@@ -1,5 +1,5 @@
 import org.scalatra.LifeCycle
 
-class ScalatraBootstrap extends Lifecycle {
+class ScalatraBootstrap extends LifeCycle {
 
 }
