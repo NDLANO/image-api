@@ -17,5 +17,7 @@ lazy val image_api = (project in file(".")).
     "org.scalatra" %% "scalatra" % Scalatraversion,
     "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container",
     "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
-    "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test")
+    "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",
+    "org.scalatra" %% "scalatra-json" % Scalatraversion,
+    "org.json4s"   %% "json4s-jackson" % "3.2.11")
 )
