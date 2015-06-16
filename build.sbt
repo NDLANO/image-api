@@ -3,7 +3,7 @@ val Scalatraversion = "2.3.1"
 val Jettyversion = "9.2.10.v20150310"
 
 lazy val commonSettings = Seq(
-  organization := "no.ndla",
+  organization := "ndla",
   version := "0.1",
   scalaVersion := Scalaversion
 )
@@ -19,8 +19,9 @@ lazy val image_api = (project in file(".")).
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
-      "org.json4s"   %% "json4s-jackson" % "3.2.11")
-  ).enablePlugins(DockerPlugin)
+      "org.json4s"   %% "json4s-jackson" % "3.2.11",
+      "org.scalatra" %% "scalatra-swagger"  % Scalatraversion)
+  ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning)
 
 
 assemblyJarName in assembly := "image-api.jar"
@@ -47,5 +48,17 @@ dockerfile in docker := {
     // On launch run Java with the classpath and the main class
     entryPoint("java", "-cp", classpathString, mainclass)
   }
+
 }
 
+
+val gitHeadCommitSha = settingKey[String]("current git commit SHA")
+gitHeadCommitSha in ThisBuild := Process("git rev-parse HEAD").lines.head
+version in ThisBuild := "0.1-" + gitHeadCommitSha.value
+
+imageNames in docker := Seq(
+  ImageName("ndla/image-api"),
+  ImageName(namespace = Some(organization.value),
+    repository = name.value,
+    tag = Some("v" + version.value))
+)
