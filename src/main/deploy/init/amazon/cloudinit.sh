@@ -9,7 +9,3 @@ EOF
 /etc/init.d/unattended-upgrades restart
 
 wget -qO- https://get.docker.com | sh
-
-cat <<EOF > /etc/default/docker
-DOCKER_OPTS="-H=unix:///var/run/docker.sock -d --tlscacert=/var/ssl/ca.pem --tlscert=/var/ssl/server-cert.pem --tlskey=/var/ssl/server-key.pem -H 0.0.0.0:4243"
-EOF

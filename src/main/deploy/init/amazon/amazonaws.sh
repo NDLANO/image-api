@@ -18,7 +18,6 @@
 ## TODO: vurder å sperre ned tilgangen ift. IP-adresser
 #aws ec2 authorize-security-group-ingress --group-id $SEC_GROUP_ID --protocol tcp --port 22 --cidr 0.0.0.0/0
 #aws ec2 authorize-security-group-ingress --group-id $SEC_GROUP_ID --protocol tcp --port 80 --cidr 0.0.0.0/0
-#aws ec2 authorize-security-group-ingress --group-id $SEC_GROUP_ID --protocol tcp --port 4243 --cidr 0.0.0.0/0
 
 # Starter instans
 # TODO: Finn annen håndtering enn manuell generering på AWS for nøkkelpar
