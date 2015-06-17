@@ -53,12 +53,11 @@ dockerfile in docker := {
 
 
 val gitHeadCommitSha = settingKey[String]("current git commit SHA")
-gitHeadCommitSha in ThisBuild := Process("git rev-parse HEAD").lines.head
-version in ThisBuild := "0.1-" + gitHeadCommitSha.value
+gitHeadCommitSha in ThisBuild := Process("git log --pretty=format:%h -n 1").lines.head
 
 imageNames in docker := Seq(
   ImageName("ndla/image-api"),
   ImageName(namespace = Some(organization.value),
     repository = name.value,
-    tag = Some("v" + version.value))
+    tag = Some("v" + version.value + "_" + gitHeadCommitSha.value))
 )
