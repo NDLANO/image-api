@@ -1,28 +1,44 @@
-import model.ImageData
+import model.{ImageData, Image}
 import org.json4s.{Formats, DefaultFormats}
 import org.scalatra.ScalatraServlet
 
 import org.scalatra.json._
+import org.scalatra.swagger.{SwaggerSupport, Swagger}
 
-import scala.io.Source
+class ImageController (implicit val swagger:Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport {
 
-class ImageController (protected implicit override val jsonFormats: Formats = DefaultFormats) extends ScalatraServlet with JacksonJsonSupport {
+  protected implicit override val jsonFormats: Formats = DefaultFormats
+
+  // Swagger-stuff
+  protected val applicationDescription = "API for accessing images from ndla.no. It exposes operations for browsing and searching lists of images, and retrieving single images."
+
+  val getImages =
+    (apiOperation[List[Image]]("getImages")
+      summary "Show all images"
+      notes "Shows all the images in the ndla.no database. You can search it too."
+      parameter queryParam[Option[String]]("tags").description("Tags that will filter the search"))
+
+  val getByImageId =
+    (apiOperation[Image]("findByImageId")
+      summary "Show image info"
+      notes "Shows info of the image with submitted id"
+      parameter pathParam[String]("image_id").description("Image_id of the image that needs to be fetched"))
+  // End of Swagger-stuff
 
   // Before every action runs, set the content type to be in JSON format.
   before() {
     contentType = formats("json")
   }
 
-
   // List images
-  get("/") {
+  get("/", operation(getImages)) {
     params.get("tags") match {
       case Some(tags) => ImageData.all.filter(_.tags.map(_.toLowerCase()).contains(tags.toLowerCase()))
       case None => ImageData.all
     }
   }
 
-  get("/:image_id") {
+  get("/:image_id", operation(getByImageId)) {
     ImageData.all find (_.id.equals(params("image_id"))) match {
       case Some(b) => b
       case None => halt(404)
