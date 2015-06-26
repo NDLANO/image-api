@@ -16,7 +16,10 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     (apiOperation[List[Image]]("getImages")
       summary "Show all images"
       notes "Shows all the images in the ndla.no database. You can search it too."
-      parameter queryParam[Option[String]]("tags").description("Tags that will filter the search"))
+      parameters (
+        queryParam[Option[String]]("tags").description("Return only images with submitted tag. Multiple tags may be entered comma separated, and will give results matching either one of them."),
+        queryParam[Option[String]]("minimumSize").description("Return only images with full size larger than submitted value in KiloBytes")
+      ))
 
   val getByImageId =
     (apiOperation[Image]("findByImageId")
