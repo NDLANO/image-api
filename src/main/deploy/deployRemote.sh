@@ -9,7 +9,7 @@ VERSION=${VER}_${GIT_HASH}
 SSH="ssh -i ./init/amazon/NDLA.pem ubuntu@52.28.51.79"
 
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-echo ">>>>>>>> DEPLOY $PROJECT:$VERSION with options : $SSL            "
+echo ">>>>>>>> DEPLOY $PROJECT:$VERSION with options : $SSH            "
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 
 set -e
