@@ -27,8 +27,13 @@ When pulling a repo with an updated dependency, the dependency folder will be ma
 
 # Building and distribution
 
-## Build
+## Compile
     sbt compile
+
+## Package and run locally
+    sbt assembly
+    export PORT=8080
+    java -jar target/scala-2.11/image-api.jar
 
 ## Create Docker Image
     sbt docker

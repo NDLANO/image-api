@@ -9,7 +9,6 @@ lazy val commonSettings = Seq(
 )
 
 lazy val image_api = (project in file(".")).
-  settings(jetty(): _*).
   settings(commonSettings: _*).
   settings(
     name := "image-api",
@@ -21,8 +20,10 @@ lazy val image_api = (project in file(".")).
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
       "org.json4s"   %% "json4s-native" % "3.2.11",
       "org.scalatra" %% "scalatra-swagger"  % Scalatraversion)
-  ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning)
+  ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
+// Include Swagger-ui in target
+unmanagedResourceDirectories in Compile <+= (baseDirectory) {_ / "lib" / "swagger-ui" / "dist"}
 
 assemblyJarName in assembly := "image-api.jar"
 mainClass in assembly := Some("JettyLauncher")
