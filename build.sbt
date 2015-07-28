@@ -1,6 +1,7 @@
 val Scalaversion = "2.11.6"
 val Scalatraversion = "2.3.1"
 val Jettyversion = "9.2.10.v20150310"
+val AwsSdkversion = "1.9.0"
 
 lazy val commonSettings = Seq(
   organization := "ndla",
@@ -19,7 +20,9 @@ lazy val image_api = (project in file(".")).
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
       "org.json4s"   %% "json4s-native" % "3.2.11",
-      "org.scalatra" %% "scalatra-swagger"  % Scalatraversion)
+      "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
+      "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
+      "com.amazonaws" % "aws-java-sdk-dynamodb" % AwsSdkversion)
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
 // Include Swagger-ui in target
@@ -27,6 +30,12 @@ unmanagedResourceDirectories in Compile <+= (baseDirectory) {_ / "lib" / "swagge
 
 assemblyJarName in assembly := "image-api.jar"
 mainClass in assembly := Some("JettyLauncher")
+assemblyMergeStrategy in assembly := {
+  case "mime.types" => MergeStrategy.filterDistinctLines
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
 
 // Make docker depend on the package task, which generates a jar file of the application code
 docker <<= docker.dependsOn(sbt.Keys.`package`.in(Compile, packageBin))
