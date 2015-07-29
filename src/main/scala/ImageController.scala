@@ -1,3 +1,4 @@
+import dao.ImageMeta
 import model.{ImageData, Image}
 import org.json4s.{Formats, DefaultFormats}
 import org.scalatra.ScalatraServlet
@@ -37,8 +38,8 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   // List images
   get("/", operation(getImages)) {
     params.get("tags") match {
-      case Some(tags) => ImageData.all.filter(_.tags.map(_.toLowerCase()).contains(tags.toLowerCase()))
-      case None => ImageData.all
+      case Some(tags) => new ImageMeta().withTags(tags.toLowerCase())
+      case None => new ImageMeta().all()
     }
   }
 

@@ -1,5 +1,6 @@
 package setup
 
+import dao.{ImageMeta, ImageBucket}
 import model.{Image, ImageData}
 
 /**

@@ -1,11 +1,11 @@
-package setup
+package dao
 
 import java.io.File
 
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
-import com.amazonaws.regions.{Regions, Region}
+import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest, CreateBucketRequest}
+import com.amazonaws.services.s3.model.{CannedAccessControlList, CreateBucketRequest, PutObjectRequest}
 import model.Image
 
 class ImageBucket(ImageBucketName: String, LocalImageDirectory: String) {
