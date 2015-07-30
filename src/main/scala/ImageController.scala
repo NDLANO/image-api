@@ -44,8 +44,8 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   get("/:image_id", operation(getByImageId)) {
-    ImageData.all find (_.id.equals(params("image_id"))) match {
-      case Some(b) => b
+    new ImageMeta().withId(params("image_id")) match {
+      case Some(image) => image
       case None => halt(404)
     }
   }
