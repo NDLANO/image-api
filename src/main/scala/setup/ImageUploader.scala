@@ -14,7 +14,7 @@ object ImageUploader {
   val LocalImageDirectory = "/Users/kes/sandboxes/ndla/image-api/src/main/resources/images/"
 
   val imageMeta = new ImageMeta(ImageMetaName, ImageBucketName)
-  val imageBucket = new ImageBucket(ImageBucketName, LocalImageDirectory)
+  val imageBucket = new ImageBucket(ImageBucketName)
 
   def main(args: Array[String]) {
     if (!imageMeta.exists) imageMeta.create
@@ -24,7 +24,7 @@ object ImageUploader {
   }
 
   def uploadImage(image: Image) = {
-    imageBucket.upload(image)
+    imageBucket.upload(image, LocalImageDirectory)
     imageMeta.upload(image)
   }
 

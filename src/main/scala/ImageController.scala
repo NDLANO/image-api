@@ -1,4 +1,4 @@
-import dao.ImageMeta
+import dao.{ImageBucket, ImageMeta}
 import model.{ImageData, Image}
 import org.json4s.{Formats, DefaultFormats}
 import org.scalatra.ScalatraServlet
@@ -51,20 +51,20 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   get("/thumbs/:name") {
-    ImageData.all find (_.thumbPath.equals("images/thumbs/" + params("name"))) match {
+    new ImageBucket().get("thumbs/" + params("name")) match {
       case Some(image) => {
-        contentType="image/jpeg"
-        getClass.getResourceAsStream(image.thumbPath)
+        contentType = image._1
+        image._2
       }
       case None => halt(404)
     }
   }
 
   get("/full/:name") {
-    ImageData.all find (_.imagePath.equals("images/full/" + params("name"))) match {
+    new ImageBucket().get("full/" + params("name")) match {
       case Some(image) => {
-        contentType="image/jpeg"
-        getClass.getResourceAsStream(image.imagePath)
+        contentType = image._1
+        image._2
       }
       case None => halt(404)
     }
