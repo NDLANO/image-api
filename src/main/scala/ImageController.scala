@@ -38,20 +38,20 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   // List images
   get("/", operation(getImages)) {
     params.get("tags") match {
-      case Some(tags) => new ImageMeta().withTags(tags.toLowerCase())
-      case None => new ImageMeta().all()
+      case Some(tags) => ImageMeta.withTags(tags.toLowerCase())
+      case None => ImageMeta.all
     }
   }
 
   get("/:image_id", operation(getByImageId)) {
-    new ImageMeta().withId(params("image_id")) match {
+    ImageMeta.withId(params("image_id")) match {
       case Some(image) => image
       case None => halt(404)
     }
   }
 
   get("/thumbs/:name") {
-    new ImageBucket().get("thumbs/" + params("name")) match {
+    ImageBucket.get("thumbs/" + params("name")) match {
       case Some(image) => {
         contentType = image._1
         image._2
@@ -61,7 +61,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   get("/full/:name") {
-    new ImageBucket().get("full/" + params("name")) match {
+    ImageBucket.get("full/" + params("name")) match {
       case Some(image) => {
         contentType = image._1
         image._2

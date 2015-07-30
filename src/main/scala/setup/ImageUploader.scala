@@ -9,23 +9,18 @@ import model.{Image, ImageData}
  */
 object ImageUploader {
 
-  val ImageBucketName = "ndla-image"
-  val ImageMetaName = "ndla-image-meta"
   val LocalImageDirectory = "/Users/kes/sandboxes/ndla/image-api/src/main/resources/images/"
 
-  val imageMeta = new ImageMeta(ImageMetaName, ImageBucketName)
-  val imageBucket = new ImageBucket(ImageBucketName)
-
   def main(args: Array[String]) {
-    if (!imageMeta.exists) imageMeta.create
-    if (!imageBucket.exists) imageBucket.create
+    if (!ImageMeta.exists) ImageMeta.create
+    if (!ImageBucket.exists) ImageBucket.create
 
-    ImageData.alle.filter(!imageBucket.contains(_)).foreach(uploadImage(_))
+    ImageData.alle.filter(!ImageBucket.contains(_)).foreach(uploadImage(_))
   }
 
   def uploadImage(image: Image) = {
-    imageBucket.upload(image, LocalImageDirectory)
-    imageMeta.upload(image)
+    ImageBucket.upload(image, LocalImageDirectory)
+    ImageMeta.upload(image)
   }
 
 }

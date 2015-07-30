@@ -4,35 +4,30 @@ import java.util
 
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
-import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec
-import com.amazonaws.services.dynamodbv2.document.utils.ValueMap
-import com.amazonaws.services.dynamodbv2.document.{PrimaryKey, DynamoDB, Item}
+import com.amazonaws.services.dynamodbv2.document.{DynamoDB, Item}
 import com.amazonaws.services.dynamodbv2.model._
 import model.Image
 
 import scala.collection.JavaConversions._
 
-class ImageMeta(ImageMetaName: String = "ndla-image-meta", ImageBucketName: String = "ndla-image") {
+object ImageMeta {
+  val ImageMetaName = "ndla-image-meta"
 
   val BucketHost = "s3.amazonaws.com"
   val ScanLimit = 100
-
-  //TODO: Må ha en egen bruker for applikasjonen. Hvordan håndtere credentials der? Som konfigurasjon?
-  val dbClient = new AmazonDynamoDBClient(new ProfileCredentialsProvider())
-  val dynamoDb = new DynamoDB(dbClient)
 
   //TODO: Gir kun 100 treff, men scan støtter paging, så vi kan tilby det kanskje.
   def all(): List[Image] = {
     dbClient.scan(new ScanRequest(ImageMetaName).
       withLimit(ScanLimit))
       .getItems
-      .map(toImage(_))
+      .map(toImageFromMap(_))
       .toList.sortBy(_.id)
   }
 
   def withId(id: String): Option[Image] = {
     Option(dynamoDb.getTable(ImageMetaName).getItem("Id", id)) match {
-      case Some(item) => Option(toImage2(item))
+      case Some(item) => Option(toImageFromItem(item))
       case None => None
     }
   }
@@ -47,11 +42,11 @@ class ImageMeta(ImageMetaName: String = "ndla-image-meta", ImageBucketName: Stri
     val scanRequest = new ScanRequest(ImageMetaName).withLimit(ScanLimit)
     scanRequest.addScanFilterEntry("Tags", condition)
 
-    dbClient.scan(scanRequest).getItems.map(toImage(_)).toList.sortBy(_.id)
+    dbClient.scan(scanRequest).getItems.map(toImageFromMap(_)).toList.sortBy(_.id)
   }
 
   // TODO: Gjør noe for å unngå to nesten helt klin like metoder
-  def toImage2(item: Item): Image = {
+  def toImageFromItem(item: Item): Image = {
     Image(item.getString("Id"),
       item.getString("Title"),
       item.getString("ThumbPath"),
@@ -60,7 +55,7 @@ class ImageMeta(ImageMetaName: String = "ndla-image-meta", ImageBucketName: Stri
   }
 
   // TODO: Gjør noe for å unngå to nesten helt klin like metoder
-  def toImage(mapEntry: util.Map[String, AttributeValue]): Image = {
+  def toImageFromMap(mapEntry: util.Map[String, AttributeValue]): Image = {
     Image(mapEntry.get("Id").getS(),
       mapEntry.get("Title").getS(),
       mapEntry.get("ThumbPath").getS(),
@@ -93,7 +88,6 @@ class ImageMeta(ImageMetaName: String = "ndla-image-meta", ImageBucketName: Stri
     newTable.waitForActive()
   }
 
-
   def exists():Boolean = {
     try {
       Option(dynamoDb.getTable(ImageMetaName).describe()).isDefined
@@ -102,4 +96,12 @@ class ImageMeta(ImageMetaName: String = "ndla-image-meta", ImageBucketName: Stri
     }
   }
 
+  def dynamoDb(): DynamoDB = {
+    new DynamoDB(dbClient)
+  }
+
+  //TODO: Må ha en egen bruker for applikasjonen. Hvordan håndtere credentials der? Som konfigurasjon?
+  def dbClient(): AmazonDynamoDBClient = {
+    new AmazonDynamoDBClient(new ProfileCredentialsProvider())
+  }
 }

@@ -2,20 +2,19 @@ package dao
 
 import java.io.{File, InputStream}
 
+import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model._
 import model.Image
 
-class ImageBucket(ImageBucketName: String = "ndla-image") {
-
-  val S3 = new AmazonS3Client(new ProfileCredentialsProvider())
-  S3.setRegion(Region.getRegion(Regions.EU_WEST_1))
+object ImageBucket {
+  val ImageBucketName = "ndla-image"
 
   def get(imageKey: String): Option[(String, InputStream)] = {
     try{
-      val s3Object = S3.getObject(new GetObjectRequest(ImageBucketName, imageKey))
+      val s3Object = s3Client.getObject(new GetObjectRequest(ImageBucketName, imageKey))
       Option(
         s3Object.getObjectMetadata().getContentType,
         s3Object.getObjectContent)
@@ -27,24 +26,33 @@ class ImageBucket(ImageBucketName: String = "ndla-image") {
   def upload(image: Image, imageDirectory: String) = {
     if(Option(image.thumbPath).isDefined){
       val thumbRequest: PutObjectRequest = new PutObjectRequest(ImageBucketName, image.thumbPath, new File(imageDirectory + image.thumbPath))
-      val thumbResult = S3.putObject(thumbRequest)
+      val thumbResult = s3Client.putObject(thumbRequest)
     }
 
     val fullRequest: PutObjectRequest = new PutObjectRequest(ImageBucketName, image.imagePath, new File(imageDirectory + image.imagePath))
-    S3.putObject(fullRequest)
+    s3Client.putObject(fullRequest)
   }
 
   def contains(image: Image): Boolean = {
-    // TODO: Hvordan sjekke om bildet allerede eksisterer?
-    false
+    try {
+      Option(s3Client.getObject(new GetObjectRequest(ImageBucketName, image.imagePath))).isDefined
+    } catch {
+      case ase: AmazonServiceException => if (ase.getErrorCode == "NoSuchKey") false else throw ase
+    }
   }
 
   def create() = {
-    val bucket = S3.createBucket(new CreateBucketRequest(ImageBucketName))
+    s3Client.createBucket(new CreateBucketRequest(ImageBucketName))
   }
 
   def exists(): Boolean = {
-    S3.doesBucketExist(ImageBucketName)
+    s3Client.doesBucketExist(ImageBucketName)
+  }
+
+  def s3Client(): AmazonS3Client = {
+    val s3Client = new AmazonS3Client(new ProfileCredentialsProvider())
+    s3Client.setRegion(Region.getRegion(Regions.EU_WEST_1))
+    s3Client
   }
 
 }
