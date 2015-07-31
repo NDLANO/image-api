@@ -1,5 +1,8 @@
-import dao.{ImageBucket, ImageMeta}
+import com.amazonaws.auth.profile.ProfileCredentialsProvider
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 import model.{ImageData, Image}
+import no.ndla.imageapi.business.{ImageBucket, ImageMeta}
+import no.ndla.imageapi.integration.{AmazonImageMeta, AmazonIntegration}
 import org.json4s.{Formats, DefaultFormats}
 import org.scalatra.ScalatraServlet
 
@@ -35,23 +38,26 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     contentType = formats("json")
   }
 
+  val imageMeta:ImageMeta = AmazonIntegration.getImageMeta()
+  val imageBucket:ImageBucket = AmazonIntegration.getImageBucket()
+
   // List images
   get("/", operation(getImages)) {
     params.get("tags") match {
-      case Some(tags) => ImageMeta.withTags(tags.toLowerCase())
-      case None => ImageMeta.all
+      case Some(tags) => imageMeta.withTags(tags.toLowerCase())
+      case None => imageMeta.all
     }
   }
 
   get("/:image_id", operation(getByImageId)) {
-    ImageMeta.withId(params("image_id")) match {
+    imageMeta.withId(params("image_id")) match {
       case Some(image) => image
       case None => halt(404)
     }
   }
 
   get("/thumbs/:name") {
-    ImageBucket.get("thumbs/" + params("name")) match {
+    imageBucket.get("thumbs/" + params("name")) match {
       case Some(image) => {
         contentType = image._1
         image._2
@@ -61,7 +67,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   get("/full/:name") {
-    ImageBucket.get("full/" + params("name")) match {
+    imageBucket.get("full/" + params("name")) match {
       case Some(image) => {
         contentType = image._1
         image._2

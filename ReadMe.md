@@ -30,6 +30,9 @@ When pulling a repo with an updated dependency, the dependency folder will be ma
 ## Compile
     sbt compile
 
+## Run tests
+    sbt test
+
 ## Package and run locally
     sbt assembly
     export PORT=8080

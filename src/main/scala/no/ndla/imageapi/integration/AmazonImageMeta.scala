@@ -1,24 +1,22 @@
-package dao
+package no.ndla.imageapi.integration
 
 import java.util
 
-import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 import com.amazonaws.services.dynamodbv2.document.{DynamoDB, Item}
 import com.amazonaws.services.dynamodbv2.model._
 import model.Image
+import no.ndla.imageapi.business.ImageMeta
 
 import scala.collection.JavaConversions._
 
-object ImageMeta {
-  val ImageMetaName = "ndla-image-meta"
+class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dynamoDb: DynamoDB) extends ImageMeta {
 
-  val BucketHost = "s3.amazonaws.com"
   val ScanLimit = 100
 
   //TODO: Gir kun 100 treff, men scan støtter paging, så vi kan tilby det kanskje.
   def all(): List[Image] = {
-    dbClient.scan(new ScanRequest(ImageMetaName).
+    dbClient.scan(new ScanRequest(imageMetaName).
       withLimit(ScanLimit))
       .getItems
       .map(toImageFromMap(_))
@@ -26,7 +24,7 @@ object ImageMeta {
   }
 
   def withId(id: String): Option[Image] = {
-    Option(dynamoDb.getTable(ImageMetaName).getItem("Id", id)) match {
+    Option(dynamoDb.getTable(imageMetaName).getItem("Id", id)) match {
       case Some(item) => Option(toImageFromItem(item))
       case None => None
     }
@@ -39,28 +37,10 @@ object ImageMeta {
       .withComparisonOperator(ComparisonOperator.CONTAINS)
       .withAttributeValueList(new AttributeValue().withS(tag))
 
-    val scanRequest = new ScanRequest(ImageMetaName).withLimit(ScanLimit)
+    val scanRequest = new ScanRequest(imageMetaName).withLimit(ScanLimit)
     scanRequest.addScanFilterEntry("Tags", condition)
 
     dbClient.scan(scanRequest).getItems.map(toImageFromMap(_)).toList.sortBy(_.id)
-  }
-
-  // TODO: Gjør noe for å unngå to nesten helt klin like metoder
-  def toImageFromItem(item: Item): Image = {
-    Image(item.getString("Id"),
-      item.getString("Title"),
-      item.getString("ThumbPath"),
-      item.getString("ImagePath"),
-      item.getList("Tags").toList)
-  }
-
-  // TODO: Gjør noe for å unngå to nesten helt klin like metoder
-  def toImageFromMap(mapEntry: util.Map[String, AttributeValue]): Image = {
-    Image(mapEntry.get("Id").getS(),
-      mapEntry.get("Title").getS(),
-      mapEntry.get("ThumbPath").getS(),
-      mapEntry.get("ImagePath").getS(),
-      mapEntry.get("Tags").getSS().toList)
   }
 
   def upload(image: Image) = {
@@ -71,7 +51,15 @@ object ImageMeta {
       .withString("ImagePath", image.imagePath)
       .withStringSet("Tags", new java.util.HashSet(image.tags))
 
-    dynamoDb.getTable(ImageMetaName).putItem(item)
+    dynamoDb.getTable(imageMetaName).putItem(item)
+  }
+
+  def exists():Boolean = {
+    try {
+      Option(dynamoDb.getTable(imageMetaName).describe()).isDefined
+    } catch {
+      case e:ResourceNotFoundException => false
+    }
   }
 
   def create() = {
@@ -79,7 +67,7 @@ object ImageMeta {
     val AttributeDefinitions = List(new AttributeDefinition("Id", "S"))
 
     val createRequest = new CreateTableRequest()
-      .withTableName(ImageMetaName)
+      .withTableName(imageMetaName)
       .withKeySchema(KeySchemas)
       .withAttributeDefinitions(AttributeDefinitions)
       .withProvisionedThroughput(new ProvisionedThroughput().withReadCapacityUnits(1L).withWriteCapacityUnits(1L))
@@ -88,20 +76,21 @@ object ImageMeta {
     newTable.waitForActive()
   }
 
-  def exists():Boolean = {
-    try {
-      Option(dynamoDb.getTable(ImageMetaName).describe()).isDefined
-    } catch {
-      case e:ResourceNotFoundException => false
-    }
+  // TODO: Gjør noe for å unngå to nesten helt klin like metoder
+  private def toImageFromItem(item: Item): Image = {
+    Image(item.getString("Id"),
+      item.getString("Title"),
+      item.getString("ThumbPath"),
+      item.getString("ImagePath"),
+      item.getList("Tags").toList)
   }
 
-  def dynamoDb(): DynamoDB = {
-    new DynamoDB(dbClient)
-  }
-
-  //TODO: Må ha en egen bruker for applikasjonen. Hvordan håndtere credentials der? Som konfigurasjon?
-  def dbClient(): AmazonDynamoDBClient = {
-    new AmazonDynamoDBClient(new ProfileCredentialsProvider())
+  // TODO: Gjør noe for å unngå to nesten helt klin like metoder
+  private def toImageFromMap(mapEntry: util.Map[String, AttributeValue]): Image = {
+    Image(mapEntry.get("Id").getS(),
+      mapEntry.get("Title").getS(),
+      mapEntry.get("ThumbPath").getS(),
+      mapEntry.get("ImagePath").getS(),
+      mapEntry.get("Tags").getSS().toList)
   }
 }
