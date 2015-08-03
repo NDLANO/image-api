@@ -1,4 +1,4 @@
-package no.ndla.imageapi.setup
+package no.ndla.imageapi.integration.setup
 
 import model.{Image, ImageData}
 import no.ndla.imageapi.integration.{AmazonIntegration, AmazonImageMeta}

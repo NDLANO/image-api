@@ -38,8 +38,8 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     contentType = formats("json")
   }
 
-  val imageMeta:ImageMeta = AmazonIntegration.getImageMeta()
-  val imageBucket:ImageBucket = AmazonIntegration.getImageBucket()
+  val imageMeta: ImageMeta = AmazonIntegration.getImageMeta()
+  val imageBucket: ImageBucket = AmazonIntegration.getImageBucket()
 
   // List images
   get("/", operation(getImages)) {
