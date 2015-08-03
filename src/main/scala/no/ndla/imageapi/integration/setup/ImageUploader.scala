@@ -13,7 +13,7 @@ object ImageUploader {
   val imageBucket = AmazonIntegration.getImageBucket()
   val imageMeta = AmazonIntegration.getImageMeta()
 
-  def main(args: Array[String]) {
+  def upload = {
     if (!imageMeta.exists) imageMeta.create
     if (!imageBucket.exists) imageBucket.create
 
