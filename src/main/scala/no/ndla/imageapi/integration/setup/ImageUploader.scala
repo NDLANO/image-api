@@ -1,7 +1,7 @@
 package no.ndla.imageapi.integration.setup
 
-import model.{Image, ImageData}
-import no.ndla.imageapi.integration.{AmazonIntegration, AmazonImageMeta}
+import model.Image
+import no.ndla.imageapi.integration.AmazonIntegration
 
 /**
  * Testklasse (og kanskje et utgangspunkt for en mer permanent løsning) som
@@ -13,11 +13,9 @@ object ImageUploader {
   val imageBucket = AmazonIntegration.getImageBucket()
   val imageMeta = AmazonIntegration.getImageMeta()
 
-  def upload = {
+  def createResources = {
     if (!imageMeta.exists) imageMeta.create
     if (!imageBucket.exists) imageBucket.create
-
-    ImageData.alle.filter(!imageBucket.contains(_)).foreach(uploadImage(_))
   }
 
   def uploadImage(image: Image) = {

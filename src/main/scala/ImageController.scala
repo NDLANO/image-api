@@ -1,13 +1,10 @@
-import com.amazonaws.auth.profile.ProfileCredentialsProvider
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
-import model.{ImageData, Image}
+import model.Image
 import no.ndla.imageapi.business.{ImageBucket, ImageMeta}
-import no.ndla.imageapi.integration.{AmazonImageMeta, AmazonIntegration}
-import org.json4s.{Formats, DefaultFormats}
+import no.ndla.imageapi.integration.AmazonIntegration
+import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
-
 import org.scalatra.json._
-import org.scalatra.swagger.{SwaggerSupport, Swagger}
+import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 class ImageController (implicit val swagger:Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport {
 
