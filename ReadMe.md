@@ -8,7 +8,7 @@ API for accessing images
 
 ### Initializing
 Upon cloning the repository run
-
+    cd lib/swagger-ui
     git submodule init
     git submodule update
 
