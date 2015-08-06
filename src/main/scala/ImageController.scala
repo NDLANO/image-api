@@ -28,7 +28,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
       summary "Show image info"
       notes "Shows info of the image with submitted id"
       parameter pathParam[String]("image_id").description("Image_id of the image that needs to be fetched"))
-  // End of Swagger-stuff
+
 
   // Before every action runs, set the content type to be in JSON format.
   before() {
@@ -38,11 +38,11 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   val imageMeta: ImageMeta = AmazonIntegration.getImageMeta()
   val imageStorage: ImageStorage = AmazonIntegration.getImageStorage()
 
-  // List images
+
   get("/", operation(getImages)) {
     params.get("tags") match {
-      case Some(tags) => imageMeta.withTags(tags.toLowerCase()).sortBy(_.id)
-      case None => imageMeta.all.sortBy(_.id)
+      case Some(tags) => imageMeta.withTags(tags.toLowerCase())
+      case None => imageMeta.all
     }
   }
 

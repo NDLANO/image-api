@@ -20,7 +20,7 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
       withLimit(ScanLimit))
       .getItems
       .map(toImageFromMap(_))
-      .toList
+      .toList.sortBy(_.id)
   }
 
   def withId(id: String): Option[ImageMetaInformation] = {
@@ -40,7 +40,7 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
     val scanRequest = new ScanRequest(imageMetaName).withLimit(ScanLimit)
     scanRequest.addScanFilterEntry("Tags", condition)
 
-    dbClient.scan(scanRequest).getItems.map(toImageFromMap(_)).toList
+    dbClient.scan(scanRequest).getItems.map(toImageFromMap(_)).toList.sortBy(_.id)
   }
 
   def upload(imageMetaInformation: ImageMetaInformation) = {
