@@ -20,7 +20,7 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
       withLimit(ScanLimit))
       .getItems
       .map(toImageFromMap(_))
-      .toList.sortBy(_.id)
+      .toList
   }
 
   def withId(id: String): Option[ImageMetaInformation] = {
@@ -40,7 +40,7 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
     val scanRequest = new ScanRequest(imageMetaName).withLimit(ScanLimit)
     scanRequest.addScanFilterEntry("Tags", condition)
 
-    dbClient.scan(scanRequest).getItems.map(toImageFromMap(_)).toList.sortBy(_.id)
+    dbClient.scan(scanRequest).getItems.map(toImageFromMap(_)).toList
   }
 
   def upload(imageMetaInformation: ImageMetaInformation) = {
@@ -79,7 +79,6 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
     newTable.waitForActive()
   }
 
-  // TODO: Gjør noe for å unngå to nesten helt klin like metoder
   private def toImageFromItem(item: Item): ImageMetaInformation = {
     import org.json4s.native.Serialization.read
     implicit val formats = org.json4s.DefaultFormats
