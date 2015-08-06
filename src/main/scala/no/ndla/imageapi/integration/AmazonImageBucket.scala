@@ -5,7 +5,7 @@ import java.io.{File, InputStream}
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model._
-import model.Image
+import model.ImageMetaInformation
 import no.ndla.imageapi.business.ImageBucket
 
 class AmazonImageBucket(imageBucketName: String, s3Client: AmazonS3Client) extends ImageBucket {
@@ -21,19 +21,19 @@ class AmazonImageBucket(imageBucketName: String, s3Client: AmazonS3Client) exten
     }
   }
 
-  def upload(image: Image, imageDirectory: String) = {
-    if(Option(image.thumbPath).isDefined){
-      val thumbRequest: PutObjectRequest = new PutObjectRequest(imageBucketName, image.thumbPath, new File(imageDirectory + image.thumbPath))
+  def upload(imageMetaInformation: ImageMetaInformation, imageDirectory: String) = {
+    if(Option(imageMetaInformation.images.small).isDefined){
+      val thumbRequest: PutObjectRequest = new PutObjectRequest(imageBucketName, imageMetaInformation.images.small.url, new File(imageDirectory + imageMetaInformation.images.small.url))
       val thumbResult = s3Client.putObject(thumbRequest)
     }
 
-    val fullRequest: PutObjectRequest = new PutObjectRequest(imageBucketName, image.imagePath, new File(imageDirectory + image.imagePath))
+    val fullRequest: PutObjectRequest = new PutObjectRequest(imageBucketName, imageMetaInformation.images.full.url, new File(imageDirectory + imageMetaInformation.images.full.url))
     s3Client.putObject(fullRequest)
   }
 
-  def contains(image: Image): Boolean = {
+  def contains(imageMetaInformation: ImageMetaInformation): Boolean = {
     try {
-      Option(s3Client.getObject(new GetObjectRequest(imageBucketName, image.imagePath))).isDefined
+      Option(s3Client.getObject(new GetObjectRequest(imageBucketName, imageMetaInformation.images.full.url))).isDefined
     } catch {
       case ase: AmazonServiceException => if (ase.getErrorCode == "NoSuchKey") false else throw ase
     }

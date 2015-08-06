@@ -5,7 +5,7 @@ import java.util
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 import com.amazonaws.services.dynamodbv2.document.{DynamoDB, Item}
 import com.amazonaws.services.dynamodbv2.model._
-import model.Image
+import model._
 import no.ndla.imageapi.business.ImageMeta
 
 import scala.collection.JavaConversions._
@@ -15,7 +15,7 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
   val ScanLimit = 100
 
   //TODO: Gir kun 100 treff, men scan støtter paging, så vi kan tilby det kanskje.
-  def all(): List[Image] = {
+  def all(): List[ImageMetaInformation] = {
     dbClient.scan(new ScanRequest(imageMetaName).
       withLimit(ScanLimit))
       .getItems
@@ -23,7 +23,7 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
       .toList.sortBy(_.id)
   }
 
-  def withId(id: String): Option[Image] = {
+  def withId(id: String): Option[ImageMetaInformation] = {
     Option(dynamoDb.getTable(imageMetaName).getItem("Id", id)) match {
       case Some(item) => Option(toImageFromItem(item))
       case None => None
@@ -32,7 +32,7 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
 
   //TODO: Funker bare for en enkelt tag (ikke hverken tags=elg,jerv eller tags=elg&tags=jerv)
   //TODO: Scan har performance issues (gjør en table-scan alltid), vurder en annen datamodell for søk
-  def withTags(tag: String): List[Image] = {
+  def withTags(tag: String): List[ImageMetaInformation] = {
     val condition = new Condition()
       .withComparisonOperator(ComparisonOperator.CONTAINS)
       .withAttributeValueList(new AttributeValue().withS(tag))
@@ -43,13 +43,16 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
     dbClient.scan(scanRequest).getItems.map(toImageFromMap(_)).toList.sortBy(_.id)
   }
 
-  def upload(image: Image) = {
+  def upload(imageMetaInformation: ImageMetaInformation) = {
+    import org.json4s.native.Serialization.write
+    implicit val formats = org.json4s.DefaultFormats
+
     val item = new Item()
-      .withPrimaryKey("Id", image.id)
-      .withString("Title", image.title)
-      .withString("ThumbPath", image.thumbPath)
-      .withString("ImagePath", image.imagePath)
-      .withStringSet("Tags", new java.util.HashSet(image.tags))
+          .withPrimaryKey("Id", imageMetaInformation.id)
+          .withString("Title", imageMetaInformation.title)
+          .withString("Images", write(imageMetaInformation.images))
+          .withString("Copyright", write(imageMetaInformation.copyright))
+          .withStringSet("Tags", new java.util.HashSet(imageMetaInformation.tags))
 
     dynamoDb.getTable(imageMetaName).putItem(item)
   }
@@ -76,21 +79,27 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
     newTable.waitForActive()
   }
 
-  // TODO: Gjør noe for å unngå to nesten helt klin like metoder
-  private def toImageFromItem(item: Item): Image = {
-    Image(item.getString("Id"),
+  private def toImageFromItem(item: Item): ImageMetaInformation = {
+    import org.json4s.native.Serialization.read
+    implicit val formats = org.json4s.DefaultFormats
+
+    ImageMetaInformation(
+      item.getString("Id"),
       item.getString("Title"),
-      item.getString("ThumbPath"),
-      item.getString("ImagePath"),
+      read[ImageVariants](item.getString("Images")),
+      read[Copyright](item.getString("Copyright")),
       item.getList("Tags").toList)
   }
 
-  // TODO: Gjør noe for å unngå to nesten helt klin like metoder
-  private def toImageFromMap(mapEntry: util.Map[String, AttributeValue]): Image = {
-    Image(mapEntry.get("Id").getS(),
+  private def toImageFromMap(mapEntry: util.Map[String, AttributeValue]): ImageMetaInformation = {
+    import org.json4s.native.Serialization.read
+    implicit val formats = org.json4s.DefaultFormats
+
+    ImageMetaInformation(
+      mapEntry.get("Id").getS(),
       mapEntry.get("Title").getS(),
-      mapEntry.get("ThumbPath").getS(),
-      mapEntry.get("ImagePath").getS(),
+      read[ImageVariants](mapEntry.get("Images").getS()),
+      read[Copyright](mapEntry.get("Copyright").getS()),
       mapEntry.get("Tags").getSS().toList)
   }
 }

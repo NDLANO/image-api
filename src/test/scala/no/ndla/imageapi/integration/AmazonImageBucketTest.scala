@@ -6,7 +6,7 @@ import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, PutObjectRequest, S3Object}
 import model.Image
-import no.ndla.imageapi.UnitSpec
+import no.ndla.imageapi.{TestData, UnitSpec}
 import no.ndla.imageapi.business.ImageBucket
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -14,8 +14,8 @@ import org.mockito.Mockito._
 class AmazonImageBucketTest extends UnitSpec{
 
   val ImageBucketName = "TestBucket"
-  val ImageWithNoThumb = Image("1", "test", null, "eksisterer.jpg", List("test", "test"))
-  val ImageWithThumb = Image("1", "test", "test", "eksistererikke.jpg", List("test", "test"))
+  val ImageWithNoThumb = TestData.nonexistingWithoutThumb
+  val ImageWithThumb = TestData.nonexisting
   val Content = "content"
   val ContentType = "image/jpeg"
 
@@ -49,7 +49,7 @@ class AmazonImageBucketTest extends UnitSpec{
     when(s3ClientMock.getObject(any[GetObjectRequest])).thenThrow(ase)
     assert(imageBucket.contains(ImageWithThumb) == false)
   }
-  
+
   "AmazonImageBucket.get" should "return a tuple with contenttype and data when the key exists" in {
     val s3object = new S3Object()
     s3object.setObjectMetadata(new ObjectMetadata())

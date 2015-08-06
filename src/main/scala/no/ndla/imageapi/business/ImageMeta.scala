@@ -1,14 +1,14 @@
 package no.ndla.imageapi.business
 
-import model.Image
+import model.ImageMetaInformation
 
 trait ImageMeta {
 
-  def all(): List[Image]
-  def withId(id: String): Option[Image]
-  def withTags(tag: String): List[Image]
+  def all(): List[ImageMetaInformation]
+  def withId(id: String): Option[ImageMetaInformation]
+  def withTags(tag: String): List[ImageMetaInformation]
 
-  def upload(image: Image)
+  def upload(imageMetaInformation: ImageMetaInformation)
 
   def exists(): Boolean
   def create()
