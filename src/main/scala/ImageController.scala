@@ -11,7 +11,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   protected implicit override val jsonFormats: Formats = DefaultFormats
 
   // Swagger-stuff
-  protected val applicationDescription = "API for accessing images from ndla.no. It exposes operations for browsing and searching lists of images, and retrieving single images."
+  protected val applicationDescription = "API for accessing images from ndla.no."
 
   val getImages =
     (apiOperation[List[ImageMetaInformation]]("getImages")

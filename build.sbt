@@ -1,9 +1,12 @@
 val Scalaversion = "2.11.6"
 val Scalatraversion = "2.3.1"
+val SwaggerUIVersion = "2.0.24"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.9.0"
 val ScalaTestVersion = "2.2.4"
 val MockitoVersion = "1.10.19"
+
+
 
 lazy val commonSettings = Seq(
   organization := "ndla",
@@ -23,14 +26,12 @@ lazy val image_api = (project in file(".")).
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
       "org.json4s"   %% "json4s-native" % "3.2.11",
       "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
+      "org.webjars" % "swagger-ui" % SwaggerUIVersion,
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % AwsSdkversion,
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
-
-// Include Swagger-ui in target
-unmanagedResourceDirectories in Compile <+= (baseDirectory) {_ / "lib" / "swagger-ui" / "dist"}
 
 assemblyJarName in assembly := "image-api.jar"
 mainClass in assembly := Some("JettyLauncher")

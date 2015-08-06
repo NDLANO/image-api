@@ -12,13 +12,13 @@ object JettyLauncher { // this is my entry object as specified in sbt project de
     val context = new WebAppContext()
     context setContextPath "/"
     context.setResourceBase("src/main/webapp")
+    context.setWelcomeFiles(Array("index.html"))
     context.addEventListener(new ScalatraListener)
     context.addServlet(classOf[DefaultServlet], "/")
 
     val resource_handler = new ResourceHandler()
-    resource_handler.setDirectoriesListed(true)
     resource_handler.setWelcomeFiles(Array("index.html"))
-    resource_handler.setResourceBase(".")
+    resource_handler.setResourceBase(getClass.getResource("META-INF/resources/webjars").toExternalForm)
 
     val handlers = new HandlerList()
     handlers.setHandlers(Array(resource_handler, context))
