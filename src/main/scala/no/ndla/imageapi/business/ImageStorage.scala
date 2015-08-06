@@ -4,7 +4,7 @@ import java.io.InputStream
 
 import model.ImageMetaInformation
 
-trait ImageBucket {
+trait ImageStorage {
   def get(imageKey: String): Option[(String, InputStream)]
   def upload(imageMetaInformation: ImageMetaInformation, imageDirectory: String)
   def contains(imageMetaInformation: ImageMetaInformation): Boolean

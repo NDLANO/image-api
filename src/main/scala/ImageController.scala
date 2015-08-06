@@ -1,5 +1,5 @@
 import model.{ImageMetaInformation}
-import no.ndla.imageapi.business.{ImageBucket, ImageMeta}
+import no.ndla.imageapi.business.{ImageStorage, ImageMeta}
 import no.ndla.imageapi.integration.AmazonIntegration
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
@@ -36,7 +36,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   val imageMeta: ImageMeta = AmazonIntegration.getImageMeta()
-  val imageBucket: ImageBucket = AmazonIntegration.getImageBucket()
+  val imageStorage: ImageStorage = AmazonIntegration.getImageStorage()
 
   // List images
   get("/", operation(getImages)) {
@@ -54,7 +54,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   get("/thumbs/:name") {
-    imageBucket.get("thumbs/" + params("name")) match {
+    imageStorage.get("thumbs/" + params("name")) match {
       case Some(image) => {
         contentType = image._1
         image._2
@@ -64,7 +64,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   get("/full/:name") {
-    imageBucket.get("full/" + params("name")) match {
+    imageStorage.get("full/" + params("name")) match {
       case Some(image) => {
         contentType = image._1
         image._2

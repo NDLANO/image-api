@@ -6,13 +6,13 @@ import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model._
 import model.ImageMetaInformation
-import no.ndla.imageapi.business.ImageBucket
+import no.ndla.imageapi.business.ImageStorage
 
-class AmazonImageBucket(imageBucketName: String, s3Client: AmazonS3Client) extends ImageBucket {
+class AmazonImageStorage(imageStorageName: String, s3Client: AmazonS3Client) extends ImageStorage {
 
   def get(imageKey: String): Option[(String, InputStream)] = {
     try{
-      val s3Object = s3Client.getObject(new GetObjectRequest(imageBucketName, imageKey))
+      val s3Object = s3Client.getObject(new GetObjectRequest(imageStorageName, imageKey))
       Option(
         s3Object.getObjectMetadata().getContentType,
         s3Object.getObjectContent)
@@ -23,27 +23,27 @@ class AmazonImageBucket(imageBucketName: String, s3Client: AmazonS3Client) exten
 
   def upload(imageMetaInformation: ImageMetaInformation, imageDirectory: String) = {
     if(Option(imageMetaInformation.images.small).isDefined){
-      val thumbRequest: PutObjectRequest = new PutObjectRequest(imageBucketName, imageMetaInformation.images.small.url, new File(imageDirectory + imageMetaInformation.images.small.url))
+      val thumbRequest: PutObjectRequest = new PutObjectRequest(imageStorageName, imageMetaInformation.images.small.url, new File(imageDirectory + imageMetaInformation.images.small.url))
       val thumbResult = s3Client.putObject(thumbRequest)
     }
 
-    val fullRequest: PutObjectRequest = new PutObjectRequest(imageBucketName, imageMetaInformation.images.full.url, new File(imageDirectory + imageMetaInformation.images.full.url))
+    val fullRequest: PutObjectRequest = new PutObjectRequest(imageStorageName, imageMetaInformation.images.full.url, new File(imageDirectory + imageMetaInformation.images.full.url))
     s3Client.putObject(fullRequest)
   }
 
   def contains(imageMetaInformation: ImageMetaInformation): Boolean = {
     try {
-      Option(s3Client.getObject(new GetObjectRequest(imageBucketName, imageMetaInformation.images.full.url))).isDefined
+      Option(s3Client.getObject(new GetObjectRequest(imageStorageName, imageMetaInformation.images.full.url))).isDefined
     } catch {
       case ase: AmazonServiceException => if (ase.getErrorCode == "NoSuchKey") false else throw ase
     }
   }
 
   def create() = {
-    s3Client.createBucket(new CreateBucketRequest(imageBucketName))
+    s3Client.createBucket(new CreateBucketRequest(imageStorageName))
   }
 
   def exists(): Boolean = {
-    s3Client.doesBucketExist(imageBucketName)
+    s3Client.doesBucketExist(imageStorageName)
   }
 }

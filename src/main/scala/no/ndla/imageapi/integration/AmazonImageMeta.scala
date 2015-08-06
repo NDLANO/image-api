@@ -79,6 +79,7 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
     newTable.waitForActive()
   }
 
+  // TODO: Gjør noe for å unngå to nesten helt klin like metoder
   private def toImageFromItem(item: Item): ImageMetaInformation = {
     import org.json4s.native.Serialization.read
     implicit val formats = org.json4s.DefaultFormats

@@ -10,7 +10,7 @@ import com.amazonaws.services.s3.AmazonS3Client
 
 object AmazonIntegration {
 
-  val ImageBucketName = "ndla-image"
+  val ImageStorageName = "ndla-image"
   val ImageMetaName = "ndla-image-meta"
 
   val ImageAPIAccessKey = "AKIAJYVWL6WV5PL3XCEQ"
@@ -28,10 +28,10 @@ object AmazonIntegration {
     new AmazonImageMeta(tableName, dbClient, dynamoDb)
   }
 
-  def getImageBucket(): AmazonImageBucket = {
+  def getImageStorage(): AmazonImageStorage = {
     val s3Client = new AmazonS3Client(new BasicAWSCredentials(ImageAPIAccessKey, ImageAPISecretAccessKey))
     s3Client.setRegion(Region.getRegion(Regions.EU_WEST_1))
-    new AmazonImageBucket(ImageBucketName, s3Client)
+    new AmazonImageStorage(ImageStorageName, s3Client)
   }
 
 }
