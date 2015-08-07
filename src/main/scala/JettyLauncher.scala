@@ -1,6 +1,7 @@
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.{HandlerList, ResourceHandler}
 import org.eclipse.jetty.servlet.DefaultServlet
+import org.eclipse.jetty.util.resource.ResourceCollection
 import org.eclipse.jetty.webapp.WebAppContext
 import org.scalatra.servlet.ScalatraListener
 
@@ -10,21 +11,18 @@ object JettyLauncher { // this is my entry object as specified in sbt project de
 
     val server = new Server(port)
     val context = new WebAppContext()
+    val staticResources = new ResourceCollection(Array(
+      getClass.getResource("image-api").toExternalForm,
+      getClass.getResource("META-INF/resources/webjars").toExternalForm))
+
     context setContextPath "/"
-    context.setResourceBase(getClass.getResource("image-api").toExternalForm)
+    context.setBaseResource(staticResources)
     context.setWelcomeFiles(Array("index.html"))
     context.addEventListener(new ScalatraListener)
     context.addServlet(classOf[DefaultServlet], "/")
+    context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
 
-    val resource_handler = new ResourceHandler()
-    resource_handler.setWelcomeFiles(Array("index.html"))
-    resource_handler.setResourceBase(getClass.getResource("META-INF/resources/webjars").toExternalForm)
-
-    val handlers = new HandlerList()
-    handlers.setHandlers(Array(resource_handler, context))
-
-    server.setHandler(handlers)
-
+    server.setHandler(context)
     server.start
     server.join
   }
