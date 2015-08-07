@@ -11,4 +11,4 @@ object ImagesApiInfo extends ApiInfo (
   "GPL2.0",
   "lisensurl")
 
-class ImageSwagger extends Swagger(Swagger.SpecVersion, "1.0.0", ImagesApiInfo)
+class ImageSwagger extends Swagger(Swagger.SpecVersion, "0.8.0", ImagesApiInfo)

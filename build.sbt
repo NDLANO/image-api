@@ -33,7 +33,6 @@ lazy val image_api = (project in file(".")).
       "org.mockito" % "mockito-all" % MockitoVersion % "test")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
-// Include Swagger-ui in target
 unmanagedResourceDirectories in Compile <+= (baseDirectory) {_ / "src/main/webapp"}
 
 assemblyJarName in assembly := "image-api.jar"
