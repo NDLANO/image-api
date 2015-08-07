@@ -33,6 +33,9 @@ lazy val image_api = (project in file(".")).
       "org.mockito" % "mockito-all" % MockitoVersion % "test")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
+// Include Swagger-ui in target
+unmanagedResourceDirectories in Compile <+= (baseDirectory) {_ / "src/main/webapp"}
+
 assemblyJarName in assembly := "image-api.jar"
 mainClass in assembly := Some("JettyLauncher")
 assemblyMergeStrategy in assembly := {
@@ -45,30 +48,18 @@ assemblyMergeStrategy in assembly := {
 // Don't run Integration tests in default run
 testOptions in Test += Tests.Argument("-l", "no.ndla.IntegrationTest")
 
-// Make docker depend on the package task, which generates a jar file of the application code
-docker <<= docker.dependsOn(sbt.Keys.`package`.in(Compile, packageBin))
+// Make the docker task depend on the assembly task, which generates a fat JAR file
+docker <<= (docker dependsOn assembly)
 
-// Define a Dockerfile
 dockerfile in docker := {
-  val jarFile = artifactPath.in(Compile, packageBin).value
-  val classpath = (managedClasspath in Compile).value
-  val mainclass = mainClass.in(Compile, packageBin).value.getOrElse(sys.error("Expected exactly one main class"))
-  val jarTarget = s"/app/${jarFile.getName}"
-  // Make a colon separated classpath with the JAR file
-  val classpathString = classpath.files.map("/app/" + _.getName).mkString(":") + ":" + jarTarget
+  val artifact = (assemblyOutputPath in assembly).value
+  val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
-    // Base image
     from("java")
-    // Add all files on the classpath
-    add(classpath.files, "/app/")
-    // Add the JAR file
-    add(jarFile, jarTarget)
-    // On launch run Java with the classpath and the main class
-    entryPoint("java", "-cp", classpathString, mainclass)
+    add(artifact, artifactTargetPath)
+    entryPoint("java", "-jar", artifactTargetPath)
   }
-
 }
-
 
 val gitHeadCommitSha = settingKey[String]("current git commit SHA")
 gitHeadCommitSha in ThisBuild := Process("git log --pretty=format:%h -n 1").lines.head
