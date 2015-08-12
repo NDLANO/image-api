@@ -1,5 +1,7 @@
 package no.ndla.imageapi.integration
 
+import javax.sql.DataSource
+
 import model.{Copyright, ImageVariants, ImageMetaInformation}
 import model.db._
 import no.ndla.imageapi.business.ImageMeta
@@ -10,15 +12,12 @@ import slick.driver.PostgresDriver.api._
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class DbImageMeta extends ImageMeta {
-
-  val ConnectionUrl = "jdbc:postgresql://ndla-image-api-test.c7wszsjus6q8.eu-central-1.rds.amazonaws.com/ndla_image_api_test?user=imageapi_write&password=cx8QnLj9qEszrep"
-  val Driver = "org.postgresql.Driver"
+class DbImageMeta(dataSource: DataSource) extends ImageMeta {
 
   val PageSize = 100
 
   override def all(): Iterable[ImageMetaInformation] = {
-    val db = Database.forURL(ConnectionUrl, driver = Driver)
+    val db = Database.forDataSource(dataSource)
     try {
       val query = Tables.imagemetas.take(PageSize)
       val result = Await.result(db.run(query.result), Duration.Inf)
@@ -28,7 +27,7 @@ class DbImageMeta extends ImageMeta {
   }
 
   override def withId(id: String): Option[ImageMetaInformation] = {
-    val db = Database.forURL(ConnectionUrl, driver = Driver)
+    val db = Database.forDataSource(dataSource)
     try {
       val query = Tables.imagemetas.filter(_.id === id.toLong)
       val result = Await.result(db.run(query.result.headOption), Duration.Inf)
@@ -38,7 +37,7 @@ class DbImageMeta extends ImageMeta {
   }
 
   override def withTags(tag: String): Iterable[ImageMetaInformation] = {
-    val db = Database.forURL(ConnectionUrl, driver = Driver)
+    val db = Database.forDataSource(dataSource)
     try {
       val query = Tables.imagetags.filter(_.tag === tag).flatMap(_.imageMeta)
       val result = Await.result(db.run(query.result), Duration.Inf)
