@@ -22,20 +22,26 @@ class AmazonImageStorage(imageStorageName: String, s3Client: AmazonS3Client) ext
   }
 
   def upload(imageMetaInformation: ImageMetaInformation, imageDirectory: String) = {
-    if(Option(imageMetaInformation.images.small).isDefined){
-      val thumbRequest: PutObjectRequest = new PutObjectRequest(imageStorageName, imageMetaInformation.images.small.url, new File(imageDirectory + imageMetaInformation.images.small.url))
-      val thumbResult = s3Client.putObject(thumbRequest)
-    }
+    imageMetaInformation.images.small.foreach(small => {
+      val thumbResult = s3Client.putObject(new PutObjectRequest(imageStorageName, small.url, new File(imageDirectory + small.url)))
+    })
 
-    val fullRequest: PutObjectRequest = new PutObjectRequest(imageStorageName, imageMetaInformation.images.full.url, new File(imageDirectory + imageMetaInformation.images.full.url))
-    s3Client.putObject(fullRequest)
+    imageMetaInformation.images.full.foreach(full => {
+      s3Client.putObject(new PutObjectRequest(imageStorageName, full.url, new File(imageDirectory + full.url)))
+    })
+
   }
 
   def contains(imageMetaInformation: ImageMetaInformation): Boolean = {
-    try {
-      Option(s3Client.getObject(new GetObjectRequest(imageStorageName, imageMetaInformation.images.full.url))).isDefined
-    } catch {
-      case ase: AmazonServiceException => if (ase.getErrorCode == "NoSuchKey") false else throw ase
+    imageMetaInformation.images.full match {
+      case Some(full) => {
+        try {
+          Option(s3Client.getObject(new GetObjectRequest(imageStorageName, full.url))).isDefined
+        } catch {
+          case ase: AmazonServiceException => if (ase.getErrorCode == "NoSuchKey") false else throw ase
+        }
+      }
+      case None => false
     }
   }
 

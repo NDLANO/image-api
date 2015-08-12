@@ -5,7 +5,7 @@ val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.9.0"
 val ScalaTestVersion = "2.2.4"
 val MockitoVersion = "1.10.19"
-
+val SlickVersion = "3.0.0"
 
 
 lazy val commonSettings = Seq(
@@ -27,6 +27,8 @@ lazy val image_api = (project in file(".")).
       "org.json4s"   %% "json4s-native" % "3.2.11",
       "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
       "org.webjars" % "swagger-ui" % SwaggerUIVersion,
+      "com.typesafe.slick" %% "slick" % SlickVersion,
+      "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % AwsSdkversion,
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",

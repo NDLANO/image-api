@@ -4,9 +4,9 @@ import model.ImageMetaInformation
 
 trait ImageMeta {
 
-  def all(): List[ImageMetaInformation]
+  def all(): Iterable[ImageMetaInformation]
   def withId(id: String): Option[ImageMetaInformation]
-  def withTags(tag: String): List[ImageMetaInformation]
+  def withTags(tag: String): Iterable[ImageMetaInformation]
 
   def upload(imageMetaInformation: ImageMetaInformation)
 
