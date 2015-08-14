@@ -20,6 +20,46 @@ object ImageApiUploader {
 
 }
 
+/**
+ *
+ * @param maxUploads Max antall opplastinger som skal gjøres i kjøringen.
+ *                   
+ * @param imageMetaFile Fil som inneholder metainformasjon for bilder.
+ *                      Kan produseres av følgende sql:
+ *                      select n.nid, n.title, from_unixtime(n.changed), f.filepath as original, f.filemime as original_mime, f.filesize as original_size,
+ *                        f2.filepath as thumb, f2.filemime as thumb_mime, f2.filesize as thumb_size
+ *                      from node n
+ *                        left join image i on (n.nid = i.nid)
+ *                        left join image i2 on (n.nid = i2.nid)
+ *                        left join files f on (i.fid = f.fid)
+ *                        left join files f2 on (i2.fid = f2.fid)
+ *                      where n.type = "image" and n.status = 1
+ *                        and i.image_size = "_original"
+ *                        and i2.image_size = "thumbnail"
+ *                      order by n.nid desc limit 40000;
+ *
+ *
+ * @param licensesFile Fil som inneholder lisensinformasjon om bilder
+ *                     Kan produseres med følgende sql:
+ *                     select n.nid, cc.license from node n
+ *                     left join creativecommons_lite cc on (n.nid = cc.nid)
+ *                     where n.type = "image" and n.status = 1;
+ *
+ * @param authorsFile Fil som inneholder authors for bilder.
+ *                    Kan produseres av følgende sql:
+ *                    SELECT n.nid AS image_nid, td.name AS author_type, person.title AS author FROM node n
+ *                    LEFT JOIN ndla_authors na ON n.vid = na.vid
+ *                    LEFT JOIN term_data td ON na.tid = td.tid
+ *                    LEFT JOIN node person ON person.nid = na.person_nid
+ *                    WHERE n.type = 'image' and n.status = 1 LIMIT 80000;
+ *
+ * @param originFile Fil som inneholder origins for bilder.
+ *                   Kan produseres av følgende sql:
+ *                   select n.nid, url.field_url_url from node n
+ *                   left join content_field_url url ON url.vid = n.vid
+ *                   where n.type = 'image' and n.status = 1 and url.field_url_url is not null
+ *                   limit 40000
+ */
 class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: String, authorsFile: String, originFile: String) {
 
   val UrlPrefix = "http://cm.test.ndla.no/"
