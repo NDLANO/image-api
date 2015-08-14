@@ -6,7 +6,7 @@ trait ImageMeta {
 
   def all(): Iterable[ImageMetaInformation]
   def withId(id: String): Option[ImageMetaInformation]
-  def withTags(tag: String): Iterable[ImageMetaInformation]
+  def withTags(tags: Iterable[String]): Iterable[ImageMetaInformation]
 
   def containsExternalId(externalId: String): Boolean
   def upload(imageMetaInformation: ImageMetaInformation, externalId: String)

@@ -41,7 +41,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
 
   get("/", operation(getImages)) {
     params.get("tags") match {
-      case Some(tags) => imageMeta.withTags(tags.toLowerCase())
+      case Some(tags) => imageMeta.withTags(tags.toLowerCase().split(",").map(_.trim))
       case None => imageMeta.all
     }
   }

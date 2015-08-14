@@ -32,10 +32,10 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
 
   //TODO: Funker bare for en enkelt tag (ikke hverken tags=elg,jerv eller tags=elg&tags=jerv)
   //TODO: Scan har performance issues (gjør en table-scan alltid), vurder en annen datamodell for søk
-  def withTags(tag: String): List[ImageMetaInformation] = {
+  override def withTags(tags: Iterable[String]): Iterable[ImageMetaInformation] = {
     val condition = new Condition()
       .withComparisonOperator(ComparisonOperator.CONTAINS)
-      .withAttributeValueList(new AttributeValue().withS(tag))
+      .withAttributeValueList(new AttributeValue().withS(tags.head))
 
     val scanRequest = new ScanRequest(imageMetaName).withLimit(ScanLimit)
     scanRequest.addScanFilterEntry("Tags", condition)

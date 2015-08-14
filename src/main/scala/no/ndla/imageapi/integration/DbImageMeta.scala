@@ -36,10 +36,10 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
     } finally db.close()
   }
 
-  override def withTags(tag: String): Iterable[ImageMetaInformation] = {
+  override def withTags(tagList: Iterable[String]): Iterable[ImageMetaInformation] = {
     val db = Database.forDataSource(dataSource)
     try {
-      val query = Tables.imagetags.filter(_.tag === tag).flatMap(_.imageMeta).take(PageSize)
+      val query = Tables.imagetags.filter(_.tag inSet tagList).flatMap(_.imageMeta).take(PageSize)
       val result = Await.result(db.run(query.result), Duration.Inf)
 
       result.map(mapImage(_, db))
