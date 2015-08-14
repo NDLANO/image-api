@@ -10,7 +10,7 @@ object ImageApiUploader {
 
   def main(args: Array[String]) {
 
-    new ImageApiUploader(maxUploads = 300,
+    new ImageApiUploader(maxUploads = 600,
       imageMetaFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/imagemetastest.csv",
       licensesFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/license_definition.csv",
       authorsFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/authors_definition.csv",
@@ -77,6 +77,8 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
       println("Uploaded:  " + imageMeta.nid + " (" + imageMeta.title  + ") with license " + license + " and authors " + authors.map(_.name) + ", full: " + sourceUrlFull + ", thumb: " + sourceUrlThumb + " with tags " + tags)
 
       Thread.sleep(1000)
+    } else {
+      println("Already exists: " + imageMeta.nid + ". Did not upload.")
     }
   }
 
