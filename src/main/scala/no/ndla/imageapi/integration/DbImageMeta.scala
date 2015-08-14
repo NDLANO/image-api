@@ -15,6 +15,7 @@ import scala.concurrent.duration.Duration
 class DbImageMeta(dataSource: DataSource) extends ImageMeta {
 
   val PageSize = 10
+  val UrlPrefix = "http://api.test.ndla.no/images/"
 
   override def all(): Iterable[ImageMetaInformation] = {
     val db = Database.forDataSource(dataSource)
@@ -57,11 +58,11 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
   def mapImage(imageMeta: Tables.ImageMeta, db:PostgresDriver.backend.Database): ImageMetaInformation = {
     val fullImage = Await.result(db.run(
       Tables.images.filter(_.id === imageMeta.fullId).result.headOption), Duration.Inf).
-      map(img => model.Image(img.url, img.size,img.contentType))
+      map(img => model.Image(UrlPrefix + img.url, img.size,img.contentType))
 
     val smallImage = Await.result(db.run(
       Tables.images.filter(_.id === imageMeta.smallId).result.headOption), Duration.Inf).
-      map(img => model.Image(img.url, img.size,img.contentType))
+      map(img => model.Image(UrlPrefix + img.url, img.size,img.contentType))
 
     val imageAuthors = Await.result(db.run(
       Tables.authors.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).
