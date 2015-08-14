@@ -1,0 +1,119 @@
+package no.ndla.imageapi.batch
+
+import model._
+import no.ndla.imageapi.integration.AmazonIntegration
+
+import scala.io.Source
+
+
+object ImageApiUploader {
+
+  def main(args: Array[String]) {
+
+    new ImageApiUploader(maxUploads = 300,
+      imageMetaFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/imagemetastest.csv",
+      licensesFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/license_definition.csv",
+      authorsFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/authors_definition.csv",
+      originFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/origin_definition.csv")
+      .uploadImages()
+  }
+
+}
+
+class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: String, authorsFile: String, originFile: String) {
+
+  val UrlPrefix = "http://cm.test.ndla.no/"
+
+  val imageMeta = Source.fromFile(imageMetaFile).getLines
+    .map(line => toImageMeta(line))
+    .toList
+
+  val imageLicense = Source.fromFile(licensesFile).getLines
+    .map(line => toImageLicense(line))
+    .map(license => license.nid -> license)
+    .toMap
+
+  val imageOrigin = Source.fromFile(originFile).getLines()
+    .map(line => toImageOrigin(line))
+    .map(origin => origin.nid -> origin)
+    .toMap
+
+  val imageAuthor = Source.fromFile(authorsFile).getLines
+    .map(line => toImageAuthor(line))
+    .map(author => author.nid -> author)
+    .toList.groupBy(_._1).map { case (k,v) => (k,v.map(_._2))}
+
+  val imageStorage = AmazonIntegration.getImageStorageDefaultCredentials();
+  val imageMetaStore = AmazonIntegration.getImageMeta()
+
+  def uploadImages() = {
+    imageMeta.take(maxUploads).foreach(upload(_))
+  }
+
+  def upload(imageMeta: ImageMeta) = {
+    if(!imageMetaStore.containsExternalId(imageMeta.nid)) {
+      val license = imageLicense.getOrElse(imageMeta.nid, ImageLicense("", "")).license
+      val origin = imageOrigin.getOrElse(imageMeta.nid, ImageOrigin("", "")).origin
+      val imageAuthors = imageAuthor.getOrElse(imageMeta.nid, List())
+      val sourceUrlFull = UrlPrefix + imageMeta.originalFile
+      val sourceUrlThumb = UrlPrefix + imageMeta.thumbFile
+      val tags = Tags.forImage(imageMeta.nid)
+
+      val thumbKey = imageMeta.thumbFile.replace("sites/default/files/images/", "thumbs/")
+      val thumb = Image("http://api.test.ndla.no/images/" + thumbKey, imageMeta.thumbSize, imageMeta.thumbMime)
+
+      val fullKey = imageMeta.originalFile.replace("sites/default/files/images/", "full/")
+      val full = Image("http://api.test.ndla.no/images/" + fullKey, imageMeta.originalSize, imageMeta.originalMime)
+
+      val authors = imageAuthors.map(ia => Author(ia.typeAuthor, ia.name))
+      val copyright = Copyright(license, origin, authors)
+      val imageMetaInformation = ImageMetaInformation("0", imageMeta.title, ImageVariants(Option(thumb), Option(full)), copyright, tags)
+
+      if(!imageStorage.contains(thumbKey)) imageStorage.uploadFromUrl(thumb, thumbKey, sourceUrlThumb)
+      if(!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
+
+      imageMetaStore.upload(imageMetaInformation, imageMeta.nid)
+
+      println("Uploaded:  " + imageMeta.nid + " (" + imageMeta.title  + ") with license " + license + " and authors " + authors.map(_.name) + ", full: " + sourceUrlFull + ", thumb: " + sourceUrlThumb + " with tags " + tags)
+
+      Thread.sleep(1000)
+    }
+  }
+
+  def toImageMeta(line: String): ImageMeta = {
+    val x = line.split("#!#") match {
+      case Array(a, b, c, d, e, f, g, h, i) => (a, b, c, d, e, f, g, h, i)
+    }
+    (ImageMeta.apply _).tupled(x)
+  }
+
+  def toImageLicense(line: String): ImageLicense = {
+    val x = line.split("#!#") match {
+      case Array(a, b) => (a, b)
+      case Array(a) => (a, "")
+    }
+    (ImageLicense.apply _).tupled(x)
+  }
+
+  def toImageOrigin(line: String): ImageOrigin = {
+    val x = line.split("#!#") match {
+      case Array(a, b) => (a, b)
+      case Array(a) => (a, "")
+    }
+    (ImageOrigin.apply _).tupled(x)
+  }
+
+  def toImageAuthor(line: String): ImageAuthor = {
+    val x = line.split("#!#") match {
+      case Array(a, b, c) => (a, b, c)
+    }
+    (ImageAuthor.apply _).tupled(x)
+  }
+}
+
+
+
+case class ImageMeta(nid:String, title:String, changed:String, originalFile:String, originalMime: String, originalSize: String, thumbFile:String, thumbMime:String, thumbSize: String)
+case class ImageLicense(nid:String, license:String)
+case class ImageAuthor(nid: String, typeAuthor:String, name:String)
+case class ImageOrigin(nid: String, origin:String)

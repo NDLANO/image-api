@@ -2,7 +2,7 @@ package no.ndla.imageapi.business
 
 import java.io.InputStream
 
-import model.ImageMetaInformation
+import model.{Image, ImageMetaInformation}
 
 trait ImageStorage {
   /**
@@ -27,7 +27,23 @@ trait ImageStorage {
    */
   def upload(imageMetaInformation: ImageMetaInformation, imageDirectory: String)
 
-  def contains(imageMetaInformation: ImageMetaInformation): Boolean
+  /**
+   * Uploads an image from the given url to storage.
+   * 
+   * @param image Metadata for the image.
+   * @param storageKey The name used in storage
+   * @param urlOfImage The url of the source
+   */
+  def uploadFromUrl(image: Image, storageKey:String, urlOfImage: String)
+
+  /**
+   * Checks if a key already exists in the imagestorage.
+   *
+   * @param storageKey The key to check for existence.
+   * @return True if storageKey exists in storage. False otherwise
+   */
+  def contains(storageKey: String): Boolean
+
   def exists(): Boolean
   def create()
 }

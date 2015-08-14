@@ -3,8 +3,6 @@ package no.ndla.imageapi.integration
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.regions.{Region, Regions}
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
-import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.s3.AmazonS3Client
 import org.postgresql.ds.PGPoolingDataSource
 
@@ -23,6 +21,12 @@ object AmazonIntegration {
   datasource.setPortNumber(5432)
   datasource.setInitialConnections(3)
   datasource.setMaxConnections(20)
+
+  def getImageStorageDefaultCredentials(): AmazonImageStorage = {
+    val s3Client = new AmazonS3Client(new ProfileCredentialsProvider())
+    s3Client.setRegion(Region.getRegion(Regions.EU_WEST_1))
+    new AmazonImageStorage(ImageStorageName, s3Client)
+  }
 
   def getImageStorage(): AmazonImageStorage = {
     val s3Client = new AmazonS3Client(new BasicAWSCredentials(ImageAPIAccessKey, ImageAPISecretAccessKey))

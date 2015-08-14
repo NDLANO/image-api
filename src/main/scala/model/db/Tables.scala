@@ -9,12 +9,13 @@ object Tables extends {
 
 trait Tables {
 
-  case class Image(id: Long, size: String, url: String)
+  case class Image(id: Long, url: String, size: String, contentType:String)
   class Images(tag: Tag) extends Table[Image](tag, "image") {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-    def size = column[String]("size")
     def url = column[String]("url")
-    def * = (id, size, url) <>(Image.tupled, Image.unapply)
+    def size = column[String]("size")
+    def contentType = column[String]("content_type")
+    def * = (id, url, size, contentType) <>(Image.tupled, Image.unapply)
   }
   lazy val images = TableQuery[Images]
 

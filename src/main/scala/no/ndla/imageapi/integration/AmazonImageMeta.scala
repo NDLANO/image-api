@@ -43,7 +43,11 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
     dbClient.scan(scanRequest).getItems.map(toImageFromMap(_)).toList.sortBy(_.id)
   }
 
-  def upload(imageMetaInformation: ImageMetaInformation) = {
+  override def containsExternalId(externalId: String): Boolean = {
+    false
+  }
+
+  def upload(imageMetaInformation: ImageMetaInformation, externalId: String) = {
     import org.json4s.native.Serialization.write
     implicit val formats = org.json4s.DefaultFormats
 

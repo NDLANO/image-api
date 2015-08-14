@@ -1,8 +1,9 @@
 
 CREATE TABLE image (
   id BIGSERIAL PRIMARY KEY,
+  url TEXT,
   size TEXT,
-  url TEXT
+  content_type TEXT
 );
 
 CREATE TABLE imagemeta(

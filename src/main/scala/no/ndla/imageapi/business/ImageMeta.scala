@@ -8,9 +8,7 @@ trait ImageMeta {
   def withId(id: String): Option[ImageMetaInformation]
   def withTags(tag: String): Iterable[ImageMetaInformation]
 
-  def upload(imageMetaInformation: ImageMetaInformation)
-
-  def exists(): Boolean
-  def create()
+  def containsExternalId(externalId: String): Boolean
+  def upload(imageMetaInformation: ImageMetaInformation, externalId: String)
 
 }

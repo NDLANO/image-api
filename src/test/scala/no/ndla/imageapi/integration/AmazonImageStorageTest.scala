@@ -40,14 +40,14 @@ class AmazonImageStorageTest extends UnitSpec{
   "AmazonImageStorage.contains" should "return true when image exists" in {
     val s3ObjectMock = mock[S3Object]
     when(s3ClientMock.getObject(any[GetObjectRequest])).thenReturn(s3ObjectMock)
-    assert(imageStorage.contains(ImageWithThumb))
+    assert(imageStorage.contains("existingKey"))
   }
 
   it should "return false when image does not exist" in {
     val ase = new AmazonServiceException("Exception")
     ase.setErrorCode("NoSuchKey")
     when(s3ClientMock.getObject(any[GetObjectRequest])).thenThrow(ase)
-    assert(imageStorage.contains(ImageWithThumb) == false)
+    assert(imageStorage.contains("nonExistingKey") == false)
   }
 
   "AmazonImageStorage.get" should "return a tuple with contenttype and data when the key exists" in {

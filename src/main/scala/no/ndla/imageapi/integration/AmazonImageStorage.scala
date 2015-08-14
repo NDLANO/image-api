@@ -1,11 +1,12 @@
 package no.ndla.imageapi.integration
 
 import java.io.{File, InputStream}
+import java.net.URL
 
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model._
-import model.ImageMetaInformation
+import model.{Image, ImageMetaInformation}
 import no.ndla.imageapi.business.ImageStorage
 
 class AmazonImageStorage(imageStorageName: String, s3Client: AmazonS3Client) extends ImageStorage {
@@ -32,17 +33,22 @@ class AmazonImageStorage(imageStorageName: String, s3Client: AmazonS3Client) ext
 
   }
 
-  def contains(imageMetaInformation: ImageMetaInformation): Boolean = {
-    imageMetaInformation.images.full match {
-      case Some(full) => {
-        try {
-          Option(s3Client.getObject(new GetObjectRequest(imageStorageName, full.url))).isDefined
-        } catch {
-          case ase: AmazonServiceException => if (ase.getErrorCode == "NoSuchKey") false else throw ase
-        }
+  override def uploadFromUrl(image: Image, storageKey:String, urlOfImage: String): Unit = {
+    val imageStream = new URL(urlOfImage).openStream()
+    val metadata = new ObjectMetadata()
+    metadata.setContentType(image.contentType)
+    metadata.setContentLength(image.size.toLong)
+
+    val request = new PutObjectRequest(imageStorageName, storageKey, imageStream, metadata)
+    val putResult = s3Client.putObject(request)
+  }
+
+  def contains(storageKey: String): Boolean = {
+      try {
+        Option(s3Client.getObject(new GetObjectRequest(imageStorageName, storageKey))).isDefined
+      } catch {
+        case ase: AmazonServiceException => if (ase.getErrorCode == "NoSuchKey") false else throw ase
       }
-      case None => false
-    }
   }
 
   def create() = {
