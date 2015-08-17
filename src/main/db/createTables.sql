@@ -2,7 +2,7 @@
 CREATE TABLE image (
   id BIGSERIAL PRIMARY KEY,
   url TEXT,
-  size TEXT,
+  size INTEGER,
   content_type TEXT
 );
 
