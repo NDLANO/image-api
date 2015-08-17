@@ -18,16 +18,16 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
       summary "Show all images"
       notes "Shows all the images in the ndla.no database. You can search it too."
       parameters (
-        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting applies on anonymous access"),
+        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting applies on anonymous access."),
         queryParam[Option[String]]("tags").description("Return only images with submitted tag. Multiple tags may be entered comma separated, and will give results matching either one of them."),
-        queryParam[Option[String]]("minimumSize").description("Return only images with full size larger than submitted value in KiloBytes")
+        queryParam[Option[String]]("minimumSize").description("Return only images with full size larger than submitted value in bytes.")
       ))
 
   val getByImageId =
     (apiOperation[ImageMetaInformation]("findByImageId")
       summary "Show image info"
-      notes "Shows info of the image with submitted id"
-      parameter pathParam[String]("image_id").description("Image_id of the image that needs to be fetched"))
+      notes "Shows info of the image with submitted id."
+      parameter pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."))
 
 
   // Before every action runs, set the content type to be in JSON format.
