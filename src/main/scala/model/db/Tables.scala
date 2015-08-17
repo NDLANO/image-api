@@ -9,11 +9,11 @@ object Tables extends {
 
 trait Tables {
 
-  case class Image(id: Long, url: String, size: String, contentType:String)
+  case class Image(id: Long, url: String, size: Int, contentType:String)
   class Images(tag: Tag) extends Table[Image](tag, "image") {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
     def url = column[String]("url")
-    def size = column[String]("size")
+    def size = column[Int]("size")
     def contentType = column[String]("content_type")
     def * = (id, url, size, contentType) <>(Image.tupled, Image.unapply)
   }

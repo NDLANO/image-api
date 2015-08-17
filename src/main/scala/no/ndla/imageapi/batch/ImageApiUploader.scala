@@ -100,10 +100,10 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
       val tags = Tags.forImage(imageMeta.nid)
 
       val thumbKey = imageMeta.thumbFile.replace("sites/default/files/images/", "thumbs/")
-      val thumb = Image("http://api.test.ndla.no/images/" + thumbKey, imageMeta.thumbSize, imageMeta.thumbMime)
+      val thumb = Image("http://api.test.ndla.no/images/" + thumbKey, imageMeta.thumbSize.toInt, imageMeta.thumbMime)
 
       val fullKey = imageMeta.originalFile.replace("sites/default/files/images/", "full/")
-      val full = Image("http://api.test.ndla.no/images/" + fullKey, imageMeta.originalSize, imageMeta.originalMime)
+      val full = Image("http://api.test.ndla.no/images/" + fullKey, imageMeta.originalSize.toInt, imageMeta.originalMime)
 
       val authors = imageAuthors.map(ia => Author(ia.typeAuthor, ia.name))
       val copyright = Copyright(license, origin, authors)

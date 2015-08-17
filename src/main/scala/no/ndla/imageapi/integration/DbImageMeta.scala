@@ -17,10 +17,22 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
   val PageSize = 10
   val UrlPrefix = "http://api.test.ndla.no/images/"
 
-  override def all(): Iterable[ImageMetaInformation] = {
+  override def all(minimumSize:Option[Int]): Iterable[ImageMetaInformation] = {
     val db = Database.forDataSource(dataSource)
     try {
-      val query = Tables.imagemetas.take(PageSize)
+      val allFilter = Tables.imagemetas
+      val filter = minimumSize match {
+        case Some(size) =>
+          allFilter.flatMap(
+            meta => Tables.images
+              .filter(image => meta.fullId === image.id)
+              .filter(image => image.size >= size)
+              .map(image => meta))
+
+        case None => allFilter
+      }
+
+      val query = filter.take(PageSize)
       val result = Await.result(db.run(query.result), Duration.Inf)
 
       result.map(mapImage(_, db))
@@ -37,12 +49,21 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
     } finally db.close()
   }
 
-  override def withTags(tagList: Iterable[String]): Iterable[ImageMetaInformation] = {
+  override def withTags(tagList: Iterable[String], minimumSize:Option[Int]): Iterable[ImageMetaInformation] = {
     val db = Database.forDataSource(dataSource)
     try {
 
-      //TODO: Denne kan nok gjøres bedre.
-      val query = Tables.imagetags.filter(_.tag inSet tagList).flatMap(_.imageMeta).groupBy(x=>x).map(_._1).take(PageSize)
+      val tagFilter = Tables.imagetags.filter(_.tag inSet tagList).flatMap(_.imageMeta).groupBy(x=>x).map(_._1)
+      val filter = minimumSize match {
+        case Some(size) => tagFilter.flatMap(meta => Tables.images
+          .filter(image => meta.fullId === image.id)
+          .filter(image => image.size >= size)
+          .map(image => meta))
+
+        case None => tagFilter
+      }
+
+      val query = filter.take(PageSize)
       val result = Await.result(db.run(query.result), Duration.Inf)
 
       result.map(mapImage(_, db))

@@ -15,7 +15,7 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
   val ScanLimit = 100
 
   //TODO: Gir kun 100 treff, men scan støtter paging, så vi kan tilby det kanskje.
-  def all(): List[ImageMetaInformation] = {
+  def all(minimumSize:Option[Int]): List[ImageMetaInformation] = {
     dbClient.scan(new ScanRequest(imageMetaName).
       withLimit(ScanLimit))
       .getItems
@@ -32,7 +32,7 @@ class AmazonImageMeta(imageMetaName:String, dbClient: AmazonDynamoDBClient, dyna
 
   //TODO: Funker bare for en enkelt tag (ikke hverken tags=elg,jerv eller tags=elg&tags=jerv)
   //TODO: Scan har performance issues (gjør en table-scan alltid), vurder en annen datamodell for søk
-  override def withTags(tags: Iterable[String]): Iterable[ImageMetaInformation] = {
+  override def withTags(tags: Iterable[String], minimumSize:Option[Int]): Iterable[ImageMetaInformation] = {
     val condition = new Condition()
       .withComparisonOperator(ComparisonOperator.CONTAINS)
       .withAttributeValueList(new AttributeValue().withS(tags.head))
