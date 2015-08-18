@@ -2,7 +2,7 @@ package no.ndla.imageapi.integration
 
 import javax.sql.DataSource
 
-import model.{Copyright, ImageVariants, ImageMetaInformation}
+import model.{ImageMetaSummary, Copyright, ImageVariants, ImageMetaInformation}
 import model.db._
 import no.ndla.imageapi.business.ImageMeta
 import slick.driver.PostgresDriver
@@ -14,10 +14,11 @@ import scala.concurrent.duration.Duration
 
 class DbImageMeta(dataSource: DataSource) extends ImageMeta {
 
-  val PageSize = 10
+  val PageSize = 20
+  val PageSizeSearch = 100
   val UrlPrefix = "http://api.test.ndla.no/images/"
 
-  override def all(minimumSize:Option[Int]): Iterable[ImageMetaInformation] = {
+  override def all(minimumSize:Option[Int]): Iterable[ImageMetaSummary] = {
     val db = Database.forDataSource(dataSource)
     try {
       val allFilter = Tables.imagemetas
@@ -35,7 +36,7 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
       val query = filter.take(PageSize)
       val result = Await.result(db.run(query.result), Duration.Inf)
 
-      result.map(mapImage(_, db))
+      result.map(mapImageSummary(_, db))
     } finally db.close()
   }
 
@@ -49,7 +50,7 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
     } finally db.close()
   }
 
-  override def withTags(tagList: Iterable[String], minimumSize:Option[Int]): Iterable[ImageMetaInformation] = {
+  override def withTags(tagList: Iterable[String], minimumSize:Option[Int]): Iterable[ImageMetaSummary] = {
     val db = Database.forDataSource(dataSource)
     try {
 
@@ -63,10 +64,10 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
         case None => tagFilter
       }
 
-      val query = filter.take(PageSize)
+      val query = filter.take(PageSizeSearch)
       val result = Await.result(db.run(query.result), Duration.Inf)
 
-      result.map(mapImage(_, db))
+      result.map(mapImageSummary(_, db))
     } finally db.close()
   }
 
@@ -76,6 +77,16 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
       Await.result(db.run(
         Tables.imagemetas.filter(_.externalId === externalId).result.headOption), Duration.Inf).isDefined
     } finally db.close()
+  }
+
+  def mapImageSummary(imageMeta: Tables.ImageMeta, db:PostgresDriver.backend.Database): ImageMetaSummary = {
+    val previewUrl = Await.result(db.run(
+      Tables.images.filter(_.id === imageMeta.smallId).result.headOption), Duration.Inf).
+      map(img => UrlPrefix + img.url).getOrElse("")
+
+    val metaUrl = UrlPrefix + imageMeta.id.toString
+
+    ImageMetaSummary(imageMeta.id.toString, previewUrl, metaUrl, imageMeta.license)
   }
 
   def mapImage(imageMeta: Tables.ImageMeta, db:PostgresDriver.backend.Database): ImageMetaInformation = {

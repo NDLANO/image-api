@@ -1,4 +1,4 @@
-import model.{ImageMetaInformation}
+import model.{ImageMetaSummary, ImageMetaInformation}
 import no.ndla.imageapi.business.{ImageStorage, ImageMeta}
 import no.ndla.imageapi.integration.AmazonIntegration
 import org.json4s.{DefaultFormats, Formats}
@@ -14,7 +14,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   protected val applicationDescription = "API for accessing images from ndla.no."
 
   val getImages =
-    (apiOperation[List[ImageMetaInformation]]("getImages")
+    (apiOperation[List[ImageMetaSummary]]("getImages")
       summary "Show all images"
       notes "Shows all the images in the ndla.no database. You can search it too."
       parameters (
