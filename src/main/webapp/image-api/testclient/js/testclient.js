@@ -1,3 +1,9 @@
+function searchIfEnter(event){
+    if(event.keyCode == 13){
+        $("#searchButton").click();
+    }
+}
+
 function search() {
     var tagString = $('#tags').val();
     var minSize = $('#minSize').val();
@@ -15,7 +21,6 @@ function search() {
         function(err, res) {
             $('#searchresults').empty();
             $('#searchresults').append(res.text);
-            console.log(res.text)
         }
     )
 }
