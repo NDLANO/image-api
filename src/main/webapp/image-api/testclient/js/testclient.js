@@ -4,6 +4,16 @@ function searchIfEnter(event){
     }
 }
 
+function searchOk(jsonData){
+    $('#searchresults').empty();
+    $.each(jsonData, function(index, element) {
+        var previewImg = "<a href='#'><img src='" + element["previewUrl"] + "'/></a>"
+
+        $('#searchresults').append(previewImg);
+    });
+}
+
+
 function search() {
     var tagString = $('#tags').val();
     var minSize = $('#minSize').val();
@@ -19,8 +29,11 @@ function search() {
     var request = window.superagent;
     request.get(searchUrl).end(
         function(err, res) {
-            $('#searchresults').empty();
-            $('#searchresults').append(res.text);
+            if(res.ok){
+                searchOk(res.body);
+            } else {
+                console.log("Dette gikk ikke bra...");
+            }
         }
     )
 }

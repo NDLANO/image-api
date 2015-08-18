@@ -32,7 +32,17 @@ body {
     padding: 10px;
 }
 
-#searchcontainer #searchresults {
+#searchcontainer #searchjson {
     margin-top: 50px;
     font-size: x-small;
 }
+
+#searchcontainer #searchresults {
+    margin-top: 50px;
+}
+
+#searchcontainer #searchresults a {
+    padding-right: 25px;
+    padding-bottom: 25px;
+}
+
