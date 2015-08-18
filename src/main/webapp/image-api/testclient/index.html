@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Testklient for NDLA Bilde-api</title>
+    <link href='css/testclient.css' media='screen' rel='stylesheet' type='text/css'/>
+    <script type="text/javascript" src="js/testclient.js"></script>
+    <script type="text/javascript" src="js/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="js/superagent.js"></script>
+</head>
+<body>
+    <div id="searchcontainer">
+        <h1>Search NDLA images</h1>
+        <div id="searchbox">
+            <input type="text" name="tags" id="tags" placeholder="Tags...">
+            <input type="text" name="minSize" id="minSize" placeholder="Minumum size in bytes">
+            <button type="button" name="searchButton" id="searchButton" onclick="search();">Search</button>
+        </div>
+
+        <div id="searchresults"></div>
+    </div>
+</body>
+</html>

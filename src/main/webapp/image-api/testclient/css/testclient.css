@@ -1,0 +1,38 @@
+body {
+    font-family: sans-serif;
+}
+
+#searchcontainer {
+    margin-top: 150px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 60%;
+    padding: 10px;
+}
+
+#searchcontainer h1 {
+    font-size: medium;
+    border-bottom: solid;
+    border-bottom-width: 2px;
+    border-bottom-color: #20588F;
+}
+
+#searchcontainer #tags {
+    width: 78%;
+    padding: 10px;
+}
+
+#searchcontainer #minSize {
+    width: 12%;
+    padding: 10px;
+}
+
+#searchcontainer #searchButton {
+    width: 5%;
+    padding: 10px;
+}
+
+#searchcontainer #searchresults {
+    margin-top: 50px;
+    font-size: x-small;
+}
