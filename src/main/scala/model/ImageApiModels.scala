@@ -16,10 +16,20 @@ case class ImageMetaSummary(
 @ApiModel(description = "Meta information for the image")
 case class ImageMetaInformation(
   @(ApiModelProperty @field)(description = "The unique id of the image") id:String,
-  @(ApiModelProperty @field)(description = "The freetext title of the image") title:String,
+  @(ApiModelProperty @field)(description = "Available titles for the image") titles:Iterable[ImageTitle],
   @(ApiModelProperty @field)(description = "The possible size variants of the image") images:ImageVariants,
   @(ApiModelProperty @field)(description = "Describes the copyright information for the image") copyright:Copyright,
-  @(ApiModelProperty @field)(description = "Searchable tags for the image") tags:Iterable[String]
+  @(ApiModelProperty @field)(description = "Searchable tags for the image") tags:Iterable[ImageTag]
+)
+
+case class ImageTitle(
+  @(ApiModelProperty @field)(description = "The freetext title of the image") title:String,
+  @(ApiModelProperty @field)(description = "ISO 639-2 code that represents the language used in title") language:String
+)
+
+case class ImageTag(
+  @(ApiModelProperty @field)(description = "The searchable tag.") tag:String,
+  @(ApiModelProperty @field)(description = "ISO 639-2 code that represents the language used in tag") language:String
 )
 
 @ApiModel(description = "The possible variants of the image")

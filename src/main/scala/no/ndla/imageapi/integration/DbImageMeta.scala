@@ -2,7 +2,7 @@ package no.ndla.imageapi.integration
 
 import javax.sql.DataSource
 
-import model.{ImageMetaSummary, Copyright, ImageVariants, ImageMetaInformation}
+import model._
 import model.db._
 import no.ndla.imageapi.business.ImageMeta
 import slick.driver.PostgresDriver
@@ -104,9 +104,9 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
 
     val tags = Await.result(db.run(
       Tables.imagetags.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).
-      map(_.tag)
+      map(dbtag => ImageTag(dbtag.tag, "nob"))
 
-    ImageMetaInformation(imageMeta.id.toString, imageMeta.title,
+    ImageMetaInformation(imageMeta.id.toString, List(ImageTitle(imageMeta.title, "nob")),
       ImageVariants(smallImage, fullImage),
       Copyright(imageMeta.license, imageMeta.origin, imageAuthors),
       tags
@@ -125,11 +125,12 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
       val thumbInsert = (Tables.images returning Tables.images.map(_.id)) += Tables.Image(0, thumbImage.url, thumbImage.size, thumbImage.contentType)
       val thumbId = Await.result(db.run(thumbInsert), Duration.Inf)
 
-      val insertImageMeta = Tables.ImageMeta(0, imageMetaInformation.title, imageMetaInformation.copyright.license, imageMetaInformation.copyright.origin, thumbId, fullId, externalId)
+      // TODO: Endre til å sette inn alle titler.
+      val insertImageMeta = Tables.ImageMeta(0, imageMetaInformation.titles.head.title, imageMetaInformation.copyright.license, imageMetaInformation.copyright.origin, thumbId, fullId, externalId)
       val imageMetaId = Await.result(db.run((Tables.imagemetas returning Tables.imagemetas.map(_.id)) += insertImageMeta), Duration.Inf)
 
       imageMetaInformation.tags.foreach(tag => {
-        Await.result(db.run(Tables.imagetags += Tables.ImageTag(0, tag, imageMetaId)), Duration.Inf)
+        Await.result(db.run(Tables.imagetags += Tables.ImageTag(0, tag.tag, imageMetaId)), Duration.Inf)
       })
 
       imageMetaInformation.copyright.authors.foreach(author => {

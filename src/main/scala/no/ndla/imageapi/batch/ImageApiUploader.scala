@@ -107,7 +107,9 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
 
       val authors = imageAuthors.map(ia => Author(ia.typeAuthor, ia.name))
       val copyright = Copyright(license, origin, authors)
-      val imageMetaInformation = ImageMetaInformation("0", imageMeta.title, ImageVariants(Option(thumb), Option(full)), copyright, tags)
+
+      //TODO: Skriv om til å også ha med andre språk
+      val imageMetaInformation = ImageMetaInformation("0", List(ImageTitle(imageMeta.title, "nob")), ImageVariants(Option(thumb), Option(full)), copyright, tags.map(ImageTag(_, "nob")))
 
       if(!imageStorage.contains(thumbKey)) imageStorage.uploadFromUrl(thumb, thumbKey, sourceUrlThumb)
       if(!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
