@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Testklient for NDLA Bilde-api</title>
@@ -17,7 +16,34 @@
             <button type="button" name="searchButton" id="searchButton" onclick="search();">Search</button>
         </div>
 
-        <div id="searchresults"/>
+        <div id="searchresults"></div>
+        <div id="imagedetail">
+            <div id="imageview"></div>
+            <div id="metaview">
+                <div class="imagetitle" id="imagetitle"></div>
+                <div class="metasection">
+                    <span class="metaheading">Størrelse:</span>
+                    <span class="metafield" id="imagesize"></span><span class="metafield"> bytes</span>
+                </div>
+                <div class="metasection">
+                    <span class="metaheading">Lisens:</span>
+                    <span class="metafield" id="license"></span>
+                </div>
+                <div class="metasection">
+                    <span class="metaheading">Opphav:</span>
+                    <span class="metafield" id="authors"></span>
+                </div>
+                <div class="metasection">
+                    <span class="metaheading">Kilde:</span>
+                    <span class="metafield" id="origin"></span>
+                </div>
+                <div class="metasection">
+                    <div class="metaheading">Tags:</div>
+                    <div class="tagsfield" id="imagetags"></div>
+                </div>
+
+            </div>
+        </div>
     </div>
 </body>
 </html>
