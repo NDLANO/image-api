@@ -30,16 +30,19 @@ a:hover {
 #searchcontainer #tags {
     width: 78%;
     padding: 10px;
+    margin-bottom: 10px;
 }
 
 #searchcontainer #minSize {
     width: 12%;
     padding: 10px;
+    margin-bottom: 10px;
 }
 
 #searchcontainer #searchButton {
-    width: 5%;
+    width: 60px;
     padding: 10px;
+    margin-bottom: 10px;
 }
 
 #searchcontainer #searchjson {
