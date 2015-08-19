@@ -11,9 +11,11 @@
     <div id="searchcontainer">
         <h1>Search NDLA images</h1>
         <div id="searchbox">
-            <input type="text" name="tags" id="tags" placeholder="Tags..." onkeyup="searchIfEnter(event);">
-            <input type="text" name="minSize" id="minSize" placeholder="Minumum size in bytes" onkeyup="searchIfEnter(event);">
-            <button type="button" name="searchButton" id="searchButton" onclick="search();">Search</button>
+            <form onsubmit="search(); return false;" action="#">
+                <input type="text" name="tags" id="tags" placeholder="Tags..."/>
+                <input type="text" name="minSize" id="minSize" placeholder="Minumum size in bytes"/>
+                <input type="submit" value="Search"/>
+            </form>
         </div>
 
         <div id="searchresults"></div>

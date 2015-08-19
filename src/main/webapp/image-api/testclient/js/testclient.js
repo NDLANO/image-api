@@ -1,9 +1,3 @@
-function searchIfEnter(event){
-    if(event.keyCode == 13){
-        $("#searchButton").click();
-    }
-}
-
 function showImage(jsonData) {
     $('#imagedetail').show();
 
