@@ -8,21 +8,25 @@
     <script type="text/javascript" src="js/testclient.js"></script>
 </head>
 <body>
+    <div id="header">
+        <div id="title">NDLA - Søk i bilder</div>
+    </div>
     <div id="searchcontainer">
-        <h1>Search NDLA images</h1>
         <div id="searchbox">
             <form onsubmit="search(); return false;" action="#">
-                <input type="text" name="tags" id="tags" placeholder="Tags..."/>
-                <input type="text" name="minSize" id="minSize" placeholder="Minumum size in bytes"/>
-                <input type="submit" value="Search"/>
+                <input type="text" name="tags" id="tags" placeholder="Nøkkelord..."/>
+                <input type="text" name="minSize" id="minSize" placeholder="Minimum størrelse i bytes"/>
+                <div>
+                    <input type="submit" value="Søk"/>
+                </div>
             </form>
         </div>
 
         <div id="searchresults"></div>
         <div id="imagedetail">
+            <div class="imagetitle" id="imagetitle"></div>
             <div id="imageview"></div>
             <div id="metaview">
-                <div class="imagetitle" id="imagetitle"></div>
                 <div class="metasection">
                     <span class="metaheading">Størrelse:</span>
                     <span class="metafield" id="imagesize"></span><span class="metafield"> bytes</span>
