@@ -30,12 +30,17 @@ function showImage(jsonData) {
 
     $('#imagetags').empty();
     $.each(jsonData["tags"], function(index, element){
-        $('#imagetags').append('<span class="tag">' + element["tag"] + '</span>');
+        $('#imagetags').append('<a href="#" class="tag" onclick=\'searchFor("' + element["tag"] + '");\'>' + element["tag"] + '</a>');
     });
 
     var fullsizeUrl = jsonData["images"]["full"]["url"];
 
     $('#imageview').empty().append('<a href="' + fullsizeUrl + '" target="_blank"><img src="' + fullsizeUrl + '"/></a>');
+}
+
+function searchFor(keyword) {
+    $('#tags').val(keyword);
+    search();
 }
 
 function loadImage(url){
