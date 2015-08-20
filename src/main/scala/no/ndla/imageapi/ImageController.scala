@@ -1,5 +1,7 @@
-import model.{ImageMetaSummary, ImageMetaInformation}
-import no.ndla.imageapi.business.{ImageStorage, ImageMeta}
+package no.ndla.imageapi
+
+import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
+import no.ndla.imageapi.business.{ImageMeta, ImageStorage}
 import no.ndla.imageapi.integration.AmazonIntegration
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet

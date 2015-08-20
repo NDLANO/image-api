@@ -2,8 +2,8 @@ package no.ndla.imageapi.integration
 
 import javax.sql.DataSource
 
-import model._
-import model.db._
+import no.ndla.imageapi.model._
+import no.ndla.imageapi.model.db._
 import no.ndla.imageapi.business.ImageMeta
 import slick.driver.PostgresDriver
 
@@ -92,15 +92,15 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
   def mapImage(imageMeta: Tables.ImageMeta, db:PostgresDriver.backend.Database): ImageMetaInformation = {
     val fullImage = Await.result(db.run(
       Tables.images.filter(_.id === imageMeta.fullId).result.headOption), Duration.Inf).
-      map(img => model.Image(UrlPrefix + img.url, img.size,img.contentType))
+      map(img => Image(UrlPrefix + img.url, img.size,img.contentType))
 
     val smallImage = Await.result(db.run(
       Tables.images.filter(_.id === imageMeta.smallId).result.headOption), Duration.Inf).
-      map(img => model.Image(UrlPrefix + img.url, img.size,img.contentType))
+      map(img => Image(UrlPrefix + img.url, img.size,img.contentType))
 
     val imageAuthors = Await.result(db.run(
       Tables.authors.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).
-      map(author => model.Author(author.typeAuthor, author.name))
+      map(author => Author(author.typeAuthor, author.name))
 
     val tags = Await.result(db.run(
       Tables.imagetags.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).

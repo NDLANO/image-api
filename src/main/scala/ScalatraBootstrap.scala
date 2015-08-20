@@ -1,5 +1,6 @@
 import javax.servlet.ServletContext
 
+import no.ndla.imageapi.{ImageController, ImageSwagger, ResourcesApp}
 import org.scalatra.LifeCycle
 
 class ScalatraBootstrap extends LifeCycle {

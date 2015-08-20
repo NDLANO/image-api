@@ -38,7 +38,7 @@ lazy val image_api = (project in file(".")).
 unmanagedResourceDirectories in Compile <+= (baseDirectory) {_ / "src/main/webapp"}
 
 assemblyJarName in assembly := "image-api.jar"
-mainClass in assembly := Some("JettyLauncher")
+mainClass in assembly := Some("no.ndla.imageapi.JettyLauncher")
 assemblyMergeStrategy in assembly := {
   case "mime.types" => MergeStrategy.filterDistinctLines
   case x =>

@@ -1,5 +1,7 @@
+package no.ndla.imageapi
+
 import org.scalatra.ScalatraServlet
-import org.scalatra.swagger.{NativeSwaggerBase, ApiInfo, Swagger}
+import org.scalatra.swagger.{ApiInfo, NativeSwaggerBase, Swagger}
 
 class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with NativeSwaggerBase
 

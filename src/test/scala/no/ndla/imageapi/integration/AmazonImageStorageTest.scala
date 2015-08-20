@@ -5,7 +5,7 @@ import java.io.ByteArrayInputStream
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, PutObjectRequest, S3Object}
-import model.Image
+import no.ndla.imageapi.model.Image
 import no.ndla.imageapi.{TestData, UnitSpec}
 import no.ndla.imageapi.business.ImageStorage
 import org.mockito.Matchers._

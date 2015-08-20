@@ -1,6 +1,6 @@
 package no.ndla.imageapi.business
 
-import model.{ImageMetaSummary, ImageMetaInformation}
+import no.ndla.imageapi.model.{ImageMetaSummary, ImageMetaInformation}
 
 trait ImageMeta {
 
