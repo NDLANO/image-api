@@ -104,9 +104,9 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
 
     val tags = Await.result(db.run(
       Tables.imagetags.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).
-      map(dbtag => ImageTag(dbtag.tag, "nob"))
+      map(dbtag => ImageTag(dbtag.tag, "nb"))
 
-    ImageMetaInformation(imageMeta.id.toString, List(ImageTitle(imageMeta.title, "nob")),
+    ImageMetaInformation(imageMeta.id.toString, List(ImageTitle(imageMeta.title, "nb")),
       ImageVariants(smallImage, fullImage),
       Copyright(imageMeta.license, imageMeta.origin, imageAuthors),
       tags
