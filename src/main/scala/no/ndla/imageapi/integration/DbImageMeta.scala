@@ -54,7 +54,7 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
     val db = Database.forDataSource(dataSource)
     try {
 
-      val tagFilter = Tables.imagetags.filter(_.tag inSet tagList).flatMap(_.imageMeta).groupBy(x=>x).map(_._1)
+      val tagFilter = Tables.imagetags.filter(_.tag.toLowerCase inSet tagList).flatMap(_.imageMeta).groupBy(x=>x).map(_._1)
       val filter = minimumSize match {
         case Some(size) => tagFilter.flatMap(meta => Tables.images
           .filter(image => meta.fullId === image.id)
