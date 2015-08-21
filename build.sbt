@@ -1,3 +1,5 @@
+import sbtdocker.Instructions
+
 val Scalaversion = "2.11.6"
 val Scalatraversion = "2.3.1"
 val SwaggerUIVersion = "2.0.24"
@@ -58,6 +60,7 @@ dockerfile in docker := {
   val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
     from("java")
+    env("NDLACOMPONENT", "image-api")
     add(artifact, artifactTargetPath)
     entryPoint("java", "-jar", artifactTargetPath)
   }
