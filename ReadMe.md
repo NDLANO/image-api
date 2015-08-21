@@ -36,7 +36,11 @@ When pulling a repo with an updated dependency, the dependency folder will be ma
 ## Package and run locally
     sbt assembly
     export PORT=8080
+    export NDLACOMPONENT=image-api
     java -jar target/scala-2.11/image-api.jar
+
+## Publish to nexus
+    sbt publish
 
 ## Create Docker Image
     sbt docker

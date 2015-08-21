@@ -1,14 +1,16 @@
 package no.ndla.imageapi
 
-import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
+import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.business.{ImageMeta, ImageStorage}
 import no.ndla.imageapi.integration.AmazonIntegration
+import no.ndla.imageapi.model.{Error, ImageMetaInformation, ImageMetaSummary}
+import no.ndla.imageapi.model.Error._
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
 import org.scalatra.json._
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-class ImageController (implicit val swagger:Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport {
+class ImageController (implicit val swagger:Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
 
   protected implicit override val jsonFormats: Formats = DefaultFormats
 
@@ -61,8 +63,10 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     if(params("image_id").forall(_.isDigit)) {
       imageMeta.withId(params("image_id")) match {
         case Some(image) => image
-        case None => None
+        case None => halt(status = 404, body = Error(NOT_FOUND, "Image with id " + params("image_id") + " not found"))
       }
+    } else {
+      halt(status = 404, body = Error(NOT_FOUND, "Image with id " + params("image_id") + " not found"))
     }
   }
 
@@ -72,7 +76,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         contentType = image._1
         image._2
       }
-      case None => None
+      case None => halt(status = 404, body = Error(NOT_FOUND, "Image with key /thumbs/" + params("name") + " not found"))
     }
   }
 
@@ -82,7 +86,16 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         contentType = image._1
         image._2
       }
-      case None => None
+      case None => halt(status = 404, body = Error(NOT_FOUND, "Image with key /full/" + params("name") + " not found"))
+    }
+  }
+
+  error{
+    case t:Throwable => {
+      val error = Error(GENERIC, "Internal error occured")
+      logger.error(error.toString, t)
+
+      halt(status = 500, body = error)
     }
   }
 }
