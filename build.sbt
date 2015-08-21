@@ -10,7 +10,7 @@ val SlickVersion = "3.0.0"
 
 lazy val commonSettings = Seq(
   organization := "ndla",
-  version := "0.1",
+  version := "0.1-SNAPSHOT",
   scalaVersion := Scalaversion
 )
 
@@ -19,6 +19,7 @@ lazy val image_api = (project in file(".")).
   settings(
     name := "image-api",
     libraryDependencies ++= Seq(
+      "ndla" %% "logging" % "0.1-SNAPSHOT",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
@@ -71,3 +72,18 @@ imageNames in docker := Seq(
     repository = name.value,
     tag = Some("v" + version.value + "_" + gitHeadCommitSha.value))
 )
+
+publishTo := {
+  val nexus = "https://nexus.knowit.no/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/ndla-snapshots")
+  else
+    Some("releases"  at nexus + "content/repositories/ndla-releases")
+}
+
+resolvers ++= Seq(
+  "Snapshot Sonatype Nexus Repository Manager" at "https://nexus.knowit.no/content/repositories/ndla-snapshots",
+  "Release Sonatype Nexus Repository Manager" at "https://nexus.knowit.no/content/repositories/ndla-releases"
+)
+
+credentials += Credentials("Sonatype Nexus Repository Manager", "nexus.knowit.no", "ndla", "ndla")
