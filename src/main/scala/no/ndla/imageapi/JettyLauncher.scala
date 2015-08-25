@@ -16,11 +16,6 @@ object JettyLauncher extends LazyLogging {
     val server = new Server(port)
     val context = new WebAppContext()
 
-    //     for debug purposes
-    //    val staticResources = new ResourceCollection(Array(
-    //      "src/main/webapp/image-api",
-    //      getClass.getResource("META-INF/resources/webjars").toExternalForm))
-
     val staticResources = new ResourceCollection(Array(
       getClass.getResource("/image-api").toExternalForm,
       getClass.getResource("/META-INF/resources/webjars").toExternalForm))
