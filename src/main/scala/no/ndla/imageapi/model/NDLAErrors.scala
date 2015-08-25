@@ -7,6 +7,8 @@ import java.util.Date
 object Error {
   val GENERIC = "1"
   val NOT_FOUND = "2"
+
+  val GenericError = Error(GENERIC, "An unknown error occured in the image-api. Please report an error.")
 }
 
 case class Error(code:String, description:String, occuredAt:String = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()))
