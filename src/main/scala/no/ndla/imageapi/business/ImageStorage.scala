@@ -2,7 +2,7 @@ package no.ndla.imageapi.business
 
 import java.io.InputStream
 
-import model.{Image, ImageMetaInformation}
+import no.ndla.imageapi.model.{Image, ImageMetaInformation}
 
 trait ImageStorage {
   /**

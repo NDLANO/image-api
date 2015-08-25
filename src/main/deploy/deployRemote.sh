@@ -28,4 +28,4 @@ then
 fi
 
 echo '>>> Starting new container'
-$SSH docker run -p 80:80 -d --restart=always -t $PROJECT:$VERSION
+$SSH docker run -p 80:80 -d --restart=always -t -v /home/ubuntu/log:/log $PROJECT:$VERSION

@@ -6,10 +6,11 @@ import java.net.URL
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model._
-import model.{Image, ImageMetaInformation}
+import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.model.{Image, ImageMetaInformation}
 import no.ndla.imageapi.business.ImageStorage
 
-class AmazonImageStorage(imageStorageName: String, s3Client: AmazonS3Client) extends ImageStorage {
+class AmazonImageStorage(imageStorageName: String, s3Client: AmazonS3Client) extends ImageStorage with LazyLogging {
 
   def get(imageKey: String): Option[(String, InputStream)] = {
     try{
@@ -18,7 +19,10 @@ class AmazonImageStorage(imageStorageName: String, s3Client: AmazonS3Client) ext
         s3Object.getObjectMetadata().getContentType,
         s3Object.getObjectContent)
     } catch {
-      case ase: Exception => None
+      case e:Exception => {
+        logger.warn("Could not get image with key {}", imageKey, e)
+        None
+      }
     }
   }
 

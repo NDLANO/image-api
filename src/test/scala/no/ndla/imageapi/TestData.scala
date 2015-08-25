@@ -1,6 +1,6 @@
 package no.ndla.imageapi
 
-import model._
+import no.ndla.imageapi.model._
 import no.ndla.imageapi.integration.AmazonIntegration
 
 /**

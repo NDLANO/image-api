@@ -1,4 +1,4 @@
-package model.db
+package no.ndla.imageapi.model.db
 
 import slick.driver.PostgresDriver.api._
 import slick.lifted.ForeignKeyQuery

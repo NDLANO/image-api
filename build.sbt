@@ -1,3 +1,5 @@
+import sbtdocker.Instructions
+
 val Scalaversion = "2.11.6"
 val Scalatraversion = "2.3.1"
 val SwaggerUIVersion = "2.0.24"
@@ -19,6 +21,7 @@ lazy val image_api = (project in file(".")).
   settings(
     name := "image-api",
     libraryDependencies ++= Seq(
+      "ndla" %% "logging" % "0.1-SNAPSHOT",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
@@ -38,7 +41,7 @@ lazy val image_api = (project in file(".")).
 unmanagedResourceDirectories in Compile <+= (baseDirectory) {_ / "src/main/webapp"}
 
 assemblyJarName in assembly := "image-api.jar"
-mainClass in assembly := Some("JettyLauncher")
+mainClass in assembly := Some("no.ndla.imageapi.JettyLauncher")
 assemblyMergeStrategy in assembly := {
   case "mime.types" => MergeStrategy.filterDistinctLines
   case x =>
@@ -57,6 +60,7 @@ dockerfile in docker := {
   val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
     from("java")
+    env("NDLACOMPONENT", "image-api")
     add(artifact, artifactTargetPath)
     entryPoint("java", "-jar", artifactTargetPath)
   }
@@ -71,3 +75,18 @@ imageNames in docker := Seq(
     repository = name.value,
     tag = Some("v" + version.value + "_" + gitHeadCommitSha.value))
 )
+
+publishTo := {
+  val nexus = "https://nexus.knowit.no/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/ndla-snapshots")
+  else
+    Some("releases"  at nexus + "content/repositories/ndla-releases")
+}
+
+resolvers ++= Seq(
+  "Snapshot Sonatype Nexus Repository Manager" at "https://nexus.knowit.no/content/repositories/ndla-snapshots",
+  "Release Sonatype Nexus Repository Manager" at "https://nexus.knowit.no/content/repositories/ndla-releases"
+)
+
+credentials += Credentials("Sonatype Nexus Repository Manager", "nexus.knowit.no", "ndla", "ndla")
