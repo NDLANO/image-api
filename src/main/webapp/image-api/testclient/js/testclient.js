@@ -3,7 +3,7 @@ function showImage(jsonData) {
 
     $('#imagetitle').empty();
     $.each(jsonData["titles"], function(index, element) {
-        $('#imagetitle').append(element["title"], "<br/>");
+        $('#imagetitle').append(element["title"] + ' (' + element["language"] + ')', "<br/>");
     });
 
     $('#imagesize').empty().append(jsonData["images"]["full"]["size"]);
