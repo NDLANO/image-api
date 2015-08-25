@@ -8,7 +8,6 @@ CREATE TABLE image (
 
 CREATE TABLE imagemeta(
   id BIGSERIAL PRIMARY KEY,
-  title TEXT,
   license TEXT,
   origin TEXT,
   small_id BIGINT REFERENCES image(id),
@@ -19,6 +18,7 @@ CREATE TABLE imagemeta(
 CREATE TABLE imagetag(
   id BIGSERIAL PRIMARY KEY,
   tag TEXT,
+  language TEXT,
   imagemeta_id BIGINT REFERENCES imagemeta(id)
 );
 
@@ -29,4 +29,10 @@ CREATE TABLE imageauthor(
   imagemeta_id BIGINT REFERENCES imagemeta(id)
 );
 
+CREATE TABLE imagetitle(
+  id BIGSERIAL PRIMARY KEY,
+  title TEXT,
+  language TEXT,
+  imagemeta_id BIGINT REFERENCES imagemeta(id)
+);
 
