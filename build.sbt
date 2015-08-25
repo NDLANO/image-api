@@ -12,7 +12,7 @@ val SlickVersion = "3.0.0"
 
 lazy val commonSettings = Seq(
   organization := "ndla",
-  version := "0.1-SNAPSHOT",
+  version := "0.1",
   scalaVersion := Scalaversion
 )
 
