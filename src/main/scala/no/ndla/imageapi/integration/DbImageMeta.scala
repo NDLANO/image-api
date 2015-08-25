@@ -50,11 +50,16 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
     } finally db.close()
   }
 
-  override def withTags(tagList: Iterable[String], minimumSize:Option[Int]): Iterable[ImageMetaSummary] = {
+  override def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String]): Iterable[ImageMetaSummary] = {
     val db = Database.forDataSource(dataSource)
     try {
 
-      val tagFilter = Tables.imagetags.filter(_.tag.toLowerCase inSet tagList).flatMap(_.imageMeta).groupBy(x=>x).map(_._1)
+      val languageFilter = language match {
+        case Some(lang) => Tables.imagetags.filter(_.language === lang)
+        case None => Tables.imagetags
+      }
+
+      val tagFilter = languageFilter.filter(_.tag.toLowerCase inSet tagList).flatMap(_.imageMeta).groupBy(x=>x).map(_._1)
       val filter = minimumSize match {
         case Some(size) => tagFilter.flatMap(meta => Tables.images
           .filter(image => meta.fullId === image.id)

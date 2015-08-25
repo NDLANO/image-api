@@ -75,7 +75,8 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     tags match {
       case Some(tags) => imageMeta.withTags(
         tags = tags.toLowerCase().split(",").map(_.trim),
-        minimumSize = size)
+        minimumSize = size,
+        language = lang)
 
       case None => imageMeta.all(minimumSize = size)
     }
