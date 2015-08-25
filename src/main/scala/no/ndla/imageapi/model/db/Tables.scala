@@ -19,28 +19,28 @@ trait Tables {
   }
   lazy val images = TableQuery[Images]
 
-  case class ImageMeta(id: Long, title: String, license: String, origin: String, smallId: Long, fullId: Long, externalId: String)
+  case class ImageMeta(id: Long, license: String, origin: String, smallId: Long, fullId: Long, externalId: String)
   class ImageMetas(tag: Tag) extends Table[ImageMeta](tag, "imagemeta") {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-    def title = column[String]("title")
     def license = column[String]("license")
     def origin = column[String]("origin")
     def smallId = column[Long]("small_id")
     def fullId = column[Long]("full_id")
     def externalId = column[String]("external_id")
-    def * = (id, title, license, origin, smallId, fullId, externalId) <>(ImageMeta.tupled, ImageMeta.unapply)
+    def * = (id, license, origin, smallId, fullId, externalId) <>(ImageMeta.tupled, ImageMeta.unapply)
 
     def small: ForeignKeyQuery[Images, Image] = foreignKey("imagemeta_small_id_fkey", smallId, TableQuery[Images])(_.id)
     def full: ForeignKeyQuery[Images, Image] = foreignKey("imagemeta_full_id_fkey", fullId, TableQuery[Images])(_.id)
   }
   lazy val imagemetas = TableQuery[ImageMetas]
 
-  case class ImageTag(id: Long, tag: String, imageMetaId: Long)
+  case class ImageTag(id: Long, tag: String, language: String, imageMetaId: Long)
   class ImageTags(dbtag: Tag) extends Table[ImageTag](dbtag, "imagetag") {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
     def tag = column[String]("tag")
+    def language = column[String]("language")
     def imageMetaId = column[Long]("imagemeta_id")
-    def * = (id, tag, imageMetaId) <>(ImageTag.tupled, ImageTag.unapply)
+    def * = (id, tag, language, imageMetaId) <>(ImageTag.tupled, ImageTag.unapply)
 
     def imageMeta: ForeignKeyQuery[ImageMetas, ImageMeta] = foreignKey("imagetag_imagemeta_id_fkey", imageMetaId, TableQuery[ImageMetas])(_.id)
   }
@@ -52,9 +52,21 @@ trait Tables {
     def typeAuthor = column[String]("type")
     def name = column[String]("name")
     def imageMetaId = column[Long]("imagemeta_id")
-    def * = (id, name, typeAuthor, imageMetaId) <>(ImageAuthor.tupled, ImageAuthor.unapply)
+    def * = (id, typeAuthor, name, imageMetaId) <>(ImageAuthor.tupled, ImageAuthor.unapply)
 
     def imageMeta: ForeignKeyQuery[ImageMetas, ImageMeta] = foreignKey("imageauthor_imagemeta_id_fkey", imageMetaId, TableQuery[ImageMetas])(_.id)
   }
   lazy val authors = TableQuery[ImageAuthors]
+
+  case class ImageTitle(id: Long, title: String, language: String, imageMetaId: Long)
+  class ImageTitles(tag: Tag) extends Table[ImageTitle](tag, "imagetitle") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def title = column[String]("title")
+    def language = column[String]("language")
+    def imageMetaId = column[Long]("imagemeta_id")
+    def * = (id, title, language, imageMetaId) <>(ImageTitle.tupled, ImageTitle.unapply)
+
+    def imageMeta: ForeignKeyQuery[ImageMetas, ImageMeta] = foreignKey("imagetitle_imagemeta_id_fkey", imageMetaId, TableQuery[ImageMetas])(_.id)
+  }
+  lazy val imagetitles = TableQuery[ImageTitles]
 }

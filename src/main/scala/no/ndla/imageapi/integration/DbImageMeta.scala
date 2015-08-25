@@ -104,9 +104,13 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
 
     val tags = Await.result(db.run(
       Tables.imagetags.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).
-      map(dbtag => ImageTag(dbtag.tag, "nb"))
+      map(dbtag => ImageTag(dbtag.tag, dbtag.language))
 
-    ImageMetaInformation(imageMeta.id.toString, List(ImageTitle(imageMeta.title, "nb")),
+    val titles = Await.result(db.run(
+      Tables.imagetitles.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).
+      map(dbimage => ImageTitle(dbimage.title, dbimage.language))
+
+    ImageMetaInformation(imageMeta.id.toString, titles,
       ImageVariants(smallImage, fullImage),
       Copyright(imageMeta.license, imageMeta.origin, imageAuthors),
       tags
@@ -125,12 +129,15 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
       val thumbInsert = (Tables.images returning Tables.images.map(_.id)) += Tables.Image(0, thumbImage.url, thumbImage.size, thumbImage.contentType)
       val thumbId = Await.result(db.run(thumbInsert), Duration.Inf)
 
-      // TODO: Endre til å sette inn alle titler.
-      val insertImageMeta = Tables.ImageMeta(0, imageMetaInformation.titles.head.title, imageMetaInformation.copyright.license, imageMetaInformation.copyright.origin, thumbId, fullId, externalId)
+      val insertImageMeta = Tables.ImageMeta(0, imageMetaInformation.copyright.license, imageMetaInformation.copyright.origin, thumbId, fullId, externalId)
       val imageMetaId = Await.result(db.run((Tables.imagemetas returning Tables.imagemetas.map(_.id)) += insertImageMeta), Duration.Inf)
 
+      imageMetaInformation.titles.foreach(title => {
+        Await.result(db.run(Tables.imagetitles += Tables.ImageTitle(0, title.title, title.language, imageMetaId)), Duration.Inf)
+      })
+
       imageMetaInformation.tags.foreach(tag => {
-        Await.result(db.run(Tables.imagetags += Tables.ImageTag(0, tag.tag, imageMetaId)), Duration.Inf)
+        Await.result(db.run(Tables.imagetags += Tables.ImageTag(0, tag.tag, tag.language, imageMetaId)), Duration.Inf)
       })
 
       imageMetaInformation.copyright.authors.foreach(author => {
