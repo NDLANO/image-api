@@ -34,13 +34,13 @@ trait Tables {
   }
   lazy val imagemetas = TableQuery[ImageMetas]
 
-  case class ImageTag(id: Long, tag: String, language: String, imageMetaId: Long)
+  case class ImageTag(id: Long, tag: String, language: Option[String], imageMetaId: Long)
   class ImageTags(dbtag: Tag) extends Table[ImageTag](dbtag, "imagetag") {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
     def tag = column[String]("tag")
     def language = column[String]("language")
     def imageMetaId = column[Long]("imagemeta_id")
-    def * = (id, tag, language, imageMetaId) <>(ImageTag.tupled, ImageTag.unapply)
+    def * = (id, tag, language.?, imageMetaId) <> (ImageTag.tupled, ImageTag.unapply)
 
     def imageMeta: ForeignKeyQuery[ImageMetas, ImageMeta] = foreignKey("imagetag_imagemeta_id_fkey", imageMetaId, TableQuery[ImageMetas])(_.id)
   }

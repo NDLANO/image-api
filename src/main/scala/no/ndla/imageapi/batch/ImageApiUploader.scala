@@ -10,7 +10,7 @@ object ImageApiUploader {
 
   def main(args: Array[String]) {
 
-    new ImageApiUploader(maxUploads = 600,
+    new ImageApiUploader(maxUploads = 20,
       imageMetaFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/imagemetastest.csv",
       licensesFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/license_definition.csv",
       authorsFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/authors_definition.csv",
@@ -91,7 +91,6 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
   }
 
   def upload(imageMeta: ImageMeta) = {
-    if(!imageMetaStore.containsExternalId(imageMeta.nid)) {
       val license = imageLicense.getOrElse(imageMeta.nid, ImageLicense("", "")).license
       val origin = imageOrigin.getOrElse(imageMeta.nid, ImageOrigin("", "")).origin
       val imageAuthors = imageAuthor.getOrElse(imageMeta.nid, List())
@@ -109,19 +108,20 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
       val copyright = Copyright(license, origin, authors)
 
       //TODO: Skriv om til å også ha med andre språk
-      val imageMetaInformation = ImageMetaInformation("0", List(ImageTitle(imageMeta.title, "nob")), ImageVariants(Option(thumb), Option(full)), copyright, tags.map(ImageTag(_, "nob")))
+      val imageMetaInformation = ImageMetaInformation("0", List(ImageTitle(imageMeta.title, "nob")), ImageVariants(Option(thumb), Option(full)), copyright, tags)
 
+    if(!imageMetaStore.containsExternalId(imageMeta.nid)) {
       if(!imageStorage.contains(thumbKey)) imageStorage.uploadFromUrl(thumb, thumbKey, sourceUrlThumb)
       if(!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
 
-      imageMetaStore.upload(imageMetaInformation, imageMeta.nid)
-
-      println("Uploaded:  " + imageMeta.nid + " (" + imageMeta.title  + ") with license " + license + " and authors " + authors.map(_.name) + ", full: " + sourceUrlFull + ", thumb: " + sourceUrlThumb + " with tags " + tags)
-
-      Thread.sleep(1000)
+      imageMetaStore.insert(imageMetaInformation, imageMeta.nid)
+      println("NEW-UPLOAD:  " + imageMeta.nid + " (" + imageMeta.title  + ") with license " + license + " and authors " + authors.map(_.name) + ", full: " + sourceUrlFull + ", thumb: " + sourceUrlThumb + " with tags " + tags)
     } else {
-      println("Already exists: " + imageMeta.nid + ". Did not upload.")
+      imageMetaStore.update(imageMetaInformation, imageMeta.nid)
+      println("EXISTING-UPDATE:  " + imageMeta.nid + " (" + imageMeta.title  + ") with license " + license + " and authors " + authors.map(_.name) + ", full: " + sourceUrlFull + ", thumb: " + sourceUrlThumb + " with tags " + tags)
     }
+
+    Thread.sleep(1000)
   }
 
   def toImageMeta(line: String): ImageMeta = {

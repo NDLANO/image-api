@@ -122,7 +122,7 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
     )
   }
 
-  override def upload(imageMetaInformation: ImageMetaInformation, externalId: String) = {
+  override def insert(imageMetaInformation: ImageMetaInformation, externalId: String) = {
     val db = Database.forDataSource(dataSource)
     try {
 
@@ -151,5 +151,45 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
 
 
     } finally db.close()
+  }
+
+  override def update(imageMetaInformation: ImageMetaInformation, externalId: String) = {
+    val db = Database.forDataSource(dataSource)
+    try {
+
+      val imageMeta = Await.result(db.run(Tables.imagemetas.filter(_.externalId === externalId).result.headOption), Duration.Inf)
+      imageMeta.foreach(existingImageMeta => {
+
+        imageMetaInformation.titles.foreach(title => {
+          if(!containsTitle(title, existingImageMeta.id)){
+            Await.result(db.run(Tables.imagetitles += Tables.ImageTitle(0, title.title, title.language, existingImageMeta.id)), Duration.Inf)
+          }
+        })
+
+        imageMetaInformation.tags.foreach(tag => {
+          if(!containsTag(tag, existingImageMeta.id)){
+            Await.result(db.run(Tables.imagetags += Tables.ImageTag(0, tag.tag, tag.language, existingImageMeta.id)), Duration.Inf)
+          }
+        })
+      })
+    } finally db.close()
+  }
+
+  def containsTitle(title: ImageTitle, imageMetaId: Long):Boolean = {
+    val db = Database.forDataSource(dataSource)
+    Await.result(db.run(Tables.imagetitles
+      .filter(_.imageMetaId === imageMetaId)
+      .filter(_.language === title.language)
+      .filter(_.title === title.title).result.headOption),
+      Duration.Inf).isDefined
+  }
+
+  def containsTag(tag: ImageTag, imageMetaId: Long): Boolean = {
+    val db = Database.forDataSource(dataSource)
+    Await.result(db.run(Tables.imagetags
+      .filter(_.imageMetaId === imageMetaId)
+      .filter(_.language === tag.language)
+      .filter(_.tag === tag.tag).result.headOption),
+      Duration.Inf).isDefined
   }
 }

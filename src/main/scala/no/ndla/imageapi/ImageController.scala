@@ -27,7 +27,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting applies on anonymous access."),
         queryParam[Option[String]]("tags").description("Return only images with submitted tag. Multiple tags may be entered comma separated, and will give results matching either one of them."),
         queryParam[Option[String]]("minimumSize").description("Return only images with full size larger than submitted value in bytes."),
-        queryParam[Option[String]]("lang").description("The ISO 639-1 language code describing language used in query-params.")
+        queryParam[Option[String]]("lang").description("The ISO 639-2 language code describing language used in query-params.")
       ))
 
   val getByImageId =

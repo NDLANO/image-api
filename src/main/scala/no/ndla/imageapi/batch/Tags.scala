@@ -1,12 +1,22 @@
 package no.ndla.imageapi.batch
 
+import no.ndla.imageapi.model.ImageTag
+
 import scala.io.Source
+import scala.util.matching.Regex
 
 object Tags {
 
   val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
+  val pattern = new Regex("http:\\/\\/psi\\..*\\/#(.+)")
 
-  def forImage(nid: String): List[String] = {
+  def main(args: Array[String]) {
+    val tags = forImage("145741")
+    tags.foreach(println)
+
+  }
+
+  def forImage(nid: String): List[ImageTag] = {
     import org.json4s.native.JsonMethods._
     import org.json4s.native.Serialization.read
     implicit val formats = org.json4s.DefaultFormats
@@ -19,8 +29,14 @@ object Tags {
       .flatMap(_.names)
       .flatMap(_.data)
       .flatMap(_.toIterable)
-      .filter(_._1 == "http://psi.oasis-open.org/iso/639/#nob")
-      .map(_._2)
+      .map(t => ImageTag(t._2.trim.toLowerCase, getISO639(t._1)))
+  }
+
+  def getISO639(languageUrl:String): Option[String] = {
+    Option(languageUrl) collect { case pattern(group) => group } match {
+      case Some(x) => if (x == "language-neutral") None else Some(x)
+      case None => None
+    }
   }
 }
 
