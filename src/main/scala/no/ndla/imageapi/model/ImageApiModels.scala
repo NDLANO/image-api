@@ -24,12 +24,12 @@ case class ImageMetaInformation(
 
 case class ImageTitle(
   @(ApiModelProperty @field)(description = "The freetext title of the image") title:String,
-  @(ApiModelProperty @field)(description = "ISO 639-2 code that represents the language used in title") language:Option[String]
+  @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in title") language:Option[String]
 )
 
 case class ImageTag(
   @(ApiModelProperty @field)(description = "The searchable tag.") tag:String,
-  @(ApiModelProperty @field)(description = "ISO 639-2 code that represents the language used in tag") language:Option[String]
+  @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in tag") language:Option[String]
 )
 
 @ApiModel(description = "The possible variants of the image")

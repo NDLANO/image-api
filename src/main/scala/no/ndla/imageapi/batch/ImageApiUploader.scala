@@ -10,7 +10,7 @@ object ImageApiUploader {
 
   def main(args: Array[String]) {
 
-    new ImageApiUploader(maxUploads = 10,
+    new ImageApiUploader(maxUploads = 1,
       imageMetaFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/imagemetastest.csv",
       licensesFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/license_definition.csv",
       authorsFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/authors_definition.csv",
@@ -70,9 +70,9 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
   val UrlPrefix = "http://cm.test.ndla.no/"
 
   val languageToISOMap = Map(
-    "nn" -> "nno",
-    "nb" -> "nob",
-    "en" -> "eng"
+    "nn" -> "nn",
+    "nb" -> "nb",
+    "en" -> "en"
   )
 
   val imageMeta = Source.fromFile(imageMetaFile).getLines
