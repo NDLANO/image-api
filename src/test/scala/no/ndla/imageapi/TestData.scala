@@ -9,40 +9,40 @@ import no.ndla.imageapi.integration.AmazonIntegration
  */
 object TestData {
 
-  val elg = ImageMetaInformation("1",List(ImageTitle("Elg i busk", "nb")),
+  val elg = ImageMetaInformation("1",List(ImageTitle("Elg i busk", Option("nob"))),
     ImageVariants(Option(Image("http://api.test.ndla.no/images/thumbs/Elg.jpg", 8680, "image/jpeg")), Option(Image("http://api.test.ndla.no/images/full/Elg.jpg", 2865539, "image/jpeg"))),
     Copyright("by-nc-sa", "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag("rovdyr", Option("nb")), ImageTag("elg", Option("nb"))))
+    List(ImageTag("rovdyr", Option("nob")), ImageTag("elg", Option("nob"))))
 
-  val bjorn = ImageMetaInformation("2", List(ImageTitle("Bjørn i busk", "nb")),
+  val bjorn = ImageMetaInformation("2", List(ImageTitle("Bjørn i busk", Option("nob"))),
     ImageVariants(Option(Image("http://api.test.ndla.no/images/thumbs/Bjørn.jpg", 5958, "image/jpeg")), Option(Image("http://api.test.ndla.no/images/full/Bjørn.jpg", 141134, "image/jpeg"))),
     Copyright("by-nc-sa", "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag("rovdyr", Option("nb")), ImageTag("bjørn", Option("nb"))))
+    List(ImageTag("rovdyr", Option("nob")), ImageTag("bjørn", Option("nob"))))
 
-  val jerv = ImageMetaInformation("3",List(ImageTitle("Jerv på stein", "nb")),
+  val jerv = ImageMetaInformation("3",List(ImageTitle("Jerv på stein", Option("nob"))),
     ImageVariants(Option(Image("http://api.test.ndla.no/images/thumbs/Jerv.jpg", 4834, "image/jpeg")), Option(Image("http://api.test.ndla.no/images/full/Jerv.jpg", 39061, "image/jpeg"))),
     Copyright("by-nc-sa", "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag("rovdyr", Option("nb")), ImageTag("jerv", Option("nb"))))
+    List(ImageTag("rovdyr", Option("nob")), ImageTag("jerv", Option("nob"))))
 
-  val mink = ImageMetaInformation("4",List(ImageTitle("Overrasket mink", "nb")),
+  val mink = ImageMetaInformation("4",List(ImageTitle("Overrasket mink", Option("nob"))),
     ImageVariants(Option(Image("http://api.test.ndla.no/images/thumbs/Mink.jpg", 6875, "image/jpeg")), Option(Image("http://api.test.ndla.no/images/full/Mink.jpg", 102559, "image/jpeg"))),
     Copyright("by-nc-sa", "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag("rovdyr", Option("nb")), ImageTag("mink", Option("nb"))))
+    List(ImageTag("rovdyr", Option("nob")), ImageTag("mink", Option("nob"))))
 
-  val rein = ImageMetaInformation("5",List(ImageTitle("Rein har fanget rødtopp", "nb")),
+  val rein = ImageMetaInformation("5",List(ImageTitle("Rein har fanget rødtopp", Option("nob"))),
     ImageVariants(Option(Image("http://api.test.ndla.no/images/thumbs/Rein.jpg", 7224, "image/jpeg")), Option(Image("http://api.test.ndla.no/images/full/Rein.jpg", 504911, "image/jpeg"))),
     Copyright("by-nc-sa", "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag("rovdyr", Option("nb")), ImageTag("rein", Option("nb")), ImageTag("jakt", Option("nb"))))
+    List(ImageTag("rovdyr", Option("nob")), ImageTag("rein", Option("nob")), ImageTag("jakt", Option("nob"))))
 
-  val nonexisting = ImageMetaInformation("6",List(ImageTitle("Krokodille på krok", "nb")),
+  val nonexisting = ImageMetaInformation("6",List(ImageTitle("Krokodille på krok", Option("nob"))),
     ImageVariants(Option(Image("http://api.test.ndla.no/images/thumbs/Krokodille.jpg", 8680, "image/jpeg")), Option(Image("http://api.test.ndla.no/images/full/Krokodille.jpg", 2865539, "image/jpeg"))),
     Copyright("by-nc-sa", "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag("rovdyr", Option("nb")), ImageTag("krokodille", Option("nb"))))
+    List(ImageTag("rovdyr", Option("nob")), ImageTag("krokodille", Option("nob"))))
 
-  val nonexistingWithoutThumb = ImageMetaInformation("6",List(ImageTitle("Bison på sletten", "nb")),
+  val nonexistingWithoutThumb = ImageMetaInformation("6",List(ImageTitle("Bison på sletten", Option("nob"))),
     ImageVariants(small = None, full = Option(Image("http://api.test.ndla.no/images/full/Bison.jpg", 2865539, "image/jpeg"))),
     Copyright("by-nc-sa", "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag("bison", Option("nb"))))
+    List(ImageTag("bison", Option("nob"))))
 
   val testdata = List(elg,bjorn, jerv, mink, rein)
 }

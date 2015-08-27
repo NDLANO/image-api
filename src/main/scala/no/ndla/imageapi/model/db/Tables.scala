@@ -58,13 +58,13 @@ trait Tables {
   }
   lazy val authors = TableQuery[ImageAuthors]
 
-  case class ImageTitle(id: Long, title: String, language: String, imageMetaId: Long)
+  case class ImageTitle(id: Long, title: String, language: Option[String], imageMetaId: Long)
   class ImageTitles(tag: Tag) extends Table[ImageTitle](tag, "imagetitle") {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
     def title = column[String]("title")
     def language = column[String]("language")
     def imageMetaId = column[Long]("imagemeta_id")
-    def * = (id, title, language, imageMetaId) <>(ImageTitle.tupled, ImageTitle.unapply)
+    def * = (id, title, language.?, imageMetaId) <>(ImageTitle.tupled, ImageTitle.unapply)
 
     def imageMeta: ForeignKeyQuery[ImageMetas, ImageMeta] = foreignKey("imagetitle_imagemeta_id_fkey", imageMetaId, TableQuery[ImageMetas])(_.id)
   }

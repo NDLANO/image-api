@@ -10,12 +10,6 @@ object Tags {
   val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
   val pattern = new Regex("http:\\/\\/psi\\..*\\/#(.+)")
 
-  def main(args: Array[String]) {
-    val tags = forImage("145741")
-    tags.foreach(println)
-
-  }
-
   def forImage(nid: String): List[ImageTag] = {
     import org.json4s.native.JsonMethods._
     import org.json4s.native.Serialization.read
@@ -41,7 +35,7 @@ object Tags {
 }
 
 case class Keywords(keyword: List[Keyword])
-case class Keyword(psi: String, topicId: String, visibility: String, approved: String, processState: String, psis: List[String],
+case class Keyword(psi: Option[String], topicId: Option[String], visibility: Option[String], approved: Option[String], processState: Option[String], psis: List[String],
                    originatingSites: List[String], types: List[Any], names: List[KeywordName])
 
 case class Type(typeId:String)
