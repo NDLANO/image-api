@@ -10,7 +10,7 @@ object ImageApiUploader {
 
   def main(args: Array[String]) {
 
-    new ImageApiUploader(maxUploads = 1,
+    new ImageApiUploader(maxUploads = 600,
       imageMetaFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/imagemetastest.csv",
       licensesFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/license_definition.csv",
       authorsFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/authors_definition.csv",
@@ -75,7 +75,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
     "en" -> "en"
   )
 
-  val imageMeta = Source.fromFile(imageMetaFile).getLines
+  val imageMeta = Source.fromFile(imageMetaFile)("UTF-8").getLines
     .map(line => toImageMeta(line))
     .toList
 
@@ -97,17 +97,17 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
       .map(_.nid)                     // konverter til en liste av nid (node id)
       .toList.contains(meta.nid))     // ...og alle imageMeta som ikke er referet til derfra
 
-  val imageLicense = Source.fromFile(licensesFile).getLines
+  val imageLicense = Source.fromFile(licensesFile)("UTF-8").getLines
     .map(line => toImageLicense(line))
     .map(license => license.nid -> license)
     .toMap
 
-  val imageOrigin = Source.fromFile(originFile).getLines()
+  val imageOrigin = Source.fromFile(originFile)("UTF-8").getLines()
     .map(line => toImageOrigin(line))
     .map(origin => origin.nid -> origin)
     .toMap
 
-  val imageAuthor = Source.fromFile(authorsFile).getLines
+  val imageAuthor = Source.fromFile(authorsFile)("UTF-8").getLines
     .map(line => toImageAuthor(line))
     .map(author => author.nid -> author)
     .toList.groupBy(_._1).map { case (k,v) => (k,v.map(_._2))}
@@ -116,7 +116,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
   val imageMetaStore = AmazonIntegration.getImageMeta()
 
   def uploadImages() = {
-    imageMetaWithoutTranslations.take(maxUploads).foreach(upload(_))
+    imageMetaWithoutTranslations.drop(610).take(maxUploads).foreach(upload(_))
   }
 
   def upload(imageMeta: ImageMeta) = {
@@ -128,10 +128,10 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
     val tags = Tags.forImage(imageMeta.nid)
 
     val thumbKey = imageMeta.thumbFile.replace("sites/default/files/images/", "thumbs/")
-    val thumb = Image("http://api.test.ndla.no/images/" + thumbKey, imageMeta.thumbSize.toInt, imageMeta.thumbMime)
+    val thumb = Image(thumbKey, imageMeta.thumbSize.toInt, imageMeta.thumbMime)
 
     val fullKey = imageMeta.originalFile.replace("sites/default/files/images/", "full/")
-    val full = Image("http://api.test.ndla.no/images/" + fullKey, imageMeta.originalSize.toInt, imageMeta.originalMime)
+    val full = Image(fullKey, imageMeta.originalSize.toInt, imageMeta.originalMime)
 
     val authors = imageAuthors.map(ia => Author(ia.typeAuthor, ia.name))
     val copyright = Copyright(license, origin, authors)

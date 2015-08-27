@@ -175,21 +175,29 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
     } finally db.close()
   }
 
-  def containsTitle(title: ImageTitle, imageMetaId: Long):Boolean = {
+  def containsTitle(title: ImageTitle, imageMetaId: Long): Boolean = {
     val db = Database.forDataSource(dataSource)
-    Await.result(db.run(Tables.imagetitles
-      .filter(_.imageMetaId === imageMetaId)
-      .filter(_.language === title.language)
-      .filter(_.title === title.title).result.headOption),
-      Duration.Inf).isDefined
+    try {
+
+      val query = Tables.imagetitles
+        .filter(_.imageMetaId === imageMetaId)
+        .filter(m => (m.language.?.isEmpty && title.language.isEmpty) || (m.language === title.language))
+        .filter(_.title === title.title).result.headOption
+
+      Await.result(db.run(query),
+        Duration.Inf).isDefined
+
+    } finally db.close()
   }
 
   def containsTag(tag: ImageTag, imageMetaId: Long): Boolean = {
     val db = Database.forDataSource(dataSource)
-    Await.result(db.run(Tables.imagetags
-      .filter(_.imageMetaId === imageMetaId)
-      .filter(_.language === tag.language)
-      .filter(_.tag === tag.tag).result.headOption),
-      Duration.Inf).isDefined
+    try {
+      Await.result(db.run(Tables.imagetags
+        .filter(_.imageMetaId === imageMetaId)
+        .filter(m => (m.language.?.isEmpty && tag.language.isEmpty) || (m.language === tag.language))
+        .filter(_.tag === tag.tag).result.headOption),
+        Duration.Inf).isDefined
+    } finally db.close()
   }
 }
