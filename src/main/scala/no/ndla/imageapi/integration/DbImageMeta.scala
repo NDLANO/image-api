@@ -18,11 +18,17 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
   val PageSizeSearch = 100
   val UrlPrefix = "http://api.test.ndla.no/images/"
 
-  override def all(minimumSize:Option[Int]): Iterable[ImageMetaSummary] = {
+  override def all(minimumSize:Option[Int], license: Option[String]): Iterable[ImageMetaSummary] = {
     val db = Database.forDataSource(dataSource)
     try {
       val allFilter = Tables.imagemetas
-      val filter = minimumSize match {
+
+      val licenseFilter = license match {
+        case Some(license) => allFilter.filter(_.license === license)
+        case None => allFilter
+      }
+
+      val sizeFilter = minimumSize match {
         case Some(size) =>
           allFilter.flatMap(
             meta => Tables.images
@@ -30,10 +36,10 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
               .filter(image => image.size >= size)
               .map(image => meta))
 
-        case None => allFilter
+        case None => licenseFilter
       }
 
-      val query = filter.take(PageSize)
+      val query = sizeFilter.take(PageSize)
       val result = Await.result(db.run(query.result), Duration.Inf)
 
       result.map(mapImageSummary(_, db))
@@ -50,7 +56,7 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
     } finally db.close()
   }
 
-  override def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String]): Iterable[ImageMetaSummary] = {
+  override def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
     val db = Database.forDataSource(dataSource)
     try {
 
@@ -60,7 +66,7 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
       }
 
       val tagFilter = languageFilter.filter(_.tag.toLowerCase inSet tagList).flatMap(_.imageMeta).groupBy(x=>x).map(_._1)
-      val filter = minimumSize match {
+      val sizeFilter = minimumSize match {
         case Some(size) => tagFilter.flatMap(meta => Tables.images
           .filter(image => meta.fullId === image.id)
           .filter(image => image.size >= size)
@@ -68,6 +74,12 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
 
         case None => tagFilter
       }
+
+      val filter = license match {
+        case Some(license) => sizeFilter.filter(_.license === license)
+        case None => sizeFilter
+      }
+
 
       val query = filter.take(PageSizeSearch)
       val result = Await.result(db.run(query.result), Duration.Inf)
