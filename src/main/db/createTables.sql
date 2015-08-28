@@ -36,3 +36,9 @@ CREATE TABLE imagetitle(
   imagemeta_id BIGINT REFERENCES imagemeta(id)
 );
 
+CREATE TABLE imagelicense (
+  id TEXT PRIMARY KEY,
+  description TEXT,
+  url TEXT
+);
+
