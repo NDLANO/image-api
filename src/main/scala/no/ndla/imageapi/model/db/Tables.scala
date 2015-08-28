@@ -69,4 +69,14 @@ trait Tables {
     def imageMeta: ForeignKeyQuery[ImageMetas, ImageMeta] = foreignKey("imagetitle_imagemeta_id_fkey", imageMetaId, TableQuery[ImageMetas])(_.id)
   }
   lazy val imagetitles = TableQuery[ImageTitles]
+
+  case class ImageLicense(id: String, description: String, url: Option[String])
+  class ImageLicenses(tag: Tag) extends Table[ImageLicense](tag, "imagelicense") {
+    def id = column[String]("id", O.PrimaryKey)
+    def description = column[String]("description")
+    def url = column[String]("url")
+    def * = (id, description, url.?) <>(ImageLicense.tupled, ImageLicense.unapply)
+
+  }
+  lazy val imagelicenses = TableQuery[ImageLicenses]
 }

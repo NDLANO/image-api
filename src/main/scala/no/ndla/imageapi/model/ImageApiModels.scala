@@ -47,9 +47,16 @@ case class Image(
 
 @ApiModel(description = "Description of copyright information")
 case class Copyright(
-  @(ApiModelProperty @field)(description = "Describes the license of the image") license:String,
+  @(ApiModelProperty @field)(description = "Describes the license of the image") license:License,
   @(ApiModelProperty @field)(description = "Reference to where the image is procured") origin:String,
   @(ApiModelProperty @field)(description = "List of authors") authors:Iterable[Author]
+)
+
+@ApiModel(description = "Description of license information")
+case class License(
+  @(ApiModelProperty @field)(description = "The name of the license") license:String,
+  @(ApiModelProperty @field)(description = "Description of the license") description:String,
+  @(ApiModelProperty @field)(description = "Url to where the license can be found") url:Option[String]
 )
 
 @ApiModel(description = "Information about an author")

@@ -115,9 +115,14 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
       Tables.imagetitles.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).
       map(dbimage => ImageTitle(dbimage.title, dbimage.language))
 
+    val license = Await.result(db.run(
+      Tables.imagelicenses.filter(_.id === imageMeta.license).result.headOption), Duration.Inf)
+      .map(dblicense => License(dblicense.id, dblicense.description, dblicense.url))
+      .getOrElse(License(imageMeta.license, imageMeta.license, None))
+
     ImageMetaInformation(imageMeta.id.toString, titles,
       ImageVariants(smallImage, fullImage),
-      Copyright(imageMeta.license, imageMeta.origin, imageAuthors),
+      Copyright(license, imageMeta.origin, imageAuthors),
       tags
     )
   }
@@ -134,7 +139,7 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
       val thumbInsert = (Tables.images returning Tables.images.map(_.id)) += Tables.Image(0, thumbImage.url, thumbImage.size, thumbImage.contentType)
       val thumbId = Await.result(db.run(thumbInsert), Duration.Inf)
 
-      val insertImageMeta = Tables.ImageMeta(0, imageMetaInformation.copyright.license, imageMetaInformation.copyright.origin, thumbId, fullId, externalId)
+      val insertImageMeta = Tables.ImageMeta(0, imageMetaInformation.copyright.license.license, imageMetaInformation.copyright.origin, thumbId, fullId, externalId)
       val imageMetaId = Await.result(db.run((Tables.imagemetas returning Tables.imagemetas.map(_.id)) += insertImageMeta), Duration.Inf)
 
       imageMetaInformation.titles.foreach(title => {

@@ -134,7 +134,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
     val full = Image(fullKey, imageMeta.originalSize.toInt, imageMeta.originalMime)
 
     val authors = imageAuthors.map(ia => Author(ia.typeAuthor, ia.name))
-    val copyright = Copyright(license, origin, authors)
+    val copyright = Copyright(License(license, license, None), origin, authors)
 
 
     var titles = List(ImageTitle(imageMeta.title, languageToISOMap.get(imageMeta.language)))
