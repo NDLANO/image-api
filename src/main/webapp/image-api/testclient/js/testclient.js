@@ -7,7 +7,9 @@ function showImage(jsonData) {
     });
 
     $('#imagesize').empty().append(jsonData["images"]["full"]["size"]);
-    $('#license').empty().append(jsonData["copyright"]["license"]);
+
+    var license = '<a href="' + jsonData["copyright"]["license"]["url"] + '" target="_blank">' + jsonData["copyright"]["license"]["description"] + '</a>';
+    $('#license').empty().append(license);
 
     var origin = '<a href="' + jsonData["copyright"]["origin"] + '" target="_blank">' + jsonData["copyright"]["origin"] + '</a>';
     $('#origin').empty().append(origin);
