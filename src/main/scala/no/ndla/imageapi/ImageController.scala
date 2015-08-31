@@ -63,11 +63,11 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
 
 
   get("/", operation(getImages)) {
-    val minimumSize = params.get("minimumSize")
+    val minimumSize = params.get("minimum-size")
     val tags = params.get("tags")
     val lang = params.get("lang")
     val license = params.get("license")
-    logger.info("GET / with params minimumSize='{}', tags='{}', lang={} license={}", minimumSize, tags, lang, license)
+    logger.info("GET / with params minimum-size='{}', tags='{}', lang={} license={}", minimumSize, tags, lang, license)
 
     val size = minimumSize match {
       case Some(size) => if (size.forall(_.isDigit)) Option(size.toInt) else None
