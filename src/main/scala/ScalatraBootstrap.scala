@@ -1,3 +1,9 @@
+/*
+ * Part of NDLA Image-API. API for searching and downloading images from NDLA.
+ * Copyright (C) 2015 NDLA
+ *
+ * See LICENSE
+ */
 import javax.servlet.ServletContext
 
 import no.ndla.imageapi.{ImageController, ImageSwagger, ResourcesApp}

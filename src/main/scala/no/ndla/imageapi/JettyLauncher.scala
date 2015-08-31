@@ -1,3 +1,9 @@
+/*
+ * Part of NDLA Image-API. API for searching and downloading images from NDLA.
+ * Copyright (C) 2015 NDLA
+ *
+ * See LICENSE
+ */
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
@@ -10,6 +16,8 @@ import org.scalatra.servlet.ScalatraListener
 object JettyLauncher extends LazyLogging {
   // this is my entry object as specified in sbt project definition
   def main(args: Array[String]) {
+    logger.info(io.Source.fromInputStream(getClass.getResourceAsStream("/log-license.txt")).mkString)
+
     val startMillis = System.currentTimeMillis();
     val port = if (System.getenv("PORT") != null) System.getenv("PORT").toInt else 80
 
