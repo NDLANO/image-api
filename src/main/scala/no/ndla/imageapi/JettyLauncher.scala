@@ -13,13 +13,15 @@ import org.eclipse.jetty.util.resource.ResourceCollection
 import org.eclipse.jetty.webapp.WebAppContext
 import org.scalatra.servlet.ScalatraListener
 
+import scala.util.Properties.envOrElse
+
 object JettyLauncher extends LazyLogging {
   // this is my entry object as specified in sbt project definition
   def main(args: Array[String]) {
     logger.info(io.Source.fromInputStream(getClass.getResourceAsStream("/log-license.txt")).mkString)
 
     val startMillis = System.currentTimeMillis();
-    val port = if (System.getenv("PORT") != null) System.getenv("PORT").toInt else 80
+    val port = envOrElse("PORT", "80").toInt
 
     val server = new Server(port)
     val context = new WebAppContext()

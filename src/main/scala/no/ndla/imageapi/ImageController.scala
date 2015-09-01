@@ -33,7 +33,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting applies on anonymous access."),
         queryParam[Option[String]]("tags").description("Return only images with submitted tag. Multiple tags may be entered comma separated, and will give results matching either one of them."),
         queryParam[Option[String]]("minimum-size").description("Return only images with full size larger than submitted value in bytes."),
-        queryParam[Option[String]]("lang").description("The ISO 639-1 language code describing language used in query-params."),
+        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
         queryParam[Option[String]]("license").description("Return only images with provided license.")
       ))
 
@@ -71,9 +71,9 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   get("/", operation(getImages)) {
     val minimumSize = params.get("minimum-size")
     val tags = params.get("tags")
-    val lang = params.get("lang")
+    val language = params.get("language")
     val license = params.get("license")
-    logger.info("GET / with params minimum-size='{}', tags='{}', lang={} license={}", minimumSize, tags, lang, license)
+    logger.info("GET / with params minimum-size='{}', tags='{}', language={} license={}", minimumSize, tags, language, license)
 
     val size = minimumSize match {
       case Some(size) => if (size.forall(_.isDigit)) Option(size.toInt) else None
@@ -84,7 +84,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
       case Some(tags) => imageMeta.withTags(
         tags = tags.toLowerCase().split(",").map(_.trim),
         minimumSize = size,
-        language = lang,
+        language = language,
         license = license)
 
       case None => imageMeta.all(minimumSize = size, license = license)
