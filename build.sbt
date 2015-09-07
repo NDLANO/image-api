@@ -64,7 +64,12 @@ dockerfile in docker := {
   val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
     from("java")
+
     env("NDLACOMPONENT", "image-api")
+    scala.io.Source.fromFile("./src/main/resources/image-api.env").getLines().foreach(key => {
+      env(key, key)
+    })
+
     add(artifact, artifactTargetPath)
     entryPoint("java", "-jar", artifactTargetPath)
   }
