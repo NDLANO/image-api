@@ -9,10 +9,12 @@ val ScalaTestVersion = "2.2.4"
 val MockitoVersion = "1.10.19"
 val SlickVersion = "3.0.0"
 
+val NDLAOrganization = "ndla"
+val NDLAComponentVersion = "0.1"
 
 lazy val commonSettings = Seq(
-  organization := "ndla",
-  version := "0.1",
+  organization := NDLAOrganization,
+  version := NDLAComponentVersion,
   scalaVersion := Scalaversion
 )
 
