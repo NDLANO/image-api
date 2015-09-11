@@ -1,3 +1,10 @@
+function showAdvancedSearch() {
+    $('#advancedsearchbox').toggle("fast");
+    $('#minSize').val('');
+    $('#withLicense').val('');
+    $('#inLanguage').val('');
+}
+
 function showImage(jsonData) {
     $('#imagedetail').show();
 
@@ -64,19 +71,29 @@ function searchOk(jsonData){
 function search() {
     var tagString = $('#tags').val();
     var minSize = $('#minSize').val();
+    var license = $('#withLicense').val();
+    var language = $('#inLanguage').val();
     var searchUrl = "/images"
 
+    var request = window.superagent;
+    var getRequest = request.get(searchUrl)
+
     if(tagString) {
-        searchUrl = searchUrl.concat("?tags=", tagString)
+        getRequest = getRequest.query("tags=" + tagString)
     }
     if(minSize) {
-        searchUrl = searchUrl.concat("&minimumSize=", minSize)
+        getRequest = getRequest.query("minimum-size=" + minSize)
+    }
+    if(license) {
+        getRequest = getRequest.query("license=" + license)
+    }
+    if(language) {
+        getRequest = getRequest.query("language=" + language)
     }
 
     $('#imagedetail').hide();
 
-    var request = window.superagent;
-    request.get(searchUrl).end(
+    getRequest.end(
         function(err, res) {
             if(res.ok){
                 searchOk(res.body);

@@ -36,17 +36,41 @@ a:hover {
 }
 
 #searchcontainer #tags {
-    width: 78%;
+    width: 100%;
     padding: 10px;
     margin-bottom: 10px;
 }
 
 #searchcontainer #minSize {
-    width: 12%;
+
+    margin-bottom: 10px;
+    margin-right: 30px;
+}
+
+#searchcontainer #withLicense {
+    height: 20px;
+    margin-bottom: 10px;
+    margin-right: 30px;
+}
+
+#searchcontainer #inLanguage {
     padding: 10px;
     margin-bottom: 10px;
 }
 
+#searchcontainer #advancedtip {
+    color: #20588F;
+    font-size: small;
+}
+
+#searchbutton {
+    margin-top: 10px;
+}
+
+#searchcontainer #advancedsearchbox {
+    display: none;
+    margin-top: 10px;
+}
 
 #searchcontainer #searchjson {
     margin-top: 50px;
