@@ -46,6 +46,7 @@ lazy val image_api = (project in file(".")).
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % AwsSdkversion,
+      "org.scalaj" %% "scalaj-http" % "1.1.5",
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
