@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 import sbtdocker.Instructions
 
 val Scalaversion = "2.11.6"
@@ -9,12 +12,17 @@ val ScalaTestVersion = "2.2.4"
 val MockitoVersion = "1.10.19"
 val SlickVersion = "3.0.0"
 
-val NDLAOrganization = "ndla"
-val NDLAComponentVersion = "0.1"
+val appProperties = settingKey[Properties]("The application properties")
+
+appProperties := {
+  val prop = new Properties()
+  IO.load(prop, new File("build.properties"))
+  prop
+}
 
 lazy val commonSettings = Seq(
-  organization := NDLAOrganization,
-  version := NDLAComponentVersion,
+  organization := appProperties.value.getProperty("NDLAOrganization"),
+  version := appProperties.value.getProperty("NDLAComponentVersion"),
   scalaVersion := Scalaversion
 )
 
