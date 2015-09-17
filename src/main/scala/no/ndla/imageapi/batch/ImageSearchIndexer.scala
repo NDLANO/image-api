@@ -21,13 +21,14 @@ object ImageSearchIndexer {
   implicit val formats = org.json4s.DefaultFormats
 
   def main (args: Array[String]) {
-    createIndex()
-    createMapping()
-    indexDocuments()
+    if(serverAlive && createIndex && createMapping) {
+      indexDocuments()
+    }
   }
 
 
   def indexDocuments() = {
+    //(1 to 1037).foreach(id => {
     (1 to 1037).foreach(id => {
       val getResponse = Http(s"http://api.test.ndla.no/images/$id").asString
       val jsonString = getResponse.body
@@ -44,22 +45,26 @@ object ImageSearchIndexer {
     })
   }
 
-  def createMapping() = {
+  def createMapping():Boolean = {
+    val mapping = io.Source.fromInputStream(getClass.getResourceAsStream("/imagemapping.json")).mkString
+    val response = Http(s"http://$IndexHost:$IndexPort/$IndexName/_mapping/$DocumentName").method("put").postData(mapping).asString
+    val json = parse(response.body)
 
+    (json \ "acknowledged").extract[Boolean]
   }
 
   def createIndex() = {
-    if(serverAlive() && !indexExists()) {
+    indexExists() || {
       val response: HttpResponse[String] = Http(s"http://$IndexHost:$IndexPort/$IndexName").method("put").asString
+      val json = parse(response.body)
+
+      (json \ "acknowledged").extract[Boolean]
     }
   }
 
   def indexExists(): Boolean = {
-    val response: HttpResponse[String] = Http(s"http://$IndexHost:$IndexPort/$IndexName/").asString
-    val json = parse(response.body)
-    val status = (json \ "status").extract[String]
-
-    status != "404"
+    val responseCode = Http(s"http://$IndexHost:$IndexPort/$IndexName/").method("head").asString.code
+    responseCode == 200
   }
 
   def serverAlive(): Boolean = {
@@ -69,7 +74,8 @@ object ImageSearchIndexer {
     val status = (json \ "status").extract[String]
     val clusterName = (json \ "cluster_name").extract[String]
 
-    status == "green" && clusterName == ClusterName
+    // TODO: Vi bør nok kjøre clusteret med minst to noder.
+    (status == "green" || status == "yellow") && clusterName == ClusterName
 
   }
 

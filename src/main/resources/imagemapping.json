@@ -1,0 +1,46 @@
+{
+  "image": {
+    "properties": {
+      "titles": {
+        "type": "nested",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string",
+            "index": "not_analyzed"
+          }
+        }
+      },
+      "copyright": {
+        "type": "nested",
+        "properties": {
+          "license": {
+            "type": "nested",
+            "properties": {
+              "license": {"type": "string", "index":"not_analyzed"},
+              "description": {"type": "string"},
+              "url": {"type": "string"}
+            }
+          },
+          "origin": {"type": "string"},
+          "authors": {
+            "type": "nested",
+            "properties" : {
+              "type": {"type": "string"},
+              "name": {"type": "string"}
+            }
+          }
+        }
+      },
+      "tags": {
+        "type": "nested",
+        "properties": {
+          "tag": {"type": "string"},
+          "language": {"type": "string", "index":"not_analyzed"}
+        }
+      }
+    }
+  }
+}
