@@ -1,83 +1,80 @@
 package no.ndla.imageapi.batch
 
-import no.ndla.imageapi.ImageApiProperties
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s._
+import com.sksamuel.elastic4s.mappings.FieldType._
+import org.elasticsearch.common.settings.ImmutableSettings
 import org.json4s.native.JsonMethods._
-import org.json4s.JsonDSL._
-import scalaj.http._
 
-/**
- * How to delete the index:
- * curl -XDELETE 'http://localhost:9200/images/'
- */
+import scalaj.http.Http
+
 object ImageSearchIndexer {
 
   val IndexName = "images"
-  val IndexHost = "localhost"
-  val IndexPort = 9200
+  val IndexHost = "52.28.51.79"
+  val IndexPort = 9300
   val ClusterName = "image-search"
   val DocumentName = "image"
 
+  val settings = ImmutableSettings.settingsBuilder().put("cluster.name", ClusterName).build()
+  val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$IndexHost:$IndexPort"))
 
-  implicit val formats = org.json4s.DefaultFormats
-
-  def main (args: Array[String]) {
-    if(serverAlive && createIndex && createMapping) {
-      indexDocuments()
-    }
+  def main(args: Array[String]) {
+    createIndex()
+    indexDocuments()
   }
 
-
   def indexDocuments() = {
-    //(1 to 1037).foreach(id => {
+    implicit val formats = org.json4s.DefaultFormats
+
     (1 to 1037).foreach(id => {
       val getResponse = Http(s"http://api.test.ndla.no/images/$id").asString
       val jsonString = getResponse.body
       val json = parse(jsonString)
       val documentId = (json \ "id").extract[String]
 
-      val putResponse = Http(s"http://$IndexHost:$IndexPort/$IndexName/$DocumentName/$documentId").method("put").postData(jsonString).asString
-      val putBody = putResponse.body
-      val putJson = parse(putBody)
-      val status = (putJson \ "created").extract[Boolean]
+      client.execute{
+        index into IndexName -> DocumentName source jsonString id documentId
+      }.await
 
-      println(s"Tried to index document with id: $documentId. Successful: $status")
-
+      println(s"Indexed document with id: $documentId.")
     })
-  }
 
-  def createMapping():Boolean = {
-    val mapping = io.Source.fromInputStream(getClass.getResourceAsStream("/imagemapping.json")).mkString
-    val response = Http(s"http://$IndexHost:$IndexPort/$IndexName/_mapping/$DocumentName").method("put").postData(mapping).asString
-    val json = parse(response.body)
-
-    (json \ "acknowledged").extract[Boolean]
   }
 
   def createIndex() = {
-    indexExists() || {
-      val response: HttpResponse[String] = Http(s"http://$IndexHost:$IndexPort/$IndexName").method("put").asString
-      val json = parse(response.body)
+    val existsDefinition = client.execute{
+      index exists IndexName
+    }.await
 
-      (json \ "acknowledged").extract[Boolean]
+    if(!existsDefinition.isExists){
+      client.execute {
+        create index IndexName mappings(
+          DocumentName as (
+            "titles" typed NestedType as (
+              "title" typed StringType,
+              "language" typed StringType index "not_analyzed"
+            ),
+            "copyright" typed NestedType as (
+              "license" typed NestedType as (
+                "license" typed StringType index "not_analyzed",
+                "description" typed StringType,
+                "url" typed StringType
+              ),
+              "origin" typed StringType,
+              "authors" typed NestedType as (
+                "type" typed StringType,
+                "name" typed StringType
+              )
+            ),
+            "tags" typed NestedType as (
+              "tag" typed StringType,
+              "language" typed StringType index "not_analyzed"
+            )
+          )
+        )
+      }.await
     }
   }
-
-  def indexExists(): Boolean = {
-    val responseCode = Http(s"http://$IndexHost:$IndexPort/$IndexName/").method("head").asString.code
-    responseCode == 200
-  }
-
-  def serverAlive(): Boolean = {
-    val response: HttpResponse[String] = Http(s"http://$IndexHost:$IndexPort/_cluster/health").asString
-
-    val json = parse(response.body)
-    val status = (json \ "status").extract[String]
-    val clusterName = (json \ "cluster_name").extract[String]
-
-    // TODO: Vi bør nok kjøre clusteret med minst to noder.
-    (status == "green" || status == "yellow") && clusterName == ClusterName
-
-  }
-
 }
 

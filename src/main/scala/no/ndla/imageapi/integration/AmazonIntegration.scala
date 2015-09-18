@@ -11,6 +11,7 @@ import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
 import no.ndla.imageapi.ImageApiProperties
+import no.ndla.imageapi.business.{SearchMeta, ImageMeta}
 import org.postgresql.ds.PGPoolingDataSource
 
 
@@ -41,4 +42,10 @@ object AmazonIntegration {
     new DbImageMeta(datasource)
   }
 
+  def getSearchMeta(): SearchMeta = {
+    new ElasticSearchMeta(
+      ImageApiProperties.get("SEARCH_CLUSTER_NAME"),
+      ImageApiProperties.get("SEARCH_HOST"),
+      ImageApiProperties.get("SEARCH_PORT"))
+  }
 }

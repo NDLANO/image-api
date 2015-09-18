@@ -47,6 +47,7 @@ lazy val image_api = (project in file(".")).
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % AwsSdkversion,
       "org.scalaj" %% "scalaj-http" % "1.1.5",
+      "com.sksamuel.elastic4s" %% "elastic4s-core" % "1.7.4",
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
@@ -57,6 +58,8 @@ assemblyJarName in assembly := "image-api.jar"
 mainClass in assembly := Some("no.ndla.imageapi.JettyLauncher")
 assemblyMergeStrategy in assembly := {
   case "mime.types" => MergeStrategy.filterDistinctLines
+  case PathList("org", "joda", "convert", "ToString.class")  => MergeStrategy.first
+  case PathList("org", "joda", "convert", "FromString.class")  => MergeStrategy.first
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
