@@ -9,7 +9,7 @@ package no.ndla.imageapi.integration
 import java.util
 
 import no.ndla.imageapi.business.SearchMeta
-import no.ndla.imageapi.model.ImageMetaSummary
+import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
 
 import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.ElasticDsl._
@@ -38,14 +38,21 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
 
   override def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
+
+    val titleSearch = new ListBuffer[QueryDefinition]
+    titleSearch += matchQuery("title", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+    language.foreach(lang => titleSearch += termQuery("language", lang))
+
+    val tagSearch = new ListBuffer[QueryDefinition]
+    tagSearch += matchQuery("tag", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+    language.foreach(lang => tagSearch += termQuery("language", lang))
+
     val theSearch = search in "images" -> "image" query {
-      bool {should (
-        nestedQuery("titles").query {bool {must (
-            matchQuery("title", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND))}
-        },
-        nestedQuery("tags").query {bool {must (
-            matchQuery("tag", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND))}
-        })
+      bool {
+        should (
+          nestedQuery("titles").query {bool {must (titleSearch.toList)}},
+          nestedQuery("tags").query {bool {must (tagSearch.toList)}}
+        )
       }
     }
 
