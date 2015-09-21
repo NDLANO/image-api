@@ -36,8 +36,17 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
 
   override def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
-    val response = client.execute {
-      search in "images" -> "image" query(tagList.mkString(" ")).defaultOperator(SimpleQueryStringBuilder.Operator.AND) limit 500
+    val response = client.execute{
+      search in "images" -> "image" query {
+        bool {should (
+          nestedQuery("titles").query {bool {must (
+              matchQuery("title", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND))}
+          },
+          nestedQuery("tags").query {bool {must (
+              matchQuery("tag", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND))}
+          })
+        }
+      }
     }.await
 
     response.as[ImageMetaSummary]
