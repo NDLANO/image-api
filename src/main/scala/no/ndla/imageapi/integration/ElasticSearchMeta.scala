@@ -11,10 +11,12 @@ import java.util
 import no.ndla.imageapi.business.SearchMeta
 import no.ndla.imageapi.model.ImageMetaSummary
 
-import com.sksamuel.elastic4s.{RichSearchHit, HitAs, ElasticsearchClientUri, ElasticClient}
+import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.ElasticDsl._
 import org.elasticsearch.index.query.{SimpleQueryStringBuilder, MatchQueryBuilder}
 import org.elasticsearch.common.settings.ImmutableSettings
+
+import scala.collection.mutable.ListBuffer
 
 class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta {
 
@@ -36,20 +38,25 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
 
   override def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
-    val response = client.execute{
-      search in "images" -> "image" query {
-        bool {should (
-          nestedQuery("titles").query {bool {must (
-              matchQuery("title", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND))}
-          },
-          nestedQuery("tags").query {bool {must (
-              matchQuery("tag", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND))}
-          })
-        }
+    val theSearch = search in "images" -> "image" query {
+      bool {should (
+        nestedQuery("titles").query {bool {must (
+            matchQuery("title", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND))}
+        },
+        nestedQuery("tags").query {bool {must (
+            matchQuery("tag", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND))}
+        })
       }
-    }.await
+    }
 
-    response.as[ImageMetaSummary]
+    val filterList = new ListBuffer[FilterDefinition]()
+    license.foreach(license => filterList += nestedFilter("copyright.license").filter(termFilter("license", license)))
+    minimumSize.foreach(size => filterList += nestedFilter("images.full").filter(rangeFilter("images.full.size").gte(size.toString)))
 
+    if(filterList.nonEmpty){
+      theSearch.postFilter(must(filterList.toList))
+    }
+
+    client.execute{theSearch limit 500}.await.as[ImageMetaSummary]
   }
 }
