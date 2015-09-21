@@ -11,7 +11,7 @@ import scalaj.http.Http
 object ImageSearchIndexer {
 
   val IndexName = "images"
-  val IndexHost = "52.28.51.79"
+  val IndexHost = "localhost"
   val IndexPort = 9300
   val ClusterName = "image-search"
   val DocumentName = "image"
@@ -54,6 +54,18 @@ object ImageSearchIndexer {
             "titles" typed NestedType as (
               "title" typed StringType,
               "language" typed StringType index "not_analyzed"
+            ),
+            "images" typed NestedType as (
+              "small" typed NestedType as (
+                "url" typed StringType,
+                "size" typed IntegerType index "not_analyzed",
+                "contentType" typed StringType
+              ),
+              "full" typed NestedType as (
+                "url" typed StringType,
+                "size" typed IntegerType index "not_analyzed",
+                "contentType" typed StringType
+              )
             ),
             "copyright" typed NestedType as (
               "license" typed NestedType as (
