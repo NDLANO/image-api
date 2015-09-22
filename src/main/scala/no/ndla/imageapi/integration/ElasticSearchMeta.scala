@@ -8,6 +8,7 @@ package no.ndla.imageapi.integration
 
 import java.util
 
+import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.business.SearchMeta
 import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
 
@@ -18,7 +19,7 @@ import org.elasticsearch.common.settings.ImmutableSettings
 
 import scala.collection.mutable.ListBuffer
 
-class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta {
+class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta with LazyLogging {
 
   val UrlPrefix = "http://api.test.ndla.no/images/"
 
@@ -38,6 +39,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
 
   override def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
+    logger.info(s"Using client at host = $clusterHost, port = $clusterPort with clusterName = $clusterName")
 
     val titleSearch = new ListBuffer[QueryDefinition]
     titleSearch += matchQuery("title", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
