@@ -11,7 +11,7 @@ import scalaj.http.Http
 object ImageSearchIndexer {
 
   val IndexName = "images"
-  val IndexHost = "localhost"
+  val IndexHost = "52.28.51.79"
   val IndexPort = 9300
   val ClusterName = "image-search"
   val DocumentName = "image"
