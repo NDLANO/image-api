@@ -23,6 +23,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
   val UrlPrefix = "http://api.test.ndla.no/images/"
 
+  val PageSize = 100
   val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
   val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
 
@@ -66,6 +67,21 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
       theSearch.postFilter(must(filterList.toList))
     }
 
-    client.execute{theSearch limit 500}.await.as[ImageMetaSummary]
+    client.execute{theSearch limit PageSize}.await.as[ImageMetaSummary]
+  }
+
+  def all(minimumSize:Option[Int], license: Option[String]): Iterable[ImageMetaSummary] = {
+    val theSearch = search in "images" -> "image"
+
+    val filterList = new ListBuffer[FilterDefinition]()
+    license.foreach(license => filterList += nestedFilter("copyright.license").filter(termFilter("license", license)))
+    minimumSize.foreach(size => filterList += nestedFilter("images.full").filter(rangeFilter("images.full.size").gte(size.toString)))
+
+    if(filterList.nonEmpty){
+      theSearch.postFilter(must(filterList.toList))
+    }
+    theSearch.sort(field sort "id")
+
+    client.execute{theSearch limit PageSize}.await.as[ImageMetaSummary]
   }
 }

@@ -22,10 +22,10 @@ case class ImageMetaSummary(
 @ApiModel(description = "Meta information for the image")
 case class ImageMetaInformation(
   @(ApiModelProperty @field)(description = "The unique id of the image") id:String,
-  @(ApiModelProperty @field)(description = "Available titles for the image") titles:Iterable[ImageTitle],
+  @(ApiModelProperty @field)(description = "Available titles for the image") titles:List[ImageTitle],
   @(ApiModelProperty @field)(description = "The possible size variants of the image") images:ImageVariants,
   @(ApiModelProperty @field)(description = "Describes the copyright information for the image") copyright:Copyright,
-  @(ApiModelProperty @field)(description = "Searchable tags for the image") tags:Iterable[ImageTag]
+  @(ApiModelProperty @field)(description = "Searchable tags for the image") tags:List[ImageTag]
 )
 
 case class ImageTitle(
@@ -55,7 +55,7 @@ case class Image(
 case class Copyright(
   @(ApiModelProperty @field)(description = "Describes the license of the image") license:License,
   @(ApiModelProperty @field)(description = "Reference to where the image is procured") origin:String,
-  @(ApiModelProperty @field)(description = "List of authors") authors:Iterable[Author]
+  @(ApiModelProperty @field)(description = "List of authors") authors:List[Author]
 )
 
 @ApiModel(description = "Description of license information")

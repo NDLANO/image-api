@@ -81,6 +81,21 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
     "en" -> "en"
   )
 
+  val licenseToLicenseDefinitionsMap = Map(
+    "by" -> License("by","Creative Commons Attribution 2.0 Generic", Option("https://creativecommons.org/licenses/by/2.0/")),
+    "by-sa" -> License("by-sa","Creative Commons Attribution-ShareAlike 2.0 Generic", Option("https://creativecommons.org/licenses/by-sa/2.0/")),
+    "by-nc" -> License("by-nc","Creative Commons Attribution-NonCommercial 2.0 Generic", Option("https://creativecommons.org/licenses/by-nc/2.0/")),
+    "by-nd" -> License("by-nd","Creative Commons Attribution-NoDerivs 2.0 Generic", Option("https://creativecommons.org/licenses/by-nd/2.0/")),
+    "by-nc-sa" -> License("by-nc-sa","Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic", Option("https://creativecommons.org/licenses/by-nc-sa/2.0/")),
+    "by-nc-nd" -> License("by-nc-nd","Creative Commons Attribution-NonCommercial-NoDerivs 2.0 Generic", Option("https://creativecommons.org/licenses/by-nc-nd/2.0/")),
+    "publicdomain" -> License("publicdomain","Public Domain", Option("https://creativecommons.org/about/pdm")),
+    "gnu" -> License("gnu","GNU General Public License, version 2", Option("http://www.gnu.org/licenses/old-licenses/gpl-2.0.html")),
+    "nolaw" -> License("nolaw","Public Domain Dedication", Option("http://opendatacommons.org/licenses/pddl/")),
+    "nlod" -> License("nlod","Norsk lisens for offentlige data", Option("http://data.norge.no/nlod/no/1.0")),
+    "noc" -> License("noc","Public Domain Mark", Option("https://creativecommons.org/about/pdm")),
+    "copyrighted" -> License("copyrighted","Copyrighted", None)
+  )
+
   val imageMeta = Source.fromFile(imageMetaFile)("UTF-8").getLines
     .map(line => toImageMeta(line))
     .toList
@@ -122,7 +137,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
   val imageMetaStore = AmazonIntegration.getImageMeta()
 
   def uploadImages() = {
-    imageMetaWithoutTranslations.drop(610).take(maxUploads).foreach(upload(_))
+    imageMetaWithoutTranslations.drop(573).take(maxUploads).foreach(upload(_))
   }
 
   def upload(imageMeta: ImageMeta) = {
@@ -140,7 +155,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
     val full = Image(fullKey, imageMeta.originalSize.toInt, imageMeta.originalMime)
 
     val authors = imageAuthors.map(ia => Author(ia.typeAuthor, ia.name))
-    val copyright = Copyright(License(license, license, None), origin, authors)
+    val copyright = Copyright(licenseToLicenseDefinitionsMap.getOrElse(license, License(license, license, None)), origin, authors)
 
 
     var titles = List(ImageTitle(imageMeta.title, languageToISOMap.get(imageMeta.language)))
@@ -161,7 +176,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
       println("EXISTING-UPDATE:  " + imageMeta.nid + " (" + imageMeta.title  + ") with license " + license + " and authors " + authors.map(_.name) + ", full: " + sourceUrlFull + ", thumb: " + sourceUrlThumb + " with tags " + tags)
     }
 
-    Thread.sleep(1000)
+    Thread.sleep(250)
   }
 
   def toImageMeta(line: String): ImageMeta = {

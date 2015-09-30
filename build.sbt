@@ -43,6 +43,7 @@ lazy val image_api = (project in file(".")).
       "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
       "org.webjars" % "swagger-ui" % SwaggerUIVersion,
       "com.typesafe.slick" %% "slick" % SlickVersion,
+      "org.scalikejdbc" %% "scalikejdbc" % "2.2.8",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % AwsSdkversion,

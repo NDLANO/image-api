@@ -24,7 +24,7 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
   val PageSizeSearch = 100
   val UrlPrefix = "http://api.test.ndla.no/images/"
 
-  override def all(minimumSize:Option[Int], license: Option[String]): Iterable[ImageMetaSummary] = {
+  def all(minimumSize:Option[Int], license: Option[String]): Iterable[ImageMetaSummary] = {
     val db = Database.forDataSource(dataSource)
     try {
       val allFilter = Tables.imagemetas
@@ -62,7 +62,7 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
     } finally db.close()
   }
 
-  override def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
+  def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
     val db = Database.forDataSource(dataSource)
     try {
 
@@ -123,15 +123,15 @@ class DbImageMeta(dataSource: DataSource) extends ImageMeta {
 
     val imageAuthors = Await.result(db.run(
       Tables.authors.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).
-      map(author => Author(author.typeAuthor, author.name))
+      map(author => Author(author.typeAuthor, author.name)).toList
 
     val tags = Await.result(db.run(
       Tables.imagetags.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).
-      map(dbtag => ImageTag(dbtag.tag, dbtag.language))
+      map(dbtag => ImageTag(dbtag.tag, dbtag.language)).toList
 
     val titles = Await.result(db.run(
       Tables.imagetitles.filter(_.imageMetaId === imageMeta.id).result), Duration.Inf).
-      map(dbimage => ImageTitle(dbimage.title, dbimage.language))
+      map(dbimage => ImageTitle(dbimage.title, dbimage.language)).toList
 
     val license = Await.result(db.run(
       Tables.imagelicenses.filter(_.id === imageMeta.license).result.headOption), Duration.Inf)

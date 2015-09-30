@@ -42,3 +42,9 @@ CREATE TABLE imagelicense (
   url TEXT
 );
 
+CREATE TABLE imagemetadata (
+  id BIGSERIAL PRIMARY KEY,
+  external_id TEXT,
+  metadata JSONB
+);
+

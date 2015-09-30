@@ -51,6 +51,7 @@ object ImageSearchIndexer {
       client.execute {
         create index IndexName mappings(
           DocumentName as (
+            "id" typed IntegerType,
             "titles" typed NestedType as (
               "title" typed StringType,
               "language" typed StringType index "not_analyzed"

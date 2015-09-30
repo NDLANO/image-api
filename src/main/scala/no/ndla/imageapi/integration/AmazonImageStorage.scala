@@ -55,7 +55,14 @@ class AmazonImageStorage(imageStorageName: String, s3Client: AmazonS3Client) ext
 
   def contains(storageKey: String): Boolean = {
       try {
-        Option(s3Client.getObject(new GetObjectRequest(imageStorageName, storageKey))).isDefined
+        val s3Object = Option(s3Client.getObject(new GetObjectRequest(imageStorageName, storageKey)))
+        s3Object match {
+          case Some(obj) => {
+            obj.close()
+            true
+          }
+          case None => false
+        }
       } catch {
         case ase: AmazonServiceException => if (ase.getErrorCode == "NoSuchKey") false else throw ase
       }

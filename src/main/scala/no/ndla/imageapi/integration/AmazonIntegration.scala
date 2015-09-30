@@ -38,8 +38,8 @@ object AmazonIntegration {
     new AmazonImageStorage(ImageApiProperties.get("STORAGE_NAME"), s3Client)
   }
 
-  def getImageMeta(): DbImageMeta = {
-    new DbImageMeta(datasource)
+  def getImageMeta(): PostgresMeta = {
+    new PostgresMeta(datasource)
   }
 
   def getSearchMeta(): SearchMeta = {
