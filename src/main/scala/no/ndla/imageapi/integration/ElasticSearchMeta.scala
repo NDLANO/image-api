@@ -14,12 +14,16 @@ import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
 
 import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.mappings.FieldType._
 import org.elasticsearch.index.query.{SimpleQueryStringBuilder, MatchQueryBuilder}
 import org.elasticsearch.common.settings.ImmutableSettings
 
 import scala.collection.mutable.ListBuffer
 
 class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta with LazyLogging {
+
+  val IndexName = "images"
+  val DocumentName = "image"
 
   val UrlPrefix = "http://api.test.ndla.no/images/"
 
@@ -50,7 +54,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     tagSearch += matchQuery("tag", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => tagSearch += termQuery("language", lang))
 
-    val theSearch = search in "images" -> "image" query {
+    val theSearch = search in IndexName -> DocumentName query {
       bool {
         should (
           nestedQuery("titles").query {bool {must (titleSearch.toList)}},
@@ -70,8 +74,8 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     client.execute{theSearch limit PageSize}.await.as[ImageMetaSummary]
   }
 
-  def all(minimumSize:Option[Int], license: Option[String]): Iterable[ImageMetaSummary] = {
-    val theSearch = search in "images" -> "image"
+  override def all(minimumSize:Option[Int], license: Option[String]): Iterable[ImageMetaSummary] = {
+    val theSearch = search in IndexName -> DocumentName
 
     val filterList = new ListBuffer[FilterDefinition]()
     license.foreach(license => filterList += nestedFilter("copyright.license").filter(termFilter("license", license)))
@@ -83,5 +87,62 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     theSearch.sort(field sort "id")
 
     client.execute{theSearch limit PageSize}.await.as[ImageMetaSummary]
+  }
+
+  override def indexDocument(imageMeta: ImageMetaInformation) = {
+    import org.json4s.native.Serialization.write
+    implicit val formats = org.json4s.DefaultFormats
+
+    client.execute{
+      index into IndexName -> DocumentName source write(imageMeta) id imageMeta.id
+    }.await
+  }
+
+  override def createIndex() = {
+    val existsDefinition = client.execute{
+      index exists IndexName
+    }.await
+
+    if(!existsDefinition.isExists){
+      client.execute {
+        create index IndexName mappings(
+          DocumentName as (
+            "id" typed IntegerType,
+            "titles" typed NestedType as (
+              "title" typed StringType,
+              "language" typed StringType index "not_analyzed"
+              ),
+            "images" typed NestedType as (
+              "small" typed NestedType as (
+                "url" typed StringType,
+                "size" typed IntegerType index "not_analyzed",
+                "contentType" typed StringType
+                ),
+              "full" typed NestedType as (
+                "url" typed StringType,
+                "size" typed IntegerType index "not_analyzed",
+                "contentType" typed StringType
+                )
+              ),
+            "copyright" typed NestedType as (
+              "license" typed NestedType as (
+                "license" typed StringType index "not_analyzed",
+                "description" typed StringType,
+                "url" typed StringType
+                ),
+              "origin" typed StringType,
+              "authors" typed NestedType as (
+                "type" typed StringType,
+                "name" typed StringType
+                )
+              ),
+            "tags" typed NestedType as (
+              "tag" typed StringType,
+              "language" typed StringType index "not_analyzed"
+              )
+            )
+          )
+      }.await
+    }
   }
 }

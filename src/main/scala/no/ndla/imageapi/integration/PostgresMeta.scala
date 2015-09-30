@@ -4,7 +4,7 @@ import javax.sql.DataSource
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.business.ImageMeta
-import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageMetaSummary, ImageVariants}
+import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants}
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
@@ -15,23 +15,9 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
   ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
   override def withId(id: String): Option[ImageMetaInformation] = {
-    import org.json4s.native.Serialization.read
-    implicit val formats = org.json4s.DefaultFormats
-
     DB readOnly {implicit session =>
       sql"select metadata from imagemetadata where id = ${id.toInt}".map(rs => rs.string("metadata")).single().apply() match {
-        case Some(json) => {
-          val meta = read[ImageMetaInformation](json)
-
-          Option(ImageMetaInformation(
-            id,
-            meta.titles,
-            ImageVariants(
-              meta.images.small.flatMap(s => Option(Image(UrlPrefix + s.url, s.size, s.contentType))),
-              meta.images.full.flatMap(f => Option(Image(UrlPrefix + f.url, f.size, f.contentType)))),
-            meta.copyright,
-            meta.tags))
-        }
+        case Some(json) => Option(asImageMetaInformation(id, json))
         case None => None
       }
     }
@@ -70,5 +56,28 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     DB readOnly{implicit session =>
       sql"select id from imagemetadata where external_id = ${externalId}".map(rs => rs.long("id")).single().apply().isDefined
     }
+  }
+
+  def foreach(func: ImageMetaInformation => Unit) = {
+    DB readOnly { implicit session =>
+      sql"select id, metadata from imagemetadata".foreach { rs =>
+        func(asImageMetaInformation(rs.long("id").toString, rs.string("metadata")))
+      }
+    }
+  }
+
+  def asImageMetaInformation(documentId: String, json: String): ImageMetaInformation = {
+    import org.json4s.native.Serialization.read
+    implicit val formats = org.json4s.DefaultFormats
+
+    val meta = read[ImageMetaInformation](json)
+    ImageMetaInformation(
+      documentId,
+      meta.titles,
+      ImageVariants(
+        meta.images.small.flatMap(s => Option(Image(UrlPrefix + s.url, s.size, s.contentType))),
+        meta.images.full.flatMap(f => Option(Image(UrlPrefix + f.url, f.size, f.contentType)))),
+      meta.copyright,
+      meta.tags)
   }
 }
