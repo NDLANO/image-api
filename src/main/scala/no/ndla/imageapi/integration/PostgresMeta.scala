@@ -1,3 +1,9 @@
+/*
+ * Part of NDLA Image-API. API for searching and downloading images from NDLA.
+ * Copyright (C) 2015 NDLA
+ *
+ * See LICENSE
+ */
 package no.ndla.imageapi.integration
 
 import javax.sql.DataSource
@@ -16,7 +22,7 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
 
   override def withId(id: String): Option[ImageMetaInformation] = {
     DB readOnly {implicit session =>
-      sql"select metadata from imagemetadata where id = ${id.toInt}".map(rs => rs.string("metadata")).single().apply() match {
+      sql"select metadata from imagemetadata where id = ${id.toInt}".map(rs => rs.string("metadata")).single.apply match {
         case Some(json) => Option(asImageMetaInformation(id, json))
         case None => None
       }
@@ -34,7 +40,7 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     dataObject.setValue(json)
 
     DB localTx {implicit session =>
-      sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})".update().apply()
+      sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})".update.apply
     }
   }
 
@@ -48,13 +54,13 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     dataObject.setValue(json)
 
     DB localTx {implicit session =>
-      sql"update imagemetadata set metadata = ${dataObject} where external_id = ${externalId}".update().apply()
+      sql"update imagemetadata set metadata = ${dataObject} where external_id = ${externalId}".update.apply
     }
   }
 
   override def containsExternalId(externalId: String): Boolean = {
     DB readOnly{implicit session =>
-      sql"select id from imagemetadata where external_id = ${externalId}".map(rs => rs.long("id")).single().apply().isDefined
+      sql"select id from imagemetadata where external_id = ${externalId}".map(rs => rs.long("id")).single.apply.isDefined
     }
   }
 
