@@ -9,6 +9,7 @@ package no.ndla.imageapi.integration
 import javax.sql.DataSource
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.business.ImageMeta
 import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants}
 import org.postgresql.util.PGobject
@@ -16,7 +17,6 @@ import scalikejdbc._
 
 
 class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
-  val UrlPrefix = "http://api.test.ndla.no/images/"
 
   ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
@@ -81,8 +81,8 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
       documentId,
       meta.titles,
       ImageVariants(
-        meta.images.small.flatMap(s => Option(Image(UrlPrefix + s.url, s.size, s.contentType))),
-        meta.images.full.flatMap(f => Option(Image(UrlPrefix + f.url, f.size, f.contentType)))),
+        meta.images.small.flatMap(s => Option(Image(ImageApiProperties.ContextRoot + s.url, s.size, s.contentType))),
+        meta.images.full.flatMap(f => Option(Image(ImageApiProperties.ContextRoot + f.url, f.size, f.contentType)))),
       meta.copyright,
       meta.tags)
   }

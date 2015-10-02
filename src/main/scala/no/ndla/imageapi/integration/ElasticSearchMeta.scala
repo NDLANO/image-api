@@ -9,6 +9,7 @@ package no.ndla.imageapi.integration
 import java.util
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.business.SearchMeta
 import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
 
@@ -25,8 +26,6 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
   val IndexName = "images"
   val DocumentName = "image"
 
-  val UrlPrefix = "http://api.test.ndla.no/images/"
-
   val PageSize = 100
   val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
   val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
@@ -37,7 +36,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
       ImageMetaSummary(
         sourceMap("id").toString,
         sourceMap("images").asInstanceOf[util.HashMap[String, AnyRef]].get("small").asInstanceOf[util.HashMap[String, String]].get("url"),
-        UrlPrefix + sourceMap("id").toString,
+        ImageApiProperties.ContextRoot + sourceMap("id").toString,
         sourceMap("copyright").asInstanceOf[util.HashMap[String, AnyRef]].get("license").asInstanceOf[util.HashMap[String, String]].get("license"))
     }
   }

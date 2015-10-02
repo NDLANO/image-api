@@ -73,7 +73,7 @@ object ImageApiUploader {
  */
 class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: String, authorsFile: String, originFile: String) {
 
-  val UrlPrefix = "http://cm.test.ndla.no/"
+  val DownloadUrlPrefix = "http://cm.test.ndla.no/"
 
   val languageToISOMap = Map(
     "nn" -> "nn",
@@ -144,8 +144,8 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
     val license = imageLicense.getOrElse(imageMeta.nid, ImageLicense("", "")).license
     val origin = imageOrigin.getOrElse(imageMeta.nid, ImageOrigin("", "")).origin
     val imageAuthors = imageAuthor.getOrElse(imageMeta.nid, List())
-    val sourceUrlFull = UrlPrefix + imageMeta.originalFile
-    val sourceUrlThumb = UrlPrefix + imageMeta.thumbFile
+    val sourceUrlFull = DownloadUrlPrefix + imageMeta.originalFile
+    val sourceUrlThumb = DownloadUrlPrefix + imageMeta.thumbFile
     val tags = Tags.forImage(imageMeta.nid)
 
     val thumbKey = imageMeta.thumbFile.replace("sites/default/files/images/", "thumbs/")

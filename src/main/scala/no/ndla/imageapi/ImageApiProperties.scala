@@ -14,6 +14,7 @@ object ImageApiProperties extends LazyLogging {
   val ImageApiProps = io.Source.fromInputStream(getClass.getResourceAsStream(EnvironmentFile)).getLines().map(key => key -> scala.util.Properties.envOrNone(key)).toMap
 
   val ContactEmail = get("CONTACT_EMAIL")
+  val ContextRoot = get("CONTEXT_ROOT")
 
   def verify() = {
     val missingProperties = ImageApiProps.filter(entry => entry._2.isEmpty).toList
