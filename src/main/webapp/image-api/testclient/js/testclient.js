@@ -13,6 +13,11 @@ function showImage(jsonData) {
         $('#imagetitle').append(element["title"] + ' (' + element["language"] + ')', "<br/>");
     });
 
+    $('#alttext').empty();
+    $.each(jsonData["alttexts"], function(index, element) {
+        $('#alttext').append(element["alttext"], "<br/>");
+    });
+
     $('#imagesize').empty().append(jsonData["images"]["full"]["size"]);
 
     var license = '<a href="' + jsonData["copyright"]["license"]["url"] + '" target="_blank">' + jsonData["copyright"]["license"]["description"] + '</a>';
