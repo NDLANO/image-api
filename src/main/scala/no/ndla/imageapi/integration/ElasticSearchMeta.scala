@@ -49,6 +49,10 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     titleSearch += matchQuery("title", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => titleSearch += termQuery("language", lang))
 
+    val altTextSearch = new ListBuffer[QueryDefinition]
+    altTextSearch += matchQuery("alttext", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+    language.foreach(lang => altTextSearch += termQuery("language", lang))
+
     val tagSearch = new ListBuffer[QueryDefinition]
     tagSearch += matchQuery("tag", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => tagSearch += termQuery("language", lang))
@@ -57,6 +61,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
       bool {
         should (
           nestedQuery("titles").query {bool {must (titleSearch.toList)}},
+          nestedQuery("alttexts").query {bool {must (altTextSearch.toList)}},
           nestedQuery("tags").query {bool {must (tagSearch.toList)}}
         )
       }
@@ -109,6 +114,10 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
             "id" typed IntegerType,
             "titles" typed NestedType as (
               "title" typed StringType,
+              "language" typed StringType index "not_analyzed"
+              ),
+            "alttexts" typed NestedType as (
+              "alttext" typed StringType,
               "language" typed StringType index "not_analyzed"
               ),
             "images" typed NestedType as (

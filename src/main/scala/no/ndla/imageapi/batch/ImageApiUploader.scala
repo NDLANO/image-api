@@ -17,10 +17,10 @@ object ImageApiUploader {
   def main(args: Array[String]) {
 
     new ImageApiUploader(maxUploads = 600,
-      imageMetaFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/imagemetastest.csv",
-      licensesFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/license_definition.csv",
-      authorsFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/authors_definition.csv",
-      originFile = "/Users/kes/sandboxes/ndla/data-dump/20150812_1351/origin_definition.csv")
+      imageMetaFile = "/Users/kes/sandboxes/ndla/data-dump/20151005_0900/imagemeta.csv",
+      licensesFile = "/Users/kes/sandboxes/ndla/data-dump/20151005_0900/license.csv",
+      authorsFile = "/Users/kes/sandboxes/ndla/data-dump/20151005_0900/authors.csv",
+      originFile = "/Users/kes/sandboxes/ndla/data-dump/20151005_0900/origin.csv")
       .uploadImages()
   }
 
@@ -32,20 +32,25 @@ object ImageApiUploader {
  *                   
  * @param imageMetaFile Fil som inneholder metainformasjon for bilder.
  *                      Kan produseres av følgende sql:
- *                      select n.nid, n.tnid, n.language, n.title,
- *                        from_unixtime(n.changed), f.filepath as original,
- *                        f.filemime as original_mime, f.filesize as original_size,
- *                        f2.filepath as thumb, f2.filemime as thumb_mime,
- *                        f2.filesize as thumb_size
- *                      from node n
- *                        left join image i on (n.nid = i.nid)
- *                        left join image i2 on (n.nid = i2.nid)
- *                        left join files f on (i.fid = f.fid)
- *                        left join files f2 on (i2.fid = f2.fid)
- *                      where n.type = "image" and n.status = 1
- *                        and i.image_size = "_original"
- *                        and i2.image_size = "thumbnail"
- *                      order by n.nid desc limit 40000;
+                        select n.nid, n.tnid, NULLIF(n.language,''), n.title,
+                              NULLIF(cti.field_alt_text_value, ''),
+                              from_unixtime(n.changed),
+                              f.filepath as original,
+                              f.filemime as original_mime,
+                              f.filesize as original_size,
+                              f2.filepath as thumb,
+                              f2.filemime as thumb_mime,
+                              f2.filesize as thumb_size
+                        from node n
+                          left join image i on (n.nid = i.nid)
+                          left join image i2 on (n.nid = i2.nid)
+                          left join files f on (i.fid = f.fid)
+                          left join files f2 on (i2.fid = f2.fid)
+                          left join content_type_image cti on (n.nid = cti.nid)
+                        where n.type = "image" and n.status = 1
+                          and i.image_size = "_original"
+                          and i2.image_size = "thumbnail"
+                        order by n.nid desc limit 400;
  *
  *
  * @param licensesFile Fil som inneholder lisensinformasjon om bilder
@@ -137,7 +142,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
   val imageMetaStore = AmazonIntegration.getImageMeta()
 
   def uploadImages() = {
-    imageMetaWithoutTranslations.drop(573).take(maxUploads).foreach(upload(_))
+    imageMetaWithoutTranslations.take(maxUploads).foreach(upload(_))
   }
 
   def upload(imageMeta: ImageMeta) = {
@@ -159,11 +164,13 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
 
 
     var titles = List(ImageTitle(imageMeta.title, languageToISOMap.get(imageMeta.language)))
+    var alttexts = List(ImageAltText(imageMeta.alttext, languageToISOMap.get(imageMeta.language)))
     translations.get(imageMeta.nid).foreach(_.foreach(translation => {
       titles = ImageTitle(translation.title, languageToISOMap.get(translation.language)) :: titles
+      alttexts = ImageAltText(translation.alttext, languageToISOMap.get(translation.language)) :: alttexts
     }))
 
-    val imageMetaInformation = ImageMetaInformation("0", titles, ImageVariants(Option(thumb), Option(full)), copyright, tags)
+    val imageMetaInformation = ImageMetaInformation("0", titles, alttexts, ImageVariants(Option(thumb), Option(full)), copyright, tags)
 
     if(!imageMetaStore.containsExternalId(imageMeta.nid)) {
       if(!imageStorage.contains(thumbKey)) imageStorage.uploadFromUrl(thumb, thumbKey, sourceUrlThumb)
@@ -181,7 +188,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
 
   def toImageMeta(line: String): ImageMeta = {
     val x = line.split("#!#") match {
-      case Array(a, b, c, d, e, f, g, h, i, j, k) => (a, b, c, d, e, f, g, h, i, j, k)
+      case Array(a, b, c, d, e, f, g, h, i, j, k, l) => (a, b, c, d, e, f, g, h, i, j, k, l)
     }
     (ImageMeta.apply _).tupled(x)
   }
@@ -212,7 +219,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
 
 
 
-case class ImageMeta(nid:String, tnid:String, language:String, title:String, changed:String, originalFile:String, originalMime: String, originalSize: String, thumbFile:String, thumbMime:String, thumbSize: String)
+case class ImageMeta(nid:String, tnid:String, language:String, title:String, alttext:String, changed:String, originalFile:String, originalMime: String, originalSize: String, thumbFile:String, thumbMime:String, thumbSize: String)
 case class ImageLicense(nid:String, license:String)
 case class ImageAuthor(nid: String, typeAuthor:String, name:String)
 case class ImageOrigin(nid: String, origin:String)

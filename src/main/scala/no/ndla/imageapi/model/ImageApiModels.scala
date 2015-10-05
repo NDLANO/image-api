@@ -23,6 +23,7 @@ case class ImageMetaSummary(
 case class ImageMetaInformation(
   @(ApiModelProperty @field)(description = "The unique id of the image") id:String,
   @(ApiModelProperty @field)(description = "Available titles for the image") titles:List[ImageTitle],
+  @(ApiModelProperty @field)(description = "Available alternative texts for the image") alttexts:List[ImageAltText],
   @(ApiModelProperty @field)(description = "The possible size variants of the image") images:ImageVariants,
   @(ApiModelProperty @field)(description = "Describes the copyright information for the image") copyright:Copyright,
   @(ApiModelProperty @field)(description = "Searchable tags for the image") tags:List[ImageTag]
@@ -31,6 +32,11 @@ case class ImageMetaInformation(
 case class ImageTitle(
   @(ApiModelProperty @field)(description = "The freetext title of the image") title:String,
   @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in title") language:Option[String]
+)
+
+case class ImageAltText(
+  @(ApiModelProperty @field)(description = "The alternative text for the image") alttext:String,
+  @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in the alternative text") language:Option[String]
 )
 
 case class ImageTag(

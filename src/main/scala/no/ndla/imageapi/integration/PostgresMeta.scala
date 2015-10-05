@@ -80,6 +80,7 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     ImageMetaInformation(
       documentId,
       meta.titles,
+      meta.alttexts,
       ImageVariants(
         meta.images.small.flatMap(s => Option(Image(ImageApiProperties.ContextRoot + s.url, s.size, s.contentType))),
         meta.images.full.flatMap(f => Option(Image(ImageApiProperties.ContextRoot + f.url, f.size, f.contentType)))),
