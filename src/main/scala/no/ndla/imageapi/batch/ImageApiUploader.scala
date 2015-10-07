@@ -6,6 +6,9 @@
  */
 package no.ndla.imageapi.batch
 
+import java.io._
+import java.net.URL
+
 import no.ndla.imageapi.model._
 import no.ndla.imageapi.integration.AmazonIntegration
 
@@ -18,11 +21,12 @@ object ImageApiUploader {
 
 
 
-    new ImageApiUploader(maxUploads = 300,
-      imageMetaFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_0957/imagemeta.csv",
-      licensesFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_0957/license.csv",
-      authorsFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_0957/authors.csv",
-      originFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_0957/origin.csv")
+    new ImageApiUploader(maxUploads = 10,
+      imageMetaFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_1430/failed.csv",
+      licensesFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_1430/license.csv",
+      authorsFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_1430/authors.csv",
+      originFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_1430/origin.csv",
+      outputFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_1430/failedImports.csv")
       .uploadImages()
   }
 
@@ -34,25 +38,19 @@ object ImageApiUploader {
  *                   
  * @param imageMetaFile Fil som inneholder metainformasjon for bilder.
  *                      Kan produseres av følgende sql:
- *                       select n.nid, n.tnid, NULLIF(n.language,''), n.title,
- *                         NULLIF(cti.field_alt_text_value, ''),
- *                         from_unixtime(n.changed),
- *                         f.filepath as original,
- *                         f.filemime as original_mime,
- *                         f.filesize as original_size,
- *                         f2.filepath as thumb,
- *                         f2.filemime as thumb_mime,
- *                         f2.filesize as thumb_size
- *                       from node n
- *                         left join image i on (n.nid = i.nid)
- *                         left join image i2 on (n.nid = i2.nid)
- *                         left join files f on (i.fid = f.fid)
- *                         left join files f2 on (i2.fid = f2.fid)
- *                         left join content_type_image cti on (n.nid = cti.nid)
- *                       where n.type = "image" and n.status = 1
- *                         and i.image_size = "_original"
- *                         and i2.image_size = "thumbnail"
- *                       order by n.nid desc limit 400;
+ *                      select n.nid, n.tnid, NULLIF(n.language,''), n.title,
+ *                      NULLIF(cti.field_alt_text_value, ''),
+ *                      from_unixtime(n.changed),
+ *                      REPLACE(f.filepath, 'sites/default/files/images/', '') as original,
+ *                      f.filemime as original_mime,
+ *                      f.filesize as original_size
+ *                      from node n
+ *                      left join image i on (n.nid = i.nid)
+ *                      left join files f on (i.fid = f.fid)
+ *                      left join content_type_image cti on (n.nid = cti.nid)
+ *                      where n.type = "image" and n.status = 1
+ *                      and i.image_size = "_original"
+ *                      order by n.nid desc limit 40000;
  *
  * @param licensesFile Fil som inneholder lisensinformasjon om bilder
  *                     Kan produseres med følgende sql:
@@ -82,9 +80,10 @@ object ImageApiUploader {
  *
  *
  */
-class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: String, authorsFile: String, originFile: String) {
+class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: String, authorsFile: String, originFile: String, outputFile: String) {
 
-  val DownloadUrlPrefix = "http://cm.test.ndla.no/"
+  val DownloadUrlPrefix = "http://ndla.no/sites/default/files/images/"
+  val ThumbUrlPrefix = "http://ndla.no/sites/default/files/imagecache/fag_preset/images/"
 
   val languageToISOMap = Map(
     "nn" -> "nn",
@@ -147,7 +146,10 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
   val imageStorage = AmazonIntegration.getImageStorageDefaultCredentials();
   val imageMetaStore = AmazonIntegration.getImageMeta()
 
-  val failed = scala.collection.mutable.Map[String, String]()
+  val failedMap = scala.collection.mutable.Map[String, String]()
+  val retryMap = scala.collection.mutable.ListBuffer[ImageMeta]()
+
+  var failed = 0
   var inserted = 0
   var updated = 0
 
@@ -156,31 +158,28 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
     imageMetaWithoutTranslations.take(maxUploads).foreach(upload(_))
 
     println(s"Inserted $inserted, updated $updated in ${System.currentTimeMillis - start}ms.")
-    if(!failed.isEmpty){
-      println("The following failed:")
-      failed.foreach(elem => println(s"${elem._1}:   ${elem._2}"))
+    if(failed > 0){
+      println(s"$failed failed:")
+      failedMap.foreach(elem => println(s"${elem._1}:   ${elem._2}"))
+
+      val writer = new PrintWriter(new File(outputFile))
+      retryMap.foreach(meta => {
+        writer.println(s"${meta.nid}#!#${meta.tnid}#!#${meta.language}#!#${meta.title}#!#${meta.alttext}#!#${meta.changed}#!#${meta.originalFile}#!#${meta.originalMime}#!#${meta.originalSize}")
+      })
+      writer.close()
     }
   }
 
   def upload(imageMeta: ImageMeta) = {
     val start = System.currentTimeMillis
     try {
-      val license = imageLicense.getOrElse(imageMeta.nid, ImageLicense("", "")).license
-      val origin = imageOrigin.getOrElse(imageMeta.nid, ImageOrigin("", "")).origin
-      val imageAuthors = imageAuthor.getOrElse(imageMeta.nid, List())
-      val sourceUrlFull = DownloadUrlPrefix + imageMeta.originalFile
-      val sourceUrlThumb = DownloadUrlPrefix + imageMeta.thumbFile
       val tags = Tags.forImage(imageMeta.nid)
 
-      val thumbKey = imageMeta.thumbFile.replace("sites/default/files/images/", "thumbs/")
-      val thumb = Image(thumbKey, imageMeta.thumbSize.toInt, imageMeta.thumbMime)
-
-      val fullKey = imageMeta.originalFile.replace("sites/default/files/images/", "full/")
-      val full = Image(fullKey, imageMeta.originalSize.toInt, imageMeta.originalMime)
-
+      val origin = imageOrigin.getOrElse(imageMeta.nid, ImageOrigin("", "")).origin
+      val imageAuthors = imageAuthor.getOrElse(imageMeta.nid, List())
       val authors = imageAuthors.map(ia => Author(ia.typeAuthor, ia.name))
+      val license = imageLicense.getOrElse(imageMeta.nid, ImageLicense("", "")).license
       val copyright = Copyright(licenseToLicenseDefinitionsMap.getOrElse(license, License(license, license, None)), origin, authors)
-
 
       var titles = List(ImageTitle(imageMeta.title, languageToISOMap.get(imageMeta.language)))
       var alttexts = List(ImageAltText(imageMeta.alttext, languageToISOMap.get(imageMeta.language)))
@@ -189,24 +188,45 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
         alttexts = ImageAltText(translation.alttext, languageToISOMap.get(translation.language)) :: alttexts
       }))
 
-      val imageMetaInformation = ImageMetaInformation("0", titles, alttexts, ImageVariants(Option(thumb), Option(full)), copyright, tags)
+      val existing = imageMetaStore.withExternalId(imageMeta.nid)
 
-      if(!imageMetaStore.containsExternalId(imageMeta.nid)) {
-        if(!imageStorage.contains(thumbKey)) imageStorage.uploadFromUrl(thumb, thumbKey, sourceUrlThumb)
-        if(!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
+      imageMetaStore.withExternalId(imageMeta.nid) match {
+        case Some(dbMeta) => {
+          imageMetaStore.update(ImageMetaInformation(dbMeta.id, titles, alttexts, dbMeta.images, copyright, tags), dbMeta.id)
+          updated += 1
+          println((inserted + updated + failed) + " - UPDATE: " + imageMeta.nid + " (" + imageMeta.title  + ") -- " + (System.currentTimeMillis - start) + "ms")
+        }
 
-        imageMetaStore.insert(imageMetaInformation, imageMeta.nid)
-        inserted += 1
-        println("INSERT: " + imageMeta.nid + " (" + imageMeta.title  + ", " + sourceUrlFull + ") -- " + (System.currentTimeMillis - start) + "ms")
-      } else {
-        imageMetaStore.update(imageMetaInformation, imageMeta.nid)
-        updated += 1
-        println("UPDATE: " + imageMeta.nid + " (" + imageMeta.title  + ", " + sourceUrlFull + ") -- " + (System.currentTimeMillis - start) + "ms")
+        case None => {
+          val sourceUrlFull = DownloadUrlPrefix + imageMeta.originalFile
+          val sourceUrlThumb = ThumbUrlPrefix + imageMeta.originalFile
+
+          val imageStream = new URL(sourceUrlThumb).openStream()
+          val buffer = Stream.continually(imageStream.read).takeWhile(_ != -1).map(_.toByte).toArray
+
+          val thumbKey = "thumbs/" + imageMeta.originalFile
+          val thumb = Image(thumbKey, buffer.size, imageMeta.originalMime)
+
+          val fullKey = "full/" + imageMeta.originalFile
+          val full = Image(fullKey, imageMeta.originalSize.toInt, imageMeta.originalMime)
+
+          val imageMetaInformation = ImageMetaInformation("0", titles, alttexts, ImageVariants(Option(thumb), Option(full)), copyright, tags)
+
+          if(!imageStorage.contains(thumbKey)) imageStorage.uploadFromByteArray(thumb, thumbKey, buffer)
+          if(!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
+
+          imageMetaStore.insert(imageMetaInformation, imageMeta.nid)
+          inserted += 1
+          println((inserted + updated + failed) + " - INSERT: " + imageMeta.nid + " (" + imageMeta.title  + ", " + sourceUrlFull + ") -- " + (System.currentTimeMillis - start) + "ms")
+        }
+
       }
     } catch {
       case e: Exception  => {
         e.printStackTrace()
-        failed += imageMeta.nid -> s"${imageMeta.nid} failed after ${System.currentTimeMillis - start}ms with error: ${e.getMessage}"
+        failed += 1
+        failedMap += imageMeta.nid -> s"${imageMeta.nid} failed after ${System.currentTimeMillis - start}ms with error: ${e.getMessage}"
+        retryMap += imageMeta
       }
     }
 
@@ -215,7 +235,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
 
   def toImageMeta(line: String): ImageMeta = {
     val x = line.split("#!#") match {
-      case Array(a, b, c, d, e, f, g, h, i, j, k, l) => (a, b, c, d, e, f, g, h, i, j, k, l)
+      case Array(a, b, c, d, e, f, g, h, i) => (a, b, c, d, e, f, g, h, i)
     }
     (ImageMeta.apply _).tupled(x)
   }
@@ -248,22 +268,10 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
   def replaceNULLWithEmtpy(str: String): String = {
     if(str == "NULL") "" else str
   }
-
-  def test() = {
-    val lines = List("145610#!#Fotograf#!#NULL", "145611#!#NULL#!#Kenneth")
-    val imageAuthor = lines
-      .map(line => toImageAuthor(line)).collect{case Some(x) => x}
-      .map(author => author.nid -> author)
-      .groupBy(_._1).map { case (k,v) => (k,v.map(_._2))}
-
-
-    imageAuthor.foreach(println)
-  }
 }
 
 
-
-case class ImageMeta(nid:String, tnid:String, language:String, title:String, alttext:String, changed:String, originalFile:String, originalMime: String, originalSize: String, thumbFile:String, thumbMime:String, thumbSize: String)
+case class ImageMeta(nid:String, tnid:String, language:String, title:String, alttext:String, changed:String, originalFile:String, originalMime: String, originalSize: String)
 case class ImageLicense(nid:String, license:String)
 case class ImageAuthor(nid: String, typeAuthor:String, name:String)
 case class ImageOrigin(nid: String, origin:String)

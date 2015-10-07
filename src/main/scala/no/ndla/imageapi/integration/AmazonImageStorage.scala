@@ -6,15 +6,15 @@
  */
 package no.ndla.imageapi.integration
 
-import java.io.{File, InputStream}
+import java.io.{ByteArrayInputStream, File, InputStream}
 import java.net.URL
 
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.model.{Image, ImageMetaInformation}
 import no.ndla.imageapi.business.ImageStorage
+import no.ndla.imageapi.model.{Image, ImageMetaInformation}
 
 class AmazonImageStorage(imageStorageName: String, s3Client: AmazonS3Client) extends ImageStorage with LazyLogging {
 
@@ -41,6 +41,15 @@ class AmazonImageStorage(imageStorageName: String, s3Client: AmazonS3Client) ext
       s3Client.putObject(new PutObjectRequest(imageStorageName, full.url, new File(imageDirectory + full.url)))
     })
 
+  }
+
+  def uploadFromByteArray(image: Image, storageKey:String, bytes:Array[Byte]): Unit = {
+    val metadata = new ObjectMetadata()
+    metadata.setContentType(image.contentType)
+    metadata.setContentLength(image.size.toLong)
+
+    val request = new PutObjectRequest(imageStorageName, storageKey, new ByteArrayInputStream(bytes), metadata)
+    val putResult = s3Client.putObject(request)
   }
 
   override def uploadFromUrl(image: Image, storageKey:String, urlOfImage: String): Unit = {

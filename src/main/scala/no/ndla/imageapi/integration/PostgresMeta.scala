@@ -29,6 +29,15 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     }
   }
 
+  override def withExternalId(externalId: String): Option[ImageMetaInformation] = {
+    DB readOnly {implicit session =>
+      sql"select id, metadata from imagemetadata where external_id = ${externalId}".map(rs => (rs.long("id"), rs.string("metadata"))).single.apply match {
+        case Some((id, meta)) => Option(asImageMetaInformation(id.toString, meta))
+        case None => None
+      }
+    }
+  }
+
   override def insert(imageMetaInformation: ImageMetaInformation, externalId: String): Unit = {
     import org.json4s.native.Serialization.write
     implicit val formats = org.json4s.DefaultFormats
@@ -55,12 +64,6 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
 
     DB localTx {implicit session =>
       sql"update imagemetadata set metadata = ${dataObject} where external_id = ${externalId}".update.apply
-    }
-  }
-
-  override def containsExternalId(externalId: String): Boolean = {
-    DB readOnly{implicit session =>
-      sql"select id from imagemetadata where external_id = ${externalId}".map(rs => rs.long("id")).single.apply.isDefined
     }
   }
 
