@@ -28,13 +28,13 @@ object AmazonIntegration {
 
   def getImageStorageDefaultCredentials(): AmazonImageStorage = {
     val s3Client = new AmazonS3Client(new ProfileCredentialsProvider())
-    s3Client.setRegion(Region.getRegion(Regions.EU_WEST_1))
+    s3Client.setRegion(Region.getRegion(Regions.EU_CENTRAL_1))
     new AmazonImageStorage(ImageApiProperties.get("STORAGE_NAME"), s3Client)
   }
 
   def getImageStorage(): AmazonImageStorage = {
     val s3Client = new AmazonS3Client(new BasicAWSCredentials(ImageApiProperties.get("STORAGE_ACCESS_KEY"), ImageApiProperties.get("STORAGE_SECRET_KEY")))
-    s3Client.setRegion(Region.getRegion(Regions.EU_WEST_1))
+    s3Client.setRegion(Region.getRegion(Regions.EU_CENTRAL_1))
     new AmazonImageStorage(ImageApiProperties.get("STORAGE_NAME"), s3Client)
   }
 
