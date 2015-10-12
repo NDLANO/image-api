@@ -19,14 +19,41 @@ object ImageApiUploader {
 
   def main(args: Array[String]) {
 
+    println("Antall argumenter: " + args.length)
+    println("Argumenter: " + args)
+
+    if(args.length != 2){
+      println("Two arguments required: <path to input files> <range to run>")
+      System.exit(1)
+    }
+
+    val path = args(0)
+    val rangeFrom = args(1).split("-")(0).toInt
+    val rangeTo = args(1).split("-")(1).toInt
 
 
-    new ImageApiUploader(maxUploads = 10,
-      imageMetaFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_1430/failed.csv",
-      licensesFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_1430/license.csv",
-      authorsFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_1430/authors.csv",
-      originFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_1430/origin.csv",
-      outputFile = "/Users/kes/sandboxes/ndla/data-dump/20151006_1430/failedImports.csv")
+    val imageMetaFile = path + "imagemeta.csv"
+    val licensesFile = path + "license.csv"
+    val authorsFile = path + "authors.csv"
+    val originFile = path + "origin.csv"
+    val failedFile = path + "failedImports.csv"
+
+    println(s"Running from $rangeFrom to $rangeTo")
+    println(s"ImageMeta: $imageMetaFile")
+    println(s"Licenses: $licensesFile")
+    println(s"Authors: $authorsFile")
+    println(s"Origin: $originFile")
+    println(s"Failed: $failedFile")
+    println("")
+
+    new ImageApiUploader(
+      maxUploads = rangeTo - rangeFrom,
+      drop = rangeFrom,
+      imageMetaFile = imageMetaFile,
+      licensesFile = licensesFile,
+      authorsFile = authorsFile,
+      originFile = originFile,
+      outputFile = failedFile)
       .uploadImages()
   }
 
@@ -80,7 +107,7 @@ object ImageApiUploader {
  *
  *
  */
-class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: String, authorsFile: String, originFile: String, outputFile: String) {
+class ImageApiUploader(maxUploads:Int = 1, drop:Int = 0, imageMetaFile: String, licensesFile: String, authorsFile: String, originFile: String, outputFile: String) {
 
   val DownloadUrlPrefix = "http://ndla.no/sites/default/files/images/"
   val ThumbUrlPrefix = "http://ndla.no/sites/default/files/imagecache/fag_preset/images/"
@@ -155,7 +182,7 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
 
   def uploadImages() = {
     val start = System.currentTimeMillis
-    imageMetaWithoutTranslations.take(maxUploads).foreach(upload(_))
+    imageMetaWithoutTranslations.drop(drop).take(maxUploads).foreach(upload(_))
 
     println(s"Inserted $inserted, updated $updated in ${System.currentTimeMillis - start}ms.")
     if(failed > 0){
@@ -230,7 +257,6 @@ class ImageApiUploader(maxUploads:Int = 1, imageMetaFile: String, licensesFile: 
       }
     }
 
-    Thread.sleep(250)
   }
 
   def toImageMeta(line: String): ImageMeta = {
