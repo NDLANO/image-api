@@ -8,16 +8,15 @@ package no.ndla.imageapi.integration
 
 import java.util
 
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s._
+import com.sksamuel.elastic4s.mappings.FieldType._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.business.SearchMeta
 import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
-
-import com.sksamuel.elastic4s._
-import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s.mappings.FieldType._
-import org.elasticsearch.index.query.{SimpleQueryStringBuilder, MatchQueryBuilder}
 import org.elasticsearch.common.settings.ImmutableSettings
+import org.elasticsearch.index.query.MatchQueryBuilder
 
 import scala.collection.mutable.ListBuffer
 
@@ -29,6 +28,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
   val PageSize = 100
   val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
   val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
+  val noCopyrightFilter = not(nestedFilter("copyright.license").filter(termFilter("license", "copyrighted")))
 
   implicit object ImageHitAs extends HitAs[ImageMetaSummary] {
     override def as(hit: RichSearchHit): ImageMetaSummary = {
@@ -43,8 +43,6 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
 
   override def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
-    logger.info(s"Using client at host = $clusterHost, port = $clusterPort with clusterName = $clusterName")
-
     val titleSearch = new ListBuffer[QueryDefinition]
     titleSearch += matchQuery("title", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => titleSearch += termQuery("language", lang))
@@ -70,6 +68,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     val filterList = new ListBuffer[FilterDefinition]()
     license.foreach(license => filterList += nestedFilter("copyright.license").filter(termFilter("license", license)))
     minimumSize.foreach(size => filterList += nestedFilter("images.full").filter(rangeFilter("images.full.size").gte(size.toString)))
+    filterList += noCopyrightFilter
 
     if(filterList.nonEmpty){
       theSearch.postFilter(must(filterList.toList))
@@ -84,6 +83,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     val filterList = new ListBuffer[FilterDefinition]()
     license.foreach(license => filterList += nestedFilter("copyright.license").filter(termFilter("license", license)))
     minimumSize.foreach(size => filterList += nestedFilter("images.full").filter(rangeFilter("images.full.size").gte(size.toString)))
+    filterList += noCopyrightFilter
 
     if(filterList.nonEmpty){
       theSearch.postFilter(must(filterList.toList))
