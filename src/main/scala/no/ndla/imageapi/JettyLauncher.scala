@@ -32,7 +32,7 @@ object JettyLauncher extends LazyLogging {
       getClass.getResource("/META-INF/resources/webjars").toExternalForm))
 
     context setContextPath "/"
-    context.setVirtualHosts(Array("127.0.0.1", "localhost", "10.0.4.187", "52.29.51.0"))
+    context.setVirtualHosts(Array("127.0.0.1", "localhost", "52.29.51.0"))
     context.setBaseResource(staticResources)
     context.setWelcomeFiles(Array("index.html"))
     context.addEventListener(new ScalatraListener)
