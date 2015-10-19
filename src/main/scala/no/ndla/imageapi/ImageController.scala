@@ -11,6 +11,7 @@ import no.ndla.imageapi.business.{SearchMeta, ImageMeta, ImageStorage}
 import no.ndla.imageapi.integration.{PostgresMeta, AmazonIntegration}
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.{Error, ImageMetaInformation, ImageMetaSummary}
+import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.logging.LoggerContext
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
@@ -51,10 +52,12 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   before() {
     contentType = formats("json")
     LoggerContext.setCorrelationID(Option(request.getHeader("X-Correlation-ID")))
+    ApplicationUrl.set(request)
   }
 
   after() {
-    LoggerContext.clearCorrelationID();
+    LoggerContext.clearCorrelationID
+    ApplicationUrl.clear
   }
 
   error{

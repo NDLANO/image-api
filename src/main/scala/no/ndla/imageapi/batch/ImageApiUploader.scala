@@ -215,8 +215,6 @@ class ImageApiUploader(maxUploads:Int = 1, drop:Int = 0, imageMetaFile: String, 
         alttexts = ImageAltText(translation.alttext, languageToISOMap.get(translation.language)) :: alttexts
       }))
 
-      val existing = imageMetaStore.withExternalId(imageMeta.nid)
-
       imageMetaStore.withExternalId(imageMeta.nid) match {
         case Some(dbMeta) => {
           imageMetaStore.update(ImageMetaInformation(dbMeta.id, titles, alttexts, dbMeta.images, copyright, tags), dbMeta.id)

@@ -15,6 +15,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.business.SearchMeta
 import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
+import no.ndla.imageapi.network.ApplicationUrl
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.index.query.MatchQueryBuilder
 
@@ -35,8 +36,8 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
       val sourceMap = hit.sourceAsMap
       ImageMetaSummary(
         sourceMap("id").toString,
-        sourceMap("images").asInstanceOf[util.HashMap[String, AnyRef]].get("small").asInstanceOf[util.HashMap[String, String]].get("url"),
-        ImageApiProperties.ContextRoot + sourceMap("id").toString,
+        ApplicationUrl.get + sourceMap("images").asInstanceOf[util.HashMap[String, AnyRef]].get("small").asInstanceOf[util.HashMap[String, String]].get("url"),
+        ApplicationUrl.get + sourceMap("id").toString,
         sourceMap("copyright").asInstanceOf[util.HashMap[String, AnyRef]].get("license").asInstanceOf[util.HashMap[String, String]].get("license"))
     }
   }

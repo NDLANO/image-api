@@ -12,6 +12,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.business.ImageMeta
 import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants}
+import no.ndla.imageapi.network.ApplicationUrl
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
@@ -23,7 +24,7 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
   override def withId(id: String): Option[ImageMetaInformation] = {
     DB readOnly {implicit session =>
       sql"select metadata from imagemetadata where id = ${id.toInt}".map(rs => rs.string("metadata")).single.apply match {
-        case Some(json) => Option(asImageMetaInformation(id, json))
+        case Some(json) => Option(asImageMetaInformationWithApplicationUrl(id, json))
         case None => None
       }
     }
@@ -32,7 +33,7 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
   override def withExternalId(externalId: String): Option[ImageMetaInformation] = {
     DB readOnly {implicit session =>
       sql"select id, metadata from imagemetadata where external_id = ${externalId}".map(rs => (rs.long("id"), rs.string("metadata"))).single.apply match {
-        case Some((id, meta)) => Option(asImageMetaInformation(id.toString, meta))
+        case Some((id, meta)) => Option(asImageMetaInformationWithRelUrl(id.toString, meta))
         case None => None
       }
     }
@@ -70,12 +71,12 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
   def foreach(func: ImageMetaInformation => Unit) = {
     DB readOnly { implicit session =>
       sql"select id, metadata from imagemetadata".foreach { rs =>
-        func(asImageMetaInformation(rs.long("id").toString, rs.string("metadata")))
+        func(asImageMetaInformationWithRelUrl(rs.long("id").toString, rs.string("metadata")))
       }
     }
   }
 
-  def asImageMetaInformation(documentId: String, json: String): ImageMetaInformation = {
+  def asImageMetaInformationWithApplicationUrl(documentId: String, json: String): ImageMetaInformation = {
     import org.json4s.native.Serialization.read
     implicit val formats = org.json4s.DefaultFormats
 
@@ -85,8 +86,22 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
       meta.titles,
       meta.alttexts,
       ImageVariants(
-        meta.images.small.flatMap(s => Option(Image(ImageApiProperties.ContextRoot + s.url, s.size, s.contentType))),
-        meta.images.full.flatMap(f => Option(Image(ImageApiProperties.ContextRoot + f.url, f.size, f.contentType)))),
+        meta.images.small.flatMap(s => Option(Image(ApplicationUrl.get + s.url, s.size, s.contentType))),
+        meta.images.full.flatMap(f => Option(Image(ApplicationUrl.get + f.url, f.size, f.contentType)))),
+      meta.copyright,
+      meta.tags)
+  }
+
+  def asImageMetaInformationWithRelUrl(documentId: String, json: String): ImageMetaInformation = {
+    import org.json4s.native.Serialization.read
+    implicit val formats = org.json4s.DefaultFormats
+
+    val meta = read[ImageMetaInformation](json)
+    ImageMetaInformation(
+      documentId,
+      meta.titles,
+      meta.alttexts,
+      meta.images,
       meta.copyright,
       meta.tags)
   }
