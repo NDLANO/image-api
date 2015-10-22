@@ -5,7 +5,6 @@ import sbtdocker.Instructions
 
 val Scalaversion = "2.11.6"
 val Scalatraversion = "2.3.1"
-val SwaggerUIVersion = "2.0.24"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.10.26"
 val ScalaTestVersion = "2.2.4"
@@ -41,7 +40,6 @@ lazy val image_api = (project in file(".")).
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
       "org.json4s"   %% "json4s-native" % "3.2.11",
       "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
-      "org.webjars" % "swagger-ui" % SwaggerUIVersion,
       "org.scalikejdbc" %% "scalikejdbc" % "2.2.8",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
@@ -50,8 +48,6 @@ lazy val image_api = (project in file(".")).
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
-
-unmanagedResourceDirectories in Compile <+= (baseDirectory) {_ / "src/main/webapp"}
 
 assemblyJarName in assembly := "image-api.jar"
 mainClass in assembly := Some("no.ndla.imageapi.JettyLauncher")

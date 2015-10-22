@@ -8,9 +8,7 @@ package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
 import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.servlet.DefaultServlet
-import org.eclipse.jetty.util.resource.ResourceCollection
-import org.eclipse.jetty.webapp.WebAppContext
+import org.eclipse.jetty.servlet.{DefaultServlet, ServletContextHandler}
 import org.scalatra.servlet.ScalatraListener
 
 
@@ -24,22 +22,15 @@ object JettyLauncher extends LazyLogging {
     val startMillis = System.currentTimeMillis();
     val port = ImageApiProperties.getInt("APPLICATION_PORT")
 
+    val servletContext = new ServletContextHandler
+    servletContext.setContextPath("/")
+    servletContext.setVirtualHosts(ImageApiProperties.Domains)
+    servletContext.addEventListener(new ScalatraListener)
+    servletContext.addServlet(classOf[DefaultServlet], "/")
+    servletContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
+
     val server = new Server(port)
-    val context = new WebAppContext()
-
-    val staticResources = new ResourceCollection(Array(
-      getClass.getResource("/image-api").toExternalForm,
-      getClass.getResource("/META-INF/resources/webjars").toExternalForm))
-
-    context setContextPath "/"
-    context.setVirtualHosts(ImageApiProperties.Domains)
-    context.setBaseResource(staticResources)
-    context.setWelcomeFiles(Array("index.html"))
-    context.addEventListener(new ScalatraListener)
-    context.addServlet(classOf[DefaultServlet], "/")
-    context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
-
-    server.setHandler(context)
+    server.setHandler(servletContext)
     server.start
 
     val startTime = System.currentTimeMillis() - startMillis
