@@ -31,8 +31,8 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
       notes "Shows all the images in the ndla.no database. You can search it too."
       parameters (
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting applies on anonymous access."),
-        queryParam[Option[String]]("tags").description("Return only images with submitted tag. Multiple tags may be entered comma separated, and will give results matching either one of them."),
+        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
+        queryParam[Option[String]]("query").description("Return only images with titles, alt-texts or tags matching the specified query."),
         queryParam[Option[String]]("minimum-size").description("Return only images with full size larger than submitted value in bytes."),
         queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
         queryParam[Option[String]]("license").description("Return only images with provided license.")
@@ -44,6 +44,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
       notes "Shows info of the image with submitted id."
       parameters (
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
         pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."))
       )
 
@@ -69,24 +70,22 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
 
   val searchMeta: SearchMeta = AmazonIntegration.getSearchMeta()
   val imageMeta: PostgresMeta = AmazonIntegration.getImageMeta()
-  val imageStorage: ImageStorage = AmazonIntegration.getImageStorage()
-
 
   get("/", operation(getImages)) {
     val minimumSize = params.get("minimum-size")
-    val tags = params.get("tags")
+    val query = params.get("query")
     val language = params.get("language")
     val license = params.get("license")
-    logger.info("GET / with params minimum-size='{}', tags='{}', language={} license={}", minimumSize, tags, language, license)
+    logger.info("GET / with params minimum-size='{}', query='{}', language={} license={}", minimumSize, query, language, license)
 
     val size = minimumSize match {
       case Some(size) => if (size.forall(_.isDigit)) Option(size.toInt) else None
       case None => None
     }
 
-    tags match {
-      case Some(tags) => searchMeta.withTags(
-        tags = tags.toLowerCase().split(",").map(_.trim),
+    query match {
+      case Some(query) => searchMeta.matchingQuery(
+        query = query.toLowerCase().split(" ").map(_.trim),
         minimumSize = size,
         language = language,
         license = license)
@@ -106,32 +105,6 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
       }
     } else {
       halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
-    }
-  }
-
-  get("/thumbs/:name") {
-    val name = params("name")
-    logger.info("GET /thumbs/{}", name)
-
-    imageStorage.get(s"thumbs/$name") match {
-      case Some(image) => {
-        contentType = image._1
-        image._2
-      }
-      case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with key /thumbs/$name not found"))
-    }
-  }
-
-  get("/full/:name") {
-    val name = params("name")
-    logger.info("GET /full/{}", name)
-
-    imageStorage.get(s"full/$name") match {
-      case Some(image) => {
-        contentType = image._1
-        image._2
-      }
-      case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with key /full/$name not found"))
     }
   }
 }

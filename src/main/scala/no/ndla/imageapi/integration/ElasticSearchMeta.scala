@@ -43,17 +43,17 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
   }
 
 
-  override def withTags(tagList: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
+  override def matchingQuery(query: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
     val titleSearch = new ListBuffer[QueryDefinition]
-    titleSearch += matchQuery("title", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+    titleSearch += matchQuery("title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => titleSearch += termQuery("language", lang))
 
     val altTextSearch = new ListBuffer[QueryDefinition]
-    altTextSearch += matchQuery("alttext", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+    altTextSearch += matchQuery("alttext", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => altTextSearch += termQuery("language", lang))
 
     val tagSearch = new ListBuffer[QueryDefinition]
-    tagSearch += matchQuery("tag", tagList.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+    tagSearch += matchQuery("tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => tagSearch += termQuery("language", lang))
 
     val theSearch = search in IndexName -> DocumentName query {
