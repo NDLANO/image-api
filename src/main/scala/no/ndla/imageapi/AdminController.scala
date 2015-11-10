@@ -16,7 +16,7 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
   def indexDocuments(indexName: String) = {
     val start = System.currentTimeMillis()
     search.createIndex(indexName)
-    meta.foreach(imageMeta => {
+    meta.elements.foreach(imageMeta => {
       search.indexDocument(imageMeta, indexName)
       println(s"Indexed document with id ${imageMeta.id} into index ${indexName}.")
     })

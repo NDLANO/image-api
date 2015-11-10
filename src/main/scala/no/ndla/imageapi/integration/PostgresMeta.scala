@@ -68,12 +68,25 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     }
   }
 
+  def elements: List[ImageMetaInformation] = {
+    DB readOnly { implicit session =>
+      sql"select id, metadata from imagemetadata".map(rs => {
+        asImageMetaInformationWithRelUrl(rs.long("id").toString, rs.string("metadata"))
+      }).list.apply()
+    }
+  }
+
   def foreach(func: ImageMetaInformation => Unit) = {
+    elements.foreach { el =>
+      func(el)
+    }
+    /*
     DB readOnly { implicit session =>
       sql"select id, metadata from imagemetadata".foreach { rs =>
         func(asImageMetaInformationWithRelUrl(rs.long("id").toString, rs.string("metadata")))
       }
     }
+    */
   }
 
   def asImageMetaInformationWithApplicationUrl(documentId: String, json: String): ImageMetaInformation = {
