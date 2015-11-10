@@ -16,9 +16,9 @@ object ImageSearchIndexer {
   def main(args: Array[String]) {
     val start = System.currentTimeMillis()
 
-    search.createIndex()
+//    search.createIndex()
     meta.foreach(imageMeta => {
-      search.indexDocument(imageMeta)
+//      search.indexDocument(imageMeta)
       println(s"Indexed document with id: ${imageMeta.id}.")
     })
 

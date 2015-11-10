@@ -94,23 +94,23 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     client.execute{theSearch limit PageSize}.await.as[ImageMetaSummary]
   }
 
-  override def indexDocument(imageMeta: ImageMetaInformation) = {
+  override def indexDocument(imageMeta: ImageMetaInformation, indexName: String) = {
     import org.json4s.native.Serialization.write
     implicit val formats = org.json4s.DefaultFormats
 
     client.execute{
-      index into IndexName -> DocumentName source write(imageMeta) id imageMeta.id
+      index into indexName -> DocumentName source write(imageMeta) id imageMeta.id
     }.await
   }
 
-  override def createIndex() = {
+  override def createIndex(indexName: String) = {
     val existsDefinition = client.execute{
-      index exists IndexName
+      index exists indexName
     }.await
 
     if(!existsDefinition.isExists){
       client.execute {
-        create index IndexName mappings(
+        create index indexName mappings(
           DocumentName as (
             "id" typed IntegerType,
             "titles" typed NestedType as (
@@ -153,5 +153,20 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
           )
       }.await
     }
+  }
+
+  override def useIndex(indexName: String) = {
+    val existsDefinition = client.execute{
+      index exists indexName
+    }.await
+    if(existsDefinition.isExists) {
+      client.execute{
+        add alias IndexName on indexName
+      }.await
+    }
+  }
+
+  override def deleteIndex(indexName: String) = {
+
   }
 }
