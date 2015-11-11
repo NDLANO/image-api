@@ -14,6 +14,7 @@ import com.sksamuel.elastic4s.mappings.FieldType._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.business.SearchMeta
+import no.ndla.imageapi.business.IndexAdmin
 import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
 import no.ndla.imageapi.network.ApplicationUrl
 import org.elasticsearch.common.settings.ImmutableSettings
@@ -21,7 +22,7 @@ import org.elasticsearch.index.query.MatchQueryBuilder
 
 import scala.collection.mutable.ListBuffer
 
-class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta with LazyLogging {
+class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta with LazyLogging with IndexAdmin {
 
   val IndexName = "images"
   val DocumentName = "image"

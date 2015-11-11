@@ -12,23 +12,23 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
 
   val meta = AmazonIntegration.getImageMeta()
   val search = AmazonIntegration.getSearchMeta()
+  val searchAdmin = AmazonIntegration.getSearchAdmin(search)
 
   def indexDocuments() = {
     val start = System.currentTimeMillis()
 
-    val prevIndex = search.usedIndex
+    val prevIndex = searchAdmin.usedIndex
     val index = prevIndex + 1
     logger.info(s"Indexing ${meta.elements.length} documents into index $index")
-    search.createIndex(index)
-    search.indexDocuments(meta.elements, index)
-    search.useIndex(index)
+    searchAdmin.createIndex(index)
+    searchAdmin.indexDocuments(meta.elements, index)
+    searchAdmin.useIndex(index)
     if(prevIndex > 0) {
-      search.deleteIndex(prevIndex)
+      searchAdmin.deleteIndex(prevIndex)
     }
     
     val result = s"Indexing took ${System.currentTimeMillis() - start} ms."
     logger.info(result)
-    s"$result\nnew alias: ${search.IndexName} -> $index\n"
   }
 
   post("/index") {
