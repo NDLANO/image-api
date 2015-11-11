@@ -35,7 +35,7 @@ object ImageApiProperties extends LazyLogging {
 
     valueForKey match {
       case Some(value) => value
-      case None => println (ImageApiProps); throw new NoSuchFieldError(s"Missing environment variable $envKey")
+      case None => throw new NoSuchFieldError(s"Missing environment variable $envKey")
     }
   }
 
