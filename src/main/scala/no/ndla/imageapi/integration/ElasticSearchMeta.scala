@@ -103,25 +103,25 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     }.await
   }
 
-  override def indexDocuments(imageMetaList: List[ImageMetaInformation], indexName: String): Unit = {
+  override def indexDocuments(imageMetaList: List[ImageMetaInformation], indexNum: Int): Unit = {
     import org.json4s.native.Serialization.write
     implicit val formats = org.json4s.DefaultFormats
 
     client.execute{
       bulk(imageMetaList.map(imageMeta => {
-        index into indexName -> DocumentName source write(imageMeta) id imageMeta.id
+        index into indexNum.toString -> DocumentName source write(imageMeta) id imageMeta.id
       }))
     }.await
   }
 
-  override def createIndex(indexName: String) = {
+  override def createIndex(indexNum: Int) = {
     val existsDefinition = client.execute{
-      index exists indexName
+      index exists indexNum.toString
     }.await
 
     if(!existsDefinition.isExists){
       client.execute {
-        create index indexName mappings(
+        create index indexNum.toString mappings(
           DocumentName as (
             "id" typed IntegerType,
             "titles" typed NestedType as (
@@ -166,18 +166,29 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     }
   }
 
-  override def useIndex(indexName: String) = {
+  override def useIndex(indexNum: Int) = {
     val existsDefinition = client.execute{
-      index exists indexName
+      index exists indexNum.toString
     }.await
     if(existsDefinition.isExists) {
       client.execute{
-        add alias IndexName on indexName
+        add alias IndexName on indexNum.toString
       }.await
     }
   }
 
-  override def deleteIndex(indexName: String) = {
+  override def deleteIndex(index: Int) = {
 
+  }
+
+  override def usedIndex: Int = {
+    val res = client.execute {
+      get alias IndexName
+    }.await
+    val aliases = res.getAliases.keysIt()
+    aliases.hasNext match {
+      case true => aliases.next().toInt
+      case false => 0
+    }
   }
 }
