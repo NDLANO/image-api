@@ -28,12 +28,7 @@ object ImageApiProperties extends LazyLogging {
   }
 
   def get(envKey: String): String = {
-   val valueForKey = ImageApiProps.get(envKey) match {
-      case Some(value) => value
-      case None => throw new NoSuchFieldError(s"No key for $envKey in ImageApiProps")
-    }
-
-    valueForKey match {
+    ImageApiProps.get(envKey).flatten match {
       case Some(value) => value
       case None => throw new NoSuchFieldError(s"Missing environment variable $envKey")
     }
