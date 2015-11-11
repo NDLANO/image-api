@@ -177,8 +177,10 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     }
   }
 
-  override def deleteIndex(index: Int) = {
-
+  override def deleteIndex(indexNum: Int) = {
+    client.execute {
+      delete index indexNum.toString
+    }.await
   }
 
   override def usedIndex: Int = {
