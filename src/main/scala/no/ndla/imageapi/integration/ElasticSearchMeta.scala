@@ -103,6 +103,17 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     }.await
   }
 
+  override def indexDocuments(imageMetaList: List[ImageMetaInformation], indexName: String): Unit = {
+    import org.json4s.native.Serialization.write
+    implicit val formats = org.json4s.DefaultFormats
+
+    client.execute{
+      bulk(imageMetaList.map(imageMeta => {
+        index into indexName -> DocumentName source write(imageMeta) id imageMeta.id
+      }))
+    }.await
+  }
+
   override def createIndex(indexName: String) = {
     val existsDefinition = client.execute{
       index exists indexName
