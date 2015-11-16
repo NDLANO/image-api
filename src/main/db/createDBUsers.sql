@@ -1,5 +1,3 @@
--- db instance identifier: ndla-image-api
-
 -- master user: imageapi_master
 -- master password: spgjdxnZqYV2jv6
 

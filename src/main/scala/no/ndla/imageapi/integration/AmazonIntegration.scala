@@ -2,7 +2,7 @@
  * Part of NDLA Image-API. API for searching and downloading images from NDLA.
  * Copyright (C) 2015 NDLA
  *
- * See LICENSE
+ * See LICENSE 
  */
 package no.ndla.imageapi.integration
 
