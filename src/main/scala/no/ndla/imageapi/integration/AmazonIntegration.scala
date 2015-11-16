@@ -25,6 +25,7 @@ object AmazonIntegration {
   datasource.setPortNumber(ImageApiProperties.getInt("META_PORT"))
   datasource.setInitialConnections(ImageApiProperties.getInt("META_INITIAL_CONNECTIONS"))
   datasource.setMaxConnections(ImageApiProperties.getInt("META_MAX_CONNECTIONS"))
+  datasource.setCurrentSchema(ImageApiProperties.get("META_SCHEMA"))
 
   def getImageStorageDefaultCredentials(): AmazonImageStorage = {
     val s3Client = new AmazonS3Client(new ProfileCredentialsProvider())
