@@ -76,6 +76,31 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     }
   }
 
+  def numElements: Int = {
+    DB readOnly { implicit session =>
+      sql"select count(*) from imagemetadata".map(rs => {
+        rs.int("count")
+      }).list.first().apply() match {
+        case Some(count) => count
+        case None => 0
+      }
+    }
+  }
+
+  def applyInBulk(func: List[ImageMetaInformation] => Unit, bulkSize: Int) = {
+    val groupRanges = Seq.range(1, numElements).grouped(bulkSize).map(group => (group.head, group.last))
+
+    DB readOnly { implicit session =>
+      groupRanges.foreach(range => {
+        func(
+          sql"select id,metadata from imagemetadata where id between ${range._1} and ${range._2}".map(rs => {
+            asImageMetaInformationWithRelUrl(rs.long("id").toString, rs.string("metadata"))
+          }).toList.apply
+        )
+      })
+    }
+  }
+
   def foreach(func: ImageMetaInformation => Unit) = {
     elements.foreach { el =>
       func(el)

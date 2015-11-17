@@ -3,7 +3,7 @@ package no.ndla.imageapi
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.integration.AmazonIntegration
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.ScalatraServlet
+import org.scalatra.{InternalServerError, Ok, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
 
 class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLogging  {
@@ -21,7 +21,9 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
     val index = prevIndex + 1
     logger.info(s"Indexing ${meta.elements.length} documents into index $index")
     searchAdmin.createIndex(index)
-    searchAdmin.indexDocuments(meta.elements, index)
+    meta.applyInBulk(docs => {
+      searchAdmin.indexDocuments(docs, index)
+    }, 100)
     searchAdmin.useIndex(index)
     if(prevIndex > 0) {
       searchAdmin.deleteIndex(prevIndex)
@@ -32,6 +34,11 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
   }
 
   post("/index") {
-    indexDocuments()
+    try {
+      indexDocuments()
+      Ok()
+    } catch {
+      case e: Exception => InternalServerError(e.getMessage)
+    }
   }
 }
