@@ -2,7 +2,7 @@
  * Part of NDLA Image-API. API for searching and downloading images from NDLA.
  * Copyright (C) 2015 NDLA
  *
- * See LICENSE
+ * See LICENSE 
  */
 package no.ndla.imageapi.integration
 
@@ -25,6 +25,7 @@ object AmazonIntegration {
   datasource.setPortNumber(ImageApiProperties.getInt("META_PORT"))
   datasource.setInitialConnections(ImageApiProperties.getInt("META_INITIAL_CONNECTIONS"))
   datasource.setMaxConnections(ImageApiProperties.getInt("META_MAX_CONNECTIONS"))
+  datasource.setCurrentSchema(ImageApiProperties.get("META_SCHEMA"))
 
   def getImageStorageDefaultCredentials(): AmazonImageStorage = {
     val s3Client = new AmazonS3Client(new ProfileCredentialsProvider())
