@@ -16,6 +16,9 @@ object ImageApiProperties extends LazyLogging {
   val ContactEmail = get("CONTACT_EMAIL")
   val HostAddr = get("HOST_ADDR")
   val Domains = get("DOMAINS").split(",") ++ Array(HostAddr)
+  val SearchIndex = get("SEARCH_INDEX")
+  val SearchDocument = get("SEARCH_DOCUMENT")
+  val IndexBulkSize = getInt("INDEX_BULK_SIZE")
 
   def verify() = {
     val missingProperties = ImageApiProps.filter(entry => entry._2.isEmpty).toList

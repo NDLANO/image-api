@@ -68,14 +68,6 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     }
   }
 
-  def elements: List[ImageMetaInformation] = {
-    DB readOnly { implicit session =>
-      sql"select id, metadata from imagemetadata".map(rs => {
-        asImageMetaInformationWithRelUrl(rs.long("id").toString, rs.string("metadata"))
-      }).list.apply()
-    }
-  }
-
   def numElements: Int = {
     DB readOnly { implicit session =>
       sql"select count(*) from imagemetadata".map(rs => {
@@ -87,7 +79,7 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     }
   }
 
-  def applyInBulk(func: List[ImageMetaInformation] => Unit, bulkSize: Int) = {
+  def applyToAllInBulk(func: List[ImageMetaInformation] => Unit, bulkSize: Int) = {
     val groupRanges = Seq.range(1, numElements).grouped(bulkSize).map(group => (group.head, group.last))
 
     DB readOnly { implicit session =>
@@ -101,17 +93,8 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     }
   }
 
-  def foreach(func: ImageMetaInformation => Unit) = {
-    elements.foreach { el =>
-      func(el)
-    }
-    /*
-    DB readOnly { implicit session =>
-      sql"select id, metadata from imagemetadata".foreach { rs =>
-        func(asImageMetaInformationWithRelUrl(rs.long("id").toString, rs.string("metadata")))
-      }
-    }
-    */
+  def applyToAll(func: List[ImageMetaInformation] => Unit) = {
+    applyToAllInBulk(func, ImageApiProperties.IndexBulkSize)
   }
 
   def asImageMetaInformationWithApplicationUrl(documentId: String, json: String): ImageMetaInformation = {

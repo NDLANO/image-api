@@ -10,11 +10,9 @@ import java.util
 
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
-import com.sksamuel.elastic4s.mappings.FieldType._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.business.SearchMeta
-import no.ndla.imageapi.business.IndexAdmin
 import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
 import no.ndla.imageapi.network.ApplicationUrl
 import org.elasticsearch.common.settings.ImmutableSettings
@@ -22,10 +20,7 @@ import org.elasticsearch.index.query.MatchQueryBuilder
 
 import scala.collection.mutable.ListBuffer
 
-class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta with LazyLogging with IndexAdmin {
-
-  val IndexName = "images"
-  val DocumentName = "image"
+class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta with LazyLogging {
 
   val PageSize = 100
   val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
@@ -57,7 +52,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     tagSearch += matchQuery("tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => tagSearch += termQuery("language", lang))
 
-    val theSearch = search in IndexName -> DocumentName query {
+    val theSearch = search in ImageApiProperties.get("SEARCH_INDEX") -> ImageApiProperties.get("SEARCH_DOCUMENT") query {
       bool {
         should (
           nestedQuery("titles").query {bool {must (titleSearch.toList)}},
@@ -80,7 +75,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
   }
 
   override def all(minimumSize:Option[Int], license: Option[String]): Iterable[ImageMetaSummary] = {
-    val theSearch = search in IndexName -> DocumentName
+    val theSearch = search in ImageApiProperties.SearchIndex -> ImageApiProperties.SearchDocument
 
     val filterList = new ListBuffer[FilterDefinition]()
     license.foreach(license => filterList += nestedFilter("copyright.license").filter(termFilter("license", license)))
@@ -95,103 +90,4 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     client.execute{theSearch limit PageSize}.await.as[ImageMetaSummary]
   }
 
-  override def indexDocument(imageMeta: ImageMetaInformation, indexName: String) = {
-    import org.json4s.native.Serialization.write
-    implicit val formats = org.json4s.DefaultFormats
-
-    client.execute{
-      index into indexName -> DocumentName source write(imageMeta) id imageMeta.id
-    }.await
-  }
-
-  override def indexDocuments(imageMetaList: List[ImageMetaInformation], indexNum: Int): Unit = {
-    import org.json4s.native.Serialization.write
-    implicit val formats = org.json4s.DefaultFormats
-
-    client.execute{
-      bulk(imageMetaList.map(imageMeta => {
-        index into indexNum.toString -> DocumentName source write(imageMeta) id imageMeta.id
-      }))
-    }.await
-  }
-
-  override def createIndex(indexNum: Int) = {
-    val existsDefinition = client.execute{
-      index exists indexNum.toString
-    }.await
-
-    if(!existsDefinition.isExists){
-      client.execute {
-        create index indexNum.toString mappings(
-          DocumentName as (
-            "id" typed IntegerType,
-            "titles" typed NestedType as (
-              "title" typed StringType,
-              "language" typed StringType index "not_analyzed"
-              ),
-            "alttexts" typed NestedType as (
-              "alttext" typed StringType,
-              "language" typed StringType index "not_analyzed"
-              ),
-            "images" typed NestedType as (
-              "small" typed NestedType as (
-                "url" typed StringType,
-                "size" typed IntegerType index "not_analyzed",
-                "contentType" typed StringType
-                ),
-              "full" typed NestedType as (
-                "url" typed StringType,
-                "size" typed IntegerType index "not_analyzed",
-                "contentType" typed StringType
-                )
-              ),
-            "copyright" typed NestedType as (
-              "license" typed NestedType as (
-                "license" typed StringType index "not_analyzed",
-                "description" typed StringType,
-                "url" typed StringType
-                ),
-              "origin" typed StringType,
-              "authors" typed NestedType as (
-                "type" typed StringType,
-                "name" typed StringType
-                )
-              ),
-            "tags" typed NestedType as (
-              "tag" typed StringType,
-              "language" typed StringType index "not_analyzed"
-              )
-            )
-          )
-      }.await
-    }
-  }
-
-  override def useIndex(indexNum: Int) = {
-    val existsDefinition = client.execute{
-      index exists indexNum.toString
-    }.await
-    if(existsDefinition.isExists) {
-      client.execute{
-        add alias IndexName on indexNum.toString
-      }.await
-    }
-  }
-
-  override def deleteIndex(indexNum: Int) = {
-    client.execute {
-      delete index indexNum.toString
-    }.await
-  }
-
-  override def usedIndex: Int = {
-    val res = client.execute {
-      get alias IndexName
-    }.await
-    val aliases = res.getAliases.keysIt()
-    aliases.hasNext match {
-      case true => aliases.next().toInt
-      case false => 0
-    }
-  }
 }

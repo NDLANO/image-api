@@ -14,5 +14,5 @@ trait ImageMeta {
   def withExternalId(externalId: String): Option[ImageMetaInformation]
   def insert(imageMetaInformation: ImageMetaInformation, externalId: String)
   def update(imageMetaInformation: ImageMetaInformation, externalId: String)
-
+  def applyToAll(func: List[ImageMetaInformation] => Unit)
 }

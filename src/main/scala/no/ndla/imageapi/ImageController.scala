@@ -69,7 +69,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   val searchMeta: SearchMeta = AmazonIntegration.getSearchMeta()
-  val imageMeta: PostgresMeta = AmazonIntegration.getImageMeta()
+  val imageMeta: ImageMeta = AmazonIntegration.getImageMeta()
 
   get("/", operation(getImages)) {
     val minimumSize = params.get("minimum-size")

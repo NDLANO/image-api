@@ -11,7 +11,7 @@ import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.business.{SearchMeta, ImageMeta, IndexAdmin}
+import no.ndla.imageapi.business.{SearchMeta, ImageMeta, IndexMeta}
 import org.postgresql.ds.PGPoolingDataSource
 
 
@@ -39,7 +39,7 @@ object AmazonIntegration {
     new AmazonImageStorage(ImageApiProperties.get("STORAGE_NAME"), s3Client)
   }
 
-  def getImageMeta(): PostgresMeta = {
+  def getImageMeta(): ImageMeta = {
     new PostgresMeta(datasource)
   }
 
@@ -52,8 +52,15 @@ object AmazonIntegration {
 
   def getSearchAdmin(searchMeta: SearchMeta) = {
     searchMeta match {
-      case sa: IndexAdmin => sa
+      case sa: IndexMeta => sa
       case _ => throw new ClassCastException
     }
+  }
+
+  def getIndexMeta(): IndexMeta = {
+    new ElasticIndexMeta(
+      ImageApiProperties.get("SEARCH_CLUSTER_NAME"),
+      ImageApiProperties.HostAddr,
+      ImageApiProperties.get("SEARCH_PORT"))
   }
 }
