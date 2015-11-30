@@ -1,5 +1,8 @@
 package no.ndla.imageapi
 
+import java.text.SimpleDateFormat
+import java.util.Calendar
+
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.integration.AmazonIntegration
 import org.json4s.{DefaultFormats, Formats}
@@ -14,21 +17,26 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
   val search = AmazonIntegration.getSearchMeta()
   val indexMeta = AmazonIntegration.getIndexMeta()
 
+  def getTimestamp: String = {
+    val timestampFormat = new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss")
+    timestampFormat.format(Calendar.getInstance.getTime)
+  }
+
   def indexDocuments() = {
     val start = System.currentTimeMillis()
 
     val prevIndex = indexMeta.usedIndex
-    val index = prevIndex + 1
+    val index = ImageApiProperties.SearchIndex + "_" + getTimestamp
     logger.info(s"Indexing all documents into index $index")
     indexMeta.createIndex(index)
     meta.applyToAll(docs => {
       indexMeta.indexDocuments(docs, index)
     })
     indexMeta.useIndex(index)
-    if(prevIndex > 0) {
-      indexMeta.deleteIndex(prevIndex)
-    }
-    
+    prevIndex.foreach(prevIndexName => {
+      indexMeta.deleteIndex(prevIndexName)
+    })
+
     val result = s"Indexing took ${System.currentTimeMillis() - start} ms."
     logger.info(result)
   }

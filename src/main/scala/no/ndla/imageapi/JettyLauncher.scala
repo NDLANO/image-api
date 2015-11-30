@@ -19,7 +19,7 @@ object JettyLauncher extends LazyLogging {
 
     ImageApiProperties.verify()
 
-    val startMillis = System.currentTimeMillis();
+    val startMillis = System.currentTimeMillis()
     val port = ImageApiProperties.getInt("APPLICATION_PORT")
 
     val servletContext = new ServletContextHandler
@@ -31,11 +31,11 @@ object JettyLauncher extends LazyLogging {
 
     val server = new Server(port)
     server.setHandler(servletContext)
-    server.start
+    server.start()
 
     val startTime = System.currentTimeMillis() - startMillis
     logger.info(s"Started at port $port in $startTime ms.")
 
-    server.join
+    server.join()
   }
 }

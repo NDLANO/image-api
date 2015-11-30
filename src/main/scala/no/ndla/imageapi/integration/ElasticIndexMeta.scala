@@ -15,29 +15,29 @@ class ElasticIndexMeta(clusterName:String, clusterHost:String, clusterPort:Strin
   val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
   val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
 
-  override def indexDocuments(imageMetaList: List[ImageMetaInformation], indexNum: Int): Unit = {
+  override def indexDocuments(imageMetaList: List[ImageMetaInformation], indexName: String): Unit = {
     import org.json4s.native.Serialization.write
     implicit val formats = org.json4s.DefaultFormats
 
     client.execute{
       bulk(imageMetaList.map(imageMeta => {
-        index into indexNum.toString -> ImageApiProperties.SearchDocument source write(imageMeta) id imageMeta.id
+        index into indexName -> ImageApiProperties.SearchDocument source write(imageMeta) id imageMeta.id
       }))
     }.await
   }
 
-  override def indexDocument(imageMeta: ImageMetaInformation, indexName: Int) = {
+  override def indexDocument(imageMeta: ImageMetaInformation, indexName: String) = {
     indexDocuments(List(imageMeta), indexName)
   }
 
-  override def createIndex(indexNum: Int) = {
+  override def createIndex(indexName: String) = {
     val existsDefinition = client.execute{
-      index exists indexNum.toString
+      index exists indexName.toString
     }.await
 
     if(!existsDefinition.isExists){
       client.execute {
-        create index indexNum.toString mappings(
+        create index indexName mappings(
           ImageApiProperties.SearchDocument as (
             "id" typed IntegerType,
             "titles" typed NestedType as (
@@ -82,31 +82,42 @@ class ElasticIndexMeta(clusterName:String, clusterHost:String, clusterPort:Strin
     }
   }
 
-  override def useIndex(indexNum: Int) = {
+  override def useIndex(indexName: String): Either[String, String] = {
     val existsDefinition = client.execute{
-      index exists indexNum.toString
+      index exists indexName
     }.await
     if(existsDefinition.isExists) {
       client.execute{
-        add alias ImageApiProperties.SearchIndex on indexNum.toString
+        add alias ImageApiProperties.SearchIndex on indexName
       }.await
+      Left(s"${ImageApiProperties.SearchIndex} is now using index $indexName.")
+    } else {
+      Right(s"Unable to set index ${ImageApiProperties.SearchIndex} to $indexName, because the specified index does not exist.")
     }
   }
 
-  override def deleteIndex(indexNum: Int) = {
-    client.execute {
-      delete index indexNum.toString
+  override def deleteIndex(indexName: String) = {
+    val existsDefinition = client.execute{
+      index exists indexName
     }.await
+    if(existsDefinition.isExists) {
+      client.execute {
+        delete index indexName
+      }.await
+      Left(s"$indexName has been deleted.")
+    } else {
+      Right(s"Unable to delete index $indexName, because it does not exist.")
+    }
   }
 
-  override def usedIndex: Int = {
+  override def usedIndex: Option[String] = {
     val res = client.execute {
       get alias ImageApiProperties.SearchIndex
     }.await
     val aliases = res.getAliases.keysIt()
     aliases.hasNext match {
-      case true => aliases.next().toInt
-      case false => 0
+      case true => Some(aliases.next())
+      case false => None
     }
   }
 }
