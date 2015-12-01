@@ -26,10 +26,6 @@ class ElasticIndexMeta(clusterName:String, clusterHost:String, clusterPort:Strin
     }.await
   }
 
-  override def indexDocument(imageMeta: ImageMetaInformation, indexName: String) = {
-    indexDocuments(List(imageMeta), indexName)
-  }
-
   override def createIndex(indexName: String) = {
     val existsDefinition = client.execute{
       index exists indexName.toString
@@ -82,7 +78,7 @@ class ElasticIndexMeta(clusterName:String, clusterHost:String, clusterPort:Strin
     }
   }
 
-  override def useIndex(indexName: String): Either[String, String] = {
+  override def useIndex(indexName: String) = {
     val existsDefinition = client.execute{
       index exists indexName
     }.await
@@ -90,9 +86,8 @@ class ElasticIndexMeta(clusterName:String, clusterHost:String, clusterPort:Strin
       client.execute{
         add alias ImageApiProperties.SearchIndex on indexName
       }.await
-      Left(s"${ImageApiProperties.SearchIndex} is now using index $indexName.")
     } else {
-      Right(s"Unable to set index ${ImageApiProperties.SearchIndex} to $indexName, because the specified index does not exist.")
+      throw new IllegalArgumentException(s"No such index: $indexName")
     }
   }
 
@@ -104,13 +99,12 @@ class ElasticIndexMeta(clusterName:String, clusterHost:String, clusterPort:Strin
       client.execute {
         delete index indexName
       }.await
-      Left(s"$indexName has been deleted.")
     } else {
-      Right(s"Unable to delete index $indexName, because it does not exist.")
+      throw new IllegalArgumentException(s"No such index: $indexName")
     }
   }
 
-  override def usedIndex: Option[String] = {
+  override def indexInUse: Option[String] = {
     val res = client.execute {
       get alias ImageApiProperties.SearchIndex
     }.await

@@ -25,14 +25,14 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
   def indexDocuments() = {
     val start = System.currentTimeMillis()
 
-    val prevIndex = indexMeta.usedIndex
-    val index = ImageApiProperties.SearchIndex + "_" + getTimestamp
-    logger.info(s"Indexing all documents into index $index")
-    indexMeta.createIndex(index)
+    val prevIndex = indexMeta.indexInUse
+    val indexName = ImageApiProperties.SearchIndex + "_" + getTimestamp
+    logger.info(s"Indexing all documents into index $indexName")
+    indexMeta.createIndex(indexName)
     meta.applyToAll(docs => {
-      indexMeta.indexDocuments(docs, index)
+      indexMeta.indexDocuments(docs, indexName)
     })
-    indexMeta.useIndex(index)
+    indexMeta.useIndex(indexName)
     prevIndex.foreach(prevIndexName => {
       indexMeta.deleteIndex(prevIndexName)
     })

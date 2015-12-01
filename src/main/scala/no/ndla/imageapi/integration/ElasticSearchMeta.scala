@@ -52,7 +52,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     tagSearch += matchQuery("tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => tagSearch += termQuery("language", lang))
 
-    val theSearch = search in ImageApiProperties.get("SEARCH_INDEX") -> ImageApiProperties.get("SEARCH_DOCUMENT") query {
+    val theSearch = search in ImageApiProperties.SearchIndex -> ImageApiProperties.SearchDocument query {
       bool {
         should (
           nestedQuery("titles").query {bool {must (titleSearch.toList)}},
