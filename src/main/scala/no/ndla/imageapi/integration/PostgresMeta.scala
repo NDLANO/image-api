@@ -79,8 +79,8 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
     }
   }
 
-  def applyToAllInBulk(func: List[ImageMetaInformation] => Unit, bulkSize: Int) = {
-    val groupRanges = Seq.range(1, numElements).grouped(bulkSize).map(group => (group.head, group.last))
+  def applyToAll(func: List[ImageMetaInformation] => Unit) = {
+    val groupRanges = Seq.range(1, numElements).grouped(ImageApiProperties.IndexBulkSize).map(group => (group.head, group.last))
 
     DB readOnly { implicit session =>
       groupRanges.foreach(range => {
@@ -91,10 +91,6 @@ class PostgresMeta(dataSource: DataSource) extends ImageMeta with LazyLogging {
         )
       })
     }
-  }
-
-  def applyToAll(func: List[ImageMetaInformation] => Unit) = {
-    applyToAllInBulk(func, ImageApiProperties.IndexBulkSize)
   }
 
   def asImageMetaInformationWithApplicationUrl(documentId: String, json: String): ImageMetaInformation = {
