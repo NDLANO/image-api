@@ -78,16 +78,21 @@ class ElasticIndexMeta(clusterName:String, clusterHost:String, clusterPort:Strin
     }
   }
 
-  override def useIndex(indexName: String) = {
+  override def updateAliasTarget(newIndexName: String, oldIndexName: Option[String]) = {
     val existsDefinition = client.execute{
-      index exists indexName
+      index exists newIndexName
     }.await
+
+
     if(existsDefinition.isExists) {
       client.execute{
-        add alias ImageApiProperties.SearchIndex on indexName
+        oldIndexName.foreach(oldIndexName => {
+          remove alias ImageApiProperties.SearchIndex on oldIndexName
+        })
+        add alias ImageApiProperties.SearchIndex on newIndexName
       }.await
     } else {
-      throw new IllegalArgumentException(s"No such index: $indexName")
+      throw new IllegalArgumentException(s"No such index: $newIndexName")
     }
   }
 
@@ -104,7 +109,7 @@ class ElasticIndexMeta(clusterName:String, clusterHost:String, clusterPort:Strin
     }
   }
 
-  override def indexInUse: Option[String] = {
+  override def aliasTarget: Option[String] = {
     val res = client.execute {
       get alias ImageApiProperties.SearchIndex
     }.await

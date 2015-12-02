@@ -50,13 +50,6 @@ object AmazonIntegration {
       ImageApiProperties.get("SEARCH_PORT"))
   }
 
-  def getSearchAdmin(searchMeta: SearchMeta) = {
-    searchMeta match {
-      case sa: IndexMeta => sa
-      case _ => throw new ClassCastException
-    }
-  }
-
   def getIndexMeta(): IndexMeta = {
     new ElasticIndexMeta(
       ImageApiProperties.get("SEARCH_CLUSTER_NAME"),
