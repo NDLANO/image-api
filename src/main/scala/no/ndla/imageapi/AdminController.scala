@@ -40,6 +40,7 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
     indexMeta.createIndex(newIndexName)
     meta.applyToAll(docs => {
       indexMeta.indexDocuments(docs, newIndexName)
+      logger.info(s"Completed indexing of ${docs.size} documents")
     })
     indexMeta.updateAliasTarget(newIndexName, prevIndexName)
 
