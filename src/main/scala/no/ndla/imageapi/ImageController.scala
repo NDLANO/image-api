@@ -56,6 +56,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     ApplicationUrl.set(request)
   }
 
+  // Clear application url and correlationId.
   after() {
     LoggerContext.clearCorrelationID
     ApplicationUrl.clear
