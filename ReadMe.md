@@ -1,30 +1,6 @@
 # IMAGE API 
 API for accessing images
 
-# Updating dependencies
-
-## SwaggerUI
-[Swagger UI](https://github.com/swagger-api/swagger-ui) is cloned into the project as a submodule. (Ref. http://stackoverflow.com/questions/7813030/how-can-i-have-linked-dependencies-in-a-git-repo)
-
-### Initializing
-Upon cloning the repository run
-    cd lib/swagger-ui
-    git submodule init
-    git submodule update
-
-### Updating dependency
-If you want to update the dependency run
-
-    cd lib/swagger-ui
-    git pull
-    git add
-    git commit
-    
-### Acknowledge updated dependency when pulling
-When pulling a repo with an updated dependency, the dependency folder will be marked as modified. In order to update the dependency locally run
-
-    git submodule update
-
 # Building and distribution
 
 ## Compile
@@ -47,7 +23,21 @@ When pulling a repo with an updated dependency, the dependency folder will be ma
 
 You need to have a docker daemon running locally. Ex: [boot2docker](http://boot2docker.io/)
 
-## Deploy Docker Image to Amazon (via DockerHub)
-    cd src/main/deploy  
-    deployRemote.sh
+## Deploy Docker Image
+    ndla deploy <environment> image-api
+    
+# Setup local environment
+## Database
+    ndla deploy local postgres 9.4
+    psql --host $(DOCKER_ADDR) --port 30005 --username "postgres" --password -d postgres -f src/main/db/local_testdata.sql
+    
+## Search-engine
+    ndla deploy local search-engine
+    
+## Index the metadata to search-engine
+    ndla index local image-api
+    
+## Test
+    curl http://$DOCKER_ADDR:30001/images/
+    
 
