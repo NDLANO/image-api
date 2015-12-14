@@ -10,12 +10,18 @@ import com.typesafe.scalalogging.LazyLogging
 
 object ImageApiProperties extends LazyLogging {
 
+
+  val ApplicationPort = 80
   val EnvironmentFile = "/image-api.env"
   val ImageApiProps = io.Source.fromInputStream(getClass.getResourceAsStream(EnvironmentFile)).getLines().map(key => key -> scala.util.Properties.envOrNone(key)).toMap
 
   val ContactEmail = get("CONTACT_EMAIL")
   val HostAddr = get("HOST_ADDR")
   val Domains = get("DOMAINS").split(",") ++ Array(HostAddr)
+
+  val SearchHost = "search-engine"
+  val SearchPort = get("SEARCH_ENGINE_ENV_TCP_PORT")
+  var SearchClusterName = get("SEARCH_ENGINE_ENV_CLUSTER_NAME")
   val SearchIndex = get("SEARCH_INDEX")
   val SearchDocument = get("SEARCH_DOCUMENT")
   val IndexBulkSize = getInt("INDEX_BULK_SIZE")

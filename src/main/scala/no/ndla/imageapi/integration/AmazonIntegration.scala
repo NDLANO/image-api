@@ -45,15 +45,15 @@ object AmazonIntegration {
 
   def getSearchMeta(): SearchMeta = {
     new ElasticSearchMeta(
-      ImageApiProperties.get("SEARCH_CLUSTER_NAME"),
-      ImageApiProperties.HostAddr,
-      ImageApiProperties.get("SEARCH_PORT"))
+      ImageApiProperties.SearchClusterName,
+      ImageApiProperties.SearchHost,
+      ImageApiProperties.SearchPort)
   }
 
   def getIndexMeta(): IndexMeta = {
     new ElasticIndexMeta(
-      ImageApiProperties.get("SEARCH_CLUSTER_NAME"),
-      ImageApiProperties.HostAddr,
-      ImageApiProperties.get("SEARCH_PORT"))
+      ImageApiProperties.SearchClusterName,
+      ImageApiProperties.SearchHost,
+      ImageApiProperties.SearchPort)
   }
 }
