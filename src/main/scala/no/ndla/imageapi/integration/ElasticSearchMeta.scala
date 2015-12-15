@@ -41,16 +41,16 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
   override def matchingQuery(query: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
     val titleSearch = new ListBuffer[QueryDefinition]
-    titleSearch += matchQuery("title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-    language.foreach(lang => titleSearch += termQuery("language", lang))
+    titleSearch += matchQuery("titles.title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+    language.foreach(lang => titleSearch += termQuery("titles.language", lang))
 
     val altTextSearch = new ListBuffer[QueryDefinition]
-    altTextSearch += matchQuery("alttext", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-    language.foreach(lang => altTextSearch += termQuery("language", lang))
+    altTextSearch += matchQuery("alttexts.alttext", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+    language.foreach(lang => altTextSearch += termQuery("alttexts.language", lang))
 
     val tagSearch = new ListBuffer[QueryDefinition]
-    tagSearch += matchQuery("tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-    language.foreach(lang => tagSearch += termQuery("language", lang))
+    tagSearch += matchQuery("tags.tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+    language.foreach(lang => tagSearch += termQuery("tags.language", lang))
 
     val theSearch = search in ImageApiProperties.SearchIndex -> ImageApiProperties.SearchDocument query {
       bool {
