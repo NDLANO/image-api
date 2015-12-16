@@ -84,7 +84,7 @@ imageNames in docker := Seq(
   ImageName(
     namespace = Some(organization.value),
     repository = name.value,
-    tag = Some("SNAPSHOT"))
+    tag = Some(System.getProperty("docker.tag", "SNAPSHOT")))
 )
 
 publishTo := {
