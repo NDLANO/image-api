@@ -22,7 +22,6 @@ import scala.collection.mutable.ListBuffer
 
 class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta with LazyLogging {
 
-  val PageSize = 100
   val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
   val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
   val noCopyrightFilter = not(nestedFilter("copyright.license").filter(termFilter("license", "copyrighted")))
@@ -39,7 +38,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
   }
 
 
-  override def matchingQuery(query: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary] = {
+  override def matchingQuery(query: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String], index: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
     val titleSearch = new ListBuffer[QueryDefinition]
     titleSearch += matchQuery("titles.title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => titleSearch += termQuery("titles.language", lang))
@@ -62,6 +61,17 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
       }
     }
 
+    val numResults = pageSize match {
+      case Some(num) =>
+        if(num > 0) num.min(ImageApiProperties.MaxPageSize) else ImageApiProperties.DefaultPageSize
+      case None => ImageApiProperties.DefaultPageSize
+    }
+
+    val startAt = index match {
+      case Some(sa) => sa.max(0)
+      case None => 0
+    }
+
     val filterList = new ListBuffer[FilterDefinition]()
     license.foreach(license => filterList += nestedFilter("copyright.license").filter(termFilter("license", license)))
     minimumSize.foreach(size => filterList += nestedFilter("images.full").filter(rangeFilter("images.full.size").gte(size.toString)))
@@ -71,7 +81,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
       theSearch.postFilter(must(filterList.toList))
     }
 
-    client.execute{theSearch limit PageSize}.await.as[ImageMetaSummary]
+    client.execute{theSearch start startAt limit numResults}.await.as[ImageMetaSummary]
   }
 
   override def all(minimumSize:Option[Int], license: Option[String], index: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
@@ -89,8 +99,8 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
     val numResults = pageSize match {
       case Some(num) =>
-        if(num > 0) num else PageSize
-      case None => PageSize
+        if(num > 0) num.min(ImageApiProperties.MaxPageSize) else ImageApiProperties.DefaultPageSize
+      case None => ImageApiProperties.DefaultPageSize
     }
 
     val startAt = index match {

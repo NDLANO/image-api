@@ -92,7 +92,9 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         query = query.toLowerCase().split(" ").map(_.trim),
         minimumSize = size,
         language = language,
-        license = license)
+        license = license,
+        index,
+        pageSize)
 
       case None => searchMeta.all(minimumSize = size, license = license, index, pageSize)
     }
