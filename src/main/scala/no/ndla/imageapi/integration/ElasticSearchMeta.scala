@@ -74,7 +74,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     client.execute{theSearch limit PageSize}.await.as[ImageMetaSummary]
   }
 
-  override def all(minimumSize:Option[Int], license: Option[String]): Iterable[ImageMetaSummary] = {
+  override def all(minimumSize:Option[Int], license: Option[String], index: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
     val theSearch = search in ImageApiProperties.SearchIndex -> ImageApiProperties.SearchDocument
 
     val filterList = new ListBuffer[FilterDefinition]()
@@ -87,7 +87,18 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     }
     theSearch.sort(field sort "id")
 
-    client.execute{theSearch limit PageSize}.await.as[ImageMetaSummary]
+    val numResults = pageSize match {
+      case Some(num) =>
+        if(num > 0) num else PageSize
+      case None => PageSize
+    }
+
+    val startAt = index match {
+      case Some(sa) => sa.max(0)
+      case None => 0
+    }
+
+    client.execute{theSearch start startAt limit numResults}.await.as[ImageMetaSummary]
   }
 
 }

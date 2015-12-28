@@ -17,6 +17,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
 import org.scalatra.json._
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
+import scala.util.Try
 
 class ImageController (implicit val swagger:Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
 
@@ -77,6 +78,8 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     val query = params.get("query")
     val language = params.get("language")
     val license = params.get("license")
+    val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
+    val index = params.get("index").flatMap(idx => Try(idx.toInt).toOption)
     logger.info("GET / with params minimum-size='{}', query='{}', language={} license={}", minimumSize, query, language, license)
 
     val size = minimumSize match {
@@ -91,7 +94,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         language = language,
         license = license)
 
-      case None => searchMeta.all(minimumSize = size, license = license)
+      case None => searchMeta.all(minimumSize = size, license = license, index, pageSize)
     }
   }
 
