@@ -38,7 +38,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
   }
 
 
-  override def matchingQuery(query: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String], index: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
+  override def matchingQuery(query: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
     val titleSearch = new ListBuffer[QueryDefinition]
     titleSearch += matchQuery("titles.title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => titleSearch += termQuery("titles.language", lang))
@@ -61,16 +61,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
       }
     }
 
-    val numResults = pageSize match {
-      case Some(num) =>
-        if(num > 0) num.min(ImageApiProperties.MaxPageSize) else ImageApiProperties.DefaultPageSize
-      case None => ImageApiProperties.DefaultPageSize
-    }
-
-    val startAt = index match {
-      case Some(sa) => sa.max(0)
-      case None => 0
-    }
+    val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
 
     val filterList = new ListBuffer[FilterDefinition]()
     license.foreach(license => filterList += nestedFilter("copyright.license").filter(termFilter("license", license)))
@@ -84,7 +75,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     client.execute{theSearch start startAt limit numResults}.await.as[ImageMetaSummary]
   }
 
-  override def all(minimumSize:Option[Int], license: Option[String], index: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
+  override def all(minimumSize:Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
     val theSearch = search in ImageApiProperties.SearchIndex -> ImageApiProperties.SearchDocument
 
     val filterList = new ListBuffer[FilterDefinition]()
@@ -97,18 +88,22 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     }
     theSearch.sort(field sort "id")
 
+    val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
+
+    client.execute{theSearch start startAt limit numResults}.await.as[ImageMetaSummary]
+  }
+  def getStartAtAndNumResults(page: Option[Int], pageSize: Option[Int]): (Int, Int) = {
     val numResults = pageSize match {
       case Some(num) =>
         if(num > 0) num.min(ImageApiProperties.MaxPageSize) else ImageApiProperties.DefaultPageSize
       case None => ImageApiProperties.DefaultPageSize
     }
 
-    val startAt = index match {
-      case Some(sa) => sa.max(0)
+    val startAt = page match {
+      case Some(sa) => (sa - 1).max(0) * numResults
       case None => 0
     }
 
-    client.execute{theSearch start startAt limit numResults}.await.as[ImageMetaSummary]
+    (startAt, numResults)
   }
-
 }

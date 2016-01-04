@@ -81,8 +81,8 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     val language = params.get("language")
     val license = params.get("license")
     val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
-    val index = params.get("index").flatMap(idx => Try(idx.toInt).toOption)
-    logger.info("GET / with params minimum-size='{}', query='{}', language={}, license={}, index={}, page-size={}", minimumSize, query, language, license, index, pageSize)
+    val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
+    logger.info("GET / with params minimum-size='{}', query='{}', language={}, license={}, page={}, page-size={}", minimumSize, query, language, license, page, pageSize)
 
     val size = minimumSize match {
       case Some(size) => if (size.forall(_.isDigit)) Option(size.toInt) else None
@@ -95,10 +95,10 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         minimumSize = size,
         language = language,
         license = license,
-        index,
+        page,
         pageSize)
 
-      case None => searchMeta.all(minimumSize = size, license = license, index, pageSize)
+      case None => searchMeta.all(minimumSize = size, license = license, page, pageSize)
     }
   }
 
