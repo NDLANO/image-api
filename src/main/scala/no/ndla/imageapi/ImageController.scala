@@ -37,8 +37,8 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         queryParam[Option[String]]("minimum-size").description("Return only images with full size larger than submitted value in bytes."),
         queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
         queryParam[Option[String]]("license").description("Return only images with provided license."),
-        queryParam[Option[Int]]("index").description("The starting index of the search hits to display."),
-        queryParam[Option[Int]]("page-size").description("The number of search hits to display.")
+        queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
+        queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
       ))
 
   val getByImageId =
