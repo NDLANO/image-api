@@ -17,6 +17,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
 import org.scalatra.json._
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
+import scala.util.Try
 
 class ImageController (implicit val swagger:Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
 
@@ -35,7 +36,9 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         queryParam[Option[String]]("query").description("Return only images with titles, alt-texts or tags matching the specified query."),
         queryParam[Option[String]]("minimum-size").description("Return only images with full size larger than submitted value in bytes."),
         queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
-        queryParam[Option[String]]("license").description("Return only images with provided license.")
+        queryParam[Option[String]]("license").description("Return only images with provided license."),
+        queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
+        queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
       ))
 
   val getByImageId =
@@ -77,7 +80,9 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     val query = params.get("query")
     val language = params.get("language")
     val license = params.get("license")
-    logger.info("GET / with params minimum-size='{}', query='{}', language={} license={}", minimumSize, query, language, license)
+    val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
+    val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
+    logger.info("GET / with params minimum-size='{}', query='{}', language={}, license={}, page={}, page-size={}", minimumSize, query, language, license, page, pageSize)
 
     val size = minimumSize match {
       case Some(size) => if (size.forall(_.isDigit)) Option(size.toInt) else None
@@ -89,9 +94,11 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         query = query.toLowerCase().split(" ").map(_.trim),
         minimumSize = size,
         language = language,
-        license = license)
+        license = license,
+        page,
+        pageSize)
 
-      case None => searchMeta.all(minimumSize = size, license = license)
+      case None => searchMeta.all(minimumSize = size, license = license, page, pageSize)
     }
   }
 

@@ -10,6 +10,6 @@ import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
 
 
 trait SearchMeta {
-  def matchingQuery(query: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String]): Iterable[ImageMetaSummary]
-  def all(minimumSize:Option[Int], license: Option[String]): Iterable[ImageMetaSummary]
+  def matchingQuery(query: Iterable[String], minimumSize:Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary]
+  def all(minimumSize:Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary]
 }
