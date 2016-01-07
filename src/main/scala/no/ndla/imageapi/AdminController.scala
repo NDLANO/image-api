@@ -30,25 +30,36 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
   }
 
   def indexDocuments() = {
-    val start = System.currentTimeMillis()
+    synchronized {
+      val start = System.currentTimeMillis()
 
-    val prevIndexName = indexMeta.aliasTarget
-    val newIndexName = ImageApiProperties.SearchIndex + "_" + getTimestamp
+      val newIndexName = ImageApiProperties.SearchIndex + "_" + getTimestamp
+      val oldIndexName = indexMeta.aliasTarget
 
-    logger.info(s"Indexing all documents into index $newIndexName")
+      indexMeta.createIndex(newIndexName)
 
-    indexMeta.createIndex(newIndexName)
-    meta.applyToAll(docs => {
-      indexMeta.indexDocuments(docs, newIndexName)
-      logger.info(s"Completed indexing of ${docs.size} documents")
-    })
-    indexMeta.updateAliasTarget(newIndexName, prevIndexName)
+      oldIndexName match {
+        case None => indexMeta.updateAliasTarget(newIndexName, oldIndexName)
+        case Some(_) =>
+      }
 
-    prevIndexName.foreach(indexMeta.deleteIndex)
+      logger.info(s"Indexing all documents into index $newIndexName")
 
-    val result = s"Completed indexing '${ImageApiProperties.SearchIndex}' in ${System.currentTimeMillis() - start} ms."
-    logger.info(result)
-    result
+      meta.applyToAll(docs => {
+        indexMeta.indexDocuments(docs, newIndexName)
+        logger.info(s"Completed indexing of ${docs.size} documents")
+      })
+      indexMeta.updateAliasTarget(newIndexName, oldIndexName)
+
+      oldIndexName.foreach(indexName => {
+        indexMeta.updateAliasTarget(newIndexName, oldIndexName)
+        indexMeta.deleteIndex(indexName)
+      })
+
+      val result = s"Completed indexing '${ImageApiProperties.SearchIndex}' in ${System.currentTimeMillis() - start} ms."
+      logger.info(result)
+      result
+    }
   }
 
   post("/index") {

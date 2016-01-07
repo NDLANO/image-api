@@ -14,6 +14,7 @@ object ImageApiProperties extends LazyLogging {
   val ImageApiProps = io.Source.fromInputStream(getClass.getResourceAsStream(EnvironmentFile)).getLines().map(key => key -> scala.util.Properties.envOrNone(key)).toMap
 
   val ContactEmail = get("CONTACT_EMAIL")
+  val ApplicationPort = getInt("APPLICATION_PORT")
   val HostAddr = get("HOST_ADDR")
   val Domains = get("DOMAINS").split(",") ++ Array(HostAddr)
   val SearchIndex = get("SEARCH_INDEX")
