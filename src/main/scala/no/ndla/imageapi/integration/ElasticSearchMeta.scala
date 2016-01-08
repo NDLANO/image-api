@@ -13,19 +13,17 @@ import com.sksamuel.elastic4s._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.business.SearchMeta
-import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary, Error}
+import no.ndla.imageapi.model.ImageMetaSummary
 import no.ndla.imageapi.network.ApplicationUrl
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.impl.client.HttpClientBuilder
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.index.query.MatchQueryBuilder
 import org.elasticsearch.indices.IndexMissingException
 import org.elasticsearch.transport.RemoteTransportException
 import scala.concurrent.ExecutionContext.Implicits.global
-import org.elasticsearch.index.Index
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
+import scalaj.http.Http
 
 class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta with LazyLogging {
 
@@ -134,9 +132,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
   def scheduleIndexDocuments() = {
     val f = Future {
-      val request = new HttpPost(s"http://${ImageApiProperties.Domains(0)}:${ImageApiProperties.ApplicationPort}/admin/index")
-      val client = HttpClientBuilder.create().build()
-      client.execute(request)
+      Http(s"http://${ImageApiProperties.Domains(0)}:${ImageApiProperties.ApplicationPort}/admin/index").postForm.asString
     }
     f onFailure { case t => logger.error("Unable to create index: " + t.getMessage) }
   }
