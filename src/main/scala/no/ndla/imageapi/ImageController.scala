@@ -13,6 +13,7 @@ import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.{Error, ImageMetaInformation, ImageMetaSummary}
 import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.logging.LoggerContext
+import org.elasticsearch.indices.IndexMissingException
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
 import org.scalatra.json._
@@ -66,6 +67,8 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   error{
+    case e:IndexMissingException =>
+      halt(status = 500, body = Error.IndexMissingError)
     case t:Throwable => {
       logger.error(Error.GenericError.toString, t)
       halt(status = 500, body = Error.GenericError)

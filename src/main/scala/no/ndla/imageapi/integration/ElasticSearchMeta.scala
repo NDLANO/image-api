@@ -13,12 +13,17 @@ import com.sksamuel.elastic4s._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.business.SearchMeta
-import no.ndla.imageapi.model.{ImageMetaInformation, ImageMetaSummary}
+import no.ndla.imageapi.model.ImageMetaSummary
 import no.ndla.imageapi.network.ApplicationUrl
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.index.query.MatchQueryBuilder
+import org.elasticsearch.indices.IndexMissingException
+import org.elasticsearch.transport.RemoteTransportException
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.Future
+import scalaj.http.Http
 
 class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta with LazyLogging {
 
@@ -72,7 +77,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
       theSearch.postFilter(must(filterList.toList))
     }
 
-    client.execute{theSearch start startAt limit numResults}.await.as[ImageMetaSummary]
+    executeSearch(theSearch, page, pageSize)
   }
 
   override def all(minimumSize:Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
@@ -88,10 +93,18 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     }
     theSearch.sort(field sort "id")
 
-    val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-
-    client.execute{theSearch start startAt limit numResults}.await.as[ImageMetaSummary]
+    executeSearch(theSearch, page, pageSize)
   }
+
+  def executeSearch(search: SearchDefinition, page: Option[Int], pageSize: Option[Int]) = {
+    val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
+    try{
+      client.execute{search start startAt limit numResults}.await.as[ImageMetaSummary]
+    } catch {
+      case e:RemoteTransportException => errorHandler(e.getCause)
+    }
+  }
+
   def getStartAtAndNumResults(page: Option[Int], pageSize: Option[Int]): (Int, Int) = {
     val numResults = pageSize match {
       case Some(num) =>
@@ -105,5 +118,22 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     }
 
     (startAt, numResults)
+  }
+
+  def errorHandler(exception: Throwable) = {
+    exception match {
+      case ex: IndexMissingException =>
+        logger.error(ex.getDetailedMessage)
+        scheduleIndexDocuments()
+        throw ex
+      case _ => throw exception
+    }
+  }
+
+  def scheduleIndexDocuments() = {
+    val f = Future {
+      Http(s"http://${ImageApiProperties.Domains(0)}:${ImageApiProperties.ApplicationPort}/admin/index").postForm.asString
+    }
+    f onFailure { case t => logger.error("Unable to create index: " + t.getMessage) }
   }
 }
