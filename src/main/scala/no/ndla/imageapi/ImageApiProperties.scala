@@ -16,9 +16,21 @@ object ImageApiProperties extends LazyLogging {
   val ImageApiProps = io.Source.fromInputStream(getClass.getResourceAsStream(EnvironmentFile)).getLines().map(key => key -> scala.util.Properties.envOrNone(key)).toMap
 
   val ContactEmail = get("CONTACT_EMAIL")
-  val ApplicationPort = getInt("APPLICATION_PORT")
   val HostAddr = get("HOST_ADDR")
   val Domains = get("DOMAINS").split(",") ++ Array(HostAddr)
+
+  val MetaUserName = get("META_USER_NAME")
+  val MetaPassword = get("META_PASSWORD")
+  val MetaResource = get("META_RESOURCE")
+  val MetaServer = get("META_SERVER")
+  val MetaPort = getInt("META_PORT")
+  val MetaInitialConnections = getInt("META_INITIAL_CONNECTIONS")
+  val MetaMaxConnections = getInt("META_MAX_CONNECTIONS")
+  val MetaSchema = get("META_SCHEMA")
+
+  val StorageName = get("STORAGE_NAME")
+  val StorageAccessKey = get("STORAGE_ACCESS_KEY")
+  val StorageSecretKey = get("STORAGE_SECRET_KEY")
 
   val SearchHost = "search-engine"
   val SearchPort = get("SEARCH_ENGINE_ENV_TCP_PORT")
@@ -39,14 +51,14 @@ object ImageApiProperties extends LazyLogging {
     }
   }
 
-  def get(envKey: String): String = {
+  private def get(envKey: String): String = {
     ImageApiProps.get(envKey).flatten match {
       case Some(value) => value
       case None => throw new NoSuchFieldError(s"Missing environment variable $envKey")
     }
   }
 
-  def getInt(envKey: String):Integer = {
+  private def getInt(envKey: String):Integer = {
     get(envKey).toInt
   }
 
