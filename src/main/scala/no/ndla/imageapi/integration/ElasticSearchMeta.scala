@@ -12,7 +12,7 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.business.SearchMeta
+import no.ndla.imageapi.business.{SearchIndexer, SearchMeta}
 import no.ndla.imageapi.model.ImageMetaSummary
 import no.ndla.imageapi.network.ApplicationUrl
 import org.elasticsearch.common.settings.ImmutableSettings
@@ -132,7 +132,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
   def scheduleIndexDocuments() = {
     val f = Future {
-      Http(s"http://${ImageApiProperties.Domains(0)}:${ImageApiProperties.ApplicationPort}/admin/index").postForm.asString
+      SearchIndexer.indexDocuments()
     }
     f onFailure { case t => logger.error("Unable to create index: " + t.getMessage) }
   }
