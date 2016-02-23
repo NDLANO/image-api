@@ -7,6 +7,7 @@
 package no.ndla.imageapi.batch
 
 import no.ndla.imageapi.model.ImageTag
+import no.ndla.mapping.ISO639Mapping.get6391CodeFor6392Code
 
 import scala.io.Source
 import scala.util.matching.Regex
@@ -47,7 +48,7 @@ object Tags {
 
   def getISO639(languageUrl:String): Option[String] = {
     Option(languageUrl) collect { case pattern(group) => group } match {
-      case Some(x) => if (x == "language-neutral") None else iso639Map.get(x)
+      case Some(x) => if (x == "language-neutral") None else get6391CodeFor6392Code(x)
       case None => None
     }
   }
