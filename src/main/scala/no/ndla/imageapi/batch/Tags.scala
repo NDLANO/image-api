@@ -16,20 +16,7 @@ object Tags {
 
   val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
   val pattern = new Regex("http:\\/\\/psi\\..*\\/#(.+)")
-
-  val iso639Map = Map(
-    "nob" -> "nb",
-    "eng" -> "en",
-    "fra" -> "fr",
-    "nno" -> "nn",
-    "sme" -> "se",
-    "sma" -> "se",
-    "smj" -> "se",
-    "deu" -> "de",
-    "spa" -> "es",
-    "zho" -> "zh"
-  )
-
+  
   def forImage(nid: String): List[ImageTag] = {
     import org.json4s.native.JsonMethods._
     import org.json4s.native.Serialization.read
