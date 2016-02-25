@@ -9,7 +9,9 @@ SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
 
-SET search_path = public, pg_catalog;
+CREATE SCHEMA imageapi;
+
+SET search_path = imageapi, pg_catalog;
 
 SET default_tablespace = '';
 
