@@ -29,8 +29,8 @@ lazy val image_api = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "image-api",
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-    scalacOptions := Seq("-target:jvm-1.8"),
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
+    scalacOptions := Seq("-target:jvm-1.7"),
     libraryDependencies ++= Seq(
       "ndla" %% "logging" % "0.1-SNAPSHOT",
       "ndla" %% "mapping" % "0.1-SNAPSHOT",
