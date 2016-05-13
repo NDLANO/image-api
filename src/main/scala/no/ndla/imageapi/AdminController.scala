@@ -14,16 +14,13 @@ import org.scalatra.{Ok, ScalatraServlet}
 class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLogging  {
 
   protected implicit override val jsonFormats: Formats = DefaultFormats
-  val imageMeta: ImageMeta = AmazonIntegration.getImageMeta()
 
-  // Before every action runs, set the content type to be in JSON format.
   before() {
     contentType = formats("json")
     LoggerContext.setCorrelationID(Option(request.getHeader("X-Correlation-ID")))
     ApplicationUrl.set(request)
   }
 
-  // Clear application url and correlationId.
   after() {
     LoggerContext.clearCorrelationID
     ApplicationUrl.clear
@@ -42,16 +39,18 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
   }
 
   get("/extern/:image_id") {
-    val imageId = params("image_id")
-    logger.info("GET /extern/{}", imageId)
+    val externalId = params("image_id")
+    val imageMeta: ImageMeta = AmazonIntegration.getImageMeta()
+    
+    logger.info("GET /extern/{}", externalId)
 
-    if(imageId.forall(_.isDigit)) {
-      imageMeta.withExternalId(imageId) match {
+    if(externalId.forall(_.isDigit)) {
+      imageMeta.withExternalId(externalId) match {
         case Some(image) => image
-        case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with external id $imageId not found"))
+        case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with external id $externalId not found"))
       }
     } else {
-      halt(status = 404, body = Error(NOT_FOUND, s"Image with external id $imageId not found"))
+      halt(status = 404, body = Error(NOT_FOUND, s"Image with external id $externalId not found"))
     }
   }
 }
