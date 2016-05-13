@@ -9,21 +9,22 @@ package no.ndla.imageapi.batch
 import java.io._
 import java.net.URL
 
+import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.model._
 import no.ndla.imageapi.integration.AmazonIntegration
 
 import scala.io.Source
 
 
-object ImageApiUploader {
+object ImageApiUploader extends LazyLogging {
 
   def main(args: Array[String]) {
 
-    println("Antall argumenter: " + args.length)
-    println("Argumenter: " + args)
+    logger.info("Antall argumenter: " + args.length)
+    logger.info("Argumenter: " + args)
 
     if(args.length != 2){
-      println("Two arguments required: <path to input files> <range to run>")
+      logger.info("Two arguments required: <path to input files> <range to run>")
       System.exit(1)
     }
 
@@ -38,13 +39,13 @@ object ImageApiUploader {
     val originFile = path + "origin.csv"
     val failedFile = path + "failedImports.csv"
 
-    println(s"Running from $rangeFrom to $rangeTo")
-    println(s"ImageMeta: $imageMetaFile")
-    println(s"Licenses: $licensesFile")
-    println(s"Authors: $authorsFile")
-    println(s"Origin: $originFile")
-    println(s"Failed: $failedFile")
-    println("")
+    logger.info(s"Running from $rangeFrom to $rangeTo")
+    logger.info(s"ImageMeta: $imageMetaFile")
+    logger.info(s"Licenses: $licensesFile")
+    logger.info(s"Authors: $authorsFile")
+    logger.info(s"Origin: $originFile")
+    logger.info(s"Failed: $failedFile")
+    logger.info("")
 
     new ImageApiUploader(
       maxUploads = rangeTo - rangeFrom,
@@ -107,7 +108,7 @@ object ImageApiUploader {
  *
  *
  */
-class ImageApiUploader(maxUploads:Int = 1, drop:Int = 0, imageMetaFile: String, licensesFile: String, authorsFile: String, originFile: String, outputFile: String) {
+class ImageApiUploader(maxUploads:Int = 1, drop:Int = 0, imageMetaFile: String, licensesFile: String, authorsFile: String, originFile: String, outputFile: String) extends LazyLogging {
 
   val DownloadUrlPrefix = "http://ndla.no/sites/default/files/images/"
   val ThumbUrlPrefix = "http://ndla.no/sites/default/files/imagecache/fag_preset/images/"
@@ -184,10 +185,10 @@ class ImageApiUploader(maxUploads:Int = 1, drop:Int = 0, imageMetaFile: String, 
     val start = System.currentTimeMillis
     imageMetaWithoutTranslations.drop(drop).take(maxUploads).foreach(upload(_))
 
-    println(s"Inserted $inserted, updated $updated in ${System.currentTimeMillis - start}ms.")
+    logger.info(s"Inserted $inserted, updated $updated in ${System.currentTimeMillis - start}ms.")
     if(failed > 0){
-      println(s"$failed failed:")
-      failedMap.foreach(elem => println(s"${elem._1}:   ${elem._2}"))
+      logger.info(s"$failed failed:")
+      failedMap.foreach(elem => logger.info(s"${elem._1}:   ${elem._2}"))
 
       val writer = new PrintWriter(new File(outputFile))
       retryMap.foreach(meta => {
@@ -219,7 +220,7 @@ class ImageApiUploader(maxUploads:Int = 1, drop:Int = 0, imageMetaFile: String, 
         case Some(dbMeta) => {
           imageMetaStore.update(ImageMetaInformation(dbMeta.id, titles, alttexts, dbMeta.images, copyright, tags), dbMeta.id)
           updated += 1
-          println((inserted + updated + failed) + " - UPDATE: " + imageMeta.nid + " (" + imageMeta.title  + ") -- " + (System.currentTimeMillis - start) + "ms")
+          logger.info((inserted + updated + failed) + " - UPDATE: " + imageMeta.nid + " (" + imageMeta.title  + ") -- " + (System.currentTimeMillis - start) + "ms")
         }
 
         case None => {
@@ -242,7 +243,7 @@ class ImageApiUploader(maxUploads:Int = 1, drop:Int = 0, imageMetaFile: String, 
 
           imageMetaStore.insert(imageMetaInformation, imageMeta.nid)
           inserted += 1
-          println((inserted + updated + failed) + " - INSERT: " + imageMeta.nid + " (" + imageMeta.title  + ", " + sourceUrlFull + ") -- " + (System.currentTimeMillis - start) + "ms")
+          logger.info((inserted + updated + failed) + " - INSERT: " + imageMeta.nid + " (" + imageMeta.title  + ", " + sourceUrlFull + ") -- " + (System.currentTimeMillis - start) + "ms")
         }
 
       }
