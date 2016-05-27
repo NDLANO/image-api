@@ -1,6 +1,7 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.batch.BatchComponentRegistry
 import no.ndla.imageapi.business.{ImageMeta, SearchIndexer}
 import no.ndla.imageapi.integration.AmazonIntegration
 import no.ndla.imageapi.model.Error
@@ -10,6 +11,8 @@ import no.ndla.logging.LoggerContext
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{Ok, ScalatraServlet}
+
+import scala.util.Try
 
 class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLogging  {
 
@@ -26,7 +29,7 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
     ApplicationUrl.clear
   }
 
-  error{
+  error {
     case t:Throwable => {
       val error = Error(Error.GENERIC, t.getMessage)
       logger.error(error.toString, t)
@@ -52,5 +55,16 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
     } else {
       halt(status = 404, body = Error(NOT_FOUND, s"Image with external id $externalId not found"))
     }
+  }
+
+  post("/import/:range_from/:range_to") {
+    val rangeFrom = params("range_from").toInt
+    val rangeTo = params("range_to").toInt
+    val (numImported, numFailed) = BatchComponentRegistry.importService.doImport(rangeFrom, rangeTo)
+    Ok("Imported " + numImported + " images. Failed to import " + numFailed + " images")
+  }
+
+  post("/import/:image_id") {
+
   }
 }
