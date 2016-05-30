@@ -8,38 +8,38 @@ package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
 
-object ImageApiProperties extends LazyLogging {
+import scala.collection.mutable
 
+object ImageApiProperties extends LazyLogging {
+  var ImageApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
 
   val ApplicationPort = 80
-  val EnvironmentFile = "/image-api.env"
-  val ImageApiProps = io.Source.fromInputStream(getClass.getResourceAsStream(EnvironmentFile)).getLines().map(key => key -> scala.util.Properties.envOrNone(key)).toMap
 
-  val ContactEmail = get("CONTACT_EMAIL")
-  val HostAddr = get("HOST_ADDR")
-  val Domains = get("DOMAINS").split(",") ++ Array(HostAddr)
+  lazy val ContactEmail = get("CONTACT_EMAIL")
+  lazy val HostAddr = get("HOST_ADDR")
+  lazy val Domains = get("DOMAINS").split(",") ++ Array(HostAddr)
 
-  val MetaUserName = get("META_USER_NAME")
-  val MetaPassword = get("META_PASSWORD")
-  val MetaResource = get("META_RESOURCE")
-  val MetaServer = get("META_SERVER")
-  val MetaPort = getInt("META_PORT")
-  val MetaInitialConnections = getInt("META_INITIAL_CONNECTIONS")
-  val MetaMaxConnections = getInt("META_MAX_CONNECTIONS")
-  val MetaSchema = get("META_SCHEMA")
+  lazy val MetaUserName = get("META_USER_NAME")
+  lazy val MetaPassword = get("META_PASSWORD")
+  lazy val MetaResource = get("META_RESOURCE")
+  lazy val MetaServer = get("META_SERVER")
+  lazy val MetaPort = getInt("META_PORT")
+  lazy val MetaInitialConnections = getInt("META_INITIAL_CONNECTIONS")
+  lazy val MetaMaxConnections = getInt("META_MAX_CONNECTIONS")
+  lazy val MetaSchema = get("META_SCHEMA")
 
-  val StorageName = get("STORAGE_NAME")
-  val StorageAccessKey = get("STORAGE_ACCESS_KEY")
-  val StorageSecretKey = get("STORAGE_SECRET_KEY")
+  lazy val StorageName = get("STORAGE_NAME")
+  lazy val StorageAccessKey = get("STORAGE_ACCESS_KEY")
+  lazy val StorageSecretKey = get("STORAGE_SECRET_KEY")
 
   val SearchHost = "search-engine"
-  val SearchPort = get("SEARCH_ENGINE_ENV_TCP_PORT")
-  var SearchClusterName = get("SEARCH_ENGINE_ENV_CLUSTER_NAME")
-  val SearchIndex = get("SEARCH_INDEX")
-  val SearchDocument = get("SEARCH_DOCUMENT")
-  val DefaultPageSize: Int = getInt("SEARCH_DEFAULT_PAGE_SIZE")
-  val MaxPageSize: Int = getInt("SEARCH_MAX_PAGE_SIZE")
-  val IndexBulkSize = getInt("INDEX_BULK_SIZE")
+  lazy val SearchPort = get("SEARCH_ENGINE_ENV_TCP_PORT")
+  lazy val SearchClusterName = get("SEARCH_ENGINE_ENV_CLUSTER_NAME")
+  lazy val SearchIndex = get("SEARCH_INDEX")
+  lazy val SearchDocument = get("SEARCH_DOCUMENT")
+  lazy val DefaultPageSize: Int = getInt("SEARCH_DEFAULT_PAGE_SIZE")
+  lazy val MaxPageSize: Int = getInt("SEARCH_MAX_PAGE_SIZE")
+  lazy val IndexBulkSize = getInt("INDEX_BULK_SIZE")
 
   def verify() = {
     val missingProperties = ImageApiProps.filter(entry => entry._2.isEmpty).toList
@@ -49,6 +49,10 @@ object ImageApiProperties extends LazyLogging {
       logger.error("Shutting down.")
       System.exit(1)
     }
+  }
+
+  def setProperties(properties: Map[String, Option[String]]) = {
+    properties.foreach(prop => ImageApiProps.put(prop._1, prop._2))
   }
 
   private def get(envKey: String): String = {
@@ -62,4 +66,17 @@ object ImageApiProperties extends LazyLogging {
     get(envKey).toInt
   }
 
+}
+
+object PropertiesLoader {
+  val EnvironmentFile = "/image-api.env"
+
+  def readPropertyFile(): Map[String,Option[String]] = {
+    io.Source.fromInputStream(getClass.getResourceAsStream(EnvironmentFile)).getLines().map(key => key -> scala.util.Properties.envOrNone(key)).toMap
+  }
+
+  def load() = {
+    ImageApiProperties.setProperties(readPropertyFile())
+    ImageApiProperties.verify()
+  }
 }

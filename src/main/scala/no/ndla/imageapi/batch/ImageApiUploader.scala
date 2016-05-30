@@ -6,35 +6,14 @@
  */
 package no.ndla.imageapi.batch
 
-import java.io._
-import java.net.URL
-
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.model._
-import no.ndla.imageapi.integration.AmazonIntegration
-
-import scala.io.Source
+import no.ndla.imageapi.ComponentRegistry
 
 
 object ImageApiUploader extends LazyLogging {
 
   def main(args: Array[String]) {
-
-    //    logger.info("Antall argumenter: " + args.length)
-    //    logger.info("Argumenter: " + args)
-    //
-    //    if (args.length != 2) {
-    //      logger.info("Two arguments required: <path to input files> <range to run>")
-    //      System.exit(1)
-    //    }
-    //
-    //    val rangeFrom = args(0).split("-")(0).toInt
-    //    val rangeTo = args(0).split("-")(1).toInt
-
-
-    val rangeFrom = 0
-    val rangeTo = 10
-    BatchComponentRegistry.importService.doImport(rangeFrom, rangeTo)
+    ComponentRegistry.importService.doImport(0, 10)
   }
 }
 

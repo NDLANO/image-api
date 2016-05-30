@@ -7,8 +7,6 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.business.{SearchMeta, ImageMeta, ImageStorage}
-import no.ndla.imageapi.integration.{PostgresMeta, AmazonIntegration}
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.{Error, ImageMetaInformation, ImageMetaSummary}
 import no.ndla.imageapi.network.ApplicationUrl
@@ -75,8 +73,8 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     }
   }
 
-  val searchMeta: SearchMeta = AmazonIntegration.getSearchMeta()
-  val imageMeta: ImageMeta = AmazonIntegration.getImageMeta()
+  val searchMeta = ComponentRegistry.elasticContentSearch
+  val imageMeta = ComponentRegistry.imageRepository
 
   get("/", operation(getImages)) {
     val minimumSize = params.get("minimum-size")

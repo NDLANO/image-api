@@ -5,16 +5,15 @@ import java.net.URL
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.batch._
 import no.ndla.imageapi.batch.integration.CMDataComponent
-import no.ndla.imageapi.integration.AmazonIntegration
 import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants, _}
+import no.ndla.imageapi.repository.ImageRepositoryComponent
+import no.ndla.imageapi.service.AmazonImageStorageComponent
 
 trait ImportServiceComponent {
-  this: CMDataComponent =>
+  this: CMDataComponent with AmazonImageStorageComponent with ImageRepositoryComponent =>
   val importService: ImportService
 
   class ImportService extends LazyLogging {
-    val imageStorage = AmazonIntegration.getImageStorageDefaultCredentials();
-    val imageMetaStore = AmazonIntegration.getImageMeta()
     val DownloadUrlPrefix = "http://ndla.no/sites/default/files/images/"
     val ThumbUrlPrefix = "http://ndla.no/sites/default/files/imagecache/fag_preset/images/"
     val licenseToLicenseDefinitionsMap = Map(
@@ -95,9 +94,9 @@ trait ImportServiceComponent {
           alttexts = ImageAltText(translation.alttext, languageToISOMap.get(translation.language)) :: alttexts
         }))
 
-        imageMetaStore.withExternalId(imageMeta.nid) match {
+        imageRepository.withExternalId(imageMeta.nid) match {
           case Some(dbMeta) => {
-            imageMetaStore.update(ImageMetaInformation(dbMeta.id, titles, alttexts, dbMeta.images, copyright, tags), dbMeta.id)
+            imageRepository.update(ImageMetaInformation(dbMeta.id, titles, alttexts, dbMeta.images, copyright, tags), dbMeta.id)
             logger.info(s"updated {} ({}) -- ${(System.currentTimeMillis - start)} ms", imageMeta.nid, imageMeta.title)
           }
           case None => {
@@ -115,10 +114,10 @@ trait ImportServiceComponent {
 
             val imageMetaInformation = ImageMetaInformation("0", titles, alttexts, ImageVariants(Option(thumb), Option(full)), copyright, tags)
 
-            if (!imageStorage.contains(thumbKey)) imageStorage.uploadFromByteArray(thumb, thumbKey, buffer)
-            if (!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
+            if (!amazonImageStorage.contains(thumbKey)) amazonImageStorage.uploadFromByteArray(thumb, thumbKey, buffer)
+            if (!amazonImageStorage.contains(fullKey)) amazonImageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
 
-            imageMetaStore.insert(imageMetaInformation, imageMeta.nid)
+            imageRepository.insert(imageMetaInformation, imageMeta.nid)
             logger.info(s"inserted {} ({}, {}) -- ${(System.currentTimeMillis - start)} ms", imageMeta.nid, imageMeta.title, sourceUrlFull)
           }
         }
