@@ -54,11 +54,13 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
   post("/import/:range_from/:range_to") {
     val rangeFrom = params("range_from").toInt
     val rangeTo = params("range_to").toInt
-    val (numImported, numFailed) = ComponentRegistry.importService.doImport(rangeFrom, rangeTo)
-    Ok("Imported " + numImported + " images. Failed to import " + numFailed + " images")
+    val (numImported, numFailed) = ComponentRegistry.importService.importRange(rangeFrom, rangeTo)
+    Ok("Successfully imported " + numImported + " images. Failed to import " + numFailed + " images")
   }
 
   post("/import/:image_id") {
-
+    val imageId = params("image_id")
+    val (numImported, numFailed) = ComponentRegistry.importService.importImage(imageId)
+    Ok("Sucessfully imported " + numImported + " images. Failed to import " + numFailed + " images")
   }
 }

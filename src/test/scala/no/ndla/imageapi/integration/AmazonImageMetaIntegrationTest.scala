@@ -8,7 +8,7 @@ class AmazonImageMetaIntegrationTest extends UnitSuite {
   val nonExistingId = "-1"
   val imageRepository = ComponentRegistry.imageRepository
 
-  "ImageMeta.withId" should "return an image for an existing id" taggedAs (IntegrationTest) in {
+  "ImageRepository.withId" should "return an image for an existing id" taggedAs (IntegrationTest) in {
     assert(imageRepository.withId(existingId).isDefined)
   }
 

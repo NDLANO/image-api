@@ -1,14 +1,13 @@
 package no.ndla.imageapi
 
+import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
-import no.ndla.imageapi.batch.integration.CMDataComponent
-import no.ndla.imageapi.batch.service.ImportServiceComponent
-import no.ndla.imageapi.integration.{AmazonClientComponent, DataSourceComponent, ElasticClientComponent}
+import no.ndla.imageapi.integration.{AmazonClientComponent, CMDataComponent, DataSourceComponent, ElasticClientComponent}
 import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
-import no.ndla.imageapi.service.{AmazonImageStorageComponent, ElasticContentIndexComponent, ElasticContentSearchComponent}
+import no.ndla.imageapi.service.{AmazonImageStorageComponent, ElasticContentIndexComponent, ElasticContentSearchComponent, ImportServiceComponent}
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.postgresql.ds.PGPoolingDataSource
 
@@ -45,7 +44,7 @@ object ComponentRegistry
   lazy val CMDatabase = scala.util.Properties.envOrNone("CM_DATABASE")
   lazy val cmData = new CMData(CMHost, CMPort, CMDatabase, CMUser, CMPassword)
 
-  lazy val amazonClient = new AmazonS3Client(new ProfileCredentialsProvider())
+  lazy val amazonClient = new AmazonS3Client(new BasicAWSCredentials(ImageApiProperties.StorageAccessKey, ImageApiProperties.StorageSecretKey))
   amazonClient.setRegion(Region.getRegion(Regions.EU_CENTRAL_1))
   lazy val storageName = ImageApiProperties.StorageName
 

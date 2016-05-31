@@ -1,13 +1,12 @@
-package no.ndla.imageapi.batch.service
+package no.ndla.imageapi.service
 
 import java.net.URL
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.batch._
-import no.ndla.imageapi.batch.integration.CMDataComponent
+import no.ndla.imageapi.Tags
+import no.ndla.imageapi.integration.CMDataComponent
 import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants, _}
 import no.ndla.imageapi.repository.ImageRepositoryComponent
-import no.ndla.imageapi.service.AmazonImageStorageComponent
 
 trait ImportServiceComponent {
   this: CMDataComponent with AmazonImageStorageComponent with ImageRepositoryComponent =>
@@ -30,23 +29,24 @@ trait ImportServiceComponent {
       "noc" -> License("noc", "Public Domain Mark", Option("https://creativecommons.org/about/pdm")),
       "copyrighted" -> License("copyrighted", "Copyrighted", None)
     )
+
     val languageToISOMap = Map(
       "nn" -> "nn",
       "nb" -> "nb",
       "en" -> "en"
     )
 
-    // Import nodes in range rangeFrom to rangeTo.
-    // Return a tuple (num. images imported, num. images failed to import)
-    def doImport(rangeFrom: Int, rangeTo: Int): (Int, Int) = {
-      val imageMeta = cmData.imageMetas(1)
-      val imageAuthor = cmData.imageAuthors(10)
+    private case class ImageWithTranslations(imageMetaWithoutTranslations: List[ImageMeta], translations: Map[String, List[ImageMeta]],
+                                     imageAuthor: Map[String, List[ImageAuthor]], imageLicense: Map[String, ImageLicense], imageOrigin: Map[String, ImageOrigin])
+
+    private def get(imageMeta: List[ImageMeta], author: List[ImageAuthor], license: List[ImageLicense], origin: List[ImageOrigin]): ImageWithTranslations = {
+      val imageAuthor = author
         .map(author => author.nid -> author)
         .groupBy(_._1).map { case (k,v) => (k,v.map(_._2))}
-      val imageLicense = cmData.imageLicences
+      val imageLicense = license
         .map(license => license.nid -> license)
         .toMap
-      val imageOrigin = cmData.imageOrigins(1).map(origin => origin.nid -> origin).toMap
+      val imageOrigin = origin.map(origin => origin.nid -> origin).toMap
 
       val imageMetaMap = imageMeta
         .map(im => im.nid -> im)
@@ -66,12 +66,45 @@ trait ImportServiceComponent {
             .map(_.nid) // konverter til en liste av nid (node id)
             .toList.contains(meta.nid)) // ...og alle imageMeta som ikke er referet til derfra
 
-      imageMetaWithoutTranslations.drop(rangeFrom).take(rangeTo - rangeFrom).foldLeft((0, 0)) { (result, current) => {
-        val origin = imageOrigin.getOrElse(current.nid, ImageOrigin("", ""))
-        val author = imageAuthor.getOrElse(current.nid, List())
-        val license = imageLicense.getOrElse(current.nid, ImageLicense("", ""))
+      ImageWithTranslations(imageMetaWithoutTranslations, translations, imageAuthor, imageLicense, imageOrigin)
+    }
 
-        upload(current, origin, author, license, translations) match {
+    // Import nodes in range rangeFrom to rangeTo.
+    // Return a tuple (num. images imported, num. images failed to import)
+    def importRange(rangeFrom: Int, rangeTo: Int): (Int, Int) = {
+      val imageMeta = cmData.imageMetas(1)
+      val imageAuthor = cmData.imageAuthors(10)
+      val imageLicense = cmData.imageLicences
+      val imageOrigin = cmData.imageOrigins(1)
+
+      val images = get(imageMeta, imageAuthor, imageLicense, imageOrigin)
+
+      images.imageMetaWithoutTranslations.drop(rangeFrom).take(rangeTo - rangeFrom).foldLeft((0, 0)) { (result, current) => {
+        val origin = images.imageOrigin.getOrElse(current.nid, ImageOrigin("", "", ""))
+        val author = images.imageAuthor.getOrElse(current.nid, List())
+        val license = images.imageLicense.getOrElse(current.nid, ImageLicense("", "", ""))
+
+        upload(current, origin, author, license, images.translations) match {
+          case Some(imageMeta) => (result._1, result._2 + 1) // Fail
+          case _ => (result._1 + 1, result._2) // Success
+        }
+      }}
+    }
+
+    def importImage(imageId: String): (Int, Int) = {
+      val meta = cmData.imageMeta(imageId)
+      val author = cmData.imageAuthor(imageId)
+      val license = cmData.imageLicence(imageId)
+      val origin = cmData.imageOrigin(imageId)
+
+      val images = get(meta, author, license, origin)
+
+      images.imageMetaWithoutTranslations.foldLeft((0, 0)) { (result, current) => {
+        val origin = images.imageOrigin.getOrElse(current.nid, ImageOrigin("", "", ""))
+        val author = images.imageAuthor.getOrElse(current.nid, List())
+        val license = images.imageLicense.getOrElse(current.nid, ImageLicense("", "", ""))
+
+        upload(current, origin, author, license, images.translations) match {
           case Some(imageMeta) => (result._1, result._2 + 1) // Fail
           case _ => (result._1 + 1, result._2) // Success
         }
@@ -132,3 +165,8 @@ trait ImportServiceComponent {
     }
   }
 }
+
+case class ImageMeta(nid:String, tnid:String, language:String, title:String, alttext:String, changed:String, originalFile:String, originalMime: String, originalSize: String)
+case class ImageLicense(nid:String, tnid: String, license:String)
+case class ImageAuthor(nid: String, tnid: String, typeAuthor:String, name:String)
+case class ImageOrigin(nid: String, tnid: String, origin:String)

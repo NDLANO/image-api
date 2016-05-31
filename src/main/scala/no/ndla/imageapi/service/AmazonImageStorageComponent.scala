@@ -12,7 +12,6 @@ import java.net.URL
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.business.ImageStorage
 import no.ndla.imageapi.integration.AmazonClientComponent
 import no.ndla.imageapi.model.{Image, ImageMetaInformation}
 
@@ -20,7 +19,7 @@ trait AmazonImageStorageComponent {
   this: AmazonClientComponent =>
   val amazonImageStorage: AmazonImageStorage
 
-  class AmazonImageStorage extends ImageStorage with LazyLogging {
+  class AmazonImageStorage extends LazyLogging {
 
     def get(imageKey: String): Option[(String, InputStream)] = {
       try {
@@ -56,7 +55,7 @@ trait AmazonImageStorageComponent {
       val putResult = amazonClient.putObject(request)
     }
 
-    override def uploadFromUrl(image: Image, storageKey: String, urlOfImage: String): Unit = {
+    def uploadFromUrl(image: Image, storageKey: String, urlOfImage: String): Unit = {
       val imageStream = new URL(urlOfImage).openStream()
       val metadata = new ObjectMetadata()
       metadata.setContentType(image.contentType)

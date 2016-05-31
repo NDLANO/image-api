@@ -5,7 +5,6 @@ import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, NestedType, Strin
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.business.IndexMeta
 import no.ndla.imageapi.integration.ElasticClientComponent
 import no.ndla.imageapi.model.ImageMetaInformation
 import org.elasticsearch.common.settings.ImmutableSettings
@@ -14,9 +13,9 @@ trait ElasticContentIndexComponent {
   this: ElasticClientComponent =>
   val elasticContentIndex: ElasticContentIndex
 
-  class ElasticContentIndex extends IndexMeta with LazyLogging {
+  class ElasticContentIndex extends LazyLogging {
 
-    override def indexDocuments(imageMetaList: List[ImageMetaInformation], indexName: String): Unit = {
+    def indexDocuments(imageMetaList: List[ImageMetaInformation], indexName: String): Unit = {
       import org.json4s.native.Serialization.write
       implicit val formats = org.json4s.DefaultFormats
 
@@ -27,7 +26,7 @@ trait ElasticContentIndexComponent {
       }.await
     }
 
-    override def createIndex(indexName: String) = {
+    def createIndex(indexName: String) = {
       val existsDefinition = elasticClient.execute {
         index exists indexName.toString
       }.await
@@ -79,7 +78,7 @@ trait ElasticContentIndexComponent {
       }
     }
 
-    override def updateAliasTarget(newIndexName: String, oldIndexName: Option[String]) = {
+    def updateAliasTarget(newIndexName: String, oldIndexName: Option[String]) = {
       val existsDefinition = elasticClient.execute {
         index exists newIndexName
       }.await
@@ -97,7 +96,7 @@ trait ElasticContentIndexComponent {
       }
     }
 
-    override def deleteIndex(indexName: String) = {
+    def deleteIndex(indexName: String) = {
       val existsDefinition = elasticClient.execute {
         index exists indexName
       }.await
@@ -110,7 +109,7 @@ trait ElasticContentIndexComponent {
       }
     }
 
-    override def aliasTarget: Option[String] = {
+    def aliasTarget: Option[String] = {
       val res = elasticClient.execute {
         get alias ImageApiProperties.SearchIndex
       }.await

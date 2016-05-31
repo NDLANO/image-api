@@ -10,7 +10,6 @@ import javax.sql.DataSource
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.business.ImageMeta
 import no.ndla.imageapi.integration.DataSourceComponent
 import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants}
 import no.ndla.imageapi.network.ApplicationUrl
@@ -22,11 +21,11 @@ trait ImageRepositoryComponent {
   this: DataSourceComponent =>
   val imageRepository: ImageRepository
 
-  class ImageRepository extends ImageMeta with LazyLogging {
+  class ImageRepository extends LazyLogging {
 
     ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
-    override def withId(id: String): Option[ImageMetaInformation] = {
+    def withId(id: String): Option[ImageMetaInformation] = {
       DB readOnly { implicit session =>
         sql"select metadata from imagemetadata where id = ${id.toInt}".map(rs => rs.string("metadata")).single.apply match {
           case Some(json) => Option(asImageMetaInformationWithApplicationUrl(id, json))
@@ -35,7 +34,7 @@ trait ImageRepositoryComponent {
       }
     }
 
-    override def withExternalId(externalId: String): Option[ImageMetaInformation] = {
+    def withExternalId(externalId: String): Option[ImageMetaInformation] = {
       DB readOnly { implicit session =>
         sql"select id, metadata from imagemetadata where external_id = ${externalId}".map(rs => (rs.long("id"), rs.string("metadata"))).single.apply match {
           case Some((id, meta)) => Option(asImageMetaInformationWithRelUrl(id.toString, meta))
@@ -44,7 +43,7 @@ trait ImageRepositoryComponent {
       }
     }
 
-    override def insert(imageMetaInformation: ImageMetaInformation, externalId: String): Unit = {
+    def insert(imageMetaInformation: ImageMetaInformation, externalId: String): Unit = {
       import org.json4s.native.Serialization.write
       implicit val formats = org.json4s.DefaultFormats
 
@@ -59,7 +58,7 @@ trait ImageRepositoryComponent {
       }
     }
 
-    override def update(imageMetaInformation: ImageMetaInformation, externalId: String): Unit = {
+    def update(imageMetaInformation: ImageMetaInformation, externalId: String): Unit = {
       import org.json4s.native.Serialization.write
       implicit val formats = org.json4s.DefaultFormats
 
