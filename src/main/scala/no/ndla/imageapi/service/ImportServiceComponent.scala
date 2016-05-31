@@ -3,7 +3,6 @@ package no.ndla.imageapi.service
 import java.net.URL
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.Tags
 import no.ndla.imageapi.integration.CMDataComponent
 import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants, _}
 import no.ndla.imageapi.repository.ImageRepositoryComponent

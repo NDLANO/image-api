@@ -5,7 +5,10 @@ import org.scalatest.mock.MockitoSugar
 
 object IntegrationTest extends Tag("no.ndla.IntegrationTest")
 
-abstract class UnitSuite extends FlatSpec with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach {
+abstract class UnitSuite extends FlatSpec with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfterAll {
+  val DEFAULT_PAGE_SIZE = 12
+  val MAX_PAGE_SIZE = 548
+
   ImageApiProperties.setProperties(Map(
     "STORAGE_NAME" -> Some("TestBucket"),
     "CONTACT_EMAIL" -> Some("ndla@knowit.no"),
@@ -16,6 +19,8 @@ abstract class UnitSuite extends FlatSpec with Matchers with OptionValues with I
     "META_PORT" -> Some("5432"),
     "META_SCHEMA" -> Some("imageapi"),
     "META_INITIAL_CONNECTIONS" -> Some("3"),
-    "META_MAX_CONNECTIONS" -> Some("20")
+    "META_MAX_CONNECTIONS" -> Some("20"),
+    "SEARCH_DEFAULT_PAGE_SIZE" -> Some(DEFAULT_PAGE_SIZE.toString()),
+    "SEARCH_MAX_PAGE_SIZE" -> Some(MAX_PAGE_SIZE.toString())
   ))
 }
