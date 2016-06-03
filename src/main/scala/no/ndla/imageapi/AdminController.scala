@@ -8,6 +8,7 @@ import no.ndla.logging.LoggerContext
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{Ok, ScalatraServlet}
+import no.ndla.imageapi.ComponentRegistry.{imageRepository, importService}
 
 class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLogging  {
 
@@ -42,7 +43,7 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
     logger.info("GET /extern/{}", externalId)
 
     if(externalId.forall(_.isDigit)) {
-      ComponentRegistry.imageRepository.withExternalId(externalId) match {
+      imageRepository.withExternalId(externalId) match {
         case Some(image) => image
         case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with external id $externalId not found"))
       }
@@ -51,16 +52,11 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
     }
   }
 
-  post("/import/:range_from/:range_to") {
-    val rangeFrom = params("range_from").toInt
-    val rangeTo = params("range_to").toInt
-    val (numImported, numFailed) = ComponentRegistry.importService.importRange(rangeFrom, rangeTo)
-    Ok("Successfully imported " + numImported + " images. Failed to import " + numFailed + " images")
-  }
-
   post("/import/:image_id") {
     val imageId = params("image_id")
-    val (numImported, numFailed) = ComponentRegistry.importService.importImage(imageId)
-    Ok("Sucessfully imported " + numImported + " images. Failed to import " + numFailed + " images")
+    importService.importImage(imageId) match {
+      case true => Ok("Sucessfully imported image")
+      case false => Ok("Failed to import image")
+    }
   }
 }

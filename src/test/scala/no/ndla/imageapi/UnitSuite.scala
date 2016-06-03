@@ -5,7 +5,7 @@ import org.scalatest.mock.MockitoSugar
 
 object IntegrationTest extends Tag("no.ndla.IntegrationTest")
 
-abstract class UnitSuite extends FlatSpec with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfterAll {
+abstract class UnitSuite extends FlatSpec with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfterAll with PrivateMethodTester {
   val DEFAULT_PAGE_SIZE = 12
   val MAX_PAGE_SIZE = 548
 

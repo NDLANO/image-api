@@ -6,125 +6,63 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.integration.CMDataComponent
 import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants, _}
 import no.ndla.imageapi.repository.ImageRepositoryComponent
+import no.ndla.mapping.{ISO639Mapping, LicenseMapping}
 
 trait ImportServiceComponent {
-  this: CMDataComponent with AmazonImageStorageComponent with ImageRepositoryComponent =>
+  this: CMDataComponent with ImageStorageService with ImageRepositoryComponent =>
   val importService: ImportService
 
   class ImportService extends LazyLogging {
     val DownloadUrlPrefix = "http://ndla.no/sites/default/files/images/"
     val ThumbUrlPrefix = "http://ndla.no/sites/default/files/imagecache/fag_preset/images/"
-    val licenseToLicenseDefinitionsMap = Map(
-      "by" -> License("by", "Creative Commons Attribution 2.0 Generic", Option("https://creativecommons.org/licenses/by/2.0/")),
-      "by-sa" -> License("by-sa", "Creative Commons Attribution-ShareAlike 2.0 Generic", Option("https://creativecommons.org/licenses/by-sa/2.0/")),
-      "by-nc" -> License("by-nc", "Creative Commons Attribution-NonCommercial 2.0 Generic", Option("https://creativecommons.org/licenses/by-nc/2.0/")),
-      "by-nd" -> License("by-nd", "Creative Commons Attribution-NoDerivs 2.0 Generic", Option("https://creativecommons.org/licenses/by-nd/2.0/")),
-      "by-nc-sa" -> License("by-nc-sa", "Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic", Option("https://creativecommons.org/licenses/by-nc-sa/2.0/")),
-      "by-nc-nd" -> License("by-nc-nd", "Creative Commons Attribution-NonCommercial-NoDerivs 2.0 Generic", Option("https://creativecommons.org/licenses/by-nc-nd/2.0/")),
-      "publicdomain" -> License("publicdomain", "Public Domain", Option("https://creativecommons.org/about/pdm")),
-      "gnu" -> License("gnu", "GNU General Public License, version 2", Option("http://www.gnu.org/licenses/old-licenses/gpl-2.0.html")),
-      "nolaw" -> License("nolaw", "Public Domain Dedication", Option("http://opendatacommons.org/licenses/pddl/")),
-      "nlod" -> License("nlod", "Norsk lisens for offentlige data", Option("http://data.norge.no/nlod/no/1.0")),
-      "noc" -> License("noc", "Public Domain Mark", Option("https://creativecommons.org/about/pdm")),
-      "copyrighted" -> License("copyrighted", "Copyrighted", None)
-    )
 
-    val languageToISOMap = Map(
-      "nn" -> "nn",
-      "nb" -> "nb",
-      "en" -> "en"
-    )
-
-    private case class ImageWithTranslations(imageMetaWithoutTranslations: List[ImageMeta], translations: Map[String, List[ImageMeta]],
-                                     imageAuthor: Map[String, List[ImageAuthor]], imageLicense: Map[String, ImageLicense], imageOrigin: Map[String, ImageOrigin])
-
-    private def get(imageMeta: List[ImageMeta], author: List[ImageAuthor], license: List[ImageLicense], origin: List[ImageOrigin]): ImageWithTranslations = {
-      val imageAuthor = author
-        .map(author => author.nid -> author)
-        .groupBy(_._1).map { case (k,v) => (k,v.map(_._2))}
-      val imageLicense = license
-        .map(license => license.nid -> license)
-        .toMap
-      val imageOrigin = origin.map(origin => origin.nid -> origin).toMap
-
-      val imageMetaMap = imageMeta
-        .map(im => im.nid -> im)
-        .toMap
-
-      val translations = imageMeta
-        .filter(_.tnid != "0") // Alle som har en tnid (translation-node-id)
-        .filter(elem => elem.nid != elem.tnid) // som ikke peker på seg selv
-        .filter(elem => imageMetaMap.contains(elem.tnid)) // hvor referansen eksisterer i datagrunnlaget
-        .filter(elem => elem.originalFile == imageMetaMap(elem.tnid).originalFile) // hvor referert node har samme filsti til bilde
-        .groupBy(_.tnid).map { case (k, v) => (k, v) } // med referert node som key i et map som peker på listen over oversettelser
-
-      val imageMetaWithoutTranslations = imageMeta
-        .filter(meta =>
-          !translations.map(_._2) // Få alle lister som er oversettelser av en annen node
-            .flatten // og slå sammen til en liste
-            .map(_.nid) // konverter til en liste av nid (node id)
-            .toList.contains(meta.nid)) // ...og alle imageMeta som ikke er referet til derfra
-
-      ImageWithTranslations(imageMetaWithoutTranslations, translations, imageAuthor, imageLicense, imageOrigin)
-    }
-
-    // Import nodes in range rangeFrom to rangeTo.
-    // Return a tuple (num. images imported, num. images failed to import)
-    def importRange(rangeFrom: Int, rangeTo: Int): (Int, Int) = {
-      val imageMeta = cmData.imageMetas(1)
-      val imageAuthor = cmData.imageAuthors(10)
-      val imageLicense = cmData.imageLicences
-      val imageOrigin = cmData.imageOrigins(1)
-
-      val images = get(imageMeta, imageAuthor, imageLicense, imageOrigin)
-
-      images.imageMetaWithoutTranslations.drop(rangeFrom).take(rangeTo - rangeFrom).foldLeft((0, 0)) { (result, current) => {
-        val origin = images.imageOrigin.getOrElse(current.nid, ImageOrigin("", "", ""))
-        val author = images.imageAuthor.getOrElse(current.nid, List())
-        val license = images.imageLicense.getOrElse(current.nid, ImageLicense("", "", ""))
-
-        upload(current, origin, author, license, images.translations) match {
-          case Some(imageMeta) => (result._1, result._2 + 1) // Fail
-          case _ => (result._1 + 1, result._2) // Success
-        }
-      }}
-    }
-
-    def importImage(imageId: String): (Int, Int) = {
+    def importImage(imageId: String): Boolean = {
       val meta = cmData.imageMeta(imageId)
+      meta match {
+        case Some(img) => if (img.isTranslation) return importImage(img.tnid)
+        case None => throw new ImageNotFoundException(s"Image with id $imageId")
+      }
+
       val author = cmData.imageAuthor(imageId)
-      val license = cmData.imageLicence(imageId)
-      val origin = cmData.imageOrigin(imageId)
+      val license = cmData.imageLicence(imageId).getOrElse(ImageLicense(meta.get.nid, meta.get.tnid, ""))
+      val origin = cmData.imageOrigin(imageId).getOrElse(ImageOrigin(meta.get.nid, meta.get.tnid, ""))
 
-      val images = get(meta, author, license, origin)
+      val translations = cmData.imageMetaTranslations(meta.get.tnid)
+        .filter(elem => elem.originalFile == meta.get.originalFile) // hvor referert node har samme filsti til bilde
 
-      images.imageMetaWithoutTranslations.foldLeft((0, 0)) { (result, current) => {
-        val origin = images.imageOrigin.getOrElse(current.nid, ImageOrigin("", "", ""))
-        val author = images.imageAuthor.getOrElse(current.nid, List())
-        val license = images.imageLicense.getOrElse(current.nid, ImageLicense("", "", ""))
-
-        upload(current, origin, author, license, images.translations) match {
-          case Some(imageMeta) => (result._1, result._2 + 1) // Fail
-          case _ => (result._1 + 1, result._2) // Success
-        }
-      }}
+      upload(meta.get, origin, author, license, translations) match {
+        case Some(imageMeta) => false // Fail
+        case _ => true // Success
+      }
     }
 
     def upload(imageMeta: ImageMeta, origin: ImageOrigin, imageAuthors: List[ImageAuthor],
-               license: ImageLicense, translations: Map[String, List[ImageMeta]]): Option[ImageMeta] = {
+               license: ImageLicense, translations: List[ImageMeta]): Option[ImageMeta] = {
       val start = System.currentTimeMillis
       try {
         val tags = Tags.forImage(imageMeta.nid)
 
         val authors = imageAuthors.map(ia => Author(ia.typeAuthor, ia.name))
-        val copyright = Copyright(licenseToLicenseDefinitionsMap.getOrElse(license.license, License(license.license, license.license, None)), origin.origin, authors)
+        val _license = LicenseMapping.getLicenseDefinition(license.license) match {
+          case Some((description, url)) => License(license.license, description, Some(url))
+          case None => License(license.license, license.license, None)
+        }
+        val copyright = Copyright(_license, origin.origin, authors)
 
-        var titles = List(ImageTitle(imageMeta.title, languageToISOMap.get(imageMeta.language)))
-        var alttexts = List(ImageAltText(imageMeta.alttext, languageToISOMap.get(imageMeta.language)))
-        translations.get(imageMeta.nid).foreach(_.foreach(translation => {
-          titles = ImageTitle(translation.title, languageToISOMap.get(translation.language)) :: titles
-          alttexts = ImageAltText(translation.alttext, languageToISOMap.get(translation.language)) :: alttexts
-        }))
+        val imageLang = ISO639Mapping.languageCodeSupported(imageMeta.language) match {
+          case true => Some(imageMeta.language)
+          case false => None
+        }
+        val translationLang = ISO639Mapping.languageCodeSupported(imageMeta.language) match {
+          case true => Some(imageMeta.language)
+          case false => None
+        }
+        var titles = List(ImageTitle(imageMeta.title, imageLang))
+        var alttexts = List(ImageAltText(imageMeta.alttext, imageLang))
+        translations.foreach(translation => {
+          titles = ImageTitle(translation.title, translationLang) :: titles
+          alttexts = ImageAltText(translation.alttext, translationLang) :: alttexts
+        })
 
         imageRepository.withExternalId(imageMeta.nid) match {
           case Some(dbMeta) => {
@@ -146,8 +84,8 @@ trait ImportServiceComponent {
 
             val imageMetaInformation = ImageMetaInformation("0", titles, alttexts, ImageVariants(Option(thumb), Option(full)), copyright, tags)
 
-            if (!amazonImageStorage.contains(thumbKey)) amazonImageStorage.uploadFromByteArray(thumb, thumbKey, buffer)
-            if (!amazonImageStorage.contains(fullKey)) amazonImageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
+            if (!imageStorage.contains(thumbKey)) imageStorage.uploadFromByteArray(thumb, thumbKey, buffer)
+            if (!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
 
             imageRepository.insert(imageMetaInformation, imageMeta.nid)
             logger.info(s"inserted {} ({}, {}) -- ${(System.currentTimeMillis - start)} ms", imageMeta.nid, imageMeta.title, sourceUrlFull)
@@ -157,7 +95,7 @@ trait ImportServiceComponent {
       } catch {
         case e: Exception => {
           e.printStackTrace()
-          logger.info(s"${imageMeta.nid} failed after ${System.currentTimeMillis - start}ms with error: ${e.getMessage}")
+          logger.info(s"${imageMeta.nid} failed after ${System.currentTimeMillis - start} ms with error: ${e.getMessage}")
           Some(imageMeta)
         }
       }
@@ -165,7 +103,10 @@ trait ImportServiceComponent {
   }
 }
 
-case class ImageMeta(nid:String, tnid:String, language:String, title:String, alttext:String, changed:String, originalFile:String, originalMime: String, originalSize: String)
+case class ImageMeta(nid:String, tnid:String, language:String, title:String, alttext:String, changed:String, originalFile:String, originalMime: String, originalSize: String) {
+  def isMainImage = nid == tnid || tnid == "0"
+  def isTranslation = !isMainImage
+}
 case class ImageLicense(nid:String, tnid: String, license:String)
 case class ImageAuthor(nid: String, tnid: String, typeAuthor:String, name:String)
 case class ImageOrigin(nid: String, tnid: String, origin:String)

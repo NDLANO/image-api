@@ -15,11 +15,11 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.integration.AmazonClientComponent
 import no.ndla.imageapi.model.{Image, ImageMetaInformation}
 
-trait AmazonImageStorageComponent {
+trait ImageStorageService {
   this: AmazonClientComponent =>
-  val amazonImageStorage: AmazonImageStorage
+  val imageStorage: AmazonImageStorageService
 
-  class AmazonImageStorage extends LazyLogging {
+  class AmazonImageStorageService extends LazyLogging {
 
     def get(imageKey: String): Option[(String, InputStream)] = {
       try {

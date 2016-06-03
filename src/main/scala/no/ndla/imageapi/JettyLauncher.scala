@@ -13,7 +13,6 @@ import org.scalatra.servlet.ScalatraListener
 
 
 object JettyLauncher extends LazyLogging {
-  // this is my entry object as specified in sbt project definition
   def main(args: Array[String]) {
     logger.info(io.Source.fromInputStream(getClass.getResourceAsStream("/log-license.txt")).mkString)
 

@@ -6,17 +6,17 @@ import com.amazonaws.services.s3.AmazonS3Client
 import com.sksamuel.elastic4s.ElasticClient
 import no.ndla.imageapi.integration.{AmazonClientComponent, DataSourceComponent, ElasticClientComponent}
 import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
-import no.ndla.imageapi.service.{AmazonImageStorageComponent, ElasticContentIndexComponent, ElasticContentSearchComponent}
+import no.ndla.imageapi.service.{ImageStorageService, ElasticContentIndexComponent, SearchService}
 import org.scalatest.mock.MockitoSugar
 
 trait TestEnvironment
   extends ElasticClientComponent
     with ElasticContentIndexComponent
-    with ElasticContentSearchComponent
+    with SearchService
     with DataSourceComponent
     with ImageRepositoryComponent
     with AmazonClientComponent
-    with AmazonImageStorageComponent
+    with ImageStorageService
     with SearchIndexerComponent
     with MockitoSugar
 {
@@ -27,8 +27,8 @@ trait TestEnvironment
 
   val dataSource = mock[DataSource]
   val elasticContentIndex = mock[ElasticContentIndex]
-  val elasticContentSearch = mock[ElasticContentSearch]
+  val searchService = mock[ElasticContentSearch]
   val imageRepository = mock[ImageRepository]
-  val amazonImageStorage = new AmazonImageStorage
+  val imageStorage = new AmazonImageStorageService
   val searchIndexer = mock[SearchIndexer]
 }
