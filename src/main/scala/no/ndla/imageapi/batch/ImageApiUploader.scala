@@ -75,7 +75,7 @@ object ImageApiUploader extends LazyLogging {
  *                      from node n
  *                      left join image i on (n.nid = i.nid)
  *                      left join files f on (i.fid = f.fid)
- *                      left join content_type_image cti on (n.nid = cti.nid)
+ *                      left join content_field_alt_text cti on (n.nid = cti.nid and n.vid = cti.vid)
  *                      where n.type = "image" and n.status = 1
  *                      and i.image_size = "_original"
  *                      order by n.nid desc limit 40000;
