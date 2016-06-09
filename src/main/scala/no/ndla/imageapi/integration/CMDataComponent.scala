@@ -26,17 +26,17 @@ trait CMDataComponent {
     def imageMeta(imageId: String): Option[ImageMeta] = {
       NamedDB('cm) readOnly { implicit session =>
         sql"""
-          select n.nid, n.tnid, n.language as language, n.title,
-            cfat.field_alt_text_value as alttext,
-            from_unixtime(n.changed) as changed,
-            REPLACE(f.filepath, 'sites/default/files/images/', '') as original,
-            f.filemime as original_mime,
-            f.filesize as original_size
-          from node n
-            left join image i on (n.nid = i.nid)
-            left join files f on (i.fid = f.fid)
-            left join content_field_alt_text cfat on (cfat.nid = n.nid)
-          where n.type = "image" and n.status = 1 and i.image_size = "_original" and n.nid = ${imageId}
+             select n.nid, n.tnid, n.language as language, n.title,
+               cfat.field_alt_text_value as alttext,
+               from_unixtime(n.changed) as changed,
+               REPLACE(f.filepath, 'sites/default/files/images/', '') as original,
+               f.filemime as original_mime,
+               f.filesize as original_size
+             from node n
+               left join image i on (n.nid = i.nid)
+               left join files f on (f.fid = i.fid)
+               left join content_field_alt_text cfat on (cfat.nid = n.nid and cfat.vid = n.vid)
+             where n.type = "image" and n.status = 1 and i.image_size = "_original" and n.nid = ${imageId}
             """.stripMargin.map(rs =>
                 ImageMeta(
                   rs.string("nid"),
