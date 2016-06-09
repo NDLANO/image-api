@@ -24,7 +24,7 @@ object ComponentRegistry
   with ImportServiceComponent
 {
   lazy val elasticClient = ElasticClient.remote(ImmutableSettings.settingsBuilder().put("cluster.name", ImageApiProperties.SearchClusterName).build(),
-    ElasticsearchClientUri(s"elasticsearch://$ImageApiProperties.SearchHost:$ImageApiProperties.SearchPort"))
+    ElasticsearchClientUri(s"elasticsearch://${ImageApiProperties.SearchHost}:${ImageApiProperties.SearchPort}"))
 
   val dataSource = new PGPoolingDataSource()
   dataSource.setUser(ImageApiProperties.MetaUserName)
