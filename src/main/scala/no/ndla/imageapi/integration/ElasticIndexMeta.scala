@@ -1,19 +1,19 @@
 package no.ndla.imageapi.integration
 
-import com.sksamuel.elastic4s.mappings.FieldType.{StringType, NestedType, IntegerType}
-import com.sksamuel.elastic4s.{ElasticsearchClientUri, ElasticClient}
 import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, NestedType, StringType}
+import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.business.{IndexMeta}
+import no.ndla.imageapi.business.IndexMeta
 import no.ndla.imageapi.model.ImageMetaInformation
-import org.elasticsearch.common.settings.ImmutableSettings
-import org.json4s.native.Serialization._
+import org.elasticsearch.common.settings.Settings
 
 class ElasticIndexMeta(clusterName:String, clusterHost:String, clusterPort:String) extends IndexMeta with LazyLogging {
 
-  val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
-  val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
+  lazy val client = ElasticClient.transport(
+    Settings.settingsBuilder().put("cluster.name", clusterName).build(),
+    ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
 
   override def indexDocuments(imageMetaList: List[ImageMetaInformation], indexName: String): Unit = {
     import org.json4s.native.Serialization.write

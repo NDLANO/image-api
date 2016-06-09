@@ -15,21 +15,22 @@ import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.business.{SearchIndexer, SearchMeta}
 import no.ndla.imageapi.model.ImageMetaSummary
 import no.ndla.imageapi.network.ApplicationUrl
-import org.elasticsearch.common.settings.ImmutableSettings
+import org.elasticsearch.common.settings.Settings
+import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query.MatchQueryBuilder
-import org.elasticsearch.indices.IndexMissingException
 import org.elasticsearch.transport.RemoteTransportException
-import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scalaj.http.Http
 
 class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:String) extends SearchMeta with LazyLogging {
 
-  val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
-  val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
-  val noCopyrightFilter = not(nestedFilter("copyright.license").filter(termFilter("license", "copyrighted")))
+  lazy val client = ElasticClient.transport(
+    Settings.settingsBuilder().put("cluster.name", clusterName).build(),
+    ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
+
+  val noCopyrightFilter = not(nestedQuery("copyright.license").query(termQuery("copyright.license.license", "copyrighted")))
 
   implicit object ImageHitAs extends HitAs[ImageMetaSummary] {
     override def as(hit: RichSearchHit): ImageMetaSummary = {
@@ -56,41 +57,35 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
     tagSearch += matchQuery("tags.tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => tagSearch += termQuery("tags.language", lang))
 
+    val filterList = new ListBuffer[QueryDefinition]()
+    license.foreach(license => filterList += nestedQuery("copyright.license").query(termQuery("copyright.license.license", license)))
+    minimumSize.foreach(size => filterList += nestedQuery("images.full").query(rangeQuery("images.full.size").gte(size.toString)))
+    filterList += noCopyrightFilter
+
     val theSearch = search in ImageApiProperties.SearchIndex -> ImageApiProperties.SearchDocument query {
       bool {
-        should (
-          nestedQuery("titles").query {bool {must (titleSearch.toList)}},
-          nestedQuery("alttexts").query {bool {must (altTextSearch.toList)}},
-          nestedQuery("tags").query {bool {must (tagSearch.toList)}}
+        must (
+          should (
+            nestedQuery("titles").query {bool {must (titleSearch.toList)}},
+            nestedQuery("alttexts").query {bool {must (altTextSearch.toList)}},
+            nestedQuery("tags").query {bool {must (tagSearch.toList)}}
+          ),
+          filter (filterList)
         )
       }
     }
 
     val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-
-    val filterList = new ListBuffer[FilterDefinition]()
-    license.foreach(license => filterList += nestedFilter("copyright.license").filter(termFilter("license", license)))
-    minimumSize.foreach(size => filterList += nestedFilter("images.full").filter(rangeFilter("images.full.size").gte(size.toString)))
-    filterList += noCopyrightFilter
-
-    if(filterList.nonEmpty){
-      theSearch.postFilter(must(filterList.toList))
-    }
-
     executeSearch(theSearch, page, pageSize)
   }
 
   override def all(minimumSize:Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
-    val theSearch = search in ImageApiProperties.SearchIndex -> ImageApiProperties.SearchDocument
-
-    val filterList = new ListBuffer[FilterDefinition]()
-    license.foreach(license => filterList += nestedFilter("copyright.license").filter(termFilter("license", license)))
-    minimumSize.foreach(size => filterList += nestedFilter("images.full").filter(rangeFilter("images.full.size").gte(size.toString)))
+    val filterList = new ListBuffer[QueryDefinition]()
+    license.foreach(license => filterList += nestedQuery("copyright.license").query(termQuery("copyright.license.license", license)))
+    minimumSize.foreach(size => filterList += nestedQuery("images.full").query(rangeQuery("images.full.size").gte(size.toString)))
     filterList += noCopyrightFilter
 
-    if(filterList.nonEmpty){
-      theSearch.postFilter(must(filterList.toList))
-    }
+    val theSearch = search in ImageApiProperties.SearchIndex -> ImageApiProperties.SearchDocument query filter(filterList)
     theSearch.sort(field sort "id")
 
     executeSearch(theSearch, page, pageSize)
@@ -122,7 +117,7 @@ class ElasticSearchMeta(clusterName:String, clusterHost:String, clusterPort:Stri
 
   def errorHandler(exception: Throwable) = {
     exception match {
-      case ex: IndexMissingException =>
+      case ex: IndexNotFoundException =>
         logger.error(ex.getDetailedMessage)
         scheduleIndexDocuments()
         throw ex

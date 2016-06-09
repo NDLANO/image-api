@@ -7,17 +7,18 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.business.{SearchMeta, ImageMeta, ImageStorage}
-import no.ndla.imageapi.integration.{PostgresMeta, AmazonIntegration}
+import no.ndla.imageapi.business.{ImageMeta, ImageStorage, SearchMeta}
+import no.ndla.imageapi.integration.{AmazonIntegration, PostgresMeta}
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.{Error, ImageMetaInformation, ImageMetaSummary}
 import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.logging.LoggerContext
-import org.elasticsearch.indices.IndexMissingException
+import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
 import org.scalatra.json._
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
+
 import scala.util.Try
 
 class ImageController (implicit val swagger:Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
@@ -67,7 +68,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   error{
-    case e:IndexMissingException =>
+    case e:IndexNotFoundException =>
       halt(status = 500, body = Error.IndexMissingError)
     case t:Throwable => {
       logger.error(Error.GenericError.toString, t)
