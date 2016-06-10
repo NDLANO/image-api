@@ -55,8 +55,8 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
   post("/import/:image_id") {
     val imageId = params("image_id")
     importService.importImage(imageId) match {
-      case true => Ok("Sucessfully imported image")
-      case false => Ok("Failed to import image")
+      case Some(error) => halt(status = 500, body = error)
+      case None => Ok("Sucessfully imported image")
     }
   }
 }

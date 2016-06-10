@@ -16,11 +16,11 @@ trait ImportServiceComponent {
     val DownloadUrlPrefix = "http://ndla.no/sites/default/files/images/"
     val ThumbUrlPrefix = "http://ndla.no/sites/default/files/imagecache/fag_preset/images/"
 
-    def importImage(imageId: String): Boolean = {
+    def importImage(imageId: String): Option[String] = {
       val meta = cmData.imageMeta(imageId)
       meta match {
         case Some(img) => if (img.isTranslation) return importImage(img.tnid)
-        case None => throw new ImageNotFoundException(s"Image with id $imageId")
+        case None => throw new ImageNotFoundException(s"Image with id $imageId was not found")
       }
 
       val author = cmData.imageAuthor(imageId)
@@ -31,13 +31,13 @@ trait ImportServiceComponent {
         .filter(elem => elem.originalFile == meta.get.originalFile) // hvor referert node har samme filsti til bilde
 
       upload(meta.get, origin, author, license, translations) match {
-        case Some(imageMeta) => false // Fail
-        case _ => true // Success
+        case Some(errorMsg) => Some(errorMsg) // Fail
+        case _ => None // Success
       }
     }
 
     def upload(imageMeta: ImageMeta, origin: ImageOrigin, imageAuthors: List[ImageAuthor],
-               license: ImageLicense, translations: List[ImageMeta]): Option[ImageMeta] = {
+               license: ImageLicense, translations: List[ImageMeta]): Option[String] = {
       val start = System.currentTimeMillis
       try {
         val tags = Tags.forImage(imageMeta.nid)
@@ -95,8 +95,9 @@ trait ImportServiceComponent {
       } catch {
         case e: Exception => {
           e.printStackTrace()
-          logger.info(s"${imageMeta.nid} failed after ${System.currentTimeMillis - start} ms with error: ${e.getMessage}")
-          Some(imageMeta)
+          val errMsg = s"Import of node ${imageMeta.nid} failed after ${System.currentTimeMillis - start} ms with error: ${e.getMessage}"
+          logger.info(errMsg)
+          Some(errMsg)
         }
       }
     }
