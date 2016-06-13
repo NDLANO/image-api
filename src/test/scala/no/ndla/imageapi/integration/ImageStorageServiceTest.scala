@@ -21,30 +21,30 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
     reset(amazonClient)
   }
 
-  "AmazonImageStorage.exists" should "return true when bucket exists" in {
+  test("That AmazonImageStorage.exists returns true when bucket exists") {
     when(amazonClient.doesBucketExist(ImageStorageName)).thenReturn(true)
     assert(imageStorage.exists())
   }
 
-  it should "return false when bucket does not exist" in {
+  test("That AmazonImageStorage.exists returns false when bucket does not exist") {
     when(amazonClient.doesBucketExist(ImageStorageName)).thenReturn(false)
     assert(imageStorage.exists() == false)
   }
 
-  "AmazonImageStorage.contains" should "return true when image exists" in {
+  test("That AmazonImageStorage.contains returns true when image exists") {
     val s3ObjectMock = mock[S3Object]
     when(amazonClient.getObject(any[GetObjectRequest])).thenReturn(s3ObjectMock)
     assert(imageStorage.contains("existingKey"))
   }
 
-  it should "return false when image does not exist" in {
+  test("That AmazonImageStorage.contains returns false when image does not exist") {
     val ase = new AmazonServiceException("Exception")
     ase.setErrorCode("NoSuchKey")
     when(amazonClient.getObject(any[GetObjectRequest])).thenThrow(ase)
     assert(imageStorage.contains("nonExistingKey") == false)
   }
 
-  "AmazonImageStorage.get" should "return a tuple with contenttype and data when the key exists" in {
+  test("That AmazonImageStorage.get returns a tuple with contenttype and data when the key exists") {
     val s3object = new S3Object()
     s3object.setObjectMetadata(new ObjectMetadata())
     s3object.getObjectMetadata().setContentType(ContentType)
@@ -57,17 +57,17 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
     assert(scala.io.Source.fromInputStream(image.get._2).mkString == Content)
   }
 
-  it should "return None when the key does not exist" in {
+  test("That AmazonImageStorage.get returns None when the key does not exist") {
     when(amazonClient.getObject(any[GetObjectRequest])).thenThrow(new RuntimeException("Exception"))
     assert(imageStorage.get("nonexisting").isEmpty)
   }
 
-  "AmazonImageStorage.upload" should "upload both thumb and image when both defined" in {
+  test("That AmazonImageStorage.upload uploads both thumb and image when both defined") {
     imageStorage.upload(ImageWithThumb, "test")
     verify(amazonClient, times(2)).putObject(any[PutObjectRequest])
   }
 
-  it should "upload only image when thumb is not defined" in {
+  test("That AmazonImageStorage.upload only uploads image when thumb is not defined") {
     imageStorage.upload(ImageWithNoThumb, "test")
     verify(amazonClient, times(1)).putObject(any[PutObjectRequest])
   }
