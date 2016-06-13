@@ -7,8 +7,6 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.business.{ImageMeta, ImageStorage, SearchMeta}
-import no.ndla.imageapi.integration.{AmazonIntegration, PostgresMeta}
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.{Error, ImageMetaInformation, ImageMetaSummary}
 import no.ndla.imageapi.network.ApplicationUrl
@@ -20,6 +18,7 @@ import org.scalatra.json._
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 import scala.util.Try
+import no.ndla.imageapi.ComponentRegistry.{searchService, imageRepository}
 
 class ImageController (implicit val swagger:Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
 
@@ -76,9 +75,6 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     }
   }
 
-  val searchMeta: SearchMeta = AmazonIntegration.getSearchMeta()
-  val imageMeta: ImageMeta = AmazonIntegration.getImageMeta()
-
   get("/", operation(getImages)) {
     val minimumSize = params.get("minimum-size")
     val query = params.get("query")
@@ -94,7 +90,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     }
 
     query match {
-      case Some(query) => searchMeta.matchingQuery(
+      case Some(query) => searchService.matchingQuery(
         query = query.toLowerCase().split(" ").map(_.trim),
         minimumSize = size,
         language = language,
@@ -102,7 +98,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         page,
         pageSize)
 
-      case None => searchMeta.all(minimumSize = size, license = license, page, pageSize)
+      case None => searchService.all(minimumSize = size, license = license, page, pageSize)
     }
   }
 
@@ -111,7 +107,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     logger.info("GET /{}", imageId)
 
     if(imageId.forall(_.isDigit)) {
-      imageMeta.withId(imageId) match {
+      imageRepository.withId(imageId) match {
         case Some(image) => image
         case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
       }
