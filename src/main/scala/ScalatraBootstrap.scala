@@ -6,7 +6,7 @@
  */
 import javax.servlet.ServletContext
 
-import no.ndla.imageapi.{AdminController, ImageController, ImageSwagger, ResourcesApp}
+import no.ndla.imageapi.{InternController, ImageController, ImageSwagger, ResourcesApp}
 import org.scalatra.LifeCycle
 
 class ScalatraBootstrap extends LifeCycle {
@@ -17,7 +17,6 @@ class ScalatraBootstrap extends LifeCycle {
     // Mount servlets.
     context.mount(new ImageController, "/images", "images")
     context.mount(new ResourcesApp, "/api-docs")
-    context.mount(new AdminController, "/admin")
+    context.mount(new InternController, "/intern")
   }
-
 }

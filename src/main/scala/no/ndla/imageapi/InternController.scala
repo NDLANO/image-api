@@ -10,7 +10,7 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{Ok, ScalatraServlet}
 import no.ndla.imageapi.ComponentRegistry.{imageRepository, importService}
 
-class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLogging  {
+class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging  {
 
   protected implicit override val jsonFormats: Formats = DefaultFormats
 
