@@ -7,18 +7,18 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.business.{SearchMeta, ImageMeta, ImageStorage}
-import no.ndla.imageapi.integration.{PostgresMeta, AmazonIntegration}
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.{Error, ImageMetaInformation, ImageMetaSummary}
 import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.logging.LoggerContext
-import org.elasticsearch.indices.IndexMissingException
+import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
 import org.scalatra.json._
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
+
 import scala.util.Try
+import no.ndla.imageapi.ComponentRegistry.{searchService, imageRepository}
 
 class ImageController (implicit val swagger:Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
 
@@ -67,16 +67,13 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   }
 
   error{
-    case e:IndexMissingException =>
+    case e:IndexNotFoundException =>
       halt(status = 500, body = Error.IndexMissingError)
     case t:Throwable => {
       logger.error(Error.GenericError.toString, t)
       halt(status = 500, body = Error.GenericError)
     }
   }
-
-  val searchMeta: SearchMeta = AmazonIntegration.getSearchMeta()
-  val imageMeta: ImageMeta = AmazonIntegration.getImageMeta()
 
   get("/", operation(getImages)) {
     val minimumSize = params.get("minimum-size")
@@ -93,7 +90,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     }
 
     query match {
-      case Some(query) => searchMeta.matchingQuery(
+      case Some(query) => searchService.matchingQuery(
         query = query.toLowerCase().split(" ").map(_.trim),
         minimumSize = size,
         language = language,
@@ -101,7 +98,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
         page,
         pageSize)
 
-      case None => searchMeta.all(minimumSize = size, license = license, page, pageSize)
+      case None => searchService.all(minimumSize = size, license = license, page, pageSize)
     }
   }
 
@@ -110,7 +107,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
     logger.info("GET /{}", imageId)
 
     if(imageId.forall(_.isDigit)) {
-      imageMeta.withId(imageId) match {
+      imageRepository.withId(imageId) match {
         case Some(image) => image
         case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
       }

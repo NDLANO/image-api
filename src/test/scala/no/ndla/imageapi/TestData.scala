@@ -1,7 +1,6 @@
 package no.ndla.imageapi
 
 import no.ndla.imageapi.model._
-import no.ndla.imageapi.integration.AmazonIntegration
 
 /**
  * Testklasse (og kanskje et utgangspunkt for en mer permanent løsning) som
