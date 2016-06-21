@@ -1,16 +1,3 @@
--- master user: imageapi_master
--- master password: spgjdxnZqYV2jv6
-
--- database name: ndla_image_api_test
--- database port: 5432
-
--- read user: imageapi_read
--- read password: Qwf9m7PywTJTrti
-
--- write user: imageapi_write
--- write password: cx8QnLj9qEszrep
-
-
 -- Schema
 CREATE SCHEMA imageapi;
 
