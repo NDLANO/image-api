@@ -57,57 +57,72 @@ class ElasticContentSearchTest extends UnitSuite with TestEnvironment with Elast
   }
 
   test("That all returns all documents ordered by id ascending") {
-    val results = searchService.all(None, None, None, None)
-    results.size should be (3)
-    results.head.id should be ("1")
-    results.last.id should be ("3")
+    val searchResult = searchService.all(None, None, None, None)
+    searchResult.totalCount should be (3)
+    searchResult.results.size should be (3)
+    searchResult.page should be (1)
+    searchResult.results.head.id should be ("1")
+    searchResult.results.last.id should be ("3")
   }
 
   test("That all filtering on minimumsize only returns images larger than minimumsize") {
-    val results = searchService.all(Some(500), None, None, None)
-    results.size should be (2)
-    results.head.id should be ("1")
-    results.last.id should be ("2")
+    val searchResult = searchService.all(Some(500), None, None, None)
+    searchResult.totalCount should be (2)
+    searchResult.results.size should be (2)
+    searchResult.results.head.id should be ("1")
+    searchResult.results.last.id should be ("2")
   }
 
   test("That all filtering on license only returns images with given license") {
-    val results = searchService.all(None, Some("publicdomain"), None, None)
-    results.size should be (1)
-    results.head.id should be ("2")
+    val searchResult = searchService.all(None, Some("publicdomain"), None, None)
+    searchResult.totalCount should be (1)
+    searchResult.results.size should be (1)
+    searchResult.results.head.id should be ("2")
   }
 
   test("That paging returns only hits on current page and not more than page-size") {
-    val page1 = searchService.all(None, None, Some(1), Some(2))
-    val page2 = searchService.all(None, None, Some(2), Some(2))
-    page1.size should be (2)
-    page1.head.id should be ("1")
-    page1.last.id should be ("2")
-    page2.size should be (1)
-    page2.head.id should be ("3")
+    val searchResultPage1 = searchService.all(None, None, Some(1), Some(2))
+    val searchResultPage2 = searchService.all(None, None, Some(2), Some(2))
+    searchResultPage1.totalCount should be (3)
+    searchResultPage1.page should be (1)
+    searchResultPage1.pageSize should be (2)
+    searchResultPage1.results.size should be (2)
+    searchResultPage1.results.head.id should be ("1")
+    searchResultPage1.results.last.id should be ("2")
+
+    searchResultPage2.totalCount should be (3)
+    searchResultPage2.page should be (2)
+    searchResultPage2.pageSize should be (2)
+    searchResultPage2.results.size should be (1)
+    searchResultPage2.results.head.id should be ("3")
   }
 
   test("That both minimum-size and license filters are applied.") {
-    val results = searchService.all(Some(500), Some("publicdomain"), None, None)
-    results.size should be (1)
-    results.head.id should be ("2")
+    val searchResult = searchService.all(Some(500), Some("publicdomain"), None, None)
+    searchResult.totalCount should be (1)
+    searchResult.results.size should be (1)
+    searchResult.results.head.id should be ("2")
   }
 
   test("That search matches title and alttext ordered by relevance") {
-    val results = searchService.matchingQuery(Seq("bil"), None, Some("nb"), None, None, None)
-    results.size should be (2)
-    results.head.id should be ("1")
-    results.last.id should be ("3")
+    val searchResult = searchService.matchingQuery(Seq("bil"), None, Some("nb"), None, None, None)
+    searchResult.totalCount should be (2)
+    searchResult.results.size should be (2)
+    searchResult.results.head.id should be ("1")
+    searchResult.results.last.id should be ("3")
   }
 
   test("That search matches title") {
-    val results = searchService.matchingQuery(Seq("Pingvinen"), None, Some("nb"), None, None, None)
-    results.size should be (1)
-    results.head.id should be ("2")
+    val searchResult = searchService.matchingQuery(Seq("Pingvinen"), None, Some("nb"), None, None, None)
+    searchResult.totalCount should be (1)
+    searchResult.results.size should be (1)
+    searchResult.results.head.id should be ("2")
   }
 
   test("That search matches tags") {
-    val results = searchService.matchingQuery(Seq("and"), None, Some("nb"), None, None, None)
-    results.size should be (1)
-    results.head.id should be ("3")
+    val searchResult = searchService.matchingQuery(Seq("and"), None, Some("nb"), None, None, None)
+    searchResult.totalCount should be (1)
+    searchResult.results.size should be (1)
+    searchResult.results.head.id should be ("3")
   }
 }

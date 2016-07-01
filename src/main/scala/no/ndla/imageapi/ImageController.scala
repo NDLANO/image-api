@@ -8,7 +8,7 @@ package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.model.Error._
-import no.ndla.imageapi.model.{Error, ImageMetaInformation, ImageMetaSummary}
+import no.ndla.imageapi.model.{Error, ImageMetaInformation, ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.logging.LoggerContext
 import org.elasticsearch.index.IndexNotFoundException
@@ -18,7 +18,7 @@ import org.scalatra.json._
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 import scala.util.Try
-import no.ndla.imageapi.ComponentRegistry.{searchService, imageRepository}
+import no.ndla.imageapi.ComponentRegistry.{imageRepository, searchService}
 
 class ImageController (implicit val swagger:Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
 
@@ -28,7 +28,7 @@ class ImageController (implicit val swagger:Swagger) extends ScalatraServlet wit
   protected val applicationDescription = "API for accessing images from ndla.no."
 
   val getImages =
-    (apiOperation[List[ImageMetaSummary]]("getImages")
+    (apiOperation[SearchResult]("getImages")
       summary "Show all images"
       notes "Shows all the images in the ndla.no database. You can search it too."
       parameters (

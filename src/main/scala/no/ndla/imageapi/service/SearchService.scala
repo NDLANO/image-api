@@ -13,7 +13,7 @@ import com.sksamuel.elastic4s._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClientComponent
-import no.ndla.imageapi.model.ImageMetaSummary
+import no.ndla.imageapi.model.{ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.imageapi.repository.SearchIndexerComponent
 import org.elasticsearch.index.IndexNotFoundException
@@ -44,7 +44,7 @@ trait SearchService {
     }
 
 
-    def matchingQuery(query: Iterable[String], minimumSize: Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
+    def matchingQuery(query: Iterable[String], minimumSize: Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val titleSearch = new ListBuffer[QueryDefinition]
       titleSearch += matchQuery("titles.title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
       language.foreach(lang => titleSearch += termQuery("titles.language", lang))
@@ -79,7 +79,7 @@ trait SearchService {
       executeSearch(theSearch, page, pageSize)
     }
 
-    def all(minimumSize: Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[ImageMetaSummary] = {
+    def all(minimumSize: Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val filterList = new ListBuffer[QueryDefinition]()
       license.foreach(license => filterList += nestedQuery("copyright.license").query(termQuery("copyright.license.license", license)))
       minimumSize.foreach(size => filterList += nestedQuery("images.full").query(rangeQuery("images.full.size").gte(size.toString)))
@@ -91,12 +91,14 @@ trait SearchService {
       executeSearch(theSearch, page, pageSize)
     }
 
-    private def executeSearch(search: SearchDefinition, page: Option[Int], pageSize: Option[Int]) = {
+    private def executeSearch(search: SearchDefinition, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       try {
-        elasticClient.execute {
+        val response = elasticClient.execute {
           search start startAt limit numResults
-        }.await.as[ImageMetaSummary]
+        }.await
+
+        SearchResult(response.getHits.getTotalHits, page.getOrElse(1), numResults, response.as[ImageMetaSummary])
       } catch {
         case e: RemoteTransportException => errorHandler(e.getCause)
       }
