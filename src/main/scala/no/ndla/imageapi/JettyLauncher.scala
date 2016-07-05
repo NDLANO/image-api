@@ -17,6 +17,7 @@ object JettyLauncher extends LazyLogging {
     logger.info(io.Source.fromInputStream(getClass.getResourceAsStream("/log-license.txt")).mkString)
 
     PropertiesLoader.load()
+    DBMigrator.migrate(ComponentRegistry.dataSource)
 
     val startMillis = System.currentTimeMillis()
     val port = ImageApiProperties.ApplicationPort

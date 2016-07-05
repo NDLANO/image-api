@@ -51,7 +51,8 @@ lazy val image_api = (project in file(".")).
       "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0",
       "com.sksamuel.elastic4s" %% "elastic4s-testkit" % "2.3.0" % "test",
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-      "org.mockito" % "mockito-all" % MockitoVersion % "test")
+      "org.mockito" % "mockito-all" % MockitoVersion % "test",
+      "org.flywaydb" % "flyway-core" % "4.0")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
 assemblyJarName in assembly := "image-api.jar"

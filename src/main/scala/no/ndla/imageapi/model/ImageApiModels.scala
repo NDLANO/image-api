@@ -31,7 +31,7 @@ case class ImageTitle(@(ApiModelProperty@field)(description = "The freetext titl
 case class ImageAltText(@(ApiModelProperty@field)(description = "The alternative text for the image") alttext: String,
                         @(ApiModelProperty@field)(description = "ISO 639-1 code that represents the language used in the alternative text") language: Option[String])
 
-case class ImageTag(@(ApiModelProperty@field)(description = "The searchable tag.") tag: String,
+case class ImageTag(@(ApiModelProperty@field)(description = "The searchable tag.") tags: Seq[String],
                     @(ApiModelProperty@field)(description = "ISO 639-1 code that represents the language used in tag") language: Option[String])
 
 @ApiModel(description = "The possible variants of the image")
