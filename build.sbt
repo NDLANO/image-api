@@ -94,7 +94,7 @@ imageNames in docker := Seq(
 )
 
 publishTo := {
-  val nexus = "https://nexus.knowit.no/"
+  val nexus = "https://nexus.knowit.no/nexus/"
   if (isSnapshot.value)
     Some("snapshots" at nexus + "content/repositories/ndla-snapshots")
   else
@@ -102,8 +102,8 @@ publishTo := {
 }
 
 resolvers ++= Seq(
-  "Snapshot Sonatype Nexus Repository Manager" at "https://nexus.knowit.no/content/repositories/ndla-snapshots",
-  "Release Sonatype Nexus Repository Manager" at "https://nexus.knowit.no/content/repositories/ndla-releases"
+  "Snapshot Sonatype Nexus Repository Manager" at "https://nexus.knowit.no/nexus/content/repositories/ndla-snapshots",
+  "Release Sonatype Nexus Repository Manager" at "https://nexus.knowit.no/nexus/content/repositories/ndla-releases"
 )
 
 credentials += Credentials("Sonatype Nexus Repository Manager", "nexus.knowit.no", "ndla", "1814Ndla")
