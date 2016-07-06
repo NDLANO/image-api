@@ -41,6 +41,10 @@ object ImageApiProperties extends LazyLogging {
   lazy val MaxPageSize: Int = getInt("SEARCH_MAX_PAGE_SIZE")
   lazy val IndexBulkSize = getInt("INDEX_BULK_SIZE")
 
+  lazy val MigrationHost = get("MIGRATION_HOST")
+  lazy val MigrationUser = get("MIGRATION_USER")
+  lazy val MigrationPassword = get("MIGRATION_PASSWORD")
+
   def verify() = {
     val missingProperties = ImageApiProps.filter(entry => entry._2.isEmpty).toList
     if (missingProperties.nonEmpty){
