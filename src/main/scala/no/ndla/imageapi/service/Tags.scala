@@ -30,7 +30,9 @@ object Tags {
       .flatMap(_.names)
       .flatMap(_.data)
       .flatMap(_.toIterable)
-      .map(t => ImageTag(t._2.trim.toLowerCase, getISO639(t._1)))
+      .map(t => (getISO639(t._1), t._2.trim.toLowerCase))
+      .groupBy(_._1).map(entry => (entry._1, entry._2.map(_._2)))
+      .map(t => ImageTag(t._2, t._1)).toList
   }
 
   def getISO639(languageUrl:String): Option[String] = {
