@@ -67,7 +67,7 @@ trait ElasticContentIndexComponent {
                   )
                 ),
               "tags" typed NestedType as(
-                "tag" typed StringType,
+                "tags" typed StringType,
                 "language" typed StringType index "not_analyzed"
                 )
               )
