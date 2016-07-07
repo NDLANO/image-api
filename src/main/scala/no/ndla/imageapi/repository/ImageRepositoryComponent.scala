@@ -6,16 +6,14 @@
  */
 package no.ndla.imageapi.repository
 
-import javax.sql.DataSource
-
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.DataSourceComponent
 import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants}
 import no.ndla.imageapi.network.ApplicationUrl
+import org.json4s.native.Serialization.{read, write}
 import org.postgresql.util.PGobject
 import scalikejdbc._
-import org.json4s.native.Serialization.{read, write}
 
 
 trait ImageRepositoryComponent {
@@ -45,7 +43,7 @@ trait ImageRepositoryComponent {
       }
     }
 
-    def insert(imageMetaInformation: ImageMetaInformation, externalId: String): Unit = {
+    def insert(imageMetaInformation: ImageMetaInformation, externalId: String): ImageMetaInformation = {
       val json = write(imageMetaInformation)
 
       val dataObject = new PGobject()
@@ -53,11 +51,12 @@ trait ImageRepositoryComponent {
       dataObject.setValue(json)
 
       DB localTx { implicit session =>
-        sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})".update.apply
+        val imageId = sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})".updateAndReturnGeneratedKey.apply
+        imageMetaInformation.copy(id = imageId.toString)
       }
     }
 
-    def update(imageMetaInformation: ImageMetaInformation, externalId: String): Unit = {
+    def update(imageMetaInformation: ImageMetaInformation, externalId: String): ImageMetaInformation = {
       val json = write(imageMetaInformation)
       val dataObject = new PGobject()
       dataObject.setType("jsonb")
@@ -65,6 +64,7 @@ trait ImageRepositoryComponent {
 
       DB localTx { implicit session =>
         sql"update imagemetadata set metadata = ${dataObject} where external_id = ${externalId}".update.apply
+        imageMetaInformation
       }
     }
 

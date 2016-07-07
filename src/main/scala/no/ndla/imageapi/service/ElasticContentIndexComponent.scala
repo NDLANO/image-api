@@ -5,18 +5,32 @@ import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, NestedType, Strin
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClientComponent
-import no.ndla.imageapi.model.ImageMetaInformation
+import no.ndla.imageapi.model.{ImageMetaInformation, ImageNotIndexedException}
+import org.json4s.native.Serialization.write
+
+import scala.util.{Failure, Success, Try}
 
 trait ElasticContentIndexComponent {
   this: ElasticClientComponent =>
   val elasticContentIndex: ElasticContentIndex
 
   class ElasticContentIndex extends LazyLogging {
+    implicit val formats = org.json4s.DefaultFormats
+
+    def indexDocument(imageMetaInformation: ImageMetaInformation): Try[ImageMetaInformation] = {
+      Try {
+        aliasTarget.foreach(indexName => {
+          elasticClient.execute {
+            index into indexName -> ImageApiProperties.SearchDocument source write(imageMetaInformation) id imageMetaInformation.id
+          }.await
+        })
+      } match {
+        case Failure(f) => Failure(new ImageNotIndexedException(f.getMessage))
+        case Success(_) => Success(imageMetaInformation)
+      }
+    }
 
     def indexDocuments(imageMetaList: List[ImageMetaInformation], indexName: String): Unit = {
-      import org.json4s.native.Serialization.write
-      implicit val formats = org.json4s.DefaultFormats
-
       elasticClient.execute {
         bulk(imageMetaList.map(imageMeta => {
           index into indexName -> ImageApiProperties.SearchDocument source write(imageMeta) id imageMeta.id
@@ -118,4 +132,5 @@ trait ElasticContentIndexComponent {
       }
     }
   }
+
 }
