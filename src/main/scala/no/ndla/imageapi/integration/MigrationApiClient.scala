@@ -1,6 +1,5 @@
 package no.ndla.imageapi.integration
 
-import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.network.NdlaClient
 
@@ -12,7 +11,7 @@ trait MigrationApiClient {
 
   val migrationApiClient: MigrationApiClient
 
-  class MigrationApiClient extends LazyLogging {
+  class MigrationApiClient {
     val imageMetadataEndpoint = s"${ImageApiProperties.MigrationHost}/images/:image_nid"
 
     def getMetaDataForImage(imageNid: String): MainImageImport = {
