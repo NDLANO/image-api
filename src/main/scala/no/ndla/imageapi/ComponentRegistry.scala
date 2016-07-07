@@ -4,13 +4,12 @@ import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
-import no.ndla.imageapi.integration.{AmazonClientComponent, CMDataComponent, DataSourceComponent, ElasticClientComponent}
+import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
 import no.ndla.imageapi.service.{ElasticContentIndexComponent, ImageStorageService, ImportServiceComponent, SearchService}
+import no.ndla.network.NdlaClient
 import org.elasticsearch.common.settings.Settings
 import org.postgresql.ds.PGPoolingDataSource
-
-import scala.util.Properties.envOrNone
 
 object ComponentRegistry
   extends ElasticClientComponent
@@ -21,7 +20,8 @@ object ComponentRegistry
   with AmazonClientComponent
   with ImageStorageService
   with SearchIndexerComponent
-  with CMDataComponent
+  with NdlaClient
+  with MigrationApiClient
   with ImportServiceComponent
 {
   lazy val elasticClient = ElasticClient.transport(
@@ -39,13 +39,6 @@ object ComponentRegistry
   dataSource.setMaxConnections(ImageApiProperties.MetaMaxConnections)
   dataSource.setCurrentSchema(ImageApiProperties.MetaSchema)
 
-  lazy val CMPassword = envOrNone("CM_PASSWORD")
-  lazy val CMUser = envOrNone("CM_USER")
-  lazy val CMHost = envOrNone("CM_HOST")
-  lazy val CMPort = envOrNone("CM_PORT")
-  lazy val CMDatabase = envOrNone("CM_DATABASE")
-  lazy val cmData = new CMData(CMHost, CMPort, CMDatabase, CMUser, CMPassword)
-
   val amazonClient = new AmazonS3Client(new BasicAWSCredentials(ImageApiProperties.StorageAccessKey, ImageApiProperties.StorageSecretKey))
   amazonClient.setRegion(Region.getRegion(Regions.EU_CENTRAL_1))
   lazy val storageName = ImageApiProperties.StorageName
@@ -56,4 +49,6 @@ object ComponentRegistry
   lazy val imageStorage = new AmazonImageStorageService
   lazy val searchIndexer = new SearchIndexer
   lazy val importService = new ImportService
+  lazy val ndlaClient = new NdlaClient
+  lazy val migrationApiClient = new MigrationApiClient
 }

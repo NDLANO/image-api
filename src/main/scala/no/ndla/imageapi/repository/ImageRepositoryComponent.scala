@@ -15,6 +15,7 @@ import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants}
 import no.ndla.imageapi.network.ApplicationUrl
 import org.postgresql.util.PGobject
 import scalikejdbc._
+import org.json4s.native.Serialization.{read, write}
 
 
 trait ImageRepositoryComponent {
@@ -22,6 +23,7 @@ trait ImageRepositoryComponent {
   val imageRepository: ImageRepository
 
   class ImageRepository extends LazyLogging {
+    implicit val formats = org.json4s.DefaultFormats
 
     ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
@@ -44,9 +46,6 @@ trait ImageRepositoryComponent {
     }
 
     def insert(imageMetaInformation: ImageMetaInformation, externalId: String): Unit = {
-      import org.json4s.native.Serialization.write
-      implicit val formats = org.json4s.DefaultFormats
-
       val json = write(imageMetaInformation)
 
       val dataObject = new PGobject()
@@ -59,9 +58,6 @@ trait ImageRepositoryComponent {
     }
 
     def update(imageMetaInformation: ImageMetaInformation, externalId: String): Unit = {
-      import org.json4s.native.Serialization.write
-      implicit val formats = org.json4s.DefaultFormats
-
       val json = write(imageMetaInformation)
       val dataObject = new PGobject()
       dataObject.setType("jsonb")
@@ -84,23 +80,20 @@ trait ImageRepositoryComponent {
     }
 
     def applyToAll(func: List[ImageMetaInformation] => Unit) = {
-      val groupRanges = Seq.range(1, numElements).grouped(ImageApiProperties.IndexBulkSize).map(group => (group.head, group.last))
+      val numberOfBulks = math.ceil(numElements.toFloat / ImageApiProperties.IndexBulkSize).toInt
 
       DB readOnly { implicit session =>
-        groupRanges.foreach(range => {
+        for(i <- 0 until numberOfBulks) {
           func(
-            sql"select id,metadata from imagemetadata where id between ${range._1} and ${range._2}".map(rs => {
+            sql"select id,metadata from imagemetadata limit ${ImageApiProperties.IndexBulkSize} offset ${i * ImageApiProperties.IndexBulkSize}".map(rs => {
               asImageMetaInformationWithRelUrl(rs.long("id").toString, rs.string("metadata"))
             }).toList.apply
           )
-        })
+        }
       }
     }
 
     def asImageMetaInformationWithApplicationUrl(documentId: String, json: String): ImageMetaInformation = {
-      import org.json4s.native.Serialization.read
-      implicit val formats = org.json4s.DefaultFormats
-
       val meta = read[ImageMetaInformation](json)
       ImageMetaInformation(
         documentId,
@@ -114,9 +107,6 @@ trait ImageRepositoryComponent {
     }
 
     def asImageMetaInformationWithRelUrl(documentId: String, json: String): ImageMetaInformation = {
-      import org.json4s.native.Serialization.read
-      implicit val formats = org.json4s.DefaultFormats
-
       val meta = read[ImageMetaInformation](json)
       ImageMetaInformation(
         documentId,
