@@ -23,7 +23,11 @@ object ComponentRegistry
   with NdlaClient
   with MigrationApiClient
   with ImportServiceComponent
+  with InternController
+  with ImageController
 {
+  implicit val swagger = new ImageSwagger
+
   lazy val elasticClient = ElasticClient.transport(
     Settings.settingsBuilder().put("cluster.name", ImageApiProperties.SearchClusterName).build(),
     ElasticsearchClientUri(s"elasticsearch://${ImageApiProperties.SearchHost}:${ImageApiProperties.SearchPort}"))
@@ -51,4 +55,7 @@ object ComponentRegistry
   lazy val importService = new ImportService
   lazy val ndlaClient = new NdlaClient
   lazy val migrationApiClient = new MigrationApiClient
+  lazy val internController = new InternController
+  lazy val imageController = new ImageController
+  lazy val resourcesApp = new ResourcesApp
 }

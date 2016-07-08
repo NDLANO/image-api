@@ -6,17 +6,14 @@
  */
 import javax.servlet.ServletContext
 
-import no.ndla.imageapi.{InternController, ImageController, ImageSwagger, ResourcesApp}
+import no.ndla.imageapi._
 import org.scalatra.LifeCycle
 
 class ScalatraBootstrap extends LifeCycle {
 
-  implicit val swagger = new ImageSwagger
-
   override def init(context: ServletContext) {
-    // Mount servlets.
-    context.mount(new ImageController, "/images", "images")
-    context.mount(new ResourcesApp, "/api-docs")
-    context.mount(new InternController, "/intern")
+    context.mount(ComponentRegistry.imageController, "/images", "images")
+    context.mount(ComponentRegistry.resourcesApp, "/api-docs")
+    context.mount(ComponentRegistry.internController, "/intern")
   }
 }
