@@ -5,10 +5,10 @@ import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, NestedType, Strin
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClientComponent
-import no.ndla.imageapi.model.{ImageMetaInformation, ImageNotIndexedException}
+import no.ndla.imageapi.model.ImageMetaInformation
 import org.json4s.native.Serialization.write
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
 trait ElasticContentIndexComponent {
   this: ElasticClientComponent =>
@@ -17,7 +17,7 @@ trait ElasticContentIndexComponent {
   class ElasticContentIndex extends LazyLogging {
     implicit val formats = org.json4s.DefaultFormats
 
-    def indexDocument(imageMetaInformation: ImageMetaInformation): Try[ImageMetaInformation] = {
+    def indexDocument(imageMetaInformation: ImageMetaInformation): ImageMetaInformation = {
       Try {
         aliasTarget.foreach(indexName => {
           elasticClient.execute {
@@ -25,8 +25,11 @@ trait ElasticContentIndexComponent {
           }.await
         })
       } match {
-        case Failure(f) => Failure(new ImageNotIndexedException(f.getMessage))
-        case Success(_) => Success(imageMetaInformation)
+        case Failure(f) => {
+          logger.warn(s"Could not add image with id ${imageMetaInformation.id} to search index. Try recreating the index. The error was ${f.getMessage}")
+          imageMetaInformation
+        }
+        case _ => imageMetaInformation
       }
     }
 

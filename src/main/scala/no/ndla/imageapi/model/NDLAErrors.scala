@@ -23,4 +23,3 @@ object Error {
 
 case class Error(code:String, description:String, occuredAt:String = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()))
 class ImageNotFoundException(message: String) extends RuntimeException(message)
-class ImageNotIndexedException(message: String) extends RuntimeException(message)

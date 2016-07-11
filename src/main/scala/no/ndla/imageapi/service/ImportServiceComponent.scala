@@ -22,7 +22,7 @@ trait ImportServiceComponent {
       for {
         metadata <- migrationApiClient.getMetaDataForImage(imageId)
         converted <- Try(upload(metadata))
-        indexed <- elasticContentIndex.indexDocument(converted)
+        indexed <- Try(elasticContentIndex.indexDocument(converted))
       } yield indexed
     }
 
