@@ -19,10 +19,9 @@ trait ImportServiceComponent {
     val ThumbUrlPrefix = "http://ndla.no/sites/default/files/imagecache/fag_preset/images/"
 
     def importImage(imageId: String): Try[ImageMetaInformation] = {
-      for {
-        metadata <- migrationApiClient.getMetaDataForImage(imageId)
-        converted <- Try(upload(metadata))
-      } yield elasticContentIndex.indexDocument(converted)
+      val imported = migrationApiClient.getMetaDataForImage(imageId).map(upload)
+      imported.foreach(elasticContentIndex.indexDocument)
+      imported
     }
 
     def upload(imageMeta: MainImageImport): ImageMetaInformation = {

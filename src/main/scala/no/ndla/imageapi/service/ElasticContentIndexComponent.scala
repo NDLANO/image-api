@@ -8,7 +8,7 @@ import no.ndla.imageapi.integration.ElasticClientComponent
 import no.ndla.imageapi.model.ImageMetaInformation
 import org.json4s.native.Serialization.write
 
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 trait ElasticContentIndexComponent {
   this: ElasticClientComponent =>
@@ -17,7 +17,7 @@ trait ElasticContentIndexComponent {
   class ElasticContentIndex extends LazyLogging {
     implicit val formats = org.json4s.DefaultFormats
 
-    def indexDocument(imageMetaInformation: ImageMetaInformation): ImageMetaInformation = {
+    def indexDocument(imageMetaInformation: ImageMetaInformation) = {
       Try {
         aliasTarget.foreach(indexName => {
           elasticClient.execute {
@@ -25,11 +25,8 @@ trait ElasticContentIndexComponent {
           }.await
         })
       } match {
-        case Failure(f) => {
-          logger.warn(s"Could not add image with id ${imageMetaInformation.id} to search index. Try recreating the index. The error was ${f.getMessage}")
-          imageMetaInformation
-        }
-        case _ => imageMetaInformation
+        case Success(_) =>
+        case Failure(f) => logger.warn(s"Could not add image with id ${imageMetaInformation.id} to search index. Try recreating the index. The error was ${f.getMessage}")
       }
     }
 
