@@ -8,7 +8,7 @@ import no.ndla.imageapi.model._
 import no.ndla.imageapi.repository.ImageRepositoryComponent
 import no.ndla.mapping.{ISO639Mapping, LicenseMapping}
 
-import scala.util.{Success, Try}
+import scala.util.Try
 
 trait ImportServiceComponent {
   this: ImageStorageService with ImageRepositoryComponent with MigrationApiClient with ElasticContentIndexComponent =>
@@ -22,8 +22,7 @@ trait ImportServiceComponent {
       for {
         metadata <- migrationApiClient.getMetaDataForImage(imageId)
         converted <- Try(upload(metadata))
-        indexed <- Try(elasticContentIndex.indexDocument(converted))
-      } yield indexed
+      } yield elasticContentIndex.indexDocument(converted)
     }
 
     def upload(imageMeta: MainImageImport): ImageMetaInformation = {
