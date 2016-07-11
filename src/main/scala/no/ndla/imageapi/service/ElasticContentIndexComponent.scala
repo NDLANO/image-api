@@ -48,6 +48,7 @@ trait ElasticContentIndexComponent {
           create index indexName mappings (
             ImageApiProperties.SearchDocument as(
               "id" typed IntegerType,
+              "metaUrl" typed StringType index "not_analyzed",
               "titles" typed NestedType as(
                 "title" typed StringType,
                 "language" typed StringType index "not_analyzed"

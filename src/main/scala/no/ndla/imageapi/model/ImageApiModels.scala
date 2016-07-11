@@ -19,6 +19,7 @@ case class ImageMetaSummary(@(ApiModelProperty@field)(description = "The unique 
 
 @ApiModel(description = "Meta information for the image")
 case class ImageMetaInformation(@(ApiModelProperty@field)(description = "The unique id of the image") id: String,
+                                @(ApiModelProperty@field)(description = "The url to where this information can be found") metaUrl: String,
                                 @(ApiModelProperty@field)(description = "Available titles for the image") titles: List[ImageTitle],
                                 @(ApiModelProperty@field)(description = "Available alternative texts for the image") alttexts: List[ImageAltText],
                                 @(ApiModelProperty@field)(description = "The possible size variants of the image") images: ImageVariants,

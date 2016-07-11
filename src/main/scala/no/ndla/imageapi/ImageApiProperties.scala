@@ -11,13 +11,16 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable
 
 object ImageApiProperties extends LazyLogging {
+
   var ImageApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
 
   val ApplicationPort = 80
 
   lazy val ContactEmail = get("CONTACT_EMAIL")
   lazy val HostAddr = get("HOST_ADDR")
-  lazy val Domains = get("DOMAINS").split(",") ++ Array(HostAddr)
+  lazy val Domain = get("DOMAIN")
+  val ImageControllerPath = "/images"
+  lazy val ImageUrlBase = Domain + ImageControllerPath + "/"
 
   lazy val MetaUserName = get("META_USER_NAME")
   lazy val MetaPassword = get("META_PASSWORD")
