@@ -33,7 +33,7 @@ trait ImportServiceComponent {
       val authors = imageMeta.authors.map(ia => Author(ia.typeAuthor, ia.name))
 
       val license = imageMeta.license.flatMap(l => LicenseMapping.getLicenseDefinition(l)) match {
-        case Some(l) => License(imageMeta.license.get, l.description, l.url)
+        case Some(l) => License(l.license, l.description, l.url)
         case None => License(imageMeta.license.get, imageMeta.license.get, None)
       }
 
