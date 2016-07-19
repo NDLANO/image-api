@@ -10,7 +10,6 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.DataSourceComponent
 import no.ndla.imageapi.model.domain.ImageMetaInformation
-import no.ndla.imageapi.model.{api, domain}
 import no.ndla.imageapi.service.ConverterService
 import org.json4s.native.Serialization.write
 import org.postgresql.util.PGobject
@@ -26,19 +25,19 @@ trait ImageRepositoryComponent {
 
     ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
-    def withId(id: Long): Option[api.ImageMetaInformation] = {
+    def withId(id: Long): Option[ImageMetaInformation] = {
       DB readOnly { implicit session =>
-        imageMetaInformationWhere(sqls"im.id = $id").map(converterService.asApiImageMetaInformationWithApplicationUrl)
+        imageMetaInformationWhere(sqls"im.id = $id")
       }
     }
 
-    def withExternalId(externalId: String): Option[domain.ImageMetaInformation] = {
+    def withExternalId(externalId: String): Option[ImageMetaInformation] = {
       DB readOnly { implicit session =>
         imageMetaInformationWhere(sqls"im.external_id = $externalId")
       }
     }
 
-    def insert(imageMetaInformation: domain.ImageMetaInformation, externalId: String): domain.ImageMetaInformation = {
+    def insert(imageMetaInformation: ImageMetaInformation, externalId: String): ImageMetaInformation = {
       val json = write(imageMetaInformation)
 
       val dataObject = new PGobject()
@@ -51,7 +50,7 @@ trait ImageRepositoryComponent {
       }
     }
 
-    def update(imageMetaInformation: domain.ImageMetaInformation, id: Long): domain.ImageMetaInformation = {
+    def update(imageMetaInformation: ImageMetaInformation, id: Long): ImageMetaInformation = {
       val json = write(imageMetaInformation)
       val dataObject = new PGobject()
       dataObject.setType("jsonb")
@@ -74,7 +73,7 @@ trait ImageRepositoryComponent {
       }
     }
 
-    def applyToAll(func: List[domain.ImageMetaInformation] => Unit) = {
+    def applyToAll(func: List[ImageMetaInformation] => Unit) = {
       val im = ImageMetaInformation.syntax("im")
       val numberOfBulks = math.ceil(numElements.toFloat / ImageApiProperties.IndexBulkSize).toInt
 

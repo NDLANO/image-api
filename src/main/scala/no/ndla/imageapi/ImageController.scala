@@ -14,7 +14,7 @@ import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
 import no.ndla.imageapi.model.{Error, ValidationException}
 import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.imageapi.repository.ImageRepositoryComponent
-import no.ndla.imageapi.service.SearchService
+import no.ndla.imageapi.service.{ConverterService, SearchService}
 import no.ndla.logging.LoggerContext
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.{DefaultFormats, Formats}
@@ -25,7 +25,7 @@ import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import scala.util.Try
 
 trait ImageController {
-  this: ImageRepositoryComponent with SearchService =>
+  this: ImageRepositoryComponent with SearchService with ConverterService =>
   val imageController: ImageController
 
   class ImageController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
@@ -113,7 +113,7 @@ trait ImageController {
     get("/:image_id", operation(getByImageId)) {
       val imageId = long("image_id")
       imageRepository.withId(imageId) match {
-        case Some(image) => image
+        case Some(image) => converterService.asApiImageMetaInformationWithApplicationUrl(image)
         case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
       }
     }
