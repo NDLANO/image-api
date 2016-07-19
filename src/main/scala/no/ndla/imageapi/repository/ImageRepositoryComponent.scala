@@ -37,7 +37,7 @@ trait ImageRepositoryComponent {
     def withExternalId(externalId: String): Option[ImageMetaInformation] = {
       DB readOnly { implicit session =>
         sql"select id, metadata from imagemetadata where external_id = ${externalId}".map(rs => (rs.long("id"), rs.string("metadata"))).single.apply match {
-          case Some((id, meta)) => Option(asImageMetaInformationWithRelUrl(id.toString, meta))
+          case Some((id, meta)) => Option(asImageMetaInformationWithDomainUrl(id.toString, meta))
           case None => None
         }
       }
@@ -52,7 +52,7 @@ trait ImageRepositoryComponent {
 
       DB localTx { implicit session =>
         val imageId = sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})".updateAndReturnGeneratedKey.apply
-        imageMetaInformation.copy(id = imageId.toString)
+        asImageMetaInformationWithDomainUrl(imageId.toString, json)
       }
     }
 
@@ -97,6 +97,7 @@ trait ImageRepositoryComponent {
       val meta = read[ImageMetaInformation](json)
       ImageMetaInformation(
         documentId,
+        ApplicationUrl.get + documentId,
         meta.titles,
         meta.alttexts,
         ImageVariants(
@@ -110,9 +111,24 @@ trait ImageRepositoryComponent {
       val meta = read[ImageMetaInformation](json)
       ImageMetaInformation(
         documentId,
+        ImageApiProperties.ImageControllerPath + "/" + documentId,
         meta.titles,
         meta.alttexts,
         meta.images,
+        meta.copyright,
+        meta.tags)
+    }
+
+    def asImageMetaInformationWithDomainUrl(documentId: String, json: String): ImageMetaInformation = {
+      val meta = read[ImageMetaInformation](json)
+      ImageMetaInformation(
+        documentId,
+        ImageApiProperties.ImageUrlBase + documentId,
+        meta.titles,
+        meta.alttexts,
+        ImageVariants(
+          meta.images.small.flatMap(s => Option(Image(ImageApiProperties.ImageUrlBase + s.url, s.size, s.contentType))),
+          meta.images.full.flatMap(f => Option(Image(ImageApiProperties.ImageUrlBase + f.url, f.size, f.contentType)))),
         meta.copyright,
         meta.tags)
     }

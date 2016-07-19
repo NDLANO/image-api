@@ -1,15 +1,15 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.model.{Error, ImageNotIndexedException}
+import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.network.ApplicationUrl
+import no.ndla.imageapi.repository.ImageRepositoryComponent
+import no.ndla.imageapi.service.ImportServiceComponent
 import no.ndla.logging.LoggerContext
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{Ok, ScalatraServlet}
-import no.ndla.imageapi.repository.ImageRepositoryComponent
-import no.ndla.imageapi.service.ImportServiceComponent
 
 import scala.util.{Failure, Success}
 
@@ -64,8 +64,7 @@ trait InternController {
       val imageId = params("image_id")
 
       importService.importImage(imageId) match {
-        case Success(imageMeta) => Ok(s"Successfully imported image with ID = ${imageMeta.id}, ExternalID = $imageId in ${System.currentTimeMillis - start} ms\n")
-        case Failure(inie: ImageNotIndexedException) => Ok(s"Image with ExternalID = $imageId was successfully imported, but not added to search index due to: ${inie.getMessage}\n")
+        case Success(imageMeta) => imageMeta
         case Failure(ex: Throwable) => {
           val errMsg = s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${ex.getMessage}\n"
           logger.warn(errMsg, ex)

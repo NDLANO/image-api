@@ -8,7 +8,7 @@ import no.ndla.imageapi.model._
 import no.ndla.imageapi.repository.ImageRepositoryComponent
 import no.ndla.mapping.{ISO639Mapping, LicenseMapping}
 
-import scala.util.{Success, Try}
+import scala.util.Try
 
 trait ImportServiceComponent {
   this: ImageStorageService with ImageRepositoryComponent with MigrationApiClient with ElasticContentIndexComponent =>
@@ -19,11 +19,9 @@ trait ImportServiceComponent {
     val ThumbUrlPrefix = "http://ndla.no/sites/default/files/imagecache/fag_preset/images/"
 
     def importImage(imageId: String): Try[ImageMetaInformation] = {
-      for {
-        metadata <- migrationApiClient.getMetaDataForImage(imageId)
-        converted <- Try(upload(metadata))
-        indexed <- elasticContentIndex.indexDocument(converted)
-      } yield indexed
+      val imported = migrationApiClient.getMetaDataForImage(imageId).map(upload)
+      imported.foreach(elasticContentIndex.indexDocument)
+      imported
     }
 
     def upload(imageMeta: MainImageImport): ImageMetaInformation = {
@@ -55,7 +53,7 @@ trait ImportServiceComponent {
 
       val persistedImageMetaInformation = imageRepository.withExternalId(imageMeta.mainImage.nid) match {
         case Some(dbMeta) => {
-          val updated = imageRepository.update(ImageMetaInformation(dbMeta.id, titles, alttexts, dbMeta.images, copyright, tags), dbMeta.id)
+          val updated = imageRepository.update(ImageMetaInformation(dbMeta.id, dbMeta.metaUrl, titles, alttexts, dbMeta.images, copyright, tags), dbMeta.id)
           logger.info(s"Updated ID = ${updated.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
           updated
         }
@@ -72,7 +70,7 @@ trait ImportServiceComponent {
           val fullKey = "full/" + imageMeta.mainImage.originalFile
           val full = Image(fullKey, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
 
-          val imageMetaInformation = ImageMetaInformation("0", titles, alttexts, ImageVariants(Option(thumb), Option(full)), copyright, tags)
+          val imageMetaInformation = ImageMetaInformation("0", "", titles, alttexts, ImageVariants(Option(thumb), Option(full)), copyright, tags)
 
           if (!imageStorage.contains(thumbKey)) imageStorage.uploadFromByteArray(thumb, thumbKey, buffer)
           if (!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
@@ -82,6 +80,7 @@ trait ImportServiceComponent {
           inserted
         }
       }
+
       persistedImageMetaInformation
     }
   }
