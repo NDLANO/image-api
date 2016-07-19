@@ -1,8 +1,7 @@
 package no.ndla.imageapi.service
 
 import com.sksamuel.elastic4s.testkit.ElasticSugar
-import no.ndla.imageapi.model._
-import no.ndla.imageapi.network.ApplicationUrl
+import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 
 
@@ -11,6 +10,7 @@ class ElasticContentSearchTest extends UnitSuite with TestEnvironment with Elast
   override val elasticClient = client
   override val elasticContentIndex = new ElasticContentIndex
   override val searchService = new ElasticContentSearch
+  override val converterService = new ConverterService
 
   val getStartAtAndNumResults = PrivateMethod[(Int, Int)]('getStartAtAndNumResults)
 
@@ -20,9 +20,9 @@ class ElasticContentSearchTest extends UnitSuite with TestEnvironment with Elast
   val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None), "Gotham City", List(Author("Forfatter", "DC Comics")))
   val publicDomain = Copyright(License("publicdomain", "Public Domain", None), "Metropolis", List(Author("Forfatter", "Bruce Wayne")))
 
-  val image1 = ImageMetaInformation("1", "/images/1", List(ImageTitle("Batmen er på vift med en bil", Some("nb"))), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", Some("nb"))), largeImageVariant, byNcSa, List(ImageTag(List("fugl"), Some("nb"))))
-  val image2 = ImageMetaInformation("2", "/images/2", List(ImageTitle("Pingvinen er ute og går", Some("nb"))), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", Some("nb"))), largeImageVariant, publicDomain, List(ImageTag(List("fugl"), Some("nb"))))
-  val image3 = ImageMetaInformation("3", "/images/3", List(ImageTitle("Donald Duck kjører bil", Some("nb"))), List(ImageAltText("Bilde av en en and som kjører en rød bil.", Some("nb"))), smallImageVariant, byNcSa, List(ImageTag(List("and"), Some("nb"))))
+  val image1 = ImageMetaInformation("1", List(ImageTitle("Batmen er på vift med en bil", Some("nb"))), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", Some("nb"))), largeImageVariant, byNcSa, List(ImageTag(List("fugl"), Some("nb"))))
+  val image2 = ImageMetaInformation("2", List(ImageTitle("Pingvinen er ute og går", Some("nb"))), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", Some("nb"))), largeImageVariant, publicDomain, List(ImageTag(List("fugl"), Some("nb"))))
+  val image3 = ImageMetaInformation("3", List(ImageTitle("Donald Duck kjører bil", Some("nb"))), List(ImageAltText("Bilde av en en and som kjører en rød bil.", Some("nb"))), smallImageVariant, byNcSa, List(ImageTag(List("and"), Some("nb"))))
 
   override def beforeAll = {
     val indexName = "testindex"

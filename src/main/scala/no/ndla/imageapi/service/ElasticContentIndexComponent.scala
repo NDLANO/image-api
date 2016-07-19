@@ -5,23 +5,23 @@ import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, NestedType, Strin
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClientComponent
-import no.ndla.imageapi.model.ImageMetaInformation
+import no.ndla.imageapi.model.{domain}
 import org.json4s.native.Serialization.write
 
 import scala.util.{Failure, Success, Try}
 
 trait ElasticContentIndexComponent {
-  this: ElasticClientComponent =>
+  this: ElasticClientComponent with ConverterService =>
   val elasticContentIndex: ElasticContentIndex
 
   class ElasticContentIndex extends LazyLogging {
     implicit val formats = org.json4s.DefaultFormats
 
-    def indexDocument(imageMetaInformation: ImageMetaInformation) = {
+    def indexDocument(imageMetaInformation: domain.ImageMetaInformation) = {
       Try {
         aliasTarget.foreach(indexName => {
           elasticClient.execute {
-            index into indexName -> ImageApiProperties.SearchDocument source write(imageMetaInformation) id imageMetaInformation.id
+            index into indexName -> ImageApiProperties.SearchDocument source write(converterService.asApiImageMetaInformationWithRelUrl(imageMetaInformation.id, imageMetaInformation)) id imageMetaInformation.id
           }.await
         })
       } match {
@@ -30,10 +30,10 @@ trait ElasticContentIndexComponent {
       }
     }
 
-    def indexDocuments(imageMetaList: List[ImageMetaInformation], indexName: String): Unit = {
+    def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Unit = {
       elasticClient.execute {
         bulk(imageMetaList.map(imageMeta => {
-          index into indexName -> ImageApiProperties.SearchDocument source write(imageMeta) id imageMeta.id
+          index into indexName -> ImageApiProperties.SearchDocument source write(converterService.asApiImageMetaInformationWithRelUrl(imageMeta.id, imageMeta)) id imageMeta.id
         }))
       }.await
     }

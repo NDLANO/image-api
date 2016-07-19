@@ -1,10 +1,11 @@
 /*
- * Part of NDLA Image-API. API for searching and downloading images from NDLA.
- * Copyright (C) 2015 NDLA
+ * Part of NDLA image_api.
+ * Copyright (C) 2016 NDLA
  *
  * See LICENSE
+ *
  */
-package no.ndla.imageapi.model
+package no.ndla.imageapi.model.api
 
 import org.scalatra.swagger.annotations.ApiModel
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty

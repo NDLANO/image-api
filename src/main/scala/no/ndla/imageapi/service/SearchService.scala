@@ -13,7 +13,7 @@ import com.sksamuel.elastic4s._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClientComponent
-import no.ndla.imageapi.model.{ImageMetaSummary, SearchResult}
+import no.ndla.imageapi.model.api.{ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.imageapi.repository.SearchIndexerComponent
 import org.elasticsearch.index.IndexNotFoundException

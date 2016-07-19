@@ -5,7 +5,7 @@ import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.imageapi.repository.ImageRepositoryComponent
-import no.ndla.imageapi.service.ImportServiceComponent
+import no.ndla.imageapi.service.{ConverterService, ImportServiceComponent}
 import no.ndla.logging.LoggerContext
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
@@ -14,7 +14,7 @@ import org.scalatra.{Ok, ScalatraServlet}
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImageRepositoryComponent with ImportServiceComponent =>
+  this: ImageRepositoryComponent with ImportServiceComponent with ConverterService =>
   val internController: InternController
 
   class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
@@ -51,7 +51,7 @@ trait InternController {
 
       if (externalId.forall(_.isDigit)) {
         imageRepository.withExternalId(externalId) match {
-          case Some(image) => image
+          case Some(image) => converterService.asApiImageMetaInformationWithDomainUrl(image.id, image)
           case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with external id $externalId not found"))
         }
       } else {
@@ -64,7 +64,7 @@ trait InternController {
       val imageId = params("image_id")
 
       importService.importImage(imageId) match {
-        case Success(imageMeta) => imageMeta
+        case Success(imageMeta) => converterService.asApiImageMetaInformationWithDomainUrl(imageMeta.id, imageMeta)
         case Failure(ex: Throwable) => {
           val errMsg = s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${ex.getMessage}\n"
           logger.warn(errMsg, ex)

@@ -7,8 +7,9 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
-import no.ndla.imageapi.model.{Error, ImageMetaInformation, SearchResult}
+import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
 import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.imageapi.repository.ImageRepositoryComponent
 import no.ndla.imageapi.service.SearchService

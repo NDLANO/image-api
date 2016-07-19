@@ -6,7 +6,7 @@
  */
 package no.ndla.imageapi.service
 
-import no.ndla.imageapi.model.ImageTag
+import no.ndla.imageapi.model.domain.ImageTag
 import no.ndla.mapping.ISO639Mapping.get6391CodeFor6392Code
 
 import scala.io.Source

@@ -6,7 +6,7 @@ import com.amazonaws.services.s3.AmazonS3Client
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
-import no.ndla.imageapi.service.{ElasticContentIndexComponent, ImageStorageService, ImportServiceComponent, SearchService}
+import no.ndla.imageapi.service._
 import no.ndla.network.NdlaClient
 import org.elasticsearch.common.settings.Settings
 import org.postgresql.ds.PGPoolingDataSource
@@ -25,6 +25,7 @@ object ComponentRegistry
   with ImportServiceComponent
   with InternController
   with ImageController
+  with ConverterService
 {
   implicit val swagger = new ImageSwagger
 
@@ -58,4 +59,5 @@ object ComponentRegistry
   lazy val internController = new InternController
   lazy val imageController = new ImageController
   lazy val resourcesApp = new ResourcesApp
+  lazy val converterService = new ConverterService
 }
