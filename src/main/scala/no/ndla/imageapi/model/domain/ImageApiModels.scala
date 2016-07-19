@@ -7,7 +7,12 @@
  */
 package no.ndla.imageapi.model.domain
 
-case class ImageMetaInformation(id: String, titles: List[ImageTitle], alttexts: List[ImageAltText], images: ImageVariants, copyright: Copyright, tags: List[ImageTag])
+import no.ndla.imageapi.ImageApiProperties
+import org.json4s.FieldSerializer
+import org.json4s.FieldSerializer._
+import org.json4s.native.Serialization._
+import scalikejdbc._
+
 case class ImageTitle(title: String, language: Option[String])
 case class ImageAltText(alttext: String, language: Option[String])
 case class ImageTag(tags: Seq[String], language: Option[String])
@@ -16,3 +21,18 @@ case class Image(url: String, size: Int, contentType: String)
 case class Copyright(license: License, origin: String, authors: List[Author])
 case class License(license: String, description: String, url: Option[String])
 case class Author(`type`: String, name: String)
+case class ImageMetaInformation(id: Option[Long], titles: List[ImageTitle], alttexts: List[ImageAltText], images: ImageVariants, copyright: Copyright, tags: List[ImageTag])
+
+object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
+  implicit val formats = org.json4s.DefaultFormats
+  override val tableName = "imagemetadata"
+  override val schemaName = Some(ImageApiProperties.MetaSchema)
+
+  def apply(im: SyntaxProvider[ImageMetaInformation])(rs:WrappedResultSet): ImageMetaInformation = apply(im.resultName)(rs)
+  def apply(im: ResultName[ImageMetaInformation])(rs: WrappedResultSet): ImageMetaInformation = {
+    val meta = read[ImageMetaInformation](rs.string(im.c("metadata")))
+    ImageMetaInformation(Some(rs.long(im.c("id"))), meta.titles, meta.alttexts, meta.images, meta.copyright, meta.tags)
+  }
+
+  val JSonSerializer = FieldSerializer[ImageMetaInformation](ignore("id"))
+}

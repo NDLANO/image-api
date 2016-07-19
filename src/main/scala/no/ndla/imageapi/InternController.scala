@@ -25,6 +25,7 @@ trait InternController {
       contentType = formats("json")
       LoggerContext.setCorrelationID(Option(request.getHeader("X-Correlation-ID")))
       ApplicationUrl.set(request)
+      logger.info("{} {}{}", request.getMethod, request.getRequestURI, Option(request.getQueryString).map(s => s"?$s").getOrElse(""))
     }
 
     after() {
@@ -47,11 +48,9 @@ trait InternController {
     get("/extern/:image_id") {
       val externalId = params("image_id")
 
-      logger.info("GET /extern/{}", externalId)
-
       if (externalId.forall(_.isDigit)) {
         imageRepository.withExternalId(externalId) match {
-          case Some(image) => converterService.asApiImageMetaInformationWithDomainUrl(image.id, image)
+          case Some(image) => converterService.asApiImageMetaInformationWithDomainUrl(image)
           case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with external id $externalId not found"))
         }
       } else {
@@ -64,7 +63,7 @@ trait InternController {
       val imageId = params("image_id")
 
       importService.importImage(imageId) match {
-        case Success(imageMeta) => converterService.asApiImageMetaInformationWithDomainUrl(imageMeta.id, imageMeta)
+        case Success(imageMeta) => converterService.asApiImageMetaInformationWithDomainUrl(imageMeta)
         case Failure(ex: Throwable) => {
           val errMsg = s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${ex.getMessage}\n"
           logger.warn(errMsg, ex)

@@ -35,22 +35,22 @@ trait ConverterService {
       api.ImageAltText(domainImageAltText.alttext, domainImageAltText.language)
     }
 
-    def asApiImageMetaInformationWithApplicationUrl(id: String, domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      asApiImageMetaInformation(id, domainImageMetaInformation, Some(ApplicationUrl.get))
+    def asApiImageMetaInformationWithApplicationUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
+      asApiImageMetaInformation(domainImageMetaInformation, Some(ApplicationUrl.get))
     }
 
-    def asApiImageMetaInformationWithRelUrl(id: String, domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      asApiImageMetaInformation(id, domainImageMetaInformation)
+    def asApiImageMetaInformationWithRelUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
+      asApiImageMetaInformation(domainImageMetaInformation)
     }
 
-    def asApiImageMetaInformationWithDomainUrl(id: String, domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      asApiImageMetaInformation(id, domainImageMetaInformation, Some(ImageApiProperties.ImageUrlBase))
+    def asApiImageMetaInformationWithDomainUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
+      asApiImageMetaInformation(domainImageMetaInformation, Some(ImageApiProperties.ImageUrlBase))
     }
 
-    private def asApiImageMetaInformation(id: String, domainImageMetaInformation: domain.ImageMetaInformation, baseUrl: Option[String] = None): api.ImageMetaInformation = {
+    private def asApiImageMetaInformation(domainImageMetaInformation: domain.ImageMetaInformation, baseUrl: Option[String] = None): api.ImageMetaInformation = {
       api.ImageMetaInformation(
-        id,
-        baseUrl.getOrElse("") + id,
+        domainImageMetaInformation.id.get.toString,
+        baseUrl.getOrElse("") + domainImageMetaInformation.id.get,
         domainImageMetaInformation.titles.map(asApiImageTitle),
         domainImageMetaInformation.alttexts.map(asApiImageAltText),
         asApiImageVariants(domainImageMetaInformation.images, baseUrl),

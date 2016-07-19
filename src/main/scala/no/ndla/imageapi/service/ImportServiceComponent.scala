@@ -53,7 +53,7 @@ trait ImportServiceComponent {
 
       val persistedImageMetaInformation = imageRepository.withExternalId(imageMeta.mainImage.nid) match {
         case Some(dbMeta) => {
-          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts, dbMeta.images, copyright, tags), dbMeta.id)
+          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts, dbMeta.images, copyright, tags), dbMeta.id.get)
           logger.info(s"Updated ID = ${updated.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
           updated
         }
@@ -70,7 +70,7 @@ trait ImportServiceComponent {
           val fullKey = "full/" + imageMeta.mainImage.originalFile
           val full = domain.Image(fullKey, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
 
-          val imageMetaInformation = domain.ImageMetaInformation("0", titles, alttexts, domain.ImageVariants(Option(thumb), Option(full)), copyright, tags)
+          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts, domain.ImageVariants(Option(thumb), Option(full)), copyright, tags)
 
           if (!imageStorage.contains(thumbKey)) imageStorage.uploadFromByteArray(thumb, thumbKey, buffer)
           if (!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)

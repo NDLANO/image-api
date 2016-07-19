@@ -21,7 +21,7 @@ trait ElasticContentIndexComponent {
       Try {
         aliasTarget.foreach(indexName => {
           elasticClient.execute {
-            index into indexName -> ImageApiProperties.SearchDocument source write(converterService.asApiImageMetaInformationWithRelUrl(imageMetaInformation.id, imageMetaInformation)) id imageMetaInformation.id
+            index into indexName -> ImageApiProperties.SearchDocument source write(converterService.asApiImageMetaInformationWithRelUrl(imageMetaInformation)) id imageMetaInformation.id.get
           }.await
         })
       } match {
@@ -33,7 +33,7 @@ trait ElasticContentIndexComponent {
     def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Unit = {
       elasticClient.execute {
         bulk(imageMetaList.map(imageMeta => {
-          index into indexName -> ImageApiProperties.SearchDocument source write(converterService.asApiImageMetaInformationWithRelUrl(imageMeta.id, imageMeta)) id imageMeta.id
+          index into indexName -> ImageApiProperties.SearchDocument source write(converterService.asApiImageMetaInformationWithRelUrl(imageMeta)) id imageMeta.id.get
         }))
       }.await
     }

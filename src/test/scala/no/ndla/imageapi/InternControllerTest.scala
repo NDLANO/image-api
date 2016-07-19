@@ -15,7 +15,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   addServlet(controller, "/*")
 
   val DefaultApiImageMetaInformation = api.ImageMetaInformation("1", "http://api.ndla.no/images/1", List(), List(), api.ImageVariants(None, None), api.Copyright(api.License("", "", None), "", List()), List())
-  val DefaultDomainImageMetaInformation = domain.ImageMetaInformation("1",  List(), List(), domain.ImageVariants(None, None), domain.Copyright(domain.License("", "", None), "", List()), List())
+  val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(Some(1),  List(), List(), domain.ImageVariants(None, None), domain.Copyright(domain.License("", "", None), "", List()), List())
 
   test("That GET /extern/abc returns 404") {
     get("/extern/abc") {
