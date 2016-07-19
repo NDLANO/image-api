@@ -12,10 +12,10 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
 import no.ndla.imageapi.model.{Error, ValidationException}
-import no.ndla.imageapi.network.ApplicationUrl
 import no.ndla.imageapi.repository.ImageRepositoryComponent
 import no.ndla.imageapi.service.{ConverterService, SearchService}
 import no.ndla.logging.LoggerContext
+import no.ndla.network.ApplicationUrl
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet

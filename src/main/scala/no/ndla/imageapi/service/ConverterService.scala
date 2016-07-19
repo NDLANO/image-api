@@ -11,7 +11,7 @@ package no.ndla.imageapi.service
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.model.{api, domain}
-import no.ndla.imageapi.network.ApplicationUrl
+import no.ndla.network.ApplicationUrl
 
 
 
