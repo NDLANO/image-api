@@ -3,7 +3,6 @@ package no.ndla.imageapi.integration
 import java.io.ByteArrayInputStream
 
 import com.amazonaws.AmazonServiceException
-import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, PutObjectRequest, S3Object}
 import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._

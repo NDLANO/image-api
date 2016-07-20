@@ -30,7 +30,7 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
     "SEARCH_DOCUMENT" -> Some("search-document"),
     "INDEX_BULK_SIZE" -> Some("1000"),
     "HOST_ADDR" -> Some("host-addr"),
-    "DOMAINS" -> Some("domains"),
+    "DOMAIN" -> Some("http://api.ndla.no"),
     "NDLACOMPONENT" -> Some("image-api"),
     "MIGRATION_HOST" -> Some("image-api"),
     "MIGRATION_USER" -> Some("user"),

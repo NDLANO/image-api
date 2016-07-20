@@ -13,7 +13,7 @@ import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.integration.AmazonClientComponent
-import no.ndla.imageapi.model.{Image, ImageMetaInformation}
+import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
 
 trait ImageStorageService {
   this: AmazonClientComponent =>

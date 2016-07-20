@@ -9,37 +9,31 @@ package no.ndla.imageapi.repository
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.DataSourceComponent
-import no.ndla.imageapi.model.{Image, ImageMetaInformation, ImageVariants}
-import no.ndla.imageapi.network.ApplicationUrl
-import org.json4s.native.Serialization.{read, write}
+import no.ndla.imageapi.model.domain.ImageMetaInformation
+import no.ndla.imageapi.service.ConverterService
+import org.json4s.native.Serialization.write
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
 
 trait ImageRepositoryComponent {
-  this: DataSourceComponent =>
+  this: DataSourceComponent with ConverterService =>
   val imageRepository: ImageRepository
 
   class ImageRepository extends LazyLogging {
-    implicit val formats = org.json4s.DefaultFormats
+    implicit val formats = org.json4s.DefaultFormats + ImageMetaInformation.JSonSerializer
 
     ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
-    def withId(id: String): Option[ImageMetaInformation] = {
+    def withId(id: Long): Option[ImageMetaInformation] = {
       DB readOnly { implicit session =>
-        sql"select metadata from imagemetadata where id = ${id.toInt}".map(rs => rs.string("metadata")).single.apply match {
-          case Some(json) => Option(asImageMetaInformationWithApplicationUrl(id, json))
-          case None => None
-        }
+        imageMetaInformationWhere(sqls"im.id = $id")
       }
     }
 
     def withExternalId(externalId: String): Option[ImageMetaInformation] = {
       DB readOnly { implicit session =>
-        sql"select id, metadata from imagemetadata where external_id = ${externalId}".map(rs => (rs.long("id"), rs.string("metadata"))).single.apply match {
-          case Some((id, meta)) => Option(asImageMetaInformationWithDomainUrl(id.toString, meta))
-          case None => None
-        }
+        imageMetaInformationWhere(sqls"im.external_id = $externalId")
       }
     }
 
@@ -52,19 +46,19 @@ trait ImageRepositoryComponent {
 
       DB localTx { implicit session =>
         val imageId = sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})".updateAndReturnGeneratedKey.apply
-        asImageMetaInformationWithDomainUrl(imageId.toString, json)
+        imageMetaInformation.copy(id = Some(imageId))
       }
     }
 
-    def update(imageMetaInformation: ImageMetaInformation, externalId: String): ImageMetaInformation = {
+    def update(imageMetaInformation: ImageMetaInformation, id: Long): ImageMetaInformation = {
       val json = write(imageMetaInformation)
       val dataObject = new PGobject()
       dataObject.setType("jsonb")
       dataObject.setValue(json)
 
       DB localTx { implicit session =>
-        sql"update imagemetadata set metadata = ${dataObject} where external_id = ${externalId}".update.apply
-        imageMetaInformation
+        sql"update imagemetadata set metadata = ${dataObject} where id = ${id}".update.apply
+        imageMetaInformation.copy(id = Some(id))
       }
     }
 
@@ -80,57 +74,21 @@ trait ImageRepositoryComponent {
     }
 
     def applyToAll(func: List[ImageMetaInformation] => Unit) = {
+      val im = ImageMetaInformation.syntax("im")
       val numberOfBulks = math.ceil(numElements.toFloat / ImageApiProperties.IndexBulkSize).toInt
 
       DB readOnly { implicit session =>
         for(i <- 0 until numberOfBulks) {
           func(
-            sql"select id,metadata from imagemetadata limit ${ImageApiProperties.IndexBulkSize} offset ${i * ImageApiProperties.IndexBulkSize}".map(rs => {
-              asImageMetaInformationWithRelUrl(rs.long("id").toString, rs.string("metadata"))
-            }).toList.apply
+            sql"""select ${im.result.*} from ${ImageMetaInformation.as(im)} limit ${ImageApiProperties.IndexBulkSize} offset ${i * ImageApiProperties.IndexBulkSize}""".map(ImageMetaInformation(im)).list.apply()
           )
         }
       }
     }
 
-    def asImageMetaInformationWithApplicationUrl(documentId: String, json: String): ImageMetaInformation = {
-      val meta = read[ImageMetaInformation](json)
-      ImageMetaInformation(
-        documentId,
-        ApplicationUrl.get + documentId,
-        meta.titles,
-        meta.alttexts,
-        ImageVariants(
-          meta.images.small.flatMap(s => Option(Image(ApplicationUrl.get + s.url, s.size, s.contentType))),
-          meta.images.full.flatMap(f => Option(Image(ApplicationUrl.get + f.url, f.size, f.contentType)))),
-        meta.copyright,
-        meta.tags)
-    }
-
-    def asImageMetaInformationWithRelUrl(documentId: String, json: String): ImageMetaInformation = {
-      val meta = read[ImageMetaInformation](json)
-      ImageMetaInformation(
-        documentId,
-        ImageApiProperties.ImageControllerPath + "/" + documentId,
-        meta.titles,
-        meta.alttexts,
-        meta.images,
-        meta.copyright,
-        meta.tags)
-    }
-
-    def asImageMetaInformationWithDomainUrl(documentId: String, json: String): ImageMetaInformation = {
-      val meta = read[ImageMetaInformation](json)
-      ImageMetaInformation(
-        documentId,
-        ImageApiProperties.ImageUrlBase + documentId,
-        meta.titles,
-        meta.alttexts,
-        ImageVariants(
-          meta.images.small.flatMap(s => Option(Image(ImageApiProperties.ImageUrlBase + s.url, s.size, s.contentType))),
-          meta.images.full.flatMap(f => Option(Image(ImageApiProperties.ImageUrlBase + f.url, f.size, f.contentType)))),
-        meta.copyright,
-        meta.tags)
+    private def imageMetaInformationWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): Option[ImageMetaInformation] = {
+      val im = ImageMetaInformation.syntax("im")
+      sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause".map(ImageMetaInformation(im)).single().apply()
     }
   }
 }
