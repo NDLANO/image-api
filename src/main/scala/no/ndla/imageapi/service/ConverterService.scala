@@ -58,8 +58,6 @@ trait ConverterService {
         domainImageMetaInformation.tags.map(asApiImageTag))
     }
 
-    def asApiImageMetaSummary(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaSummary = {null}
-
     def asApiImageTag(domainImageTag: domain.ImageTag): api.ImageTag = {
       api.ImageTag(domainImageTag.tags, domainImageTag.language)
     }
