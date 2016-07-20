@@ -18,6 +18,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(Some(1),  List(), List(), domain.ImageVariants(None, None), domain.Copyright(domain.License("", "", None), "", List()), List())
 
   test("That GET /extern/abc returns 404") {
+    when(imageRepository.withExternalId(eqTo("abc"))).thenReturn(None)
     get("/extern/abc") {
       status should equal (404)
     }

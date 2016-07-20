@@ -6,20 +6,12 @@
  */
 package no.ndla.imageapi
 
-import javax.servlet.http.HttpServletRequest
-
-import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.controller.NdlaController
+import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
-import no.ndla.imageapi.model.{Error, ValidationException}
 import no.ndla.imageapi.repository.ImageRepositoryComponent
 import no.ndla.imageapi.service.{ConverterService, SearchService}
-import no.ndla.logging.LoggerContext
-import no.ndla.network.ApplicationUrl
-import org.elasticsearch.index.IndexNotFoundException
-import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.ScalatraServlet
-import org.scalatra.json._
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 import scala.util.Try
@@ -28,10 +20,7 @@ trait ImageController {
   this: ImageRepositoryComponent with SearchService with ConverterService =>
   val imageController: ImageController
 
-  class ImageController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
-
-    protected implicit override val jsonFormats: Formats = DefaultFormats
-
+  class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
     // Swagger-stuff
     protected val applicationDescription = "API for accessing images from ndla.no."
 
@@ -60,29 +49,6 @@ trait ImageController {
         pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."))
         )
 
-
-    // Before every action runs, set the content type to be in JSON format.
-    before() {
-      contentType = formats("json")
-      LoggerContext.setCorrelationID(Option(request.getHeader("X-Correlation-ID")))
-      ApplicationUrl.set(request)
-      logger.info("{} {}{}", request.getMethod, request.getRequestURI, Option(request.getQueryString).map(s => s"?$s").getOrElse(""))
-    }
-
-    // Clear application url and correlationId.
-    after() {
-      LoggerContext.clearCorrelationID
-      ApplicationUrl.clear
-    }
-
-    error {
-      case v: ValidationException => halt(status = 400, body = Error(Error.VALIDATION, v.getMessage))
-      case e: IndexNotFoundException => halt(status = 500, body = Error.IndexMissingError)
-      case t: Throwable => {
-        logger.error(Error.GenericError.toString, t)
-        halt(status = 500, body = Error.GenericError)
-      }
-    }
 
     get("/", operation(getImages)) {
       val minimumSize = params.get("minimum-size")
@@ -117,14 +83,5 @@ trait ImageController {
         case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
       }
     }
-
-    def long(paramName: String)(implicit request: HttpServletRequest): Long = {
-      val paramValue = params(paramName)
-      paramValue.forall(_.isDigit) match {
-        case true => paramValue.toLong
-        case false => throw new ValidationException(s"Invalid value for $paramName. Only digits are allowed.")
-      }
-    }
   }
-
 }
