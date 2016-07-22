@@ -26,6 +26,8 @@ object ComponentRegistry
   with InternController
   with ImageController
   with ConverterService
+  with MappingApiClient
+  with TagsService
 {
   implicit val swagger = new ImageSwagger
 
@@ -60,4 +62,6 @@ object ComponentRegistry
   lazy val imageController = new ImageController
   lazy val resourcesApp = new ResourcesApp
   lazy val converterService = new ConverterService
+  lazy val mappingApiClient = new MappingApiClient
+  lazy val tagsService = new TagsService
 }

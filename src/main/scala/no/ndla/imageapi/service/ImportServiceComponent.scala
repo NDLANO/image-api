@@ -4,14 +4,13 @@ import java.net.URL
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.integration._
-import no.ndla.imageapi.model.{api, domain}
+import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.repository.ImageRepositoryComponent
-import no.ndla.mapping.{ISO639Mapping, LicenseMapping}
 
 import scala.util.Try
 
 trait ImportServiceComponent {
-  this: ImageStorageService with ImageRepositoryComponent with MigrationApiClient with ElasticContentIndexComponent with ConverterService =>
+  this: ImageStorageService with ImageRepositoryComponent with MigrationApiClient with ElasticContentIndexComponent with ConverterService with MappingApiClient with TagsService =>
   val importService: ImportService
 
   class ImportService extends LazyLogging {
@@ -27,17 +26,17 @@ trait ImportServiceComponent {
     def upload(imageMeta: MainImageImport): domain.ImageMetaInformation = {
       val start = System.currentTimeMillis
 
-      val tags = Tags.forImage(imageMeta.mainImage.nid)
+      val tags = tagsService.forImage(imageMeta.mainImage.nid)
       val authors = imageMeta.authors.map(ia => domain.Author(ia.typeAuthor, ia.name))
 
-      val license = imageMeta.license.flatMap(l => LicenseMapping.getLicenseDefinition(l)) match {
-        case Some(l) => domain.License(l.license, l.description, l.url)
+      val license = imageMeta.license.flatMap(l => mappingApiClient.getLicenseDefinition(l)) match {
+        case Some(l) => l
         case None => domain.License(imageMeta.license.get, imageMeta.license.get, None)
       }
 
       val copyright = domain.Copyright(license, imageMeta.origin.getOrElse(""), authors)
 
-      val imageLang = ISO639Mapping.languageCodeSupported(imageMeta.mainImage.language) match {
+      val imageLang = mappingApiClient.languageCodeSupported(imageMeta.mainImage.language) match {
         case true => Some(imageMeta.mainImage.language)
         case false => None
       }
@@ -45,7 +44,7 @@ trait ImportServiceComponent {
       var titles = List(domain.ImageTitle(imageMeta.mainImage.title, imageLang))
       var alttexts = List(domain.ImageAltText(imageMeta.mainImage.alttext, imageLang))
       imageMeta.translations.foreach(translation => {
-        val transLang = if (ISO639Mapping.languageCodeSupported(translation.language)) Some(translation.language) else None
+        val transLang = if (mappingApiClient.languageCodeSupported(translation.language)) Some(translation.language) else None
 
         titles = domain.ImageTitle(translation.title, transLang) :: titles
         alttexts = domain.ImageAltText(translation.alttext, transLang) :: alttexts

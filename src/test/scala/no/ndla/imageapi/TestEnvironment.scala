@@ -4,7 +4,7 @@ import javax.sql.DataSource
 
 import com.amazonaws.services.s3.AmazonS3Client
 import com.sksamuel.elastic4s.ElasticClient
-import no.ndla.imageapi.integration.{AmazonClientComponent, DataSourceComponent, ElasticClientComponent, MigrationApiClient}
+import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
 import no.ndla.imageapi.service._
 import no.ndla.network.NdlaClient
@@ -26,6 +26,8 @@ trait TestEnvironment
     with ImageController
     with MockitoSugar
     with ConverterService
+    with MappingApiClient
+    with TagsService
 {
   val storageName = ImageApiProperties.StorageName
 
@@ -45,4 +47,6 @@ trait TestEnvironment
   val imageController = mock[ImageController]
   val internController = mock[InternController]
   val converterService = mock[ConverterService]
+  val mappingApiClient = mock[MappingApiClient]
+  val tagsService = mock[TagsService]
 }
