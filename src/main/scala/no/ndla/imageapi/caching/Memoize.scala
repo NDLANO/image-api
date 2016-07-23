@@ -15,7 +15,7 @@ class Memoize[R](f: () => R, maxAgeMs: Long) extends (() => R) {
 
   private[this] var cache: Option[CacheValue] = None
 
-  def apply(): R = cache.synchronized {
+  def apply(): R = {
     cache match {
       case Some(cachedValue) if !cachedValue.isExpired => cachedValue.value
       case _ => {
