@@ -5,6 +5,7 @@
  * See LICENSE
  *
  */
+
 package no.ndla.imageapi.model.domain
 
 import no.ndla.imageapi.ImageApiProperties

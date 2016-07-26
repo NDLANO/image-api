@@ -1,3 +1,11 @@
+/*
+ * Part of NDLA image_api.
+ * Copyright (C) 2016 NDLA
+ *
+ * See LICENSE
+ *
+ */
+
 package no.ndla.imageapi.db.migration
 
 import db.migration.{V3_DBImage, V3__RenameTagToTags}
