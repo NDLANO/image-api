@@ -6,9 +6,8 @@
  *
  */
 
-package no.ndla.imageapi
+package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.controller.NdlaController
 import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}

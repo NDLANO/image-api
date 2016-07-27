@@ -37,6 +37,8 @@ object ImageApiProperties extends LazyLogging {
   lazy val StorageAccessKey = get("STORAGE_ACCESS_KEY")
   lazy val StorageSecretKey = get("STORAGE_SECRET_KEY")
 
+  lazy val TopicAPIUrl = get("TOPIC_API_URL")
+
   val SearchHost = "search-engine"
   lazy val SearchPort = get("SEARCH_ENGINE_ENV_TCP_PORT")
   lazy val SearchClusterName = get("SEARCH_ENGINE_ENV_CLUSTER_NAME")

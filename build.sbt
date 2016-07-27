@@ -1,7 +1,4 @@
-import java.io.FileInputStream
 import java.util.Properties
-
-import sbtdocker.Instructions
 
 val Scalaversion = "2.11.8"
 val Scalatraversion = "2.4.1"

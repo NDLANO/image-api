@@ -6,9 +6,9 @@
  *
  */
 
-package no.ndla.imageapi
+package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.controller.NdlaController
+import no.ndla.imageapi.ComponentRegistry
 import no.ndla.imageapi.integration.MappingApiClient
 import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._

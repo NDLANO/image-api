@@ -54,9 +54,9 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   test("That asApiImageMetaInformationWithDomainUrl returns links with domain urls") {
     val api = converterService.asApiImageMetaInformationWithDomainUrl(DefaultImageMetaInformation)
-    api.metaUrl should equal ("http://api.ndla.no/images/1")
-    api.images.small.get.url should equal ("http://api.ndla.no/images/thumbs/123.png")
-    api.images.full.get.url should equal ("http://api.ndla.no/images/full/123.png")
+    api.metaUrl should equal ("http://somedomain/images/1")
+    api.images.small.get.url should equal ("http://somedomain/images/thumbs/123.png")
+    api.images.full.get.url should equal ("http://somedomain/images/full/123.png")
   }
 
 }
