@@ -2,6 +2,8 @@ import java.util.Properties
 
 val Scalaversion = "2.11.8"
 val Scalatraversion = "2.4.1"
+val ScalaLoggingVersion = "3.1.0"
+val Log4JVersion = "2.6"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.10.26"
 val ScalaTestVersion = "2.2.4"
@@ -29,14 +31,16 @@ lazy val image_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
     scalacOptions := Seq("-target:jvm-1.7"),
     libraryDependencies ++= Seq(
-      "ndla" %% "logging" % "0.1-SNAPSHOT",
-      "ndla" %% "logging" % "0.1-SNAPSHOT" % "test" classifier "tests",
-      "ndla" %% "network" % "0.2-SNAPSHOT",
+      "ndla" %% "network" % "0.4",
       "joda-time" % "joda-time" % "2.8.2",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
       "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
       "org.scalatra" %% "scalatra-scalatest" % Scalatraversion % "test",
+      "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
+      "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
+      "org.apache.logging.log4j" % "log4j-core" % Log4JVersion,
+      "org.apache.logging.log4j" % "log4j-slf4j-impl" % Log4JVersion,
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",

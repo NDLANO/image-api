@@ -1,0 +1,26 @@
+Configuration:
+  status: warn
+
+  Properties:
+    Property:
+      name: component_name
+      value: "${env:NDLACOMPONENT}"
+
+  Appenders:
+    Console:
+      name: Console
+      target: SYSTEM_OUT
+      PatternLayout:
+        Pattern: "[${component_name}] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] (%X{correlationID}) %-5level %C.%M#%L: %msg%n"
+
+  Loggers:
+    Logger:
+      name: "no.ndla"
+      level: info
+      additivity: false
+      AppenderRef:
+        - ref: Console
+    Root:
+      level: warn
+      AppenderRef:
+        - ref: Console

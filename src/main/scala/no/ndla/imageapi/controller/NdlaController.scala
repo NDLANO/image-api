@@ -12,8 +12,9 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.model.{Error, ValidationException}
-import no.ndla.logging.LoggerContext
-import no.ndla.network.ApplicationUrl
+import no.ndla.network.{ApplicationUrl, CorrelationID}
+import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKey}
+import org.apache.logging.log4j.ThreadContext
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
@@ -24,13 +25,15 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
 
   before() {
     contentType = formats("json")
-    LoggerContext.setCorrelationID(Option(request.getHeader("X-Correlation-ID")))
+    CorrelationID.set(Option(request.getHeader(CorrelationIdHeader)))
+    ThreadContext.put(CorrelationIdKey, CorrelationID.get.getOrElse(""))
     ApplicationUrl.set(request)
     logger.info("{} {}{}", request.getMethod, request.getRequestURI, Option(request.getQueryString).map(s => s"?$s").getOrElse(""))
   }
 
   after() {
-    LoggerContext.clearCorrelationID
+    CorrelationID.clear()
+    ThreadContext.remove(CorrelationIdKey)
     ApplicationUrl.clear
   }
 
