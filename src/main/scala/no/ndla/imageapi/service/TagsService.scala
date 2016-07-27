@@ -1,14 +1,16 @@
 /*
- * Part of NDLA Image-API. API for searching and downloading images from NDLA.
- * Copyright (C) 2015 NDLA
+ * Part of NDLA image_api.
+ * Copyright (C) 2016 NDLA
  *
  * See LICENSE
+ *
  */
+
 package no.ndla.imageapi.service
 
 import no.ndla.imageapi.integration.MappingApiClient
 import no.ndla.imageapi.model.domain.ImageTag
-
+import no.ndla.imageapi.ImageApiProperties.TopicAPIUrl
 import scala.io.Source
 import scala.util.matching.Regex
 
@@ -18,7 +20,6 @@ trait TagsService {
 
   class TagsService {
 
-    val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
     val pattern = new Regex("http:\\/\\/psi\\..*\\/#(.+)")
 
     def forImage(nid: String): List[ImageTag] = {

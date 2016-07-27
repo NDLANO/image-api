@@ -1,6 +1,6 @@
 
 NDLA Image-API. API for searching and downloading images from NDLA.
-Copyright (C) 2015 NDLA
+Copyright (C) 2016 NDLA
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

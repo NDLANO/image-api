@@ -1,9 +1,11 @@
 /*
- * Part of NDLA Image-API. API for searching and downloading images from NDLA.
- * Copyright (C) 2015 NDLA
+ * Part of NDLA image_api.
+ * Copyright (C) 2016 NDLA
  *
  * See LICENSE
+ *
  */
+
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
@@ -15,6 +17,9 @@ object ImageApiProperties extends LazyLogging {
   var ImageApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
 
   val ApplicationPort = 80
+
+  val CorrelationIdKey = "correlationID"
+  val CorrelationIdHeader = "X-Correlation-ID"
 
   lazy val ContactEmail = get("CONTACT_EMAIL")
   lazy val HostAddr = get("HOST_ADDR")
@@ -34,6 +39,8 @@ object ImageApiProperties extends LazyLogging {
   lazy val StorageName = get("STORAGE_NAME")
   lazy val StorageAccessKey = get("STORAGE_ACCESS_KEY")
   lazy val StorageSecretKey = get("STORAGE_SECRET_KEY")
+
+  lazy val TopicAPIUrl = get("TOPIC_API_URL")
 
   val SearchHost = "search-engine"
   lazy val SearchPort = get("SEARCH_ENGINE_ENV_TCP_PORT")

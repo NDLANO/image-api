@@ -1,6 +1,14 @@
-package no.ndla.imageapi
+/*
+ * Part of NDLA image_api.
+ * Copyright (C) 2016 NDLA
+ *
+ * See LICENSE
+ *
+ */
 
-import no.ndla.imageapi.controller.NdlaController
+package no.ndla.imageapi.controller
+
+import no.ndla.imageapi.ComponentRegistry
 import no.ndla.imageapi.integration.MappingApiClient
 import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._

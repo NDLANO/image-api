@@ -14,7 +14,6 @@ import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
 
 
-
 trait ConverterService {
   val converterService: ConverterService
 
