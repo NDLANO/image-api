@@ -6,9 +6,10 @@
  *
  */
 
-package no.ndla.imageapi
+package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.model.{api, domain}
+import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 import org.json4s.jackson.Serialization._
 import org.mockito.Matchers.{eq => eqTo}
 import org.mockito.Mockito._

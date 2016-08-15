@@ -17,5 +17,6 @@ class ScalatraBootstrap extends LifeCycle {
     context.mount(ComponentRegistry.imageController, ImageApiProperties.ImageControllerPath, "images")
     context.mount(ComponentRegistry.resourcesApp, "/api-docs")
     context.mount(ComponentRegistry.internController, "/intern")
+    context.mount(ComponentRegistry.healthController, ImageApiProperties.HealthControllerPath)
   }
 }

@@ -12,7 +12,7 @@ import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
-import no.ndla.imageapi.controller.{ImageController, InternController}
+import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
 import no.ndla.imageapi.service._
@@ -37,6 +37,7 @@ object ComponentRegistry
   with ConverterService
   with MappingApiClient
   with TagsService
+  with HealthController
 {
   implicit val swagger = new ImageSwagger
 
@@ -69,6 +70,7 @@ object ComponentRegistry
   lazy val migrationApiClient = new MigrationApiClient
   lazy val internController = new InternController
   lazy val imageController = new ImageController
+  lazy val healthController = new HealthController
   lazy val resourcesApp = new ResourcesApp
   lazy val converterService = new ConverterService
   lazy val mappingApiClient = new MappingApiClient

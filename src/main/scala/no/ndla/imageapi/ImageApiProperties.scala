@@ -21,9 +21,11 @@ object ImageApiProperties extends LazyLogging {
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
 
+
   lazy val ContactEmail = get("CONTACT_EMAIL")
   lazy val HostAddr = get("HOST_ADDR")
   lazy val Domain = get("DOMAIN")
+  val HealthControllerPath = "/health"
   val ImageControllerPath = "/images"
   lazy val ImageUrlBase = Domain + ImageControllerPath + "/"
 

@@ -12,7 +12,7 @@ import javax.sql.DataSource
 
 import com.amazonaws.services.s3.AmazonS3Client
 import com.sksamuel.elastic4s.ElasticClient
-import no.ndla.imageapi.controller.{ImageController, InternController}
+import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
 import no.ndla.imageapi.service._
@@ -37,6 +37,7 @@ trait TestEnvironment
     with ConverterService
     with MappingApiClient
     with TagsService
+    with HealthController
 {
   val storageName = ImageApiProperties.StorageName
 
@@ -55,6 +56,7 @@ trait TestEnvironment
   val migrationApiClient = mock[MigrationApiClient]
   val imageController = mock[ImageController]
   val internController = mock[InternController]
+  val healthController = mock[HealthController]
   val converterService = mock[ConverterService]
   val mappingApiClient = mock[MappingApiClient]
   val tagsService = mock[TagsService]
