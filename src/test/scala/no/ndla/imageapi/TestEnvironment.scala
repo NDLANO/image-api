@@ -12,6 +12,7 @@ import javax.sql.DataSource
 
 import com.amazonaws.services.s3.AmazonS3Client
 import com.sksamuel.elastic4s.ElasticClient
+import io.searchbox.client.JestClient
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
@@ -60,4 +61,5 @@ trait TestEnvironment
   val converterService = mock[ConverterService]
   val mappingApiClient = mock[MappingApiClient]
   val tagsService = mock[TagsService]
+  val jestClient = mock[JestClient]
 }

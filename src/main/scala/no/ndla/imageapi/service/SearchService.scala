@@ -8,21 +8,20 @@
 
 package no.ndla.imageapi.service
 
-import java.util
-
-import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s._
+import com.google.gson.JsonObject
 import com.typesafe.scalalogging.LazyLogging
+import io.searchbox.core.{Search, SearchResult => JestSearchResult}
+import io.searchbox.params.Parameters
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClientComponent
 import no.ndla.imageapi.model.api.{ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.repository.SearchIndexerComponent
 import no.ndla.network.ApplicationUrl
 import org.elasticsearch.index.IndexNotFoundException
-import org.elasticsearch.index.query.MatchQueryBuilder
-import org.elasticsearch.transport.RemoteTransportException
+import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilders}
+import org.elasticsearch.search.builder.SearchSourceBuilder
+import org.elasticsearch.search.sort.SortBuilders
 
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -31,79 +30,81 @@ trait SearchService {
   val searchService: ElasticContentSearch
 
   class ElasticContentSearch extends LazyLogging {
+    val noCopyright = QueryBuilders.boolQuery().mustNot(QueryBuilders.nestedQuery("copyright.license", QueryBuilders.termQuery("copyright.license.license","copyrighted")))
 
-    val noCopyrightFilter = not(nestedQuery("copyright.license").query(termQuery("copyright.license.license", "copyrighted")))
-
-    implicit object ImageHitAs extends HitAs[ImageMetaSummary] {
-      override def as(hit: RichSearchHit): ImageMetaSummary = {
-        val sourceMap = hit.sourceAsMap
-        ImageMetaSummary(
-          sourceMap("id").toString,
-          ApplicationUrl.get + sourceMap("images").asInstanceOf[util.HashMap[String, AnyRef]].get("small").asInstanceOf[util.HashMap[String, String]].get("url"),
-          ApplicationUrl.get + sourceMap("id").toString,
-          sourceMap("copyright").asInstanceOf[util.HashMap[String, AnyRef]].get("license").asInstanceOf[util.HashMap[String, String]].get("license"))
+    def getHits(response: JestSearchResult): Seq[ImageMetaSummary] = {
+      var resultList = Seq[ImageMetaSummary]()
+      response.getTotal match {
+        case count: Integer if count > 0 => {
+          val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
+          val iterator = resultArray.iterator()
+          while(iterator.hasNext) {
+            resultList = resultList :+ hitAsImageMetaSummary(iterator.next().asInstanceOf[JsonObject].get("_source").asInstanceOf[JsonObject])
+          }
+          resultList
+        }
+        case _ => Seq()
       }
     }
 
+    def hitAsImageMetaSummary(hit: JsonObject): ImageMetaSummary = {
+      ImageMetaSummary(
+        hit.get("id").getAsString,
+        ApplicationUrl.get + hit.getAsJsonObject("images").getAsJsonObject("small").get("url").getAsString,
+        ApplicationUrl.get + hit.get("id").getAsString,
+        hit.getAsJsonObject("copyright").getAsJsonObject("license").get("license").getAsString)
+    }
 
     def matchingQuery(query: Iterable[String], minimumSize: Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      val titleSearch = new ListBuffer[QueryDefinition]
-      titleSearch += matchQuery("titles.title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      language.foreach(lang => titleSearch += termQuery("titles.language", lang))
-
-      val altTextSearch = new ListBuffer[QueryDefinition]
-      altTextSearch += matchQuery("alttexts.alttext", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      language.foreach(lang => altTextSearch += termQuery("alttexts.language", lang))
-
-      val tagSearch = new ListBuffer[QueryDefinition]
-      tagSearch += matchQuery("tags.tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      language.foreach(lang => tagSearch += termQuery("tags.language", lang))
-
-      val filterList = new ListBuffer[QueryDefinition]()
-      license.foreach(license => filterList += nestedQuery("copyright.license").query(termQuery("copyright.license.license", license)))
-      minimumSize.foreach(size => filterList += nestedQuery("images.full").query(rangeQuery("images.full.size").gte(size.toString)))
-      filterList += noCopyrightFilter
-
-      val theSearch = search in ImageApiProperties.SearchIndex -> ImageApiProperties.SearchDocument query {
-        bool {
-          must (
-            should(
-              nestedQuery("titles").query {bool {must(titleSearch.toList)}},
-              nestedQuery("alttexts").query {bool {must(altTextSearch.toList)}},
-              nestedQuery("tags").query {bool {must(tagSearch.toList)}}
-            ),
-            filter (filterList)
-          )
-        }
+      val titleSearch = QueryBuilders.matchQuery("titles.title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val languageSpecificTitleSearch = language match {
+        case None => titleSearch
+        case Some(lang) => QueryBuilders.boolQuery().must(titleSearch).must(QueryBuilders.termQuery("titles.language", lang))
       }
 
+      val altTextSearch = QueryBuilders.matchQuery("alttexts.alttext", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val languageSpecificAltTextSearch = language match {
+        case None => altTextSearch
+        case Some(lang) => QueryBuilders.boolQuery().must(altTextSearch).must(QueryBuilders.termQuery("alttexts.language", lang))
+      }
+
+      val tagSearch = QueryBuilders.matchQuery("tags.tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val languageSpecificTagSearch = language match {
+        case None => tagSearch
+        case Some(lang) => QueryBuilders.boolQuery().must(tagSearch).must(QueryBuilders.termQuery("tags.language", lang))
+      }
+
+      val filters = QueryBuilders.boolQuery().filter(noCopyright)
+      license.foreach(lic => filters.filter(QueryBuilders.nestedQuery("copyright.license", QueryBuilders.termQuery("copyright.license.license", license.get))))
+      minimumSize.foreach(ms => filters.filter(QueryBuilders.nestedQuery("images.full", QueryBuilders.rangeQuery("images.full.size").gte(minimumSize.get))))
+
+      val fullSearch = QueryBuilders.boolQuery()
+        .must(QueryBuilders.boolQuery()
+          .should(QueryBuilders.nestedQuery("titles", languageSpecificTitleSearch))
+          .should(QueryBuilders.nestedQuery("alttexts", languageSpecificAltTextSearch))
+          .should(QueryBuilders.nestedQuery("tags", languageSpecificTagSearch)))
+        .must(filters)
+
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-      executeSearch(theSearch, page, pageSize)
+      val searchQuery = new SearchSourceBuilder().query(fullSearch).sort(SortBuilders.fieldSort("id"))
+      val request = new Search.Builder(searchQuery.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
+      val response = jestClient.execute(request)
+
+      SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
     }
 
     def all(minimumSize: Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      val filterList = new ListBuffer[QueryDefinition]()
-      license.foreach(license => filterList += nestedQuery("copyright.license").query(termQuery("copyright.license.license", license)))
-      minimumSize.foreach(size => filterList += nestedQuery("images.full").query(rangeQuery("images.full.size").gte(size.toString)))
-      filterList += noCopyrightFilter
-
-      val theSearch = search in ImageApiProperties.SearchIndex -> ImageApiProperties.SearchDocument query filter(filterList)
-      theSearch.sort(field sort "id")
-
-      executeSearch(theSearch, page, pageSize)
-    }
-
-    private def executeSearch(search: SearchDefinition, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-      try {
-        val response = elasticClient.execute {
-          search start startAt limit numResults
-        }.await
 
-        SearchResult(response.getHits.getTotalHits, page.getOrElse(1), numResults, response.as[ImageMetaSummary])
-      } catch {
-        case e: RemoteTransportException => errorHandler(e.getCause)
-      }
+      val filters = QueryBuilders.boolQuery().filter(noCopyright)
+      license.foreach(lic => filters.filter(QueryBuilders.nestedQuery("copyright.license", QueryBuilders.termQuery("copyright.license.license", license.get))))
+      minimumSize.foreach(ms => filters.filter(QueryBuilders.nestedQuery("images.full", QueryBuilders.rangeQuery("images.full.size").gte(minimumSize.get))))
+
+      val searchQuery = new SearchSourceBuilder().query(filters).sort(SortBuilders.fieldSort("id"))
+      val request = new Search.Builder(searchQuery.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
+      val response = jestClient.execute(request)
+
+      SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
     }
 
     private def getStartAtAndNumResults(page: Option[Int], pageSize: Option[Int]): (Int, Int) = {

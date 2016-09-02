@@ -8,12 +8,14 @@
 
 package no.ndla.imageapi.service
 
-import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, NestedType, StringType}
 import com.typesafe.scalalogging.LazyLogging
+import io.searchbox.core.{Bulk, Index}
+import io.searchbox.indices.aliases.{AddAliasMapping, ModifyAliases, RemoveAliasMapping}
+import io.searchbox.indices.mapping.PutMapping
+import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists}
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClientComponent
-import no.ndla.imageapi.model.{domain}
+import no.ndla.imageapi.model.domain
 import org.json4s.native.Serialization.write
 
 import scala.util.{Failure, Success, Try}
@@ -27,11 +29,12 @@ trait ElasticContentIndexComponent {
 
     def indexDocument(imageMetaInformation: domain.ImageMetaInformation) = {
       Try {
-        aliasTarget.foreach(indexName => {
-          elasticClient.execute {
-            index into indexName -> ImageApiProperties.SearchDocument source write(converterService.asApiImageMetaInformationWithRelUrl(imageMetaInformation)) id imageMetaInformation.id.get
-          }.await
-        })
+        val source = write(converterService.asApiImageMetaInformationWithRelUrl(imageMetaInformation))
+        val indexRequest = new Index.Builder(source).index(ImageApiProperties.SearchIndex).`type`(ImageApiProperties.SearchDocument).id(imageMetaInformation.id.get.toString).build
+        val result = jestClient.execute(indexRequest)
+        if (!result.isSucceeded) {
+          logger.warn(s"Received error = ${result.getErrorMessage}")
+        }
       } match {
         case Success(_) =>
         case Failure(f) => logger.warn(s"Could not add image with id ${imageMetaInformation.id} to search index. Try recreating the index. The error was ${f.getMessage}")
@@ -39,107 +42,125 @@ trait ElasticContentIndexComponent {
     }
 
     def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Unit = {
-      elasticClient.execute {
-        bulk(imageMetaList.map(imageMeta => {
-          index into indexName -> ImageApiProperties.SearchDocument source write(converterService.asApiImageMetaInformationWithRelUrl(imageMeta)) id imageMeta.id.get
-        }))
-      }.await
+      val bulkBuilder = new Bulk.Builder()
+      imageMetaList.foreach(imageMeta => {
+        val source = write(converterService.asApiImageMetaInformationWithRelUrl(imageMeta))
+        bulkBuilder.addAction(new Index.Builder(source).index(ImageApiProperties.SearchIndex).`type`(ImageApiProperties.SearchDocument).id(imageMeta.id.get.toString).build)
+      })
+      jestClient.execute(bulkBuilder.build())
     }
 
     def createIndex(indexName: String) = {
-      val existsDefinition = elasticClient.execute {
-        index exists indexName.toString
-      }.await
-
-      if (!existsDefinition.isExists) {
-        elasticClient.execute {
-          create index indexName mappings (
-            ImageApiProperties.SearchDocument as(
-              "id" typed IntegerType,
-              "metaUrl" typed StringType index "not_analyzed",
-              "titles" typed NestedType as(
-                "title" typed StringType,
-                "language" typed StringType index "not_analyzed"
-                ),
-              "alttexts" typed NestedType as(
-                "alttext" typed StringType,
-                "language" typed StringType index "not_analyzed"
-                ),
-              "images" typed NestedType as(
-                "small" typed NestedType as(
-                  "url" typed StringType,
-                  "size" typed IntegerType index "not_analyzed",
-                  "contentType" typed StringType
-                  ),
-                "full" typed NestedType as(
-                  "url" typed StringType,
-                  "size" typed IntegerType index "not_analyzed",
-                  "contentType" typed StringType
-                  )
-                ),
-              "copyright" typed NestedType as(
-                "license" typed NestedType as(
-                  "license" typed StringType index "not_analyzed",
-                  "description" typed StringType,
-                  "url" typed StringType
-                  ),
-                "origin" typed StringType,
-                "authors" typed NestedType as(
-                  "type" typed StringType,
-                  "name" typed StringType
-                  )
-                ),
-              "tags" typed NestedType as(
-                "tags" typed StringType,
-                "language" typed StringType index "not_analyzed"
-                )
-              )
-            )
-        }.await
+      if (!indexExists(indexName)) {
+        jestClient.execute(new CreateIndex.Builder(indexName).build())
+        jestClient.execute(new PutMapping.Builder(indexName, ImageApiProperties.SearchDocument, imageMapping).build())
       }
     }
 
     def updateAliasTarget(newIndexName: String, oldIndexName: Option[String]) = {
-      val existsDefinition = elasticClient.execute {
-        index exists newIndexName
-      }.await
+      if (indexExists(newIndexName)) {
+        val addAliasDefinition = new AddAliasMapping.Builder(newIndexName, ImageApiProperties.SearchIndex).build()
+        val modifyAliasRequest = oldIndexName match {
+          case None => new ModifyAliases.Builder(addAliasDefinition).build()
+          case Some(oldIndex) => {
+            new ModifyAliases.Builder(
+              new RemoveAliasMapping.Builder(oldIndex, ImageApiProperties.SearchIndex).build()
+            ).addAlias(addAliasDefinition).build()
+          }
+        }
 
-
-      if (existsDefinition.isExists) {
-        elasticClient.execute {
-          oldIndexName.foreach(oldIndexName => {
-            remove alias ImageApiProperties.SearchIndex on oldIndexName
-          })
-          add alias ImageApiProperties.SearchIndex on newIndexName
-        }.await
+        jestClient.execute(modifyAliasRequest)
       } else {
         throw new IllegalArgumentException(s"No such index: $newIndexName")
       }
     }
 
     def deleteIndex(indexName: String) = {
-      val existsDefinition = elasticClient.execute {
-        index exists indexName
-      }.await
-      if (existsDefinition.isExists) {
-        elasticClient.execute {
-          delete index indexName
-        }.await
+      if (indexExists(indexName)) {
+        jestClient.execute(new DeleteIndex.Builder(indexName).build())
       } else {
         throw new IllegalArgumentException(s"No such index: $indexName")
       }
     }
 
     def aliasTarget: Option[String] = {
-      val res = elasticClient.execute {
-        get alias ImageApiProperties.SearchIndex
-      }.await
-      val aliases = res.getAliases.keysIt()
-      aliases.hasNext match {
-        case true => Some(aliases.next())
-        case false => None
-      }
+      // TODO: Denne trenger litt kjærlighet, og vil tryne
+      //      val result = jestClient.execute(new GetAliases.Builder().addIndex(ImageApiProperties.SearchIndex).build())
+      None
+      //      Some(result.getJsonObject.getAsJsonObject.getAsString)
     }
+
+
+    def indexExists(indexName: String): Boolean = {
+      jestClient.execute(new IndicesExists.Builder(indexName).build()).isSucceeded
+    }
+
+
+
+    val imageMapping = """
+      {
+        "image":{
+          "properties":{
+            "alttexts":{
+              "type":"nested",
+              "properties":{
+                "alttext":{
+                  "type":"string"
+                },
+                "language":{
+                  "type":"string",
+                  "index":"not_analyzed"
+                }
+              }
+            },
+            "copyright":{
+              "type":"nested",
+              "properties":{
+                "authors":{
+                  "type":"nested",
+                  "properties":{
+                    "name":{
+                      "type":"string"
+                    },
+                    "type":{
+                      "type":"string"
+                    }
+                  }
+                },
+                "license":{
+                  "type":"nested",
+                  "properties":{
+                    "description":{
+                    "type":"string"
+                  },
+                  "license":{
+                    "type":"string",
+                    "index":"not_analyzed"
+                  },
+                  "url":{
+                    "type":"string"
+                  }
+                }
+              },
+              "origin":{
+                "type":"string"
+              }
+            }
+          },
+          "id":{
+            "type":"integer"
+          },
+          "images":{
+            "type":"nested",
+            "properties":{
+              "full":{
+                "type":"nested",
+                "properties":{
+                  "contentType":{
+                    "type":"string"
+                  },"size":{"type":"integer"},"url":{"type":"string"}}},"small":{"type":"nested","properties":{"contentType":{"type":"string"},"size":{"type":"integer"},"url":{"type":"string"}}}}},"metaUrl":{"type":"string","index":"not_analyzed"},"tags":{"type":"nested","properties":{"language":{"type":"string","index":"not_analyzed"},"tags":{"type":"string"}}},"titles":{"type":"nested","properties":{"language":{"type":"string","index":"not_analyzed"},"title":{"type":"string"}}}}}
+      }""".stripMargin
+
   }
 
 }

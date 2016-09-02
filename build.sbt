@@ -8,7 +8,6 @@ val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.10.26"
 val ScalaTestVersion = "2.2.4"
 val MockitoVersion = "1.10.19"
-val SlickVersion = "3.0.0"
 
 val appProperties = settingKey[Properties]("The application properties")
 
@@ -28,8 +27,8 @@ lazy val image_api = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "image-api",
-    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
-    scalacOptions := Seq("-target:jvm-1.7"),
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
+    scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
       "ndla" %% "network" % "0.4",
       "joda-time" % "joda-time" % "2.8.2",
@@ -54,7 +53,10 @@ lazy val image_api = (project in file(".")).
       "com.sksamuel.elastic4s" %% "elastic4s-testkit" % "2.3.0" % "test",
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
-      "org.flywaydb" % "flyway-core" % "4.0")
+      "org.flywaydb" % "flyway-core" % "4.0",
+      "io.searchbox" % "jest" % "2.0.0",
+      "org.elasticsearch" % "elasticsearch" % "2.2.3",
+      "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.14")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
 assemblyJarName in assembly := "image-api.jar"

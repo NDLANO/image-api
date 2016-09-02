@@ -13,10 +13,12 @@ import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.{DefaultServlet, ServletContextHandler}
 import org.scalatra.servlet.ScalatraListener
 
+import scala.io.Source
+
 
 object JettyLauncher extends LazyLogging {
   def main(args: Array[String]) {
-    logger.info(io.Source.fromInputStream(getClass.getResourceAsStream("/log-license.txt")).mkString)
+    logger.info(Source.fromInputStream(getClass.getResourceAsStream("/log-license.txt")).mkString)
 
     PropertiesLoader.load()
     DBMigrator.migrate(ComponentRegistry.dataSource)

@@ -11,12 +11,13 @@ package no.ndla.imageapi
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable
+import scala.io.Source
 
 object ImageApiProperties extends LazyLogging {
 
   var ImageApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
 
-  val ApplicationPort = 80
+  lazy val ApplicationPort = getInt("APPLICATION_PORT")
 
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
@@ -45,8 +46,8 @@ object ImageApiProperties extends LazyLogging {
   lazy val TopicAPIUrl = get("TOPIC_API_URL")
 
   val SearchHost = "search-engine"
-  lazy val SearchPort = get("SEARCH_ENGINE_ENV_TCP_PORT")
-  lazy val SearchClusterName = get("SEARCH_ENGINE_ENV_CLUSTER_NAME")
+  lazy val SearchServer = get("SEARCH_SERVER")
+  lazy val SearchRegion = get("SEARCH_REGION")
   lazy val SearchIndex = get("SEARCH_INDEX")
   lazy val SearchDocument = get("SEARCH_DOCUMENT")
   lazy val DefaultPageSize: Int = getInt("SEARCH_DEFAULT_PAGE_SIZE")
@@ -92,7 +93,7 @@ object PropertiesLoader {
   val EnvironmentFile = "/image-api.env"
 
   def readPropertyFile(): Map[String,Option[String]] = {
-    io.Source.fromInputStream(getClass.getResourceAsStream(EnvironmentFile)).getLines().map(key => key -> scala.util.Properties.envOrNone(key)).toMap
+    Source.fromInputStream(getClass.getResourceAsStream(EnvironmentFile)).getLines().map(key => key -> scala.util.Properties.envOrNone(key)).toMap
   }
 
   def load() = {

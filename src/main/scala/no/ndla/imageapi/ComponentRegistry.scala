@@ -11,13 +11,11 @@ package no.ndla.imageapi
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
-import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
 import no.ndla.imageapi.service._
 import no.ndla.network.NdlaClient
-import org.elasticsearch.common.settings.Settings
 import org.postgresql.ds.PGPoolingDataSource
 
 object ComponentRegistry
@@ -40,11 +38,6 @@ object ComponentRegistry
   with HealthController
 {
   implicit val swagger = new ImageSwagger
-
-  lazy val elasticClient = ElasticClient.transport(
-    Settings.settingsBuilder().put("cluster.name", ImageApiProperties.SearchClusterName).build(),
-    ElasticsearchClientUri(s"elasticsearch://${ImageApiProperties.SearchHost}:${ImageApiProperties.SearchPort}"))
-
 
   val dataSource = new PGPoolingDataSource()
   dataSource.setUser(ImageApiProperties.MetaUserName)
@@ -75,4 +68,5 @@ object ComponentRegistry
   lazy val converterService = new ConverterService
   lazy val mappingApiClient = new MappingApiClient
   lazy val tagsService = new TagsService
+  lazy val jestClient = JestClientFactory.getClient
 }
