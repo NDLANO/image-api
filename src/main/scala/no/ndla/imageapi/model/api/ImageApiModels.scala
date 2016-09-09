@@ -22,17 +22,21 @@ case class ImageMetaSummary(@(ApiModelProperty@field)(description = "The unique 
 @ApiModel(description = "Meta information for the image")
 case class ImageMetaInformation(@(ApiModelProperty@field)(description = "The unique id of the image") id: String,
                                 @(ApiModelProperty@field)(description = "The url to where this information can be found") metaUrl: String,
-                                @(ApiModelProperty@field)(description = "Available titles for the image") titles: List[ImageTitle],
-                                @(ApiModelProperty@field)(description = "Available alternative texts for the image") alttexts: List[ImageAltText],
+                                @(ApiModelProperty@field)(description = "Available titles for the image") titles: Seq[ImageTitle],
+                                @(ApiModelProperty@field)(description = "Available alternative texts for the image") alttexts: Seq[ImageAltText],
                                 @(ApiModelProperty@field)(description = "The possible size variants of the image") images: ImageVariants,
                                 @(ApiModelProperty@field)(description = "Describes the copyright information for the image") copyright: Copyright,
-                                @(ApiModelProperty@field)(description = "Searchable tags for the image") tags: List[ImageTag])
+                                @(ApiModelProperty@field)(description = "Searchable tags for the image") tags: Seq[ImageTag],
+                                @(ApiModelProperty@field)(description = "Searchable tags for the image") captions: Seq[ImageCaption])
 
 case class ImageTitle(@(ApiModelProperty@field)(description = "The freetext title of the image") title: String,
                       @(ApiModelProperty@field)(description = "ISO 639-1 code that represents the language used in title") language: Option[String])
 
 case class ImageAltText(@(ApiModelProperty@field)(description = "The alternative text for the image") alttext: String,
                         @(ApiModelProperty@field)(description = "ISO 639-1 code that represents the language used in the alternative text") language: Option[String])
+
+case class ImageCaption(@(ApiModelProperty@field)(description = "The caption for the image") alttext: String,
+                        @(ApiModelProperty@field)(description = "ISO 639-1 code that represents the language used in the caption") language: Option[String])
 
 case class ImageTag(@(ApiModelProperty@field)(description = "The searchable tag.") tags: Seq[String],
                     @(ApiModelProperty@field)(description = "ISO 639-1 code that represents the language used in tag") language: Option[String])
@@ -49,7 +53,7 @@ case class Image(@(ApiModelProperty@field)(description = "The full url to where 
 @ApiModel(description = "Description of copyright information")
 case class Copyright(@(ApiModelProperty@field)(description = "Describes the license of the image") license: License,
                      @(ApiModelProperty@field)(description = "Reference to where the image is procured") origin: String,
-                     @(ApiModelProperty@field)(description = "List of authors") authors: List[Author])
+                     @(ApiModelProperty@field)(description = "List of authors") authors: Seq[Author])
 
 @ApiModel(description = "Description of license information")
 case class License(@(ApiModelProperty@field)(description = "The name of the license") license: String,
