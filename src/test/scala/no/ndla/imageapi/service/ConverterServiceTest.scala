@@ -22,7 +22,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   val small = Image("thumbs/123.png", 100, "image/png")
   val full = Image("full/123.png", 200, "image/png")
-  val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(), List(), ImageVariants(Some(small), Some(full)), Copyright(License("", "", None), "", List()), List())
+  val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(), List(), ImageVariants(Some(small), Some(full)), Copyright(License("", "", None), "", List()), List(), List())
 
   override def beforeEach = {
     val request = mock[HttpServletRequest]

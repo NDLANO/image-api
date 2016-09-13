@@ -31,7 +31,7 @@ trait MigrationApiClient {
 }
 
 case class MainImageImport(mainImage: ImageMeta, authors: List[ImageAuthor], license: Option[String], origin: Option[String], translations: List[ImageMeta])
-case class ImageMeta(nid: String, tnid: String, language: String, title: String, alttext: String, changed: String, originalFile: String, originalMime: String, originalSize: String) {
+case class ImageMeta(nid: String, tnid: String, language: String, title: String, alttext: String, changed: String, originalFile: String, originalMime: String, originalSize: String, caption: Option[String]) {
   def isMainImage = nid == tnid || tnid == "0"
   def isTranslation = !isMainImage
 }

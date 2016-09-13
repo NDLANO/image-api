@@ -49,18 +49,22 @@ trait ImportServiceComponent {
         case false => None
       }
 
-      var titles = List(domain.ImageTitle(imageMeta.mainImage.title, imageLang))
-      var alttexts = List(domain.ImageAltText(imageMeta.mainImage.alttext, imageLang))
-      imageMeta.translations.foreach(translation => {
+      val mainTitle = domain.ImageTitle(imageMeta.mainImage.title, imageLang)
+      val mainAlttext = domain.ImageAltText(imageMeta.mainImage.alttext, imageLang)
+      val mainCaption = imageMeta.mainImage.caption.map(x => domain.ImageCaption(x, imageLang))
+
+      val (titles, alttexts, captions) = imageMeta.translations.foldLeft((Seq(mainTitle), Seq(mainAlttext), Seq(mainCaption)))((result, translation) => {
+        val (titles, alttexts, captions) = result
         val transLang = if (mappingApiClient.languageCodeSupported(translation.language)) Some(translation.language) else None
 
-        titles = domain.ImageTitle(translation.title, transLang) :: titles
-        alttexts = domain.ImageAltText(translation.alttext, transLang) :: alttexts
+        (titles :+ domain.ImageTitle(translation.title, transLang),
+        alttexts :+ domain.ImageAltText(translation.alttext, transLang),
+        captions :+ translation.caption.map(x => domain.ImageCaption(x, transLang)))
       })
 
       val persistedImageMetaInformation = imageRepository.withExternalId(imageMeta.mainImage.nid) match {
         case Some(dbMeta) => {
-          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts, dbMeta.images, copyright, tags), dbMeta.id.get)
+          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts, dbMeta.images, copyright, tags, captions.flatten), dbMeta.id.get)
           logger.info(s"Updated ID = ${updated.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
           updated
         }
@@ -77,7 +81,7 @@ trait ImportServiceComponent {
           val fullKey = "full/" + imageMeta.mainImage.originalFile
           val full = domain.Image(fullKey, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
 
-          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts, domain.ImageVariants(Option(thumb), Option(full)), copyright, tags)
+          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts, domain.ImageVariants(Option(thumb), Option(full)), copyright, tags, captions.flatten)
 
           if (!imageStorage.contains(thumbKey)) imageStorage.uploadFromByteArray(thumb, thumbKey, buffer)
           if (!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
