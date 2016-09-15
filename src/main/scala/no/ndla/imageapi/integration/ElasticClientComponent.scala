@@ -10,7 +10,7 @@ package no.ndla.imageapi.integration
 
 import java.time.{LocalDateTime, ZoneOffset}
 
-import com.amazonaws.auth.{AWSCredentials, AWSCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.google.common.base.Supplier
 import io.searchbox.client.JestClient
 import io.searchbox.client.config.HttpClientConfig
@@ -24,22 +24,25 @@ trait ElasticClientComponent {
 }
 
 object JestClientFactory {
+  def getClient(searchServer: String = ImageApiProperties.SearchServer): JestClient = {
+    ImageApiProperties.SearchSignRequests match {
+      case true => getSigningClient(searchServer)
+      case false => getNonSigningClient(searchServer)
+    }
+  }
 
+  def getNonSigningClient(searchServer: String): JestClient = {
+    val factory = new io.searchbox.client.JestClientFactory()
+    factory.setHttpClientConfig(new HttpClientConfig.Builder(searchServer).build())
+    factory.getObject
+  }
 
-  def getClient: JestClient = {
+  def getSigningClient(searchServer: String): JestClient = {
     val clock: Supplier[LocalDateTime] = new Supplier[LocalDateTime] {
       override def get(): LocalDateTime = LocalDateTime.now(ZoneOffset.UTC)
     }
 
-    val service = "es"
-    val region = ImageApiProperties.SearchRegion
-    val credentialsProvider = new AWSCredentialsProvider {
-      override def refresh(): Unit = {}
-
-      override def getCredentials: AWSCredentials = new BasicAWSCredentials("AKIAJGYNKKHCFWOE7TNA", "dA1wW+tBdZZYZcecfmsRgfQBAvp44lw/Jty4Ur6l")
-    }
-
-    val awsSigner = new AWSSigner(credentialsProvider, region, service, clock);
+    val awsSigner = new AWSSigner(new DefaultAWSCredentialsProviderChain(), ImageApiProperties.SearchRegion, "es", clock);
     val requestInterceptor = new AWSSigningRequestInterceptor(awsSigner)
 
     val factory = new io.searchbox.client.JestClientFactory() {
@@ -54,13 +57,7 @@ object JestClientFactory {
       }
     }
 
-    factory.setHttpClientConfig(new HttpClientConfig.Builder(ImageApiProperties.SearchServer).build())
-    factory.getObject
-  }
-
-  def getLocalClient: JestClient = {
-    val factory = new io.searchbox.client.JestClientFactory()
-    factory.setHttpClientConfig(new HttpClientConfig.Builder(ImageApiProperties.SearchServer).build())
+    factory.setHttpClientConfig(new HttpClientConfig.Builder(searchServer).build())
     factory.getObject
   }
 }

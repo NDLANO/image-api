@@ -10,7 +10,7 @@ package no.ndla.imageapi.service
 
 import com.google.gson.JsonObject
 import com.typesafe.scalalogging.LazyLogging
-import io.searchbox.core.{Search, SearchResult => JestSearchResult}
+import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
 import io.searchbox.params.Parameters
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClientComponent
@@ -68,7 +68,7 @@ trait SearchService {
         case Some(lang) => QueryBuilders.boolQuery().must(altTextSearch).must(QueryBuilders.termQuery("alttexts.language", lang))
       }
 
-      val tagSearch = QueryBuilders.matchQuery("tags.tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val tagSearch = QueryBuilders.matchQuery("tags.tags", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
       val languageSpecificTagSearch = language match {
         case None => tagSearch
         case Some(lang) => QueryBuilders.boolQuery().must(tagSearch).must(QueryBuilders.termQuery("tags.language", lang))
@@ -102,9 +102,16 @@ trait SearchService {
 
       val searchQuery = new SearchSourceBuilder().query(filters).sort(SortBuilders.fieldSort("id"))
       val request = new Search.Builder(searchQuery.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
+
       val response = jestClient.execute(request)
 
       SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+    }
+
+    def countDocuments(): Int = {
+      jestClient.execute(
+        new Count.Builder().addIndex(ImageApiProperties.SearchIndex).build()
+      ).getCount.toInt
     }
 
     private def getStartAtAndNumResults(page: Option[Int], pageSize: Option[Int]): (Int, Int) = {

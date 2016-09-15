@@ -11,7 +11,6 @@ package no.ndla.imageapi
 import javax.sql.DataSource
 
 import com.amazonaws.services.s3.AmazonS3Client
-import com.sksamuel.elastic4s.ElasticClient
 import io.searchbox.client.JestClient
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import no.ndla.imageapi.integration._
@@ -42,7 +41,6 @@ trait TestEnvironment
 {
   val storageName = ImageApiProperties.StorageName
 
-  val elasticClient = mock[ElasticClient]
   val amazonClient = mock[AmazonS3Client]
 
   val dataSource = mock[DataSource]

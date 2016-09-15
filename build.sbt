@@ -49,13 +49,13 @@ lazy val image_api = (project in file(".")).
       "mysql" % "mysql-connector-java" % "5.1.36",
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
       "org.scalaj" %% "scalaj-http" % "1.1.5",
-      "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0",
-      "com.sksamuel.elastic4s" %% "elastic4s-testkit" % "2.3.0" % "test",
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
       "org.flywaydb" % "flyway-core" % "4.0",
       "io.searchbox" % "jest" % "2.0.0",
-      "org.elasticsearch" % "elasticsearch" % "2.2.3",
+      "org.elasticsearch" % "elasticsearch" % "2.3.3",
+      "org.elasticsearch" % "elasticsearch" % "2.3.3" % "test",
+      "org.apache.lucene" % "lucene-test-framework" % "5.5.0" % "test",
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.14")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 

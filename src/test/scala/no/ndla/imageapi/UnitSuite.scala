@@ -34,14 +34,17 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
     "SEARCH_ENGINE_ENV_CLUSTER_NAME" -> Some("search-engine"),
     "SEARCH_DEFAULT_PAGE_SIZE" -> Some(DEFAULT_PAGE_SIZE.toString()),
     "SEARCH_MAX_PAGE_SIZE" -> Some(MAX_PAGE_SIZE.toString()),
-    "SEARCH_INDEX" -> Some("search-index"),
-    "SEARCH_DOCUMENT" -> Some("search-document"),
+    "SEARCH_INDEX" -> Some("andeby"),
+    "SEARCH_DOCUMENT" -> Some("and"),
     "INDEX_BULK_SIZE" -> Some("1000"),
     "HOST_ADDR" -> Some("host-addr"),
     "DOMAIN" -> Some("http://somedomain"),
     "NDLACOMPONENT" -> Some("image-api"),
     "MIGRATION_HOST" -> Some("image-api"),
     "MIGRATION_USER" -> Some("user"),
-    "MIGRATION_PASSWORD" -> Some("password")
+    "MIGRATION_PASSWORD" -> Some("password"),
+    "SEARCH_SERVER" -> Some("search-server"),
+    "SEARCH_SIGN_REQUESTS" -> Some("true"),
+    "SEARCH_REGION" -> Some("eu-central-1")
   ))
 }

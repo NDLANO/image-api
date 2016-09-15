@@ -10,7 +10,7 @@ package no.ndla.imageapi.service
 
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Bulk, Index}
-import io.searchbox.indices.aliases.{AddAliasMapping, ModifyAliases, RemoveAliasMapping}
+import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases, RemoveAliasMapping}
 import io.searchbox.indices.mapping.PutMapping
 import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists}
 import no.ndla.imageapi.ImageApiProperties
@@ -84,22 +84,24 @@ trait ElasticContentIndexComponent {
     }
 
     def aliasTarget: Option[String] = {
-      // TODO: Denne trenger litt kjærlighet, og vil tryne
-      //      val result = jestClient.execute(new GetAliases.Builder().addIndex(ImageApiProperties.SearchIndex).build())
-      None
-      //      Some(result.getJsonObject.getAsJsonObject.getAsString)
+      val getAliasRequest = new GetAliases.Builder().addIndex(s"${ImageApiProperties.SearchIndex}*").build()
+      val result = jestClient.execute(getAliasRequest)
+      val aliasIterator = result.getJsonObject.entrySet().iterator()
+      aliasIterator.hasNext match {
+        case true => Some(aliasIterator.next().getKey)
+        case false => None
+      }
     }
-
 
     def indexExists(indexName: String): Boolean = {
       jestClient.execute(new IndicesExists.Builder(indexName).build()).isSucceeded
     }
 
 
-
-    val imageMapping = """
+    val imageMapping =
+      s"""
       {
-        "image":{
+        "${ImageApiProperties.SearchDocument}":{
           "properties":{
             "alttexts":{
               "type":"nested",

@@ -68,5 +68,5 @@ object ComponentRegistry
   lazy val converterService = new ConverterService
   lazy val mappingApiClient = new MappingApiClient
   lazy val tagsService = new TagsService
-  lazy val jestClient = JestClientFactory.getClient
+  lazy val jestClient = JestClientFactory.getClient()
 }
