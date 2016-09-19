@@ -17,6 +17,7 @@ import no.ndla.imageapi.integration.ElasticClientComponent
 import no.ndla.imageapi.model.api.{ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.repository.SearchIndexerComponent
 import no.ndla.network.ApplicationUrl
+import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilders}
 import org.elasticsearch.search.builder.SearchSourceBuilder
@@ -85,27 +86,27 @@ trait SearchService {
           .should(QueryBuilders.nestedQuery("tags", languageSpecificTagSearch)))
         .must(filters)
 
-      val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val searchQuery = new SearchSourceBuilder().query(fullSearch).sort(SortBuilders.fieldSort("id"))
-      val request = new Search.Builder(searchQuery.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
-      val response = jestClient.execute(request)
-
-      SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+      executeSearch(searchQuery, page, pageSize)
     }
 
     def all(minimumSize: Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-
       val filters = QueryBuilders.boolQuery().filter(noCopyright)
       license.foreach(lic => filters.filter(QueryBuilders.nestedQuery("copyright.license", QueryBuilders.termQuery("copyright.license.license", license.get))))
       minimumSize.foreach(ms => filters.filter(QueryBuilders.nestedQuery("images.full", QueryBuilders.rangeQuery("images.full.size").gte(minimumSize.get))))
 
       val searchQuery = new SearchSourceBuilder().query(filters).sort(SortBuilders.fieldSort("id"))
+      executeSearch(searchQuery, page, pageSize)
+    }
+
+    def executeSearch(searchQuery: SearchSourceBuilder, page: Option[Int], pageSize: Option[Int]): SearchResult = {
+      val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val request = new Search.Builder(searchQuery.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
-
       val response = jestClient.execute(request)
-
-      SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+      response.isSucceeded match {
+        case true => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+        case false => errorHandler(response)
+      }
     }
 
     def countDocuments(): Int = {
@@ -129,13 +130,14 @@ trait SearchService {
       (startAt, numResults)
     }
 
-    private def errorHandler(exception: Throwable) = {
-      exception match {
-        case ex: IndexNotFoundException =>
-          logger.error(ex.getDetailedMessage)
+    private def errorHandler(response: JestSearchResult) = {
+      response.getResponseCode match {
+        case notFound: Int if notFound == 404 => {
+          logger.error(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex.")
           scheduleIndexDocuments()
-          throw ex
-        case _ => throw exception
+          throw new IndexNotFoundException(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex")
+        }
+        case _ => throw new ElasticsearchException(s"Unable to execute search in ${ImageApiProperties.SearchIndex}", response.getErrorMessage)
       }
     }
 

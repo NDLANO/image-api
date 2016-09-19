@@ -1,5 +1,8 @@
 package no.ndla.imageapi.service
 
+import java.text.SimpleDateFormat
+import java.util.Calendar
+
 import no.ndla.imageapi.integration.JestClientFactory
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
@@ -42,8 +45,10 @@ class ElasticContentSearchTest extends UnitSuite with TestEnvironment {
     esNode = new NodeBuilder().settings(settings).node()
     esNode.start()
 
-    elasticContentIndex.createIndex(ImageApiProperties.SearchIndex)
-    elasticContentIndex.updateAliasTarget(ImageApiProperties.SearchIndex, None)
+    val indexName = ImageApiProperties.SearchIndex + "_" + new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
+
+    elasticContentIndex.createIndex(indexName)
+    elasticContentIndex.updateAliasTarget(indexName, None)
     elasticContentIndex.indexDocument(image1)
     elasticContentIndex.indexDocument(image2)
     elasticContentIndex.indexDocument(image3)

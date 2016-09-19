@@ -41,18 +41,18 @@ trait SearchIndexerComponent {
 
         logger.info(s"Indexing all documents into index $newIndexName")
 
+        var numIndexed = 0
         imageRepository.applyToAll(docs => {
-          elasticContentIndex.indexDocuments(docs, newIndexName)
-          logger.info(s"Completed indexing of ${docs.size} documents")
+          numIndexed += elasticContentIndex.indexDocuments(docs, newIndexName)
+          logger.info(s"Completed indexing of $numIndexed documents")
         })
-        elasticContentIndex.updateAliasTarget(newIndexName, oldIndexName)
 
         oldIndexName.foreach(indexName => {
           elasticContentIndex.updateAliasTarget(newIndexName, oldIndexName)
           elasticContentIndex.deleteIndex(indexName)
         })
 
-        val result = s"Completed indexing '${ImageApiProperties.SearchIndex}' in ${System.currentTimeMillis() - start} ms."
+        val result = s"Completed indexing $numIndexed documents into '${ImageApiProperties.SearchIndex}' in ${System.currentTimeMillis() - start} ms."
         logger.info(result)
         result
       }

@@ -15,7 +15,7 @@ import com.google.common.base.Supplier
 import io.searchbox.client.JestClient
 import io.searchbox.client.config.HttpClientConfig
 import no.ndla.imageapi.ImageApiProperties
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.{DefaultHttpRequestRetryHandler, HttpClientBuilder}
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import vc.inreach.aws.request.{AWSSigner, AWSSigningRequestInterceptor}
 
@@ -48,6 +48,7 @@ object JestClientFactory {
     val factory = new io.searchbox.client.JestClientFactory() {
       override def configureHttpClient(builder: HttpClientBuilder): HttpClientBuilder = {
         builder.addInterceptorLast(requestInterceptor)
+        builder.setRetryHandler(new DefaultHttpRequestRetryHandler(3, true))
         builder
       }
 

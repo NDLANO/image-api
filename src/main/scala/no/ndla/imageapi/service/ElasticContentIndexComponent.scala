@@ -16,6 +16,7 @@ import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists}
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClientComponent
 import no.ndla.imageapi.model.domain
+import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization.write
 
 import scala.util.{Failure, Success, Try}
@@ -41,19 +42,34 @@ trait ElasticContentIndexComponent {
       }
     }
 
-    def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Unit = {
+    def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Int = {
       val bulkBuilder = new Bulk.Builder()
       imageMetaList.foreach(imageMeta => {
         val source = write(converterService.asApiImageMetaInformationWithRelUrl(imageMeta))
-        bulkBuilder.addAction(new Index.Builder(source).index(ImageApiProperties.SearchIndex).`type`(ImageApiProperties.SearchDocument).id(imageMeta.id.get.toString).build)
+        bulkBuilder.addAction(new Index.Builder(source).index(indexName).`type`(ImageApiProperties.SearchDocument).id(imageMeta.id.get.toString).build)
       })
-      jestClient.execute(bulkBuilder.build())
+
+      val response = jestClient.execute(bulkBuilder.build())
+      if(!response.isSucceeded) {
+        throw new ElasticsearchException(s"Unable to index documents to ${ImageApiProperties.SearchIndex}", response.getErrorMessage)
+      }
+      imageMetaList.size
     }
 
     def createIndex(indexName: String) = {
       if (!indexExists(indexName)) {
-        jestClient.execute(new CreateIndex.Builder(indexName).build())
-        jestClient.execute(new PutMapping.Builder(indexName, ImageApiProperties.SearchDocument, imageMapping).build())
+        val createIndexResponse = jestClient.execute(new CreateIndex.Builder(indexName).build())
+        createIndexResponse.isSucceeded match {
+          case false => throw new ElasticsearchException(s"Unable to create index $indexName", createIndexResponse.getErrorMessage)
+          case true => createMapping(indexName)
+        }
+      }
+    }
+
+    def createMapping(indexName: String) = {
+      val mappingResponse = jestClient.execute(new PutMapping.Builder(indexName, ImageApiProperties.SearchDocument, imageMapping).build())
+      if(!mappingResponse.isSucceeded) {
+        throw new ElasticsearchException(s"Unable to create mapping for index $indexName", mappingResponse.getErrorMessage)
       }
     }
 
@@ -69,7 +85,10 @@ trait ElasticContentIndexComponent {
           }
         }
 
-        jestClient.execute(modifyAliasRequest)
+        val response = jestClient.execute(modifyAliasRequest)
+        if(!response.isSucceeded) {
+          throw new ElasticsearchException(s"Unable to modify alias ${ImageApiProperties.SearchIndex} -> $oldIndexName to ${ImageApiProperties.SearchIndex} -> $newIndexName", response.getErrorMessage)
+        }
       } else {
         throw new IllegalArgumentException(s"No such index: $newIndexName")
       }
@@ -77,19 +96,27 @@ trait ElasticContentIndexComponent {
 
     def deleteIndex(indexName: String) = {
       if (indexExists(indexName)) {
-        jestClient.execute(new DeleteIndex.Builder(indexName).build())
+        val response = jestClient.execute(new DeleteIndex.Builder(indexName).build())
+        if(!response.isSucceeded) {
+          throw new ElasticsearchException(s"Unable to delete index $indexName", response.getErrorMessage)
+        }
       } else {
         throw new IllegalArgumentException(s"No such index: $indexName")
       }
     }
 
     def aliasTarget: Option[String] = {
-      val getAliasRequest = new GetAliases.Builder().addIndex(s"${ImageApiProperties.SearchIndex}*").build()
+      val getAliasRequest = new GetAliases.Builder().addIndex(s"${ImageApiProperties.SearchIndex}").build()
       val result = jestClient.execute(getAliasRequest)
-      val aliasIterator = result.getJsonObject.entrySet().iterator()
-      aliasIterator.hasNext match {
-        case true => Some(aliasIterator.next().getKey)
+      result.isSucceeded match {
         case false => None
+        case true => {
+          val aliasIterator = result.getJsonObject.entrySet().iterator()
+          aliasIterator.hasNext match {
+            case true => Some(aliasIterator.next().getKey)
+            case false => None
+          }
+        }
       }
     }
 
