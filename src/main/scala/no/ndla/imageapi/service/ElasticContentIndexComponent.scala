@@ -124,71 +124,57 @@ trait ElasticContentIndexComponent {
       jestClient.execute(new IndicesExists.Builder(indexName).build()).isSucceeded
     }
 
-
     val imageMapping =
       s"""
-      {
-        "${ImageApiProperties.SearchDocument}":{
-          "properties":{
-            "alttexts":{
-              "type":"nested",
-              "properties":{
-                "alttext":{
-                  "type":"string"
-                },
-                "language":{
-                  "type":"string",
-                  "index":"not_analyzed"
-                }
-              }
-            },
-            "copyright":{
-              "type":"nested",
-              "properties":{
-                "authors":{
-                  "type":"nested",
-                  "properties":{
-                    "name":{
-                      "type":"string"
-                    },
-                    "type":{
-                      "type":"string"
-                    }
-                  }
-                },
-                "license":{
-                  "type":"nested",
-                  "properties":{
-                    "description":{
-                    "type":"string"
-                  },
-                  "license":{
-                    "type":"string",
-                    "index":"not_analyzed"
-                  },
-                  "url":{
-                    "type":"string"
-                  }
-                }
-              },
-              "origin":{
-                "type":"string"
-              }
-            }
-          },
-          "id":{
-            "type":"integer"
-          },
+      {"${ImageApiProperties.SearchDocument}":{
+        "properties":{
+          "id":{ "type":"integer" },
+          "titles":{
+            "type":"nested",
+            "properties":{
+              "language":{ "type":"string","index":"not_analyzed" },
+              "title":{ "type":"string" }}},
+          "tags":{
+            "type":"nested",
+            "properties":{
+              "language":{ "type":"string","index":"not_analyzed" },
+              "tags":{ "type":"string" }}},
+          "alttexts":{
+            "type":"nested",
+            "properties":{
+              "alttext":{ "type":"string" },
+              "language":{ "type":"string", "index":"not_analyzed" }}},
+          "metaUrl":{ "type":"string","index":"not_analyzed" },
+          "copyright":{
+            "type":"nested",
+            "properties":{
+              "authors":{
+                "type":"nested",
+                "properties":{
+                  "name":{ "type":"string" },
+                  "type":{ "type":"string" }}},
+              "license":{
+                "type":"nested",
+                "properties":{
+                  "description":{ "type":"string" },
+                "license":{ "type":"string", "index":"not_analyzed" },
+                "url":{ "type":"string" }}},
+            "origin":{ "type":"string" }}},
           "images":{
             "type":"nested",
             "properties":{
               "full":{
                 "type":"nested",
                 "properties":{
-                  "contentType":{
-                    "type":"string"
-                  },"size":{"type":"integer"},"url":{"type":"string"}}},"small":{"type":"nested","properties":{"contentType":{"type":"string"},"size":{"type":"integer"},"url":{"type":"string"}}}}},"metaUrl":{"type":"string","index":"not_analyzed"},"tags":{"type":"nested","properties":{"language":{"type":"string","index":"not_analyzed"},"tags":{"type":"string"}}},"titles":{"type":"nested","properties":{"language":{"type":"string","index":"not_analyzed"},"title":{"type":"string"}}}}}
-      }""".stripMargin
+                  "contentType":{ "type":"string" },
+                  "size":{ "type":"integer" },
+                  "url":{ "type":"string" }}},
+              "small":{
+              "type":"nested",
+              "properties":{
+                "contentType":{ "type":"string" },
+                "size":{ "type":"integer" },
+                "url":{ "type":"string" }}}}}}}}""".stripMargin
 
   }
 
