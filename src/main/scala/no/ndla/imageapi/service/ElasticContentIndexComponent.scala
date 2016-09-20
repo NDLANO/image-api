@@ -138,6 +138,10 @@ trait ElasticContentIndexComponent {
           "alttext" typed StringType,
           "language" typed StringType index "not_analyzed"
           ),
+        "captions" typed NestedType as(
+          "caption" typed StringType,
+          "language" typed StringType index "not_analyzed"
+          ),
         "images" typed NestedType as(
           "small" typed NestedType as(
             "url" typed StringType,
