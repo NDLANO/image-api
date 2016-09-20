@@ -54,6 +54,7 @@ lazy val image_api = (project in file(".")).
       "org.flywaydb" % "flyway-core" % "4.0",
       "io.searchbox" % "jest" % "2.0.0",
       "org.elasticsearch" % "elasticsearch" % "2.3.3",
+      "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0",
       "org.elasticsearch" % "elasticsearch" % "2.3.3" % "test",
       "org.apache.lucene" % "lucene-test-framework" % "5.5.0" % "test",
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.14")

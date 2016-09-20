@@ -8,6 +8,8 @@
 
 package no.ndla.imageapi.service
 
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, NestedType, StringType}
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Bulk, Index}
 import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases, RemoveAliasMapping}
@@ -50,7 +52,7 @@ trait ElasticContentIndexComponent {
       })
 
       val response = jestClient.execute(bulkBuilder.build())
-      if(!response.isSucceeded) {
+      if (!response.isSucceeded) {
         throw new ElasticsearchException(s"Unable to index documents to ${ImageApiProperties.SearchIndex}", response.getErrorMessage)
       }
       imageMetaList.size
@@ -67,8 +69,8 @@ trait ElasticContentIndexComponent {
     }
 
     def createMapping(indexName: String) = {
-      val mappingResponse = jestClient.execute(new PutMapping.Builder(indexName, ImageApiProperties.SearchDocument, imageMapping).build())
-      if(!mappingResponse.isSucceeded) {
+      val mappingResponse = jestClient.execute(new PutMapping.Builder(indexName, ImageApiProperties.SearchDocument, buildMapping()).build())
+      if (!mappingResponse.isSucceeded) {
         throw new ElasticsearchException(s"Unable to create mapping for index $indexName", mappingResponse.getErrorMessage)
       }
     }
@@ -86,7 +88,7 @@ trait ElasticContentIndexComponent {
         }
 
         val response = jestClient.execute(modifyAliasRequest)
-        if(!response.isSucceeded) {
+        if (!response.isSucceeded) {
           throw new ElasticsearchException(s"Unable to modify alias ${ImageApiProperties.SearchIndex} -> $oldIndexName to ${ImageApiProperties.SearchIndex} -> $newIndexName", response.getErrorMessage)
         }
       } else {
@@ -97,7 +99,7 @@ trait ElasticContentIndexComponent {
     def deleteIndex(indexName: String) = {
       if (indexExists(indexName)) {
         val response = jestClient.execute(new DeleteIndex.Builder(indexName).build())
-        if(!response.isSucceeded) {
+        if (!response.isSucceeded) {
           throw new ElasticsearchException(s"Unable to delete index $indexName", response.getErrorMessage)
         }
       } else {
@@ -124,58 +126,48 @@ trait ElasticContentIndexComponent {
       jestClient.execute(new IndicesExists.Builder(indexName).build()).isSucceeded
     }
 
-    val imageMapping =
-      s"""
-      {"${ImageApiProperties.SearchDocument}":{
-        "properties":{
-          "id":{ "type":"integer" },
-          "titles":{
-            "type":"nested",
-            "properties":{
-              "language":{ "type":"string","index":"not_analyzed" },
-              "title":{ "type":"string" }}},
-          "tags":{
-            "type":"nested",
-            "properties":{
-              "language":{ "type":"string","index":"not_analyzed" },
-              "tags":{ "type":"string" }}},
-          "alttexts":{
-            "type":"nested",
-            "properties":{
-              "alttext":{ "type":"string" },
-              "language":{ "type":"string", "index":"not_analyzed" }}},
-          "metaUrl":{ "type":"string","index":"not_analyzed" },
-          "copyright":{
-            "type":"nested",
-            "properties":{
-              "authors":{
-                "type":"nested",
-                "properties":{
-                  "name":{ "type":"string" },
-                  "type":{ "type":"string" }}},
-              "license":{
-                "type":"nested",
-                "properties":{
-                  "description":{ "type":"string" },
-                "license":{ "type":"string", "index":"not_analyzed" },
-                "url":{ "type":"string" }}},
-            "origin":{ "type":"string" }}},
-          "images":{
-            "type":"nested",
-            "properties":{
-              "full":{
-                "type":"nested",
-                "properties":{
-                  "contentType":{ "type":"string" },
-                  "size":{ "type":"integer" },
-                  "url":{ "type":"string" }}},
-              "small":{
-              "type":"nested",
-              "properties":{
-                "contentType":{ "type":"string" },
-                "size":{ "type":"integer" },
-                "url":{ "type":"string" }}}}}}}}""".stripMargin
-
+    def buildMapping(): String = {
+      mapping(ImageApiProperties.SearchDocument).fields(
+        "id" typed IntegerType,
+        "metaUrl" typed StringType index "not_analyzed",
+        "titles" typed NestedType as(
+          "title" typed StringType,
+          "language" typed StringType index "not_analyzed"
+          ),
+        "alttexts" typed NestedType as(
+          "alttext" typed StringType,
+          "language" typed StringType index "not_analyzed"
+          ),
+        "images" typed NestedType as(
+          "small" typed NestedType as(
+            "url" typed StringType,
+            "size" typed IntegerType index "not_analyzed",
+            "contentType" typed StringType
+            ),
+          "full" typed NestedType as(
+            "url" typed StringType,
+            "size" typed IntegerType index "not_analyzed",
+            "contentType" typed StringType
+            )
+          ),
+        "copyright" typed NestedType as(
+          "license" typed NestedType as(
+            "license" typed StringType index "not_analyzed",
+            "description" typed StringType,
+            "url" typed StringType
+            ),
+          "origin" typed StringType,
+          "authors" typed NestedType as(
+            "type" typed StringType,
+            "name" typed StringType
+            )
+          ),
+        "tags" typed NestedType as(
+          "tags" typed StringType,
+          "language" typed StringType index "not_analyzed"
+          )
+      ).buildWithName.string()
+    }
   }
 
 }
