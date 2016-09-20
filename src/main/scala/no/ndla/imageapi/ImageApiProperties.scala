@@ -50,7 +50,7 @@ object ImageApiProperties extends LazyLogging {
   lazy val SearchRegion = get("SEARCH_REGION")
   lazy val SearchIndex = get("SEARCH_INDEX")
   lazy val SearchDocument = get("SEARCH_DOCUMENT")
-  lazy val SearchSignRequests = getBoolean("SEARCH_SIGN_REQUESTS")
+  lazy val RunWithSignedSearchRequests = getBoolean("RUN_WITH_SIGNED_SEARCH_REQUESTS")
   lazy val DefaultPageSize: Int = getInt("SEARCH_DEFAULT_PAGE_SIZE")
   lazy val MaxPageSize: Int = getInt("SEARCH_MAX_PAGE_SIZE")
   lazy val IndexBulkSize = getInt("INDEX_BULK_SIZE")

@@ -44,7 +44,7 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
     "MIGRATION_USER" -> Some("user"),
     "MIGRATION_PASSWORD" -> Some("password"),
     "SEARCH_SERVER" -> Some("search-server"),
-    "SEARCH_SIGN_REQUESTS" -> Some("true"),
+    "RUN_WITH_SIGNED_SEARCH_REQUESTS" -> Some("true"),
     "SEARCH_REGION" -> Some("eu-central-1")
   ))
 }

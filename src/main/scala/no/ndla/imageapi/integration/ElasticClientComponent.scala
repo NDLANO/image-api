@@ -25,19 +25,19 @@ trait ElasticClientComponent {
 
 object JestClientFactory {
   def getClient(searchServer: String = ImageApiProperties.SearchServer): JestClient = {
-    ImageApiProperties.SearchSignRequests match {
+    ImageApiProperties.RunWithSignedSearchRequests match {
       case true => getSigningClient(searchServer)
       case false => getNonSigningClient(searchServer)
     }
   }
 
-  def getNonSigningClient(searchServer: String): JestClient = {
+  private def getNonSigningClient(searchServer: String): JestClient = {
     val factory = new io.searchbox.client.JestClientFactory()
     factory.setHttpClientConfig(new HttpClientConfig.Builder(searchServer).build())
     factory.getObject
   }
 
-  def getSigningClient(searchServer: String): JestClient = {
+  private def getSigningClient(searchServer: String): JestClient = {
     val clock: Supplier[LocalDateTime] = new Supplier[LocalDateTime] {
       override def get(): LocalDateTime = LocalDateTime.now(ZoneOffset.UTC)
     }
