@@ -54,12 +54,16 @@ trait ConverterService {
         domainImageMetaInformation.alttexts.map(asApiImageAltText),
         asApiImageVariants(domainImageMetaInformation.images, baseUrl),
         asApiCopyright(domainImageMetaInformation.copyright),
-        domainImageMetaInformation.tags.map(asApiImageTag))
+        domainImageMetaInformation.tags.map(asApiImageTag),
+        domainImageMetaInformation.captions.map(asApiCaption))
     }
 
     def asApiImageTag(domainImageTag: domain.ImageTag): api.ImageTag = {
       api.ImageTag(domainImageTag.tags, domainImageTag.language)
     }
+
+    def asApiCaption(domainImageCaption: domain.ImageCaption): api.ImageCaption =
+      api.ImageCaption(domainImageCaption.caption, domainImageCaption.language)
 
     def asApiImageTitle(domainImageTitle: domain.ImageTitle): api.ImageTitle = {
       api.ImageTitle(domainImageTitle.title, domainImageTitle.language)
