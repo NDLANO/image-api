@@ -14,3 +14,10 @@ before_cache:
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
   - find $HOME/.sbt -name "*.lock" -delete
+
+notifications:
+  slack:
+    on_success: change
+    on_failure: always
+    rooms:
+      secure: rlD82tYO/xUJC9Kfh/X3aDDR4Lz+84PiToYLvpccubTY64jjOmXinCYQMLrNywYcTMOwgXkxoHhKWzmP+tf3EDGy+HhKRcZGc6rhaXmGy5t0vZ56FLWwx90+McfiXJx3hSAxPMgTAaVX87xpTS+lCXCbZlvDAVX0SulGEuypz4WW5lRzPCSG9/9sNPA5j1HB/GpKur+lwsgIzsQnsomEMetCbvywjxo5izy0GNGrGHew29BKxeVxlHlIE3F0JIkatqPgDOMh2lFr/UkGniZwzI50pxEfbApGqS9XHpX242MRZnrMRU/soIEFrfqMLR2xa94QWLuz2o1XVw8co+K4Qkf/kMFyImMUTliMZZr6POCnpYzkIsp2q0tQKZCPMGMYWKh8JQ7Wr+NWwo4mVQGv83Ktifs159PPH9Mww4xgpawW1NfwJVMMANr0OoUaorZrsZiik7klLeaCMUI1O1wngnQpQAM+9XNjEhOoo8czsVvNlip6Uggd15V4cuPzDg0gDToE74LkB5Zg6SW5IMxtW9NakNJ4wp1PwStbf1/XFUmFHE7GgOPzVVZDu7eBwVTGC0lc1Ws7FyXNCdN+Zyjax6gsk3x6OFs1irKDujV28RADcgIuPQn98HTuKJlQDR/HMELPaWHK8C4s5bcwUOlYo4FkmRaAD/hXLzgiwRkPlVQ=
