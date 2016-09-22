@@ -1,4 +1,6 @@
-# IMAGE API 
+# IMAGE API
+[![Build Status](https://travis-ci.org/NDLANO/image-api.svg?branch=master)](https://travis-ci.org/NDLANO/image-api)
+
 API for accessing images
 
 # Building and distribution
