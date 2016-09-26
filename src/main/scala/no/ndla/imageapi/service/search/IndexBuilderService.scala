@@ -3,39 +3,38 @@
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
- *
  */
 
-package no.ndla.imageapi.repository
+package no.ndla.imageapi.service.search
 
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.service.ElasticContentIndexComponent
+import no.ndla.imageapi.repository.ImageRepository
 
-trait SearchIndexerComponent {
-  this: ImageRepositoryComponent with ElasticContentIndexComponent =>
-  val searchIndexer: SearchIndexer
+trait IndexBuilderService {
+  this: ImageRepository with IndexService =>
+  val indexBuilderService: IndexBuilderService
 
-  class SearchIndexer extends LazyLogging {
+  class IndexBuilderService extends LazyLogging {
 
     def getTimestamp: String = {
       new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
     }
 
-    def indexDocuments() = {
+    def buildIndex() = {
       synchronized {
         val start = System.currentTimeMillis()
 
         val newIndexName = ImageApiProperties.SearchIndex + "_" + getTimestamp
-        val oldIndexName = elasticContentIndex.aliasTarget
+        val oldIndexName = indexService.aliasTarget
 
-        elasticContentIndex.createIndex(newIndexName)
+        indexService.createIndex(newIndexName)
 
         oldIndexName match {
-          case None => elasticContentIndex.updateAliasTarget(newIndexName, oldIndexName)
+          case None => indexService.updateAliasTarget(newIndexName, oldIndexName)
           case Some(_) =>
         }
 
@@ -43,13 +42,13 @@ trait SearchIndexerComponent {
 
         var numIndexed = 0
         imageRepository.applyToAll(docs => {
-          numIndexed += elasticContentIndex.indexDocuments(docs, newIndexName)
+          numIndexed += indexService.indexDocuments(docs, newIndexName)
           logger.info(s"Completed indexing of $numIndexed documents")
         })
 
         oldIndexName.foreach(indexName => {
-          elasticContentIndex.updateAliasTarget(newIndexName, oldIndexName)
-          elasticContentIndex.deleteIndex(indexName)
+          indexService.updateAliasTarget(newIndexName, oldIndexName)
+          indexService.deleteIndex(indexName)
         })
 
         val result = s"Completed indexing $numIndexed documents into '${ImageApiProperties.SearchIndex}' in ${System.currentTimeMillis() - start} ms."

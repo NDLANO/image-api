@@ -13,23 +13,24 @@ import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import no.ndla.imageapi.integration._
-import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
+import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service._
+import no.ndla.imageapi.service.search.{IndexService, IndexBuilderService, SearchService}
 import no.ndla.network.NdlaClient
 import org.postgresql.ds.PGPoolingDataSource
 
 object ComponentRegistry
-  extends ElasticClientComponent
-  with ElasticContentIndexComponent
+  extends ElasticClient
+  with IndexService
   with SearchService
-  with DataSourceComponent
-  with ImageRepositoryComponent
-  with AmazonClientComponent
+  with DataSource
+  with ImageRepository
+  with AmazonClient
   with ImageStorageService
-  with SearchIndexerComponent
+  with IndexBuilderService
   with NdlaClient
   with MigrationApiClient
-  with ImportServiceComponent
+  with ImportService
   with InternController
   with ImageController
   with ConverterService
@@ -53,11 +54,11 @@ object ComponentRegistry
   amazonClient.setRegion(Region.getRegion(Regions.EU_CENTRAL_1))
   lazy val storageName = ImageApiProperties.StorageName
 
-  lazy val elasticContentIndex = new ElasticContentIndex
-  lazy val searchService = new ElasticContentSearch
+  lazy val indexService = new IndexService
+  lazy val searchService = new SearchService
+  lazy val indexBuilderService = new IndexBuilderService
   lazy val imageRepository = new ImageRepository
   lazy val imageStorage = new AmazonImageStorageService
-  lazy val searchIndexer = new SearchIndexer
   lazy val importService = new ImportService
   lazy val ndlaClient = new NdlaClient
   lazy val migrationApiClient = new MigrationApiClient

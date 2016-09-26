@@ -5,7 +5,7 @@
  * See LICENSE
  */
 
-package no.ndla.imageapi.service
+package no.ndla.imageapi.service.search
 
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -18,7 +18,7 @@ import org.elasticsearch.node.{Node, NodeBuilder}
 
 import scala.reflect.io.Path
 
-class ElasticContentSearchTest extends UnitSuite with TestEnvironment {
+class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   val esHttpPort = 29999
   val esDataDir = "esTestData"
@@ -26,8 +26,8 @@ class ElasticContentSearchTest extends UnitSuite with TestEnvironment {
 
   override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esHttpPort")
   override val converterService = new ConverterService
-  override val elasticContentIndex = new ElasticContentIndex
-  override val searchService = new ElasticContentSearch
+  override val indexService = new IndexService
+  override val searchService = new SearchService
 
   val getStartAtAndNumResults = PrivateMethod[(Int, Int)]('getStartAtAndNumResults)
 
@@ -54,11 +54,11 @@ class ElasticContentSearchTest extends UnitSuite with TestEnvironment {
 
     val indexName = ImageApiProperties.SearchIndex + "_" + new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
 
-    elasticContentIndex.createIndex(indexName)
-    elasticContentIndex.updateAliasTarget(indexName, None)
-    elasticContentIndex.indexDocument(image1)
-    elasticContentIndex.indexDocument(image2)
-    elasticContentIndex.indexDocument(image3)
+    indexService.createIndex(indexName)
+    indexService.updateAliasTarget(indexName, None)
+    indexService.indexDocument(image1)
+    indexService.indexDocument(image2)
+    indexService.indexDocument(image3)
 
     blockUntil(() => searchService.countDocuments() == 3)
   }

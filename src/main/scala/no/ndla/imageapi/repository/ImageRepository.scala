@@ -10,7 +10,7 @@ package no.ndla.imageapi.repository
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.integration.DataSourceComponent
+import no.ndla.imageapi.integration.DataSource
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.service.ConverterService
 import org.json4s.native.Serialization.write
@@ -18,8 +18,8 @@ import org.postgresql.util.PGobject
 import scalikejdbc._
 
 
-trait ImageRepositoryComponent {
-  this: DataSourceComponent with ConverterService =>
+trait ImageRepository {
+  this: DataSource with ConverterService =>
   val imageRepository: ImageRepository
 
   class ImageRepository extends LazyLogging {

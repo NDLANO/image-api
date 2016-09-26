@@ -12,14 +12,15 @@ import no.ndla.imageapi.ImageApiProperties._
 import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
-import no.ndla.imageapi.repository.ImageRepositoryComponent
-import no.ndla.imageapi.service.{ConverterService, SearchService}
+import no.ndla.imageapi.repository.ImageRepository
+import no.ndla.imageapi.service.ConverterService
+import no.ndla.imageapi.service.search.SearchService
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 import scala.util.Try
 
 trait ImageController {
-  this: ImageRepositoryComponent with SearchService with ConverterService =>
+  this: ImageRepository with SearchService with ConverterService =>
   val imageController: ImageController
 
   class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {

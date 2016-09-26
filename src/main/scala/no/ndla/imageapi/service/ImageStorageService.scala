@@ -14,11 +14,11 @@ import java.net.URL
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.integration.AmazonClientComponent
+import no.ndla.imageapi.integration.AmazonClient
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
 
 trait ImageStorageService {
-  this: AmazonClientComponent =>
+  this: AmazonClient =>
   val imageStorage: AmazonImageStorageService
 
   class AmazonImageStorageService extends LazyLogging {
