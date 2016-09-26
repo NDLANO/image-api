@@ -16,7 +16,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   lazy val controller = new HealthController
   addServlet(controller, ImageApiProperties.HealthControllerPath)
 
-  test("That /health returns 200 no content") {
+  test("That /health returns 200 ok") {
     get("/health") {
       status should equal (200)
     }
