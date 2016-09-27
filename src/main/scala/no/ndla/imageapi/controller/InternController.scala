@@ -12,20 +12,20 @@ import no.ndla.imageapi.ComponentRegistry
 import no.ndla.imageapi.integration.MappingApiClient
 import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
-import no.ndla.imageapi.repository.ImageRepositoryComponent
-import no.ndla.imageapi.service.{ConverterService, ImportServiceComponent}
+import no.ndla.imageapi.repository.ImageRepository
+import no.ndla.imageapi.service.{ConverterService, ImportService}
 import org.scalatra.Ok
 
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImageRepositoryComponent with ImportServiceComponent with ConverterService with MappingApiClient =>
+  this: ImageRepository with ImportService with ConverterService with MappingApiClient =>
   val internController: InternController
 
   class InternController extends NdlaController {
 
     post("/index") {
-      Ok(ComponentRegistry.searchIndexer.indexDocuments())
+      Ok(ComponentRegistry.indexBuilderService.buildIndex())
     }
 
     get("/extern/:image_id") {

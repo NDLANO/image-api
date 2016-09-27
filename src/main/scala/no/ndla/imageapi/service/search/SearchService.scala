@@ -3,19 +3,17 @@
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
- *
  */
 
-package no.ndla.imageapi.service
+package no.ndla.imageapi.service.search
 
 import com.google.gson.JsonObject
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
 import io.searchbox.params.Parameters
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.integration.ElasticClientComponent
+import no.ndla.imageapi.integration.ElasticClient
 import no.ndla.imageapi.model.api.{ImageMetaSummary, SearchResult}
-import no.ndla.imageapi.repository.SearchIndexerComponent
 import no.ndla.network.ApplicationUrl
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
@@ -27,10 +25,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 trait SearchService {
-  this: ElasticClientComponent with SearchIndexerComponent =>
-  val searchService: ElasticContentSearch
+  this: ElasticClient with IndexBuilderService =>
+  val searchService: SearchService
 
-  class ElasticContentSearch extends LazyLogging {
+  class SearchService extends LazyLogging {
     val noCopyright = QueryBuilders.boolQuery().mustNot(QueryBuilders.nestedQuery("copyright.license", QueryBuilders.termQuery("copyright.license.license","copyrighted")))
 
     def getHits(response: JestSearchResult): Seq[ImageMetaSummary] = {
@@ -143,7 +141,7 @@ trait SearchService {
 
     private def scheduleIndexDocuments() = {
       val f = Future {
-        searchIndexer.indexDocuments()
+        indexBuilderService.buildIndex()
       }
       f onFailure { case t => logger.error("Unable to create index: " + t.getMessage) }
     }

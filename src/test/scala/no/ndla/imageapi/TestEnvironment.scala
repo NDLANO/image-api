@@ -8,33 +8,33 @@
 
 package no.ndla.imageapi
 
-import javax.sql.DataSource
 
 import com.amazonaws.services.s3.AmazonS3Client
 import io.searchbox.client.JestClient
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import no.ndla.imageapi.integration._
-import no.ndla.imageapi.repository.{ImageRepositoryComponent, SearchIndexerComponent}
+import no.ndla.imageapi.repository._
 import no.ndla.imageapi.service._
+import no.ndla.imageapi.service.search.{IndexService, IndexBuilderService, SearchService}
 import no.ndla.network.NdlaClient
 import org.scalatest.mock.MockitoSugar
 
 trait TestEnvironment
-  extends ElasticClientComponent
-    with ElasticContentIndexComponent
+  extends ElasticClient
+    with IndexService
     with SearchService
-    with DataSourceComponent
-    with ImageRepositoryComponent
-    with AmazonClientComponent
+    with DataSource
+    with ConverterService
+    with ImageRepository
+    with AmazonClient
     with ImageStorageService
-    with SearchIndexerComponent
-    with ImportServiceComponent
+    with IndexBuilderService
+    with ImportService
     with MigrationApiClient
     with NdlaClient
     with InternController
     with ImageController
     with MockitoSugar
-    with ConverterService
     with MappingApiClient
     with TagsService
     with HealthController
@@ -43,12 +43,12 @@ trait TestEnvironment
 
   val amazonClient = mock[AmazonS3Client]
 
-  val dataSource = mock[DataSource]
-  val elasticContentIndex = mock[ElasticContentIndex]
-  val searchService = mock[ElasticContentSearch]
+  val dataSource = mock[javax.sql.DataSource]
+  val indexService = mock[IndexService]
+  val searchService = mock[SearchService]
+  val indexBuilderService = mock[IndexBuilderService]
   val imageRepository = mock[ImageRepository]
   val imageStorage = new AmazonImageStorageService
-  val searchIndexer = mock[SearchIndexer]
 
   val importService = mock[ImportService]
   val ndlaClient = mock[NdlaClient]

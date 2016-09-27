@@ -3,10 +3,9 @@
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
- *
  */
 
-package no.ndla.imageapi.service
+package no.ndla.imageapi.service.search
 
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, NestedType, StringType}
@@ -16,18 +15,19 @@ import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases,
 import io.searchbox.indices.mapping.PutMapping
 import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists}
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.integration.ElasticClientComponent
+import no.ndla.imageapi.integration.ElasticClient
 import no.ndla.imageapi.model.domain
+import no.ndla.imageapi.service.ConverterService
 import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization.write
 
 import scala.util.{Failure, Success, Try}
 
-trait ElasticContentIndexComponent {
-  this: ElasticClientComponent with ConverterService =>
-  val elasticContentIndex: ElasticContentIndex
+trait IndexService {
+  this: ElasticClient with ConverterService =>
+  val indexService: IndexService
 
-  class ElasticContentIndex extends LazyLogging {
+  class IndexService extends LazyLogging {
     implicit val formats = org.json4s.DefaultFormats
 
     def indexDocument(imageMetaInformation: domain.ImageMetaInformation) = {

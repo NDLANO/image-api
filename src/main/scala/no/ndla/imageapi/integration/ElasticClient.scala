@@ -19,7 +19,7 @@ import org.apache.http.impl.client.{DefaultHttpRequestRetryHandler, HttpClientBu
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import vc.inreach.aws.request.{AWSSigner, AWSSigningRequestInterceptor}
 
-trait ElasticClientComponent {
+trait ElasticClient {
   val jestClient: JestClient
 }
 
