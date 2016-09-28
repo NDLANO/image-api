@@ -15,7 +15,7 @@ import no.ndla.imageapi.controller.{HealthController, ImageController, InternCon
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service._
-import no.ndla.imageapi.service.search.{IndexService, IndexBuilderService, SearchService}
+import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
 import no.ndla.network.NdlaClient
 import org.postgresql.ds.PGPoolingDataSource
 
@@ -23,6 +23,7 @@ object ComponentRegistry
   extends ElasticClient
   with IndexService
   with SearchService
+  with SearchConverterService
   with DataSource
   with ImageRepository
   with AmazonClient
@@ -70,4 +71,5 @@ object ComponentRegistry
   lazy val mappingApiClient = new MappingApiClient
   lazy val tagsService = new TagsService
   lazy val jestClient = JestClientFactory.getClient()
+  lazy val searchConverterService = new SearchConverterService
 }

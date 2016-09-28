@@ -15,7 +15,7 @@ import no.ndla.imageapi.controller.{HealthController, ImageController, InternCon
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository._
 import no.ndla.imageapi.service._
-import no.ndla.imageapi.service.search.{IndexService, IndexBuilderService, SearchService}
+import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
 import no.ndla.network.NdlaClient
 import org.scalatest.mock.MockitoSugar
 
@@ -23,6 +23,7 @@ trait TestEnvironment
   extends ElasticClient
     with IndexService
     with SearchService
+    with SearchConverterService
     with DataSource
     with ConverterService
     with ImageRepository
@@ -60,4 +61,5 @@ trait TestEnvironment
   val mappingApiClient = mock[MappingApiClient]
   val tagsService = mock[TagsService]
   val jestClient = mock[JestClient]
+  val searchConverterService = mock[SearchConverterService]
 }

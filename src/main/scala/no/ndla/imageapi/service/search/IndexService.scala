@@ -8,7 +8,8 @@
 package no.ndla.imageapi.service.search
 
 import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, NestedType, StringType}
+import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, StringType}
+import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Bulk, Index}
 import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases, RemoveAliasMapping}
@@ -16,23 +17,24 @@ import io.searchbox.indices.mapping.PutMapping
 import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists}
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClient
+import no.ndla.imageapi.model.Language._
 import no.ndla.imageapi.model.domain
-import no.ndla.imageapi.service.ConverterService
+import no.ndla.imageapi.model.search.SearchableLanguageFormats
 import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization.write
 
 import scala.util.{Failure, Success, Try}
 
 trait IndexService {
-  this: ElasticClient with ConverterService =>
+  this: ElasticClient with SearchConverterService =>
   val indexService: IndexService
 
   class IndexService extends LazyLogging {
-    implicit val formats = org.json4s.DefaultFormats
+    implicit val formats = SearchableLanguageFormats.JSonFormats
 
     def indexDocument(imageMetaInformation: domain.ImageMetaInformation) = {
       Try {
-        val source = write(converterService.asApiImageMetaInformationWithRelUrl(imageMetaInformation))
+        val source = write(searchConverterService.asSearchableImage(imageMetaInformation))
         val indexRequest = new Index.Builder(source).index(ImageApiProperties.SearchIndex).`type`(ImageApiProperties.SearchDocument).id(imageMetaInformation.id.get.toString).build
         val result = jestClient.execute(indexRequest)
         if (!result.isSucceeded) {
@@ -47,7 +49,7 @@ trait IndexService {
     def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Int = {
       val bulkBuilder = new Bulk.Builder()
       imageMetaList.foreach(imageMeta => {
-        val source = write(converterService.asApiImageMetaInformationWithRelUrl(imageMeta))
+        val source = write(searchConverterService.asSearchableImage(imageMeta))
         bulkBuilder.addAction(new Index.Builder(source).index(indexName).`type`(ImageApiProperties.SearchDocument).id(imageMeta.id.get.toString).build)
       })
 
@@ -62,7 +64,7 @@ trait IndexService {
       if (!indexExists(indexName)) {
         val createIndexResponse = jestClient.execute(new CreateIndex.Builder(indexName).build())
         createIndexResponse.isSucceeded match {
-          case false => throw new ElasticsearchException(s"Unable to create index $indexName", createIndexResponse.getErrorMessage)
+          case false => throw new ElasticsearchException(s"Unable to create index $indexName. ErrorMessage: {}", createIndexResponse.getErrorMessage)
           case true => createMapping(indexName)
         }
       }
@@ -89,7 +91,7 @@ trait IndexService {
 
         val response = jestClient.execute(modifyAliasRequest)
         if (!response.isSucceeded) {
-          throw new ElasticsearchException(s"Unable to modify alias ${ImageApiProperties.SearchIndex} -> $oldIndexName to ${ImageApiProperties.SearchIndex} -> $newIndexName", response.getErrorMessage)
+          throw new ElasticsearchException(s"Unable to modify alias ${ImageApiProperties.SearchIndex} -> $oldIndexName to ${ImageApiProperties.SearchIndex} -> $newIndexName. ErrorMessage: {}", response.getErrorMessage)
         }
       } else {
         throw new IllegalArgumentException(s"No such index: $newIndexName")
@@ -129,48 +131,24 @@ trait IndexService {
     def buildMapping(): String = {
       mapping(ImageApiProperties.SearchDocument).fields(
         "id" typed IntegerType,
-        "metaUrl" typed StringType index "not_analyzed",
-        "titles" typed NestedType as(
-          "title" typed StringType,
-          "language" typed StringType index "not_analyzed"
-          ),
-        "alttexts" typed NestedType as(
-          "alttext" typed StringType,
-          "language" typed StringType index "not_analyzed"
-          ),
-        "captions" typed NestedType as(
-          "caption" typed StringType,
-          "language" typed StringType index "not_analyzed"
-          ),
-        "images" typed NestedType as(
-          "small" typed NestedType as(
-            "url" typed StringType,
-            "size" typed IntegerType index "not_analyzed",
-            "contentType" typed StringType
-            ),
-          "full" typed NestedType as(
-            "url" typed StringType,
-            "size" typed IntegerType index "not_analyzed",
-            "contentType" typed StringType
-            )
-          ),
-        "copyright" typed NestedType as(
-          "license" typed NestedType as(
-            "license" typed StringType index "not_analyzed",
-            "description" typed StringType,
-            "url" typed StringType
-            ),
-          "origin" typed StringType,
-          "authors" typed NestedType as(
-            "type" typed StringType,
-            "name" typed StringType
-            )
-          ),
-        "tags" typed NestedType as(
-          "tags" typed StringType,
-          "language" typed StringType index "not_analyzed"
-          )
+        "license" typed StringType index "not_analyzed",
+        "imageSize" typed IntegerType index "not_analyzed",
+        "previewUrl" typed StringType index "not_analyzed",
+        languageSupportedField("titles", keepRaw = true),
+        languageSupportedField("alttexts", keepRaw = false),
+        languageSupportedField("captions", keepRaw = false),
+        languageSupportedField("tags", keepRaw = false)
       ).buildWithName.string()
+    }
+
+    private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
+      val languageSupportedField = new NestedFieldDefinition(fieldName)
+      languageSupportedField._fields = keepRaw match {
+        case true => languageAnalyzers.map(langAnalyzer => langAnalyzer.lang typed StringType analyzer langAnalyzer.analyzer fields ("raw" typed StringType index "not_analyzed"))
+        case false => languageAnalyzers.map(langAnalyzer => langAnalyzer.lang typed StringType analyzer langAnalyzer.analyzer)
+      }
+
+      languageSupportedField
     }
   }
 
