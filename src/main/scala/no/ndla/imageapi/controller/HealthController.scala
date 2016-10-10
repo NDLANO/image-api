@@ -8,7 +8,7 @@
 
 package no.ndla.imageapi.controller
 
-import org.scalatra.{NoContent, ScalatraServlet}
+import org.scalatra.{Ok, ScalatraServlet}
 
 trait HealthController {
   val healthController: HealthController
@@ -16,7 +16,7 @@ trait HealthController {
   class HealthController extends ScalatraServlet {
 
     get("/") {
-      NoContent()
+      Ok()
     }
   }
 }
