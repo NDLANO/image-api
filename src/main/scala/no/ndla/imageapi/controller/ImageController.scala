@@ -67,8 +67,8 @@ trait ImageController {
       }
 
       query match {
-        case Some(query) => searchService.matchingQuery(
-          query = query.toLowerCase().split(" ").map(_.trim),
+        case Some(searchString) => searchService.matchingQuery(
+          query = searchString.trim,
           minimumSize = size,
           language = language,
           license = license,
