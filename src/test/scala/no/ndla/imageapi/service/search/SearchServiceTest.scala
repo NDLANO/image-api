@@ -20,7 +20,7 @@ import scala.reflect.io.Path
 
 class SearchServiceTest extends UnitSuite with TestEnvironment {
 
-  val esHttpPort = 29999
+  val esHttpPort = 19999
   val esDataDir = "esTestData"
   var esNode: Node = _
 
