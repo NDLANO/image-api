@@ -28,9 +28,9 @@ object ImageApiProperties extends LazyLogging {
 
   var ImageApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
 
-  lazy val ApplicationPort = getInt("APPLICATION_PORT")
-  lazy val ContactEmail = get("CONTACT_EMAIL")
-  lazy val HostAddr = get("HOST_ADDR")
+  lazy val ApplicationPort = 80
+  lazy val ContactEmail = "christergundersen@ndla.no"
+
   lazy val Domain = get("DOMAIN")
   lazy val ImageUrlBase = Domain + ImageControllerPath + "/"
 
@@ -40,21 +40,21 @@ object ImageApiProperties extends LazyLogging {
   lazy val MetaServer = get(PropertyKeys.MetaServerKey)
   lazy val MetaPort = getInt(PropertyKeys.MetaPortKey)
   lazy val MetaSchema = get(PropertyKeys.MetaSchemaKey)
-  lazy val MetaInitialConnections = getInt("META_INITIAL_CONNECTIONS")
-  lazy val MetaMaxConnections = getInt("META_MAX_CONNECTIONS")
+  lazy val MetaInitialConnections = 3
+  lazy val MetaMaxConnections = 20
 
   lazy val StorageName = get("STORAGE_NAME")
   lazy val StorageAccessKey = get("STORAGE_ACCESS_KEY")
   lazy val StorageSecretKey = get("STORAGE_SECRET_KEY")
 
-  lazy val SearchServer = get("SEARCH_SERVER")
-  lazy val SearchRegion = get("SEARCH_REGION")
-  lazy val SearchIndex = get("SEARCH_INDEX")
-  lazy val SearchDocument = get("SEARCH_DOCUMENT")
-  lazy val RunWithSignedSearchRequests = getBoolean("RUN_WITH_SIGNED_SEARCH_REQUESTS")
-  lazy val DefaultPageSize: Int = getInt("SEARCH_DEFAULT_PAGE_SIZE")
-  lazy val MaxPageSize: Int = getInt("SEARCH_MAX_PAGE_SIZE")
-  lazy val IndexBulkSize = getInt("INDEX_BULK_SIZE")
+  lazy val SearchServer = getOrElse("SEARCH_SERVER", "search-image-api.ndla-local")
+  lazy val SearchRegion = getOrElse("SEARCH_REGION", "eu-central-1")
+  lazy val SearchIndex = "images"
+  lazy val SearchDocument = "image"
+  lazy val DefaultPageSize: Int = 10
+  lazy val MaxPageSize: Int = 100
+  lazy val IndexBulkSize = 1000
+  lazy val RunWithSignedSearchRequests = getOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
 
   lazy val TopicAPIUrl = get("TOPIC_API_URL")
   lazy val MigrationHost = get("MIGRATION_HOST")
@@ -70,10 +70,18 @@ object ImageApiProperties extends LazyLogging {
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
 
   def setProperties(properties: Map[String, Option[String]]) = {
-    val missingProperties = properties.filter(_._2.isEmpty).keys
-    missingProperties.isEmpty match {
-      case true => Success(properties.foreach(prop => ImageApiProps.put(prop._1, prop._2)))
-      case false => Failure(new RuntimeException(s"Missing required properties: ${missingProperties.mkString(", ")}"))
+    Success(properties.foreach(prop => ImageApiProps.put(prop._1, prop._2)))
+//    val missingProperties = properties.filter(_._2.isEmpty).keys
+//    missingProperties.isEmpty match {
+//      case true => Success(properties.foreach(prop => ImageApiProps.put(prop._1, prop._2)))
+//      case false => Failure(new RuntimeException(s"Missing required properties: ${missingProperties.mkString(", ")}"))
+//    }
+  }
+
+  private def getOrElse(envKey: String, defaultValue: String) = {
+    ImageApiProps.get(envKey).flatten match {
+      case Some(value) => value
+      case None => defaultValue
     }
   }
 
