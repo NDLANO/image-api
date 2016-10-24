@@ -22,7 +22,7 @@ object Secrets {
     val amazonClient = new AmazonS3Client(new DefaultAWSCredentialsProviderChain())
     amazonClient.setRegion(Region.getRegion(Regions.EU_CENTRAL_1))
 
-    new Secrets(amazonClient, Properties.envOrElse("ENV", "local")).readSecrets()
+    new Secrets(amazonClient, Properties.envOrElse("NDLA_ENVIRONMENT", "local")).readSecrets()
   }
 }
 
