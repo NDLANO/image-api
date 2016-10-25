@@ -8,9 +8,8 @@
 
 package no.ndla.imageapi
 
-import com.amazonaws.auth.BasicAWSCredentials
-import com.amazonaws.regions.{Region, Regions}
-import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.ImageRepository
@@ -51,9 +50,7 @@ object ComponentRegistry
   dataSource.setMaxConnections(ImageApiProperties.MetaMaxConnections)
   dataSource.setCurrentSchema(ImageApiProperties.MetaSchema)
 
-  val amazonClient = new AmazonS3Client(new BasicAWSCredentials(ImageApiProperties.StorageAccessKey, ImageApiProperties.StorageSecretKey))
-  amazonClient.setRegion(Region.getRegion(Regions.EU_CENTRAL_1))
-  lazy val storageName = ImageApiProperties.StorageName
+  val amazonClient = AmazonS3ClientBuilder.standard().withRegion(Regions.EU_CENTRAL_1).build()
 
   lazy val indexService = new IndexService
   lazy val searchService = new SearchService

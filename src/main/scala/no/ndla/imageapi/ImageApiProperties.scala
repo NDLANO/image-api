@@ -40,8 +40,6 @@ object ImageApiProperties extends LazyLogging {
   lazy val MetaSchema = get("META_SCHEMA")
 
   lazy val StorageName = get("STORAGE_NAME")
-  lazy val StorageAccessKey = get("STORAGE_ACCESS_KEY")
-  lazy val StorageSecretKey = get("STORAGE_SECRET_KEY")
 
   lazy val TopicAPIUrl = get("TOPIC_API_URL")
 
