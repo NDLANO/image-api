@@ -44,8 +44,6 @@ object ImageApiProperties extends LazyLogging {
   lazy val MetaMaxConnections = 20
 
   lazy val StorageName = get("STORAGE_NAME")
-  lazy val StorageAccessKey = get("STORAGE_ACCESS_KEY")
-  lazy val StorageSecretKey = get("STORAGE_SECRET_KEY")
 
   lazy val SearchServer = getOrElse("SEARCH_SERVER", "search-image-api.ndla-local")
   lazy val SearchRegion = getOrElse("SEARCH_REGION", "eu-central-1")

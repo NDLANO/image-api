@@ -16,6 +16,7 @@ import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.integration.AmazonClient
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
+import no.ndla.imageapi.ImageApiProperties.StorageName
 
 trait ImageStorageService {
   this: AmazonClient =>
@@ -25,7 +26,7 @@ trait ImageStorageService {
 
     def get(imageKey: String): Option[(String, InputStream)] = {
       try {
-        val s3Object = amazonClient.getObject(new GetObjectRequest(storageName, imageKey))
+        val s3Object = amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))
         Option(
           s3Object.getObjectMetadata().getContentType,
           s3Object.getObjectContent)
@@ -39,11 +40,11 @@ trait ImageStorageService {
 
     def upload(imageMetaInformation: ImageMetaInformation, imageDirectory: String) = {
       imageMetaInformation.images.small.foreach(small => {
-        val thumbResult = amazonClient.putObject(new PutObjectRequest(storageName, small.url, new File(imageDirectory + small.url)))
+        val thumbResult = amazonClient.putObject(new PutObjectRequest(StorageName, small.url, new File(imageDirectory + small.url)))
       })
 
       imageMetaInformation.images.full.foreach(full => {
-        amazonClient.putObject(new PutObjectRequest(storageName, full.url, new File(imageDirectory + full.url)))
+        amazonClient.putObject(new PutObjectRequest(StorageName, full.url, new File(imageDirectory + full.url)))
       })
 
     }
@@ -53,7 +54,7 @@ trait ImageStorageService {
       metadata.setContentType(image.contentType)
       metadata.setContentLength(image.size.toLong)
 
-      val request = new PutObjectRequest(storageName, storageKey, new ByteArrayInputStream(bytes), metadata)
+      val request = new PutObjectRequest(StorageName, storageKey, new ByteArrayInputStream(bytes), metadata)
       val putResult = amazonClient.putObject(request)
     }
 
@@ -63,13 +64,13 @@ trait ImageStorageService {
       metadata.setContentType(image.contentType)
       metadata.setContentLength(image.size.toLong)
 
-      val request = new PutObjectRequest(storageName, storageKey, imageStream, metadata)
+      val request = new PutObjectRequest(StorageName, storageKey, imageStream, metadata)
       val putResult = amazonClient.putObject(request)
     }
 
     def contains(storageKey: String): Boolean = {
       try {
-        val s3Object = Option(amazonClient.getObject(new GetObjectRequest(storageName, storageKey)))
+        val s3Object = Option(amazonClient.getObject(new GetObjectRequest(StorageName, storageKey)))
         s3Object match {
           case Some(obj) => {
             obj.close()
@@ -83,11 +84,11 @@ trait ImageStorageService {
     }
 
     def create() = {
-      amazonClient.createBucket(new CreateBucketRequest(storageName))
+      amazonClient.createBucket(new CreateBucketRequest(StorageName))
     }
 
     def exists(): Boolean = {
-      amazonClient.doesBucketExist(storageName)
+      amazonClient.doesBucketExist(StorageName)
     }
   }
 }
