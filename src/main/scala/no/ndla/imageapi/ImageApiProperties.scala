@@ -45,7 +45,7 @@ object ImageApiProperties extends LazyLogging {
 
   lazy val StorageName = get("NDLA_ENVIRONMENT") + ".images.ndla"
 
-  lazy val SearchServer = getOrElse("SEARCH_SERVER", "search-image-api.ndla-local")
+  lazy val SearchServer = getOrElse("SEARCH_SERVER", "http://search-image-api.ndla-local")
   lazy val SearchRegion = getOrElse("SEARCH_REGION", "eu-central-1")
   lazy val SearchIndex = "images"
   lazy val SearchDocument = "image"
