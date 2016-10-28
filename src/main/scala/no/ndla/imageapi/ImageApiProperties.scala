@@ -25,7 +25,8 @@ object ImageApiProperties extends LazyLogging {
 
   lazy val ContactEmail = get("CONTACT_EMAIL")
   lazy val HostAddr = get("HOST_ADDR")
-  lazy val Domain = get("DOMAIN")
+  lazy val Environment = get("NDLA_ENVIRONMENT")
+  lazy val Domain = getDomain
   val HealthControllerPath = "/health"
   val ImageControllerPath = "/images"
   lazy val ImageUrlBase = Domain + ImageControllerPath + "/"
@@ -73,6 +74,15 @@ object ImageApiProperties extends LazyLogging {
 
   def setProperties(properties: Map[String, Option[String]]) = {
     properties.foreach(prop => ImageApiProps.put(prop._1, prop._2))
+  }
+
+  private def getDomain: String = {
+    Map("local" -> "http://localhost",
+        "prod" -> "http://api.ndla.no"
+    ).get(Environment) match {
+      case Some(url) => url
+      case _ => s"http://api.$Environment.ndla.no"
+    }
   }
 
   private def get(envKey: String): String = {

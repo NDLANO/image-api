@@ -23,7 +23,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   lazy val controller = new InternController
   addServlet(controller, "/*")
 
-  val DefaultApiImageMetaInformation = api.ImageMetaInformation("1", "http://somedomain/images/1", List(), List(), api.ImageVariants(None, None), api.Copyright(api.License("", "", None), "", List()), List(), List())
+  val DefaultApiImageMetaInformation = api.ImageMetaInformation("1", "http://localhost/images/1", List(), List(), api.ImageVariants(None, None), api.Copyright(api.License("", "", None), "", List()), List(), List())
   val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(Some(1),  List(), List(), domain.ImageVariants(None, None), domain.Copyright(domain.License("", "", None), "", List()), List(), List())
 
   test("That GET /extern/abc returns 404") {
