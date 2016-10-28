@@ -16,6 +16,7 @@ object IntegrationTest extends Tag("no.ndla.IntegrationTest")
 abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfterAll with PrivateMethodTester {
 
   ImageApiProperties.setProperties(Map(
+    "NDLA_ENVIRONMENT" -> Some("unittest"),
     "STORAGE_NAME" -> Some("TestBucket"),
     "STORAGE_ACCESS_KEY" -> Some("AccessKey"),
     "STORAGE_SECRET_KEY" -> Some("SecretKey"),
