@@ -14,8 +14,6 @@ import org.scalatest.mock.MockitoSugar
 object IntegrationTest extends Tag("no.ndla.IntegrationTest")
 
 abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfterAll with PrivateMethodTester {
-  val DEFAULT_PAGE_SIZE = 12
-  val MAX_PAGE_SIZE = 548
 
   ImageApiProperties.setProperties(Map(
     "STORAGE_NAME" -> Some("TestBucket"),
@@ -32,8 +30,6 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
     "META_MAX_CONNECTIONS" -> Some("20"),
     "SEARCH_ENGINE_ENV_TCP_PORT" -> Some("123"),
     "SEARCH_ENGINE_ENV_CLUSTER_NAME" -> Some("search-engine"),
-    "SEARCH_DEFAULT_PAGE_SIZE" -> Some(DEFAULT_PAGE_SIZE.toString()),
-    "SEARCH_MAX_PAGE_SIZE" -> Some(MAX_PAGE_SIZE.toString()),
     "SEARCH_INDEX" -> Some("images"),
     "SEARCH_DOCUMENT" -> Some("image"),
     "INDEX_BULK_SIZE" -> Some("1000"),
