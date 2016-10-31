@@ -42,8 +42,7 @@ case class ImageTag(@(ApiModelProperty@field)(description = "The searchable tag.
                     @(ApiModelProperty@field)(description = "ISO 639-1 code that represents the language used in tag") language: Option[String])
 
 @ApiModel(description = "The possible variants of the image")
-case class ImageVariants(@(ApiModelProperty@field)(description = "The thumbsize image") small: Option[Image],
-                         @(ApiModelProperty@field)(description = "The fullsize image") full: Option[Image])
+case class ImageVariants(@(ApiModelProperty@field)(description = "The fullsize image") full: Option[Image])
 
 @ApiModel(description = "Url and size information about the image")
 case class Image(@(ApiModelProperty@field)(description = "The full url to where the image can be downloaded") url: String,

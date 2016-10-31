@@ -71,7 +71,6 @@ trait ConverterService {
 
     def asApiImageVariants(domainImageVariants: domain.ImageVariants, baseUrl: Option[String] = None): api.ImageVariants = {
       api.ImageVariants(
-        domainImageVariants.small.map(small => asApiImage(small, baseUrl)),
         domainImageVariants.full.map(full => asApiImage(full, baseUrl)))
     }
 
