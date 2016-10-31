@@ -35,13 +35,13 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
     "SEARCH_DOCUMENT" -> Some("image"),
     "INDEX_BULK_SIZE" -> Some("1000"),
     "HOST_ADDR" -> Some("host-addr"),
-    "DOMAIN" -> Some("http://somedomain"),
     "NDLACOMPONENT" -> Some("image-api"),
     "MIGRATION_HOST" -> Some("image-api"),
     "MIGRATION_USER" -> Some("user"),
     "MIGRATION_PASSWORD" -> Some("password"),
     "SEARCH_SERVER" -> Some("search-server"),
     "RUN_WITH_SIGNED_SEARCH_REQUESTS" -> Some("false"),
-    "SEARCH_REGION" -> Some("eu-central-1")
+    "SEARCH_REGION" -> Some("eu-central-1"),
+    "NDLA_ENVIRONMENT" -> Some("local")
   ))
 }

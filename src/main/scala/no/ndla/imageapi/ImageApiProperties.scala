@@ -13,7 +13,7 @@ import no.ndla.imageapi.Secrets.readSecrets
 
 import scala.collection.mutable
 import scala.io.Source
-import scala.util.{Failure, Properties, Success, Try}
+import scala.util.{Properties, Success, Try}
 
 
 object ImageApiProperties extends LazyLogging {
@@ -31,7 +31,8 @@ object ImageApiProperties extends LazyLogging {
   lazy val ApplicationPort = 80
   lazy val ContactEmail = "christergundersen@ndla.no"
 
-  lazy val Domain = get("DOMAIN")
+  lazy val Environment = get("NDLA_ENVIRONMENT")
+  lazy val Domain = getDomain
   lazy val ImageUrlBase = Domain + ImageControllerPath + "/"
 
   lazy val MetaUserName = get(PropertyKeys.MetaUserNameKey)
@@ -81,6 +82,12 @@ object ImageApiProperties extends LazyLogging {
       case Some(value) => value
       case None => defaultValue
     }
+  }
+
+  private def getDomain: String = {
+    Map("local" -> "http://localhost",
+        "prod" -> "http://api.ndla.no"
+    ).getOrElse(Environment, s"http://api.$Environment.ndla.no")
   }
 
   private def get(envKey: String): String = {
