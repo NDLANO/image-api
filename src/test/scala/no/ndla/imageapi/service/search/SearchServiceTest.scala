@@ -33,8 +33,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   val getStartAtAndNumResults = PrivateMethod[(Int, Int)]('getStartAtAndNumResults)
 
-  val largeImageVariant = ImageVariants(Some(Image("large-thumb-url", 1000, "jpg")), Some(Image("large-full-url", 10000, "jpg")))
-  val smallImageVariant = ImageVariants(Some(Image("small-thumb-url", 10, "jpg")), Some(Image("small-full-url", 100, "jpg")))
+  val largeImageVariant = ImageVariants(Some(Image("large-full-url", 10000, "jpg")))
+  val smallImageVariant = ImageVariants(Some(Image("small-full-url", 100, "jpg")))
 
   val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None), "Gotham City", List(Author("Forfatter", "DC Comics")))
   val publicDomain = Copyright(License("publicdomain", "Public Domain", None), "Metropolis", List(Author("Forfatter", "Bruce Wayne")))
