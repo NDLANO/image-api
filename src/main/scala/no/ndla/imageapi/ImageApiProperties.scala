@@ -13,7 +13,7 @@ import no.ndla.imageapi.Secrets.readSecrets
 
 import scala.collection.mutable
 import scala.io.Source
-import scala.util.{Failure, Properties, Success, Try}
+import scala.util.{Properties, Success, Try}
 
 
 object ImageApiProperties extends LazyLogging {
@@ -69,11 +69,6 @@ object ImageApiProperties extends LazyLogging {
 
   def setProperties(properties: Map[String, Option[String]]) = {
     Success(properties.foreach(prop => ImageApiProps.put(prop._1, prop._2)))
-//    val missingProperties = properties.filter(_._2.isEmpty).keys
-//    missingProperties.isEmpty match {
-//      case true => Success(properties.foreach(prop => ImageApiProps.put(prop._1, prop._2)))
-//      case false => Failure(new RuntimeException(s"Missing required properties: ${missingProperties.mkString(", ")}"))
-//    }
   }
 
   private def getOrElse(envKey: String, defaultValue: String) = {
