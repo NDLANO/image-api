@@ -9,7 +9,8 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.Secrets.readSecrets
+import no.ndla.network.secrets.PropertyKeys
+import no.ndla.network.secrets.Secrets.readSecrets
 
 import scala.collection.mutable
 import scala.io.Source
@@ -17,14 +18,6 @@ import scala.util.{Properties, Success, Try}
 
 
 object ImageApiProperties extends LazyLogging {
-  object PropertyKeys {
-    val MetaUserNameKey = "META_USER_NAME"
-    val MetaPasswordKey = "META_PASSWORD"
-    val MetaResourceKey = "META_RESOURCE"
-    val MetaServerKey = "META_SERVER"
-    val MetaPortKey = "META_PORT"
-    val MetaSchemaKey = "META_SCHEMA"
-  }
 
   var ImageApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
 
@@ -104,7 +97,7 @@ object PropertiesLoader extends LazyLogging {
   def load() = {
     val verification = for {
       file <- readPropertyFile()
-      secrets <- readSecrets()
+      secrets <- readSecrets("image_api.secrets")
       didSetProperties <- ImageApiProperties.setProperties(file ++ secrets)
     } yield didSetProperties
 
