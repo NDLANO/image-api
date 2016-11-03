@@ -38,10 +38,6 @@ trait ConverterService {
       asApiImageMetaInformation(domainImageMetaInformation, Some(ApplicationUrl.get))
     }
 
-    def asApiImageMetaInformationWithRelUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      asApiImageMetaInformation(domainImageMetaInformation)
-    }
-
     def asApiImageMetaInformationWithDomainUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
       asApiImageMetaInformation(domainImageMetaInformation, Some(ImageApiProperties.ImageUrlBase))
     }
@@ -52,7 +48,9 @@ trait ConverterService {
         baseUrl.getOrElse("") + domainImageMetaInformation.id.get,
         domainImageMetaInformation.titles.map(asApiImageTitle),
         domainImageMetaInformation.alttexts.map(asApiImageAltText),
-        asApiImageVariants(domainImageMetaInformation.images, baseUrl),
+        asApiUrl(domainImageMetaInformation.url, baseUrl),
+        domainImageMetaInformation.size,
+        domainImageMetaInformation.contentType,
         asApiCopyright(domainImageMetaInformation.copyright),
         domainImageMetaInformation.tags.map(asApiImageTag),
         domainImageMetaInformation.captions.map(asApiCaption))
@@ -69,13 +67,12 @@ trait ConverterService {
       api.ImageTitle(domainImageTitle.title, domainImageTitle.language)
     }
 
-    def asApiImageVariants(domainImageVariants: domain.ImageVariants, baseUrl: Option[String] = None): api.ImageVariants = {
-      api.ImageVariants(
-        domainImageVariants.full.map(full => asApiImage(full, baseUrl)))
-    }
-
     def asApiLicense(domainLicense: domain.License): api.License = {
       api.License(domainLicense.license, domainLicense.description, domainLicense.url)
+    }
+
+    def asApiUrl(url: String, baseUrl: Option[String] = None): String = {
+      baseUrl.getOrElse("") + url
     }
   }
 
