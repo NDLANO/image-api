@@ -35,7 +35,6 @@ class V6__ChangeImageStructure extends JdbcMigration{
 
   def allImages(implicit session: DBSession): List[V6_ImageJson] = {
     sql"select id, metadata from imagemetadata".map(rs => V6_ImageJson(rs.long("id"), rs.string("metadata"))).list().apply()
-
   }
 
   def removeImageVariants(imageJson: V6_ImageJson) : Option[V6_ImageJson]  = {
@@ -60,14 +59,11 @@ class V6__ChangeImageStructure extends JdbcMigration{
         Some(imageJson.copy(metadata = compact(render(parse(write(updatedImage))))))
       }
     }
-
-
   }
   def update(image: V6_ImageJson)(implicit session: DBSession) = {
     val dataObject = new PGobject()
     dataObject.setType("jsonb")
     dataObject.setValue(image.metadata)
-
 
     sql"update imagemetadata set metadata = $dataObject where id = ${image.id}".update().apply
   }
@@ -75,5 +71,4 @@ class V6__ChangeImageStructure extends JdbcMigration{
 
 case class V6_ImageVariants(small: Option[V6_Image], full: Option[V6_Image])
 case class V6_Image(url: String, size: Int, contentType: String)
-
 case class V6_ImageJson(id: Long, metadata: String)
