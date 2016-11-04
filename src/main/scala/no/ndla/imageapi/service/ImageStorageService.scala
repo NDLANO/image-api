@@ -39,7 +39,7 @@ trait ImageStorageService {
     }
 
     def upload(imageMetaInformation: ImageMetaInformation, imageDirectory: String) = {
-      amazonClient.putObject(new PutObjectRequest(StorageName, imageMetaInformation.url, new File(imageDirectory + imageMetaInformation.url)))
+      amazonClient.putObject(new PutObjectRequest(StorageName, imageMetaInformation.imageUrl, new File(imageDirectory + imageMetaInformation.imageUrl)))
     }
 
     def uploadFromByteArray(image: Image, storageKey: String, bytes: Array[Byte]): Unit = {

@@ -48,7 +48,7 @@ trait ConverterService {
         baseUrl.getOrElse("") + domainImageMetaInformation.id.get,
         domainImageMetaInformation.titles.map(asApiImageTitle),
         domainImageMetaInformation.alttexts.map(asApiImageAltText),
-        asApiUrl(domainImageMetaInformation.url, baseUrl),
+        asApiUrl(domainImageMetaInformation.imageUrl, baseUrl),
         domainImageMetaInformation.size,
         domainImageMetaInformation.contentType,
         asApiCopyright(domainImageMetaInformation.copyright),

@@ -40,13 +40,13 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   test("That asApiImageMetaInformationWithApplicationUrl returns links with applicationUrl") {
     val api = converterService.asApiImageMetaInformationWithApplicationUrl(DefaultImageMetaInformation)
     api.metaUrl should equal ("http://image-api/images/1")
-    api.url should equal ("http://image-api/images/full/123.png")
+    api.imageUrl should equal ("http://image-api/images/full/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrl returns links with domain urls") {
     val api = converterService.asApiImageMetaInformationWithDomainUrl(DefaultImageMetaInformation)
     api.metaUrl should equal ("http://somedomain/images/1")
-    api.url should equal ("http://somedomain/images/full/123.png")
+    api.imageUrl should equal ("http://somedomain/images/full/123.png")
   }
 
 }
