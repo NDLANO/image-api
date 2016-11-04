@@ -18,7 +18,7 @@ class V6__ChangeImageStructure extends JdbcMigration{
   implicit class JValueExtended(value: JValue) {
     def has(childString: String): Boolean = (value \ childString) != JNothing
   }
-  override def migrate(connection: Connection): Unit  = {
+  override def migrate(connection: Connection): Unit = {
     val db = DB(connection)
     db.autoClose(false)
 
@@ -41,8 +41,6 @@ class V6__ChangeImageStructure extends JdbcMigration{
       case ("images", _) => true
       case _ => false
     }
-
-    {"tags": [{"tags": ["oslo", "etnisitet", "etnisk", "grønland", "mat"], "language": "nn"}, {"tags": ["oslo", "etnisitet", "etnisk", "grønland", "indisk", "indisk mat", "mat", "restaurant"], "language": "nb"}, {"tags": ["oslo", "ethnicity", "ethnic", "greenland", "indian", "indian food", "food", "restaurant"]}, {"tags": ["oslo", "ethnicity", "ethnic", "greenland", "indian", "indian food", "food", "restaurant"], "language": "en"}], "images": {"full": {"url": "full/Indisk mat på Grønland_1.jpg", "size": 123989, "contentType": "image/jpeg"}, "small": {"url": "thumbs/Indisk mat på Grønland_1.jpg", "size": 7302, "contentType": "image/jpeg"}}, "titles": [{"title": "Indisk mat på Grønland, Oslo"}], "alttexts": [{"alttext": "Indisk mat på Grønland, Oslo. Foto."}], "captions": [], "copyright": {"origin": "http://www.scanpix.no", "authors": [{"name": "Joronn Sagen Engen", "type": "Fotograf"}, {"name": "Aftenposten", "type": "Leverandør"}, {"name": "NTB scanpix", "type": "Leverandør"}], "license": {"url": "https://creativecommons.org/licenses/by-nc-sa/2.0/", "license": "by-nc-sa", "description": "Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic"}}}
 
     hasImages match {
       case false => None
