@@ -95,7 +95,7 @@ trait SearchService {
         case Some(size) => licensedFiltered.filter(QueryBuilders.rangeQuery("imageSize").gte(minimumSize.get))
       }
 
-      val search = new SearchSourceBuilder().query(queryBuilder).sort(SortBuilders.fieldSort("id"))
+      val search = new SearchSourceBuilder().query(sizeFiltered).sort(SortBuilders.fieldSort("id"))
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val request = new Search.Builder(search.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
