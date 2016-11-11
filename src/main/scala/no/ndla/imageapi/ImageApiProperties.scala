@@ -40,7 +40,7 @@ object ImageApiProperties extends LazyLogging {
   val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
   val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
 
-  val StorageName = s"images.$Environment.ndla"
+  val StorageName = s"$Environment.images.ndla"
 
   val SearchIndex = "images"
   val SearchDocument = "image"
