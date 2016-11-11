@@ -40,7 +40,7 @@ object ImageApiProperties extends LazyLogging {
   val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
   val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
 
-  val StorageName = s"$Environment.images.ndla"
+  val StorageName = s"images.$Environment.ndla"
 
   val SearchIndex = "images"
   val SearchDocument = "image"
@@ -52,7 +52,7 @@ object ImageApiProperties extends LazyLogging {
   val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
 
   val MappingHost = "mapping-api.ndla-local"
-  val TopicAPIUrl = prop("TOPIC_API_URL")
+  val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
 
   val MigrationHost = prop("MIGRATION_HOST")
   val MigrationUser = prop("MIGRATION_USER")

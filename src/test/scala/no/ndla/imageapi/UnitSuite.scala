@@ -26,7 +26,6 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
   setEnv("SEARCH_SERVER", "search-server")
   setEnv("SEARCH_REGION", "some-region")
   setEnv("RUN_WITH_SIGNED_SEARCH_REQUESTS", "false")
-  setEnv("TOPIC_API_URL", "some-url")
   setEnv("MIGRATION_HOST", "some-host")
   setEnv("MIGRATION_USER", "some-user")
   setEnv("MIGRATION_PASSWORD", "some-password")
