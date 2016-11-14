@@ -20,7 +20,6 @@ object JettyLauncher extends LazyLogging {
   def main(args: Array[String]) {
     logger.info(Source.fromInputStream(getClass.getResourceAsStream("/log-license.txt")).mkString)
 
-    PropertiesLoader.load()
     DBMigrator.migrate(ComponentRegistry.dataSource)
 
     val startMillis = System.currentTimeMillis()

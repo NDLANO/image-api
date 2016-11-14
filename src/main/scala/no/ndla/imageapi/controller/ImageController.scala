@@ -8,7 +8,6 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.ImageApiProperties._
 import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
@@ -62,7 +61,7 @@ trait ImageController {
       val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
 
       val size = minimumSize match {
-        case Some(size) => if (size.forall(_.isDigit)) Option(size.toInt) else None
+        case Some(toCheck) => if (toCheck.forall(_.isDigit)) Option(toCheck.toInt) else None
         case None => None
       }
 

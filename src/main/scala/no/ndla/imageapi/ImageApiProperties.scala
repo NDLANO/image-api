@@ -12,105 +12,71 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.network.secrets.PropertyKeys
 import no.ndla.network.secrets.Secrets.readSecrets
 
-import scala.collection.mutable
-import scala.io.Source
-import scala.util.{Properties, Success, Try}
+import scala.util.Properties._
 
 
 object ImageApiProperties extends LazyLogging {
+  val SecretsFile = "image_api.secrets"
 
-  var ImageApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
-
-  lazy val ApplicationPort = 80
-  lazy val ContactEmail = "christergundersen@ndla.no"
-
-  lazy val Environment = get("NDLA_ENVIRONMENT")
-  lazy val Domain = getDomain
-  lazy val ImageUrlBase = Domain + ImageControllerPath + "/"
-
-  lazy val MetaUserName = get(PropertyKeys.MetaUserNameKey)
-  lazy val MetaPassword = get(PropertyKeys.MetaPasswordKey)
-  lazy val MetaResource = get(PropertyKeys.MetaResourceKey)
-  lazy val MetaServer = get(PropertyKeys.MetaServerKey)
-  lazy val MetaPort = getInt(PropertyKeys.MetaPortKey)
-  lazy val MetaSchema = get(PropertyKeys.MetaSchemaKey)
-  lazy val MetaInitialConnections = 3
-  lazy val MetaMaxConnections = 20
-
-  lazy val StorageName = get("NDLA_ENVIRONMENT") + ".images.ndla"
-
-  lazy val SearchServer = getOrElse("SEARCH_SERVER", "http://search-image-api.ndla-local")
-  lazy val SearchRegion = getOrElse("SEARCH_REGION", "eu-central-1")
-  lazy val SearchIndex = "images"
-  lazy val SearchDocument = "image"
-  lazy val DefaultPageSize: Int = 10
-  lazy val MaxPageSize: Int = 100
-  lazy val IndexBulkSize = 1000
-  lazy val RunWithSignedSearchRequests = getOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
-
-  lazy val TopicAPIUrl = get("TOPIC_API_URL")
-  lazy val MigrationHost = get("MIGRATION_HOST")
-  lazy val MigrationUser = get("MIGRATION_USER")
-  lazy val MigrationPassword = get("MIGRATION_PASSWORD")
-
+  val ApplicationPort = 80
+  val ContactEmail = "christergundersen@ndla.no"
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
   val HealthControllerPath = "/health"
   val ImageControllerPath = "/images"
-  val MappingHost = "mapping-api.ndla-local"
+
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
 
-  def setProperties(properties: Map[String, Option[String]]) = {
-    Success(properties.foreach(prop => ImageApiProps.put(prop._1, prop._2)))
+  lazy val secrets = readSecrets(SecretsFile).getOrElse(throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile"))
+
+  val MetaInitialConnections = 3
+  val MetaMaxConnections = 20
+  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
+  val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
+  val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
+  val MetaResource = prop(PropertyKeys.MetaResourceKey)
+  val MetaServer = prop(PropertyKeys.MetaServerKey)
+  val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
+  val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
+
+  val StorageName = s"$Environment.images.ndla"
+
+  val SearchIndex = "images"
+  val SearchDocument = "image"
+  val DefaultPageSize: Int = 10
+  val MaxPageSize: Int = 100
+  val IndexBulkSize = 1000
+  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-image-api.ndla-local")
+  val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
+  val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
+
+  val MappingHost = "mapping-api.ndla-local"
+  val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
+
+  val MigrationHost = prop("MIGRATION_HOST")
+  val MigrationUser = prop("MIGRATION_USER")
+  val MigrationPassword = prop("MIGRATION_PASSWORD")
+
+  val Domain = Map(
+    "local" -> "http://localhost",
+    "prod" -> "http://api.ndla.no"
+  ).getOrElse(Environment, s"http://api.$Environment.ndla.no")
+  val ImageUrlBase = Domain + ImageControllerPath + "/"
+
+
+  def prop(key: String): String = {
+    propOrElse(key, throw new RuntimeException(s"Unable to load property $key"))
   }
 
-  private def getOrElse(envKey: String, defaultValue: String) = {
-    ImageApiProps.get(envKey).flatten match {
-      case Some(value) => value
-      case None => defaultValue
-    }
-  }
-
-  private def getDomain: String = {
-    Map("local" -> "http://localhost",
-        "prod" -> "http://api.ndla.no"
-    ).getOrElse(Environment, s"http://api.$Environment.ndla.no")
-  }
-
-  private def get(envKey: String): String = {
-    ImageApiProps.get(envKey).flatten match {
-      case Some(value) => value
-      case None => throw new NoSuchFieldError(s"Missing environment variable $envKey")
-    }
-  }
-
-  private def getInt(envKey: String):Integer = {
-    get(envKey).toInt
-  }
-
-  private def getBoolean(envKey: String): Boolean = {
-    get(envKey).toBoolean
-  }
-}
-
-object PropertiesLoader extends LazyLogging {
-  val EnvironmentFile = "/image-api.env"
-
-  def readPropertyFile() = {
-    Try(Source.fromInputStream(getClass.getResourceAsStream(EnvironmentFile)).getLines().map(key => key -> Properties.envOrNone(key)).toMap)
-  }
-
-  def load() = {
-    val verification = for {
-      file <- readPropertyFile()
-      secrets <- readSecrets("image_api.secrets")
-      didSetProperties <- ImageApiProperties.setProperties(file ++ secrets)
-    } yield didSetProperties
-
-    if(verification.isFailure){
-      logger.error("Unable to load properties", verification.failed.get)
-      System.exit(1)
+  def propOrElse(key: String, default: => String): String = {
+    secrets.get(key).flatten match {
+      case Some(secret) => secret
+      case None =>
+        envOrNone(key) match {
+          case Some(env) => env
+          case None => default
+        }
     }
   }
 }
