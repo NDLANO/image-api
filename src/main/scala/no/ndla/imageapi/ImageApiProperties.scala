@@ -12,11 +12,12 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.network.secrets.PropertyKeys
 import no.ndla.network.secrets.Secrets.readSecrets
 
+import scala.util.{Failure, Success}
 import scala.util.Properties._
 
 
 object ImageApiProperties extends LazyLogging {
-  val SecretsFile = "image_api.secrets"
+  val SecretsFile = "image-api.secrets"
 
   val ApplicationPort = 80
   val ContactEmail = "christergundersen@ndla.no"
@@ -27,8 +28,6 @@ object ImageApiProperties extends LazyLogging {
 
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
-
-  lazy val secrets = readSecrets(SecretsFile).getOrElse(throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile"))
 
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
@@ -64,6 +63,10 @@ object ImageApiProperties extends LazyLogging {
   ).getOrElse(Environment, s"http://api.$Environment.ndla.no")
   val ImageUrlBase = Domain + ImageControllerPath + "/"
 
+  lazy val secrets = readSecrets(SecretsFile) match {
+     case Success(values) => values
+     case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
+   }
 
   def prop(key: String): String = {
     propOrElse(key, throw new RuntimeException(s"Unable to load property $key"))
