@@ -20,7 +20,6 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
 
   val ImageStorageName = ImageApiProperties.StorageName
   val ImageWithNoThumb = TestData.nonexistingWithoutThumb
-  val ImageWithThumb = TestData.nonexisting
   val Content = "content"
   val ContentType = "image/jpeg"
 
@@ -67,11 +66,6 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
   test("That AmazonImageStorage.get returns None when the key does not exist") {
     when(amazonClient.getObject(any[GetObjectRequest])).thenThrow(new RuntimeException("Exception"))
     assert(imageStorage.get("nonexisting").isEmpty)
-  }
-
-  test("That AmazonImageStorage.upload uploads both thumb and image when both defined") {
-    imageStorage.upload(ImageWithThumb, "test")
-    verify(amazonClient, times(2)).putObject(any[PutObjectRequest])
   }
 
   test("That AmazonImageStorage.upload only uploads image when thumb is not defined") {

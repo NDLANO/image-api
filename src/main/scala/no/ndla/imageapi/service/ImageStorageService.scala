@@ -39,14 +39,7 @@ trait ImageStorageService {
     }
 
     def upload(imageMetaInformation: ImageMetaInformation, imageDirectory: String) = {
-      imageMetaInformation.images.small.foreach(small => {
-        val thumbResult = amazonClient.putObject(new PutObjectRequest(StorageName, small.url, new File(imageDirectory + small.url)))
-      })
-
-      imageMetaInformation.images.full.foreach(full => {
-        amazonClient.putObject(new PutObjectRequest(StorageName, full.url, new File(imageDirectory + full.url)))
-      })
-
+      amazonClient.putObject(new PutObjectRequest(StorageName, imageMetaInformation.imageUrl, new File(imageDirectory + imageMetaInformation.imageUrl)))
     }
 
     def uploadFromByteArray(image: Image, storageKey: String, bytes: Array[Byte]): Unit = {

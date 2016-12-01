@@ -20,9 +20,8 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   override val converterService = new ConverterService
 
-  val small = Image("thumbs/123.png", 100, "image/png")
   val full = Image("full/123.png", 200, "image/png")
-  val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(), List(), ImageVariants(Some(small), Some(full)), Copyright(License("", "", None), "", List()), List(), List())
+  val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(), List(), full.url, full.size, full.contentType, Copyright(License("", "", None), "", List()), List(), List())
 
   override def beforeEach = {
     val request = mock[HttpServletRequest]
@@ -41,22 +40,13 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   test("That asApiImageMetaInformationWithApplicationUrl returns links with applicationUrl") {
     val api = converterService.asApiImageMetaInformationWithApplicationUrl(DefaultImageMetaInformation)
     api.metaUrl should equal ("http://image-api/images/1")
-    api.images.small.get.url should equal ("http://image-api/images/thumbs/123.png")
-    api.images.full.get.url should equal ("http://image-api/images/full/123.png")
-  }
-
-  test("That asApiImageMetaInformationWithRelUrl returns links with relative urls") {
-    val api = converterService.asApiImageMetaInformationWithRelUrl(DefaultImageMetaInformation)
-    api.metaUrl should equal ("1")
-    api.images.small.get.url should equal ("thumbs/123.png")
-    api.images.full.get.url should equal ("full/123.png")
+    api.imageUrl should equal ("http://image-api/images/full/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrl returns links with domain urls") {
     val api = converterService.asApiImageMetaInformationWithDomainUrl(DefaultImageMetaInformation)
     api.metaUrl should equal ("http://localhost/images/1")
-    api.images.small.get.url should equal ("http://localhost/images/thumbs/123.png")
-    api.images.full.get.url should equal ("http://localhost/images/full/123.png")
+    api.imageUrl should equal ("http://localhost/images/full/123.png")
   }
 
 }

@@ -25,8 +25,8 @@ trait SearchConverterService {
         captions = SearchableLanguageValues(image.captions.map(caption => LanguageValue(caption.language, caption.caption))),
         tags = SearchableLanguageList(image.tags.map(tag => LanguageValue(tag.language, tag.tags))),
         license = image.copyright.license.license,
-        imageSize = image.images.full.map(_.size).getOrElse(0),
-        previewUrl = image.images.small.map(_.url).getOrElse(""))
+        imageSize = image.size,
+        previewUrl = image.imageUrl)
     }
 
     def asImageMetaSummary(searchableImage: SearchableImage): ImageMetaSummary = {

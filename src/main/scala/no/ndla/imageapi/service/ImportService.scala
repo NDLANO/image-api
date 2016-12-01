@@ -24,7 +24,6 @@ trait ImportService {
 
   class ImportService extends LazyLogging {
     val DownloadUrlPrefix = "http://ndla.no/sites/default/files/images/"
-    val ThumbUrlPrefix = "http://ndla.no/sites/default/files/imagecache/fag_preset/images/"
 
     def importImage(imageId: String): Try[domain.ImageMetaInformation] = {
       val imported = migrationApiClient.getMetaDataForImage(imageId).map(upload)
@@ -65,26 +64,18 @@ trait ImportService {
 
       val persistedImageMetaInformation = imageRepository.withExternalId(imageMeta.mainImage.nid) match {
         case Some(dbMeta) => {
-          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts.flatten, dbMeta.images, copyright, tags, captions.flatten), dbMeta.id.get)
+          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts.flatten, dbMeta.imageUrl, dbMeta.size, dbMeta.contentType, copyright, tags, captions.flatten), dbMeta.id.get)
           logger.info(s"Updated ID = ${updated.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
           updated
         }
         case None => {
           val sourceUrlFull = DownloadUrlPrefix + imageMeta.mainImage.originalFile
-          val sourceUrlThumb = ThumbUrlPrefix + imageMeta.mainImage.originalFile
-
-          val imageStream = new URL(sourceUrlThumb).openStream()
-          val buffer = Stream.continually(imageStream.read).takeWhile(_ != -1).map(_.toByte).toArray
-
-          val thumbKey = "thumbs/" + imageMeta.mainImage.originalFile
-          val thumb = domain.Image(thumbKey, buffer.size, imageMeta.mainImage.originalMime)
 
           val fullKey = "full/" + imageMeta.mainImage.originalFile
           val full = domain.Image(fullKey, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
 
-          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, domain.ImageVariants(Option(thumb), Option(full)), copyright, tags, captions.flatten)
+          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, full.url, full.size, full.contentType, copyright, tags, captions.flatten)
 
-          if (!imageStorage.contains(thumbKey)) imageStorage.uploadFromByteArray(thumb, thumbKey, buffer)
           if (!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
 
           val inserted = imageRepository.insert(imageMetaInformation, imageMeta.mainImage.nid)
