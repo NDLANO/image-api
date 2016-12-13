@@ -18,7 +18,7 @@ import org.mockito.Mockito._
 
 class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
 
-  val ImageStorageName = "TestBucket"
+  val ImageStorageName = "unittest.images.ndla"
   val ImageWithNoThumb = TestData.nonexistingWithoutThumb
   val Content = "content"
   val ContentType = "image/jpeg"

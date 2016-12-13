@@ -40,8 +40,6 @@ trait TestEnvironment
     with TagsService
     with HealthController
 {
-  val storageName = ImageApiProperties.StorageName
-
   val amazonClient = mock[AmazonS3Client]
 
   val dataSource = mock[javax.sql.DataSource]

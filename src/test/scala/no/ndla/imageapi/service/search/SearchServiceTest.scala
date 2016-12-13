@@ -10,6 +10,7 @@ package no.ndla.imageapi.service.search
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
+import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
 import no.ndla.imageapi.integration.JestClientFactory
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
@@ -74,22 +75,22 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That getStartAtAndNumResults returns default values for None-input") {
-    searchService invokePrivate getStartAtAndNumResults(None, None) should equal((0, DEFAULT_PAGE_SIZE))
+    searchService invokePrivate getStartAtAndNumResults(None, None) should equal((0, DefaultPageSize))
   }
 
   test("That getStartAtAndNumResults returns SEARCH_MAX_PAGE_SIZE for value greater than SEARCH_MAX_PAGE_SIZE") {
-    searchService invokePrivate getStartAtAndNumResults(None, Some(1000)) should equal((0, MAX_PAGE_SIZE))
+    searchService invokePrivate getStartAtAndNumResults(None, Some(1000)) should equal((0, MaxPageSize))
   }
 
   test("That getStartAtAndNumResults returns the correct calculated start at for page and page-size with default page-size") {
     val page = 74
-    val expectedStartAt = (page - 1) * DEFAULT_PAGE_SIZE
-    searchService invokePrivate getStartAtAndNumResults(Some(page), None) should equal((expectedStartAt, DEFAULT_PAGE_SIZE))
+    val expectedStartAt = (page - 1) * DefaultPageSize
+    searchService invokePrivate getStartAtAndNumResults(Some(page), None) should equal((expectedStartAt, DefaultPageSize))
   }
 
   test("That getStartAtAndNumResults returns the correct calculated start at for page and page-size") {
     val page = 123
-    val pageSize = 321
+    val pageSize = 43
     val expectedStartAt = (page - 1) * pageSize
     searchService invokePrivate getStartAtAndNumResults(Some(page), Some(pageSize)) should equal((expectedStartAt, pageSize))
   }
