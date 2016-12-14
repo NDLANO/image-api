@@ -8,8 +8,6 @@
 
 package no.ndla.imageapi.service
 
-import java.net.URL
-
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain

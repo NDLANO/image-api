@@ -1,7 +1,7 @@
 import java.util.Properties
 
 val Scalaversion = "2.11.8"
-val Scalatraversion = "2.4.1"
+val Scalatraversion = "2.5.0"
 val ScalaLoggingVersion = "3.1.0"
 val Log4JVersion = "2.6"
 val Jettyversion = "9.2.10.v20150310"
@@ -43,7 +43,7 @@ lazy val image_api = (project in file(".")).
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",
-      "org.json4s"   %% "json4s-native" % "3.3.0",
+      "org.json4s"   %% "json4s-native" % "3.5.0",
       "org.scalikejdbc" %% "scalikejdbc" % "2.2.8",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "mysql" % "mysql-connector-java" % "5.1.36",
