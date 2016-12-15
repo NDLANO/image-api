@@ -8,14 +8,13 @@
 
 package no.ndla.imageapi.service
 
-import no.ndla.imageapi.integration.MappingApiClient
 import no.ndla.imageapi.model.domain.ImageTag
 import no.ndla.imageapi.ImageApiProperties.TopicAPIUrl
+import no.ndla.mapping.ISO639.get6391CodeFor6392Code
 import scala.io.Source
 import scala.util.matching.Regex
 
 trait TagsService {
-  this: MappingApiClient =>
   val tagsService: TagsService
 
   class TagsService {
@@ -42,12 +41,11 @@ trait TagsService {
 
     def getISO639(languageUrl: String): Option[String] = {
       Option(languageUrl) collect { case pattern(group) => group } match {
-        case Some(x) => if (x == "language-neutral") None else mappingApiClient.get6391CodeFor6392Code(x)
+        case Some(x) => if (x == "language-neutral") None else get6391CodeFor6392Code(x)
         case None => None
       }
     }
   }
-
 
 }
 
