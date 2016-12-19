@@ -8,6 +8,7 @@
 
 package no.ndla.imageapi.service
 
+import no.ndla.imageapi.model.domain.ImageTag
 import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 
 class TagsServiceTest extends UnitSuite with TestEnvironment {
@@ -23,6 +24,45 @@ class TagsServiceTest extends UnitSuite with TestEnvironment {
     service.getISO639("http://psi.some.url.org/#XXX") should equal (None)
     service.getISO639("http://psi.some.url.org/#YYY") should equal (None)
     service.getISO639("http://psi.some.url.org/#ZZZ") should equal (None)
+  }
+
+  test("keywordsJsonToImageTags converts a keyword json string to a ImageTag List") {
+    val jsonString = """{
+      "keyword": [{
+        "psi": "http://psi.somesite.no/keywords/#keyword-123",
+        "topicId": "keyword-123",
+        "visibility": "1",
+        "approved": "true",
+        "approval_date": "2014-06-27 08:20:05.294",
+        "processState": "2",
+        "psis": ["http://psi.somesite.no/keywords/#keyword-123"],
+        "originatingSites": ["http://somesite.org/"],
+        "types": [{
+          "typeId": "keyword",
+          "names": [
+            {"http://psi.somesite.org/#language-neutral": "Keyword"},
+            {"http://psi.somesite.org/iso/639/#eng": "Keyword"},
+            {"http://psi.somesite.org/iso/639/#nob": "Nøkkelord"}
+          ]
+        }],
+        "names": [
+          {
+          "wordclass": "noun",
+          "data": [
+            {"http://psi.oasis-open.org/iso/639/#nno": "folkevise"},
+            {"http://psi.topic.ndla.no/#language-neutral": "folk song"},
+            {"http://psi.oasis-open.org/iso/639/#eng": "folk song"},
+            {"http://psi.oasis-open.org/iso/639/#nob": "folkevise"}
+          ]}
+        ]
+      }]}"""
+    val expectedResult = List(
+      ImageTag(List("folkevise"),Some("nn")),
+      ImageTag(List("folkevise"),Some("nb")),
+      ImageTag(List("folk song"),None),
+      ImageTag(List("folk song"),Some("en"))
+    )
+    service.keywordsJsonToImageTags(jsonString) should equal (expectedResult)
   }
 
 }
