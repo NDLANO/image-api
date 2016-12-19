@@ -26,6 +26,11 @@ class TagsServiceTest extends UnitSuite with TestEnvironment {
     service.getISO639("http://psi.some.url.org/#ZZZ") should equal (None)
   }
 
+  test("keywordsJsonToImageTags returns an empty list for an unparsable json body") {
+    val jsonString = """{"keyword": [{"""
+    service.keywordsJsonToImageTags(jsonString) should equal (List())
+  }
+
   test("keywordsJsonToImageTags converts a keyword json string to a ImageTag List") {
     val jsonString = """{
       "keyword": [{
