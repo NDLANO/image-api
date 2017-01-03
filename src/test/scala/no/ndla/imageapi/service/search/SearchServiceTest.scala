@@ -52,6 +52,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
       .put("index.number_of_shards", "1")
       .put("index.number_of_replicas", "0")
       .put("http.port", esHttpPort)
+      .put("cluster.name", getClass.getName)
       .build()
 
     esNode = new NodeBuilder().settings(settings).node()
