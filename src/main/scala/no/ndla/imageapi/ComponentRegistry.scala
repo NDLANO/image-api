@@ -34,7 +34,6 @@ object ComponentRegistry
   with InternController
   with ImageController
   with ConverterService
-  with MappingApiClient
   with TagsService
   with HealthController
 {
@@ -65,7 +64,6 @@ object ComponentRegistry
   lazy val healthController = new HealthController
   lazy val resourcesApp = new ResourcesApp
   lazy val converterService = new ConverterService
-  lazy val mappingApiClient = new MappingApiClient
   lazy val tagsService = new TagsService
   lazy val jestClient = JestClientFactory.getClient()
   lazy val searchConverterService = new SearchConverterService
