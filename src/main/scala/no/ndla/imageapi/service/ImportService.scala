@@ -13,11 +13,13 @@ import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexService
+import no.ndla.mapping.License.getLicense
+import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
 
 import scala.util.Try
 
 trait ImportService {
-  this: ImageStorageService with ImageRepository with MigrationApiClient with IndexService with ConverterService with MappingApiClient with TagsService =>
+  this: ImageStorageService with ImageRepository with MigrationApiClient with IndexService with ConverterService with TagsService =>
   val importService: ImportService
 
   class ImportService extends LazyLogging {
@@ -29,20 +31,23 @@ trait ImportService {
       imported
     }
 
+    private def languageCodeSupported(languageCode: String) =
+      get6391CodeFor6392CodeMappings.exists(_._1 == language)
+
     def upload(imageMeta: MainImageImport): domain.ImageMetaInformation = {
       val start = System.currentTimeMillis
 
       val tags = tagsService.forImage(imageMeta.mainImage.nid)
       val authors = imageMeta.authors.map(ia => domain.Author(ia.typeAuthor, ia.name))
 
-      val license = imageMeta.license.flatMap(l => mappingApiClient.getLicenseDefinition(l)) match {
-        case Some(l) => l
+      val license = imageMeta.license.flatMap(l => getLicense(l)) match {
+        case Some(l) => domain.License(l.license, l.description, l.url)
         case None => domain.License(imageMeta.license.get, imageMeta.license.get, None)
       }
 
       val copyright = domain.Copyright(license, imageMeta.origin.getOrElse(""), authors)
 
-      val imageLang = mappingApiClient.languageCodeSupported(imageMeta.mainImage.language) match {
+      val imageLang = languageCodeSupported(imageMeta.mainImage.language) match {
         case true => Some(imageMeta.mainImage.language)
         case false => None
       }
@@ -53,7 +58,7 @@ trait ImportService {
 
       val (titles, alttexts, captions) = imageMeta.translations.foldLeft((Seq(mainTitle), Seq(mainAlttext), Seq(mainCaption)))((result, translation) => {
         val (titles, alttexts, captions) = result
-        val transLang = if (mappingApiClient.languageCodeSupported(translation.language)) Some(translation.language) else None
+        val transLang = if (languageCodeSupported(translation.language)) Some(translation.language) else None
 
         (titles :+ domain.ImageTitle(translation.title, transLang),
           alttexts :+ translation.alttext.map(x => domain.ImageAltText(x, transLang)),
