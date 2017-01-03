@@ -23,8 +23,9 @@ object ImageApiProperties extends LazyLogging {
   val ContactEmail = "christergundersen@ndla.no"
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
+  val ApiPath = "/image-api"
   val HealthControllerPath = "/health"
-  val ImageControllerPath = "/v1/images"
+  val ImageControllerPath = s"${ApiPath}/v1/images"
 
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
