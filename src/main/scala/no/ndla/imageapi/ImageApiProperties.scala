@@ -60,7 +60,7 @@ object ImageApiProperties extends LazyLogging {
   val Domain = Map(
     "local" -> "http://localhost",
     "prod" -> "http://api.ndla.no"
-  ).getOrElse(Environment, s"http://api.$Environment.ndla.no")
+  ).getOrElse(Environment, s"http://$Environment.api.ndla.no")
   val ImageUrlBase = Domain + ImageControllerPath + "/"
 
   lazy val secrets = readSecrets(SecretsFile) match {
