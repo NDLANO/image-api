@@ -8,43 +8,32 @@
 
 package no.ndla.imageapi
 
+import no.ndla.network.secrets.PropertyKeys
 import org.scalatest._
 import org.scalatest.mock.MockitoSugar
 
 object IntegrationTest extends Tag("no.ndla.IntegrationTest")
 
 abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfterAll with PrivateMethodTester {
-  val DEFAULT_PAGE_SIZE = 12
-  val MAX_PAGE_SIZE = 548
 
-  ImageApiProperties.setProperties(Map(
-    "STORAGE_NAME" -> Some("TestBucket"),
-    "STORAGE_ACCESS_KEY" -> Some("AccessKey"),
-    "STORAGE_SECRET_KEY" -> Some("SecretKey"),
-    "CONTACT_EMAIL" -> Some("someone@somewhere"),
-    "META_USER_NAME" -> Some("username"),
-    "META_PASSWORD" -> Some("secrets"),
-    "META_RESOURCE" -> Some("resource"),
-    "META_SERVER" -> scala.util.Properties.envOrNone("DOCKER_ADDR"),
-    "META_PORT" -> Some("5432"),
-    "META_SCHEMA" -> Some("someschema"),
-    "META_INITIAL_CONNECTIONS" -> Some("3"),
-    "META_MAX_CONNECTIONS" -> Some("20"),
-    "SEARCH_ENGINE_ENV_TCP_PORT" -> Some("123"),
-    "SEARCH_ENGINE_ENV_CLUSTER_NAME" -> Some("search-engine"),
-    "SEARCH_DEFAULT_PAGE_SIZE" -> Some(DEFAULT_PAGE_SIZE.toString()),
-    "SEARCH_MAX_PAGE_SIZE" -> Some(MAX_PAGE_SIZE.toString()),
-    "SEARCH_INDEX" -> Some("images"),
-    "SEARCH_DOCUMENT" -> Some("image"),
-    "INDEX_BULK_SIZE" -> Some("1000"),
-    "HOST_ADDR" -> Some("host-addr"),
-    "DOMAIN" -> Some("http://somedomain"),
-    "NDLACOMPONENT" -> Some("image-api"),
-    "MIGRATION_HOST" -> Some("image-api"),
-    "MIGRATION_USER" -> Some("user"),
-    "MIGRATION_PASSWORD" -> Some("password"),
-    "SEARCH_SERVER" -> Some("search-server"),
-    "RUN_WITH_SIGNED_SEARCH_REQUESTS" -> Some("false"),
-    "SEARCH_REGION" -> Some("eu-central-1")
-  ))
+  setEnv("NDLA_ENVIRONMENT", "local")
+  setEnv(PropertyKeys.MetaUserNameKey, "username")
+  setEnv(PropertyKeys.MetaPasswordKey, "secret")
+  setEnv(PropertyKeys.MetaResourceKey, "resource")
+  setEnv(PropertyKeys.MetaServerKey, "server")
+  setEnv(PropertyKeys.MetaPortKey, "1234")
+  setEnv(PropertyKeys.MetaSchemaKey, "someschema")
+  setEnv("SEARCH_SERVER", "search-server")
+  setEnv("SEARCH_REGION", "some-region")
+  setEnv("RUN_WITH_SIGNED_SEARCH_REQUESTS", "false")
+  setEnv("MIGRATION_HOST", "some-host")
+  setEnv("MIGRATION_USER", "some-user")
+  setEnv("MIGRATION_PASSWORD", "some-password")
+
+  def setEnv(key: String, value: String) = {
+    val field = System.getenv().getClass.getDeclaredField("m")
+    field.setAccessible(true)
+    val map = field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
+    map.put(key, value)
+  }
 }

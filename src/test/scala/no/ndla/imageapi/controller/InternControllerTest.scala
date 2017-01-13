@@ -9,7 +9,7 @@
 package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.model.{api, domain}
-import no.ndla.imageapi.{TestEnvironment, UnitSuite}
+import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import org.json4s.jackson.Serialization._
 import org.mockito.Matchers.{eq => eqTo}
 import org.mockito.Mockito._
@@ -23,7 +23,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   lazy val controller = new InternController
   addServlet(controller, "/*")
 
-  val DefaultApiImageMetaInformation = api.ImageMetaInformation("1", "http://somedomain/images/1", List(), List(), "http://somedomain/images/full/test.jpg", 0, "", api.Copyright(api.License("", "", None), "", List()), List(), List())
+  val DefaultApiImageMetaInformation = api.ImageMetaInformation("1", s"${ImageApiProperties.ImageUrlBase}1", List(), List(), s"${ImageApiProperties.ImageUrlBase}full/test.jpg", 0, "", api.Copyright(api.License("", "", None), "", List()), List(), List())
   val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(Some(1), List(), List(), "full/test.jpg", 0, "", domain.Copyright(domain.License("", "", None), "", List()), List(), List())
 
   test("That GET /extern/abc returns 404") {

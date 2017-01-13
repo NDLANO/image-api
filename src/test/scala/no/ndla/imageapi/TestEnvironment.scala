@@ -39,8 +39,6 @@ trait TestEnvironment
     with HealthController
     with MockitoSugar
 {
-  val storageName = ImageApiProperties.StorageName
-
   val amazonClient = mock[AmazonS3Client]
 
   val dataSource = mock[javax.sql.DataSource]

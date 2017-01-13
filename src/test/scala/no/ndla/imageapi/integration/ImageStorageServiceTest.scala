@@ -12,13 +12,13 @@ import java.io.ByteArrayInputStream
 
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, PutObjectRequest, S3Object}
-import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
+import no.ndla.imageapi.{ImageApiProperties, TestData, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 
 class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
 
-  val ImageStorageName = "TestBucket"
+  val ImageStorageName = ImageApiProperties.StorageName
   val ImageWithNoThumb = TestData.nonexistingWithoutThumb
   val Content = "content"
   val ContentType = "image/jpeg"
@@ -34,7 +34,7 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
 
   test("That AmazonImageStorage.exists returns false when bucket does not exist") {
     when(amazonClient.doesBucketExist(ImageStorageName)).thenReturn(false)
-    assert(imageStorage.exists() == false)
+    assert(!imageStorage.exists())
   }
 
   test("That AmazonImageStorage.contains returns true when image exists") {
@@ -47,7 +47,7 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
     val ase = new AmazonServiceException("Exception")
     ase.setErrorCode("NoSuchKey")
     when(amazonClient.getObject(any[GetObjectRequest])).thenThrow(ase)
-    assert(imageStorage.contains("nonExistingKey") == false)
+    assert(!imageStorage.contains("nonExistingKey"))
   }
 
   test("That AmazonImageStorage.get returns a tuple with contenttype and data when the key exists") {
