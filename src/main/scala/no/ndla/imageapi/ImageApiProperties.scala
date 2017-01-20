@@ -9,6 +9,7 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.network.Domains
 import no.ndla.network.secrets.PropertyKeys
 import no.ndla.network.secrets.Secrets.readSecrets
 
@@ -57,10 +58,7 @@ object ImageApiProperties extends LazyLogging {
   val MigrationUser = prop("MIGRATION_USER")
   val MigrationPassword = prop("MIGRATION_PASSWORD")
 
-  val Domain = Map(
-    "local" -> "http://localhost",
-    "prod" -> "http://api.ndla.no"
-  ).getOrElse(Environment, s"http://$Environment.api.ndla.no")
+  val Domain = Domains.get(Environment)
   val ImageUrlBase = Domain + ImageControllerPath + "/"
 
   lazy val secrets = readSecrets(SecretsFile) match {
