@@ -12,14 +12,14 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.IndexService
-import no.ndla.mapping.License.getLicense
+import no.ndla.imageapi.service.search.IndexBuilderService
 import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
+import no.ndla.mapping.License.getLicense
 
 import scala.util.Try
 
 trait ImportService {
-  this: ImageStorageService with ImageRepository with MigrationApiClient with IndexService with ConverterService with TagsService =>
+  this: ImageStorageService with ImageRepository with MigrationApiClient with IndexBuilderService with ConverterService with TagsService =>
   val importService: ImportService
 
   class ImportService extends LazyLogging {
@@ -27,7 +27,7 @@ trait ImportService {
 
     def importImage(imageId: String): Try[domain.ImageMetaInformation] = {
       val imported = migrationApiClient.getMetaDataForImage(imageId).map(upload)
-      imported.foreach(indexService.indexDocument)
+      imported.foreach(indexBuilderService.indexDocument)
       imported
     }
 

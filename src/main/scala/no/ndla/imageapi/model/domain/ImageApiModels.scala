@@ -37,3 +37,5 @@ object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
 
   val JSonSerializer = FieldSerializer[ImageMetaInformation](ignore("id"))
 }
+
+case class ReindexResult(totalIndexed: Int, millisUsed: Long)

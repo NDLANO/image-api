@@ -13,9 +13,9 @@ import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
 import io.searchbox.params.Parameters
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClient
-import no.ndla.imageapi.model.Language
 import no.ndla.imageapi.model.api.{ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
+import no.ndla.imageapi.model.{Language, NdlaSearchException}
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query.{BoolQueryBuilder, MatchQueryBuilder, QueryBuilder, QueryBuilders}
@@ -25,13 +25,14 @@ import org.json4s.native.Serialization.read
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 trait SearchService {
   this: ElasticClient with IndexBuilderService with SearchConverterService =>
   val searchService: SearchService
 
   class SearchService extends LazyLogging {
-    val noCopyright = QueryBuilders.boolQuery().mustNot(QueryBuilders.termQuery("license","copyrighted"))
+    private val noCopyright = QueryBuilders.boolQuery().mustNot(QueryBuilders.termQuery("license","copyrighted"))
 
     def getHits(response: JestSearchResult): Seq[ImageMetaSummary] = {
       var resultList = Seq[ImageMetaSummary]()
@@ -99,17 +100,18 @@ trait SearchService {
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val request = new Search.Builder(search.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
-      val response = jestClient.execute(request)
-      response.isSucceeded match {
-        case true => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
-        case false => errorHandler(response)
+
+      jestClient.execute(request) match {
+        case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+        case Failure(f) => errorHandler(Failure(f))
       }
     }
 
     def countDocuments(): Int = {
-      jestClient.execute(
+      val ret = jestClient.execute(
         new Count.Builder().addIndex(ImageApiProperties.SearchIndex).build()
-      ).getCount.toInt
+      ).map(result => result.getCount.toInt)
+      ret.getOrElse(0)
     }
 
     private def getStartAtAndNumResults(page: Option[Int], pageSize: Option[Int]): (Int, Int) = {
@@ -127,22 +129,36 @@ trait SearchService {
       (startAt, numResults)
     }
 
-    private def errorHandler(response: JestSearchResult) = {
-      response.getResponseCode match {
-        case notFound: Int if notFound == 404 => {
-          logger.error(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex.")
-          scheduleIndexDocuments()
-          throw new IndexNotFoundException(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex")
+    private def errorHandler[T](failure: Failure[T]) = {
+      failure match {
+        case Failure(e: NdlaSearchException) => {
+          e.getResponse.getResponseCode match {
+            case notFound: Int if notFound == 404 => {
+              logger.error(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex.")
+              scheduleIndexDocuments()
+              throw new IndexNotFoundException(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex")
+            }
+            case _ => {
+              logger.error(e.getResponse.getErrorMessage)
+              throw new ElasticsearchException(s"Unable to execute search in ${ImageApiProperties.SearchIndex}", e.getResponse.getErrorMessage)
+            }
+          }
+
         }
-        case _ => throw new ElasticsearchException(s"Unable to execute search in ${ImageApiProperties.SearchIndex}. ErrorMessage: {}", response.getErrorMessage)
+        case Failure(t: Throwable) => throw t
       }
     }
 
     private def scheduleIndexDocuments() = {
       val f = Future {
-        indexBuilderService.buildIndex()
+        indexBuilderService.indexDocuments
       }
-      f onFailure { case t => logger.error("Unable to create index: " + t.getMessage) }
+
+      f onFailure { case t => logger.warn("Unable to create index: " + t.getMessage, t) }
+      f onSuccess {
+        case Success(reindexResult) => logger.info(s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms.")
+        case Failure(ex) => logger.warn(ex.getMessage, ex)
+      }
     }
   }
 }
