@@ -7,6 +7,9 @@
 
 package no.ndla.imageapi.service.search
 
+import java.text.SimpleDateFormat
+import java.util.Calendar
+
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, StringType}
 import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
@@ -18,8 +21,8 @@ import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists}
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClient
 import no.ndla.imageapi.model.Language._
-import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.model.search.SearchableLanguageFormats
+import no.ndla.imageapi.model.{NdlaSearchException, domain}
 import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization.write
 
@@ -32,21 +35,14 @@ trait IndexService {
   class IndexService extends LazyLogging {
     implicit val formats = SearchableLanguageFormats.JSonFormats
 
-    def indexDocument(imageMetaInformation: domain.ImageMetaInformation) = {
-      Try {
-        val source = write(searchConverterService.asSearchableImage(imageMetaInformation))
-        val indexRequest = new Index.Builder(source).index(ImageApiProperties.SearchIndex).`type`(ImageApiProperties.SearchDocument).id(imageMetaInformation.id.get.toString).build
-        val result = jestClient.execute(indexRequest)
-        if (!result.isSucceeded) {
-          logger.warn(s"Received error = ${result.getErrorMessage}")
-        }
-      } match {
-        case Success(_) =>
-        case Failure(f) => logger.warn(s"Could not add image with id ${imageMetaInformation.id} to search index. Try recreating the index. The error was ${f.getMessage}")
-      }
+    def indexDocument(imageMetaInformation: domain.ImageMetaInformation): Try[domain.ImageMetaInformation] = {
+      val source = write(searchConverterService.asSearchableImage(imageMetaInformation))
+      val indexRequest = new Index.Builder(source).index(ImageApiProperties.SearchIndex).`type`(ImageApiProperties.SearchDocument).id(imageMetaInformation.id.get.toString).build
+
+      jestClient.execute(indexRequest).map(_ => imageMetaInformation)
     }
 
-    def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Int = {
+    def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Try[Int] = {
       val bulkBuilder = new Bulk.Builder()
       imageMetaList.foreach(imageMeta => {
         val source = write(searchConverterService.asSearchableImage(imageMeta))
@@ -54,31 +50,31 @@ trait IndexService {
       })
 
       val response = jestClient.execute(bulkBuilder.build())
-      if (!response.isSucceeded) {
-        throw new ElasticsearchException(s"Unable to index documents to ${ImageApiProperties.SearchIndex}", response.getErrorMessage)
-      }
-      imageMetaList.size
+      response.map(_ => {
+        logger.info(s"Indexed ${imageMetaList.size} documents")
+        imageMetaList.size
+      })
     }
 
-    def createIndex(indexName: String) = {
-      if (!indexExists(indexName)) {
+    def createIndex(): Try[String] = {
+      val indexName = ImageApiProperties.SearchIndex + "_" + getTimestamp
+      if (indexExists(indexName).getOrElse(false)) {
+        Success(indexName)
+      } else {
         val createIndexResponse = jestClient.execute(new CreateIndex.Builder(indexName).build())
-        createIndexResponse.isSucceeded match {
-          case false => throw new ElasticsearchException(s"Unable to create index $indexName. ErrorMessage: {}", createIndexResponse.getErrorMessage)
-          case true => createMapping(indexName)
-        }
+        createIndexResponse.map(_ => createMapping(indexName)).map(_ => indexName)
       }
     }
 
-    def createMapping(indexName: String) = {
+    def createMapping(indexName: String): Try[String] = {
       val mappingResponse = jestClient.execute(new PutMapping.Builder(indexName, ImageApiProperties.SearchDocument, buildMapping()).build())
-      if (!mappingResponse.isSucceeded) {
-        throw new ElasticsearchException(s"Unable to create mapping for index $indexName", mappingResponse.getErrorMessage)
-      }
+      mappingResponse.map(_ => indexName)
     }
 
-    def updateAliasTarget(newIndexName: String, oldIndexName: Option[String]) = {
-      if (indexExists(newIndexName)) {
+    def updateAliasTarget(oldIndexName: Option[String], newIndexName: String): Try[Any] = {
+      if (!indexExists(newIndexName).getOrElse(false)) {
+        Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
+      } else {
         val addAliasDefinition = new AddAliasMapping.Builder(newIndexName, ImageApiProperties.SearchIndex).build()
         val modifyAliasRequest = oldIndexName match {
           case None => new ModifyAliases.Builder(addAliasDefinition).build()
@@ -89,43 +85,44 @@ trait IndexService {
           }
         }
 
-        val response = jestClient.execute(modifyAliasRequest)
-        if (!response.isSucceeded) {
-          throw new ElasticsearchException(s"Unable to modify alias ${ImageApiProperties.SearchIndex} -> $oldIndexName to ${ImageApiProperties.SearchIndex} -> $newIndexName. ErrorMessage: {}", response.getErrorMessage)
-        }
-      } else {
-        throw new IllegalArgumentException(s"No such index: $newIndexName")
+        jestClient.execute(modifyAliasRequest)
       }
     }
 
-    def deleteIndex(indexName: String) = {
-      if (indexExists(indexName)) {
-        val response = jestClient.execute(new DeleteIndex.Builder(indexName).build())
-        if (!response.isSucceeded) {
-          throw new ElasticsearchException(s"Unable to delete index $indexName", response.getErrorMessage)
-        }
-      } else {
-        throw new IllegalArgumentException(s"No such index: $indexName")
-      }
-    }
-
-    def aliasTarget: Option[String] = {
-      val getAliasRequest = new GetAliases.Builder().addIndex(s"${ImageApiProperties.SearchIndex}").build()
-      val result = jestClient.execute(getAliasRequest)
-      result.isSucceeded match {
-        case false => None
-        case true => {
-          val aliasIterator = result.getJsonObject.entrySet().iterator()
-          aliasIterator.hasNext match {
-            case true => Some(aliasIterator.next().getKey)
-            case false => None
+    def deleteIndex(optIndexName: Option[String]): Try[_] = {
+      optIndexName match {
+        case None => Success()
+        case Some(indexName) => {
+          if (!indexExists(indexName).getOrElse(false)) {
+            Failure(new IllegalArgumentException(s"No such index: $indexName"))
+          } else {
+            jestClient.execute(new DeleteIndex.Builder(indexName).build())
           }
         }
       }
     }
 
-    def indexExists(indexName: String): Boolean = {
-      jestClient.execute(new IndicesExists.Builder(indexName).build()).isSucceeded
+    def aliasTarget: Try[Option[String]] = {
+      val getAliasRequest = new GetAliases.Builder().addIndex(s"${ImageApiProperties.SearchIndex}").build()
+      jestClient.execute(getAliasRequest) match {
+        case Success(result) => {
+          val aliasIterator = result.getJsonObject.entrySet().iterator()
+          aliasIterator.hasNext match {
+            case true => Success(Some(aliasIterator.next().getKey))
+            case false => Success(None)
+          }
+        }
+        case Failure(_: NdlaSearchException) => Success(None)
+        case Failure(t: Throwable) => Failure(t)
+      }
+    }
+
+    def indexExists(indexName: String): Try[Boolean] = {
+      jestClient.execute(new IndicesExists.Builder(indexName).build()) match {
+        case Success(_) => Success(true)
+        case Failure(_: ElasticsearchException) => Success(false)
+        case Failure(t: Throwable) => Failure(t)
+      }
     }
 
     def buildMapping(): String = {
@@ -149,6 +146,10 @@ trait IndexService {
       }
 
       languageSupportedField
+    }
+
+    private def getTimestamp: String = {
+      new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
     }
   }
 

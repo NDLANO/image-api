@@ -11,6 +11,7 @@ package no.ndla.imageapi.model
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import io.searchbox.client.JestResult
 import no.ndla.imageapi.ImageApiProperties
 
 
@@ -27,3 +28,6 @@ object Error {
 case class Error(code:String, description:String, occuredAt:String = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()))
 class ImageNotFoundException(message: String) extends RuntimeException(message)
 class ValidationException(message: String) extends RuntimeException(message)
+class NdlaSearchException(jestResponse: JestResult) extends RuntimeException(jestResponse.getErrorMessage) {
+  def getResponse: JestResult = jestResponse
+}

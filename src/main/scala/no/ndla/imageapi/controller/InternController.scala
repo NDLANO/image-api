@@ -8,23 +8,33 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.ComponentRegistry
 import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.repository.ImageRepository
+import no.ndla.imageapi.service.search.IndexBuilderService
 import no.ndla.imageapi.service.{ConverterService, ImportService}
-import org.scalatra.Ok
+import org.scalatra.{InternalServerError, Ok}
 
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImageRepository with ImportService with ConverterService =>
+  this: ImageRepository with ImportService with ConverterService with IndexBuilderService =>
   val internController: InternController
 
   class InternController extends NdlaController {
 
     post("/index") {
-      Ok(ComponentRegistry.indexBuilderService.buildIndex())
+      indexBuilderService.indexDocuments match {
+        case Success(reindexResult) => {
+          val result = s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms."
+          logger.info(result)
+          Ok(result)
+        }
+        case Failure(f) => {
+          logger.warn(f.getMessage, f)
+          InternalServerError(f.getMessage)
+        }
+      }
     }
 
     get("/extern/:image_id") {

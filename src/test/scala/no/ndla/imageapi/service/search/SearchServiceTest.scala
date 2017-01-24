@@ -58,10 +58,9 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     esNode = new NodeBuilder().settings(settings).node()
     esNode.start()
 
-    val indexName = ImageApiProperties.SearchIndex + "_" + new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
 
-    indexService.createIndex(indexName)
-    indexService.updateAliasTarget(indexName, None)
+    val indexName = indexService.createIndex().get
+    indexService.updateAliasTarget(None, indexName)
     indexService.indexDocument(image1)
     indexService.indexDocument(image2)
     indexService.indexDocument(image3)

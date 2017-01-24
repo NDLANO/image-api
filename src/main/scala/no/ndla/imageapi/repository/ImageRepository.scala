@@ -64,33 +64,27 @@ trait ImageRepository {
       }
     }
 
-    def numElements: Int = {
+    def minMaxId: (Long, Long) = {
       DB readOnly { implicit session =>
-        sql"select count(*) from imagemetadata".map(rs => {
-          rs.int("count")
-        }).list.first().apply() match {
-          case Some(count) => count
-          case None => 0
+        sql"select coalesce(MIN(id),0) as mi, coalesce(MAX(id),0) as ma from imagemetadata".map(rs => {
+          (rs.long("mi"), rs.long("ma"))
+        }).single().apply() match {
+          case Some(minmax) => minmax
+          case None => (0L, 0L)
         }
       }
     }
 
-    def applyToAll(func: List[ImageMetaInformation] => Unit) = {
-      val im = ImageMetaInformation.syntax("im")
-      val numberOfBulks = math.ceil(numElements.toFloat / ImageApiProperties.IndexBulkSize).toInt
-
-      DB readOnly { implicit session =>
-        for(i <- 0 until numberOfBulks) {
-          func(
-            sql"""select ${im.result.*} from ${ImageMetaInformation.as(im)} limit ${ImageApiProperties.IndexBulkSize} offset ${i * ImageApiProperties.IndexBulkSize}""".map(ImageMetaInformation(im)).list.apply()
-          )
-        }
-      }
-    }
+    def imagesWithIdBetween(min: Long, max: Long): List[ImageMetaInformation] = imageMetaInformationsWhere(sqls"im.id between $min and $max")
 
     private def imageMetaInformationWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): Option[ImageMetaInformation] = {
       val im = ImageMetaInformation.syntax("im")
       sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause".map(ImageMetaInformation(im)).single().apply()
+    }
+
+    private def imageMetaInformationsWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): List[ImageMetaInformation] = {
+      val im = ImageMetaInformation.syntax("im")
+      sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause".map(ImageMetaInformation(im)).list.apply()
     }
   }
 }
