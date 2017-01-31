@@ -8,10 +8,15 @@
 
 package no.ndla.imageapi.service
 
+import java.net.URL
+
 import no.ndla.imageapi.model.domain.ImageTag
 import no.ndla.imageapi.ImageApiProperties.TopicAPIUrl
 import no.ndla.mapping.ISO639.get6391CodeFor6392Code
+import org.json4s.native.Serialization.read
+
 import scala.io.Source
+import scala.util.Try
 import scala.util.matching.Regex
 
 trait TagsService {
@@ -21,23 +26,18 @@ trait TagsService {
 
     val pattern = new Regex("http:\\/\\/psi\\..*\\/#(.+)")
 
-    def forImage(nid: String): List[ImageTag] = {
-      val jsonString = Source.fromURL(TopicAPIUrl + nid).mkString
-      keywordsJsonToImageTags(jsonString)
-    }
-
-    def keywordsJsonToImageTags(keywordsJson: String): List[ImageTag] = {
-      import org.json4s.native.Serialization.read
+    def forImage(nid: String): Try[List[ImageTag]] = {
       implicit val formats = org.json4s.DefaultFormats
-
-      read[Keywords](keywordsJson)
-        .keyword
-        .flatMap(_.names)
-        .flatMap(_.data)
-        .flatMap(_.toIterable)
-        .map(t => (getISO639(t._1), t._2.trim.toLowerCase))
-        .groupBy(_._1).map(entry => (entry._1, entry._2.map(_._2)))
-        .map(t => ImageTag(t._2, t._1)).toList
+      Try(new URL(TopicAPIUrl + nid).openStream).map(stream => {
+        read[Keywords](Source.fromInputStream(stream).mkString)
+          .keyword
+          .flatMap(_.names)
+          .flatMap(_.data)
+          .flatMap(_.toIterable)
+          .map(t => (getISO639(t._1), t._2.trim.toLowerCase))
+          .groupBy(_._1).map(entry => (entry._1, entry._2.map(_._2)))
+          .map(t => ImageTag(t._2, t._1)).toList
+      })
     }
 
     def getISO639(languageUrl: String): Option[String] = {
