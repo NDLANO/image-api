@@ -28,9 +28,7 @@ trait TagsService {
     val pattern = new Regex("http:\\/\\/psi\\..*\\/#(.+)")
 
     def forImage(nid: String): Try[List[ImageTag]] = {
-      Try(new URL(TopicAPIUrl + nid).openStream).map(stream => {
-        streamToImageTags(stream)
-      })
+      Try(new URL(TopicAPIUrl + nid).openStream).map(streamToImageTags)
     }
 
     def streamToImageTags(stream: InputStream) = {
