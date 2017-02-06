@@ -16,7 +16,7 @@ import no.ndla.imageapi.service.search.IndexBuilderService
 import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
 import no.ndla.mapping.License.getLicense
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait ImportService {
   this: ImageStorageService with ImageRepository with MigrationApiClient with IndexBuilderService with ConverterService with TagsService =>
@@ -37,7 +37,13 @@ trait ImportService {
     def upload(imageMeta: MainImageImport): domain.ImageMetaInformation = {
       val start = System.currentTimeMillis
 
-      val tags = tagsService.forImage(imageMeta.mainImage.nid)
+      val tags = tagsService.forImage(imageMeta.mainImage.nid) match {
+        case Failure(e) =>
+          logger.warn(s"Could not import tags for node ${imageMeta.mainImage.nid}", e)
+          List()
+        case Success(tags) => tags
+      }
+
       val authors = imageMeta.authors.map(ia => domain.Author(ia.typeAuthor, ia.name))
 
       val license = imageMeta.license.flatMap(l => getLicense(l)) match {
