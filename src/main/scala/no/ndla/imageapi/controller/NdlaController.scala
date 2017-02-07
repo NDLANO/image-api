@@ -70,10 +70,27 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   def intOpts(paramNames: String*)(implicit request: HttpServletRequest): Seq[Option[Int]] = {
     paramNames.map(paramName => {
       params.get(paramName) match {
-        case Some(value) if isNumber(value) => Some(value.toInt)
+        case Some(value) =>
+          if (!isNumber(value)) {
+            throw new ValidationException(s"Invalid value for $paramName. Only digits are allowed.")
+          }
+          Some(value.toInt)
         case _ => None
       }
     })
+  }
+
+  def paramAsListOfInt(paramName: String)(implicit request: HttpServletRequest): List[Int] = {
+    params.get(paramName) match {
+      case None => List()
+      case Some(param) => {
+        val paramAsListOfStrings = param.split(",").toList.map(_.trim)
+        if (!paramAsListOfStrings.forall(isNumber)) {
+          throw new ValidationException(s"Invalid value for $paramName. Only (list of) digits are allowed.")
+        }
+        paramAsListOfStrings.map(_.toInt)
+      }
+    }
   }
 
 }

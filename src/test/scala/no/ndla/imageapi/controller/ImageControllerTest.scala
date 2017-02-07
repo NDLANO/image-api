@@ -43,7 +43,7 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
   }
 
   test("That GET /full/image.jpg with cropping returns a cropped image") {
-    get(s"/full/$imageName?x1=0&y1=0&x2=20&y2=20") {
+    get(s"/full/$imageName?cropStart=0,0&cropEnd=20,20") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
@@ -53,7 +53,7 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
   }
 
   test("That GET /full/image.jpg with cropping and resizing returns a cropped and resized image") {
-    get(s"/full/$imageName?x1=0&y1=0&x2=100&y2=20&width=50") {
+    get(s"/full/$imageName?cropStart=0,0&cropEnd=100,20&width=50") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
