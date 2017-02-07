@@ -22,6 +22,7 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
   val ImageWithNoThumb = TestData.nonexistingWithoutThumb
   val Content = "content"
   val ContentType = "image/jpeg"
+  override val imageStorage = new AmazonImageStorageService
 
   override def beforeEach() = {
     reset(amazonClient)
