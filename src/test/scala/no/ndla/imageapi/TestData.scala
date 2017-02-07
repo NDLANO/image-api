@@ -8,6 +8,8 @@
 
 package no.ndla.imageapi
 
+import java.io.InputStream
+
 import no.ndla.imageapi.model.domain._
 
 /**
@@ -54,4 +56,12 @@ object TestData {
     List(ImageTag(List("bison"), Option("nb"))), List(ImageCaption("Bison på sletten", Some("nb"))))
 
   val testdata = List(elg, bjorn, jerv, mink, rein)
+
+  case class DiskImage(filename: String) extends ImageStream {
+    override def contentType: String = s"image/$format"
+    override def stream: InputStream = getClass.getResourceAsStream(s"/$filename")
+    override def fileName: String = filename
+  }
+
+  val NdlaLogoImage = DiskImage("ndla_logo.jpg")
 }

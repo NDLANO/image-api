@@ -1,10 +1,9 @@
 package no.ndla.imageapi.controller
 
-import java.awt.image.BufferedImage
-import java.io.{BufferedInputStream, ByteArrayInputStream, InputStream}
+import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 
-import no.ndla.imageapi.model.domain.ImageStream
+import no.ndla.imageapi.TestData.NdlaLogoImage
 import no.ndla.imageapi.{ImageSwagger, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -20,14 +19,8 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
   lazy val controller = new ImageController
   addServlet(controller, "/*")
 
-  case class DiskImage(filename: String) extends ImageStream {
-    override def contentType: String = s"image/$format"
-    override def stream: InputStream = getClass.getResourceAsStream(s"/$imageName")
-    override def fileName: String = filename
-  }
-
   override def beforeEach = {
-    when(imageStorage.get(any[String])).thenReturn(Success(DiskImage(imageName)))
+    when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoImage))
   }
 
   test("That GET /full/image.jpg returns 200 if image was found") {

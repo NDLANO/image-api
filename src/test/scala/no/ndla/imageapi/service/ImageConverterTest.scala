@@ -1,7 +1,9 @@
 package no.ndla.imageapi.service
 
 import java.awt.image.BufferedImage
+import javax.imageio.ImageIO
 
+import no.ndla.imageapi.TestData.NdlaLogoImage
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 import org.mockito.Mockito._
@@ -50,4 +52,29 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
     result.format should equal (origImage.format)
   }
 
+  test("crop crops an image according to given settings") {
+    val croppedImage = service.crop(NdlaLogoImage, CropOptions(0, 0, 100, 50))
+    croppedImage.isSuccess should equal(true)
+
+    val image = ImageIO.read(croppedImage.get.stream)
+    image.getWidth should equal(100)
+    image.getHeight should equal(50)
+  }
+
+  test("resize resizes an image according to image orientationif only one size is specified") {
+    val croppedImage = service.resize(NdlaLogoImage, 100)
+    croppedImage.isSuccess should equal(true)
+
+    val image = ImageIO.read(croppedImage.get.stream)
+    image.getWidth should equal(100)
+  }
+
+  test("resize resizes an image according to image orientationif both height and width is specified") {
+    val croppedImage = service.resize(NdlaLogoImage, 100, 60)
+    croppedImage.isSuccess should equal(true)
+
+    val image = ImageIO.read(croppedImage.get.stream)
+    image.getWidth should equal(100)
+    image.getHeight should not equal 60
+  }
 }
