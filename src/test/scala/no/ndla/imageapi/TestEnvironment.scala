@@ -37,6 +37,7 @@ trait TestEnvironment
     with ImageController
     with TagsService
     with HealthController
+    with ImageConverter
     with MockitoSugar
 {
   val amazonClient = mock[AmazonS3Client]
@@ -58,4 +59,5 @@ trait TestEnvironment
   val tagsService = mock[TagsService]
   val jestClient = mock[NdlaJestClient]
   val searchConverterService = mock[SearchConverterService]
+  val imageConverter = mock[ImageConverter]
 }

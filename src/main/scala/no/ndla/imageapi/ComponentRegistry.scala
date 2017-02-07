@@ -36,6 +36,7 @@ object ComponentRegistry
   with ConverterService
   with TagsService
   with HealthController
+  with ImageConverter
 {
   implicit val swagger = new ImageSwagger
 
@@ -67,4 +68,6 @@ object ComponentRegistry
   lazy val tagsService = new TagsService
   lazy val jestClient = JestClientFactory.getClient()
   lazy val searchConverterService = new SearchConverterService
+
+  lazy val imageConverter = new ImageConverter
 }

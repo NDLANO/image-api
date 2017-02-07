@@ -8,18 +8,22 @@
 
 package no.ndla.imageapi.controller
 
+import javax.servlet.http.HttpServletRequest
+
+import com.sun.scenario.effect.Crop
 import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
+import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.ConverterService
+import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.SearchService
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait ImageController {
-  this: ImageRepository with SearchService with ConverterService =>
+  this: ImageRepository with SearchService with ConverterService with ImageStorageService with ImageConverter =>
   val imageController: ImageController
 
   class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
@@ -85,5 +89,30 @@ trait ImageController {
         case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
       }
     }
+
+    get("/full/:filename") {
+      val filepath = s"full/${params("filename")}"
+      imageStorage.get(filepath).flatMap(crop).flatMap(resize) match {
+        case Success(img) => img
+        case Failure(e) => errorHandler(e)
+      }
+    }
+
+    def crop(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
+      intOpts("x1", "y1", "x2", "y2") match {
+        case Seq(Some(x1), Some(y1), Some(x2), Some(y2)) => imageConverter.crop(image, CropOptions(x1, y1, x2, y2))
+        case _ => Success(image)
+      }
+    }
+
+    def resize(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
+     intOpts("width", "height") match {
+        case Seq(Some(width), _) => imageConverter.resize(image, width)
+        case Seq(_, Some(height)) => imageConverter.resize(image, height)
+        case Seq(Some(width), Some(height)) => imageConverter.resize(image, width, height)
+        case _ => Success(image)
+      }
+    }
+
   }
 }

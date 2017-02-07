@@ -14,10 +14,11 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.model.{Error, ValidationException}
 import no.ndla.network.{ApplicationUrl, CorrelationID}
 import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKey}
+import no.ndla.imageapi.model.domain.{ImageStream, NdlaImage}
 import org.apache.logging.log4j.ThreadContext
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.ScalatraServlet
+import org.scalatra.{RenderPipeline, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
@@ -46,11 +47,33 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     }
   }
 
+  private val streamRenderer: RenderPipeline = {
+    case f: ImageStream =>
+      contentType = f.contentType
+      org.scalatra.util.io.copy(f.stream, response.getOutputStream)
+  }
+
+  override def renderPipeline = streamRenderer orElse super.renderPipeline
+
+  def isNumber(value: String): Boolean = {
+    value.forall(_.isDigit)
+  }
+
   def long(paramName: String)(implicit request: HttpServletRequest): Long = {
     val paramValue = params(paramName)
-    paramValue.forall(_.isDigit) match {
+    isNumber(paramValue) match {
       case true => paramValue.toLong
       case false => throw new ValidationException(s"Invalid value for $paramName. Only digits are allowed.")
     }
   }
+
+  def intOpts(paramNames: String*)(implicit request: HttpServletRequest): Seq[Option[Int]] = {
+    paramNames.map(paramName => {
+      params.get(paramName) match {
+        case Some(value) if isNumber(value) => Some(value.toInt)
+        case _ => None
+      }
+    })
+  }
+
 }
