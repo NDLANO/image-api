@@ -62,7 +62,7 @@ trait ImageController {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        pathParam[String]("filename").description("The image filename"),
+        pathParam[String]("name").description("The name of the image"),
         queryParam[Option[Int]]("width").description("The target width to resize the image. Image proportions are kept intact"),
         queryParam[Option[Int]]("height").description("The target height to resize the image. Image proportions are kept intact"),
         queryParam[Option[String]]("cropStart").description(
@@ -109,8 +109,8 @@ trait ImageController {
       }
     }
 
-    get("/full/:filename", operation(getImageFile)) {
-      val filepath = s"full/${params("filename")}"
+    get("/full/:name", operation(getImageFile)) {
+      val filepath = s"full/${params("name")}"
       imageStorage.get(filepath).flatMap(crop).flatMap(resize) match {
         case Success(img) => img
         case Failure(e) => errorHandler(e)
