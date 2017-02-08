@@ -11,20 +11,20 @@ import org.scalatra.test.scalatest.ScalatraSuite
 
 import scala.util.Success
 
-class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironment {
+class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironment {
   implicit val swagger = new ImageSwagger
   val imageName = "ndla_logo.jpg"
 
   override val imageConverter = new ImageConverter
-  lazy val controller = new ImageController
+  lazy val controller = new RawController
   addServlet(controller, "/*")
 
   override def beforeEach = {
     when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoImage))
   }
 
-  test("That GET /full/image.jpg returns 200 if image was found") {
-    get(s"/full/$imageName") {
+  test("That GET /image.jpg returns 200 if image was found") {
+    get(s"/$imageName") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
@@ -33,8 +33,8 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
     }
   }
 
-  test("That GET /full/image.jpg with resizing returns a resized image") {
-    get(s"/full/$imageName?width=100") {
+  test("That GET /image.jpg with resizing returns a resized image") {
+    get(s"/$imageName?width=100") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
@@ -42,8 +42,8 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
     }
   }
 
-  test("That GET /full/image.jpg with cropping returns a cropped image") {
-    get(s"/full/$imageName?cropStart=0,0&cropEnd=20,20") {
+  test("That GET /image.jpg with cropping returns a cropped image") {
+    get(s"/$imageName?cropStart=0,0&cropEnd=20,20") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
@@ -52,8 +52,8 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
     }
   }
 
-  test("That GET /full/image.jpg with cropping and resizing returns a cropped and resized image") {
-    get(s"/full/$imageName?cropStart=0,0&cropEnd=100,20&width=50") {
+  test("That GET /image.jpg with cropping and resizing returns a cropped and resized image") {
+    get(s"/$imageName?cropStart=0,0&cropEnd=100,20&width=50") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))

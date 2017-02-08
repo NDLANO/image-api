@@ -8,22 +8,18 @@
 
 package no.ndla.imageapi.controller
 
-import javax.servlet.http.HttpServletRequest
-
-import com.sun.scenario.effect.Crop
-import no.ndla.imageapi.model.{Error, ValidationException}
+import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
-import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.SearchService
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 trait ImageController {
-  this: ImageRepository with SearchService with ConverterService with ImageStorageService with ImageConverter =>
+  this: ImageRepository with SearchService with ConverterService with ImageStorageService =>
   val imageController: ImageController
 
   class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
@@ -54,26 +50,6 @@ trait ImageController {
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
         pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."))
         )
-
-    val getImageFile =
-      (apiOperation[ImageMetaInformation]("getImageFile")
-        summary "Fetches a raw image"
-        notes "Fetches an image with options to resize and crop"
-        parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        pathParam[String]("name").description("The name of the image"),
-        queryParam[Option[Int]]("width").description("The target width to resize the image. Image proportions are kept intact"),
-        queryParam[Option[Int]]("height").description("The target height to resize the image. Image proportions are kept intact"),
-        queryParam[Option[String]]("cropStart").description(
-          """The first image coordinate (X,Y) specifying the crop start position.
-            |The coordinate is a comma separated value of the form row,column (e.g 100,10).
-            |If cropStart is specified cropEnd must also be specified""".stripMargin),
-        queryParam[Option[String]]("cropEnd").description(
-          """The second image coordinate (X,Y) specifying the crop end position, forming a square cutout.
-            |The coordinate is a comma separated value of the form row,column (e.g 200,100).
-            |If cropEnd is specified cropStart must also be specified""".stripMargin)
-        ))
 
     get("/", operation(getImages)) {
       val minimumSize = params.get("minimum-size")
@@ -106,30 +82,6 @@ trait ImageController {
       imageRepository.withId(imageId) match {
         case Some(image) => converterService.asApiImageMetaInformationWithApplicationUrl(image)
         case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
-      }
-    }
-
-    get("/full/:name", operation(getImageFile)) {
-      val filepath = s"full/${params("name")}"
-      imageStorage.get(filepath).flatMap(crop).flatMap(resize) match {
-        case Success(img) => img
-        case Failure(e) => errorHandler(e)
-      }
-    }
-
-    def crop(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
-      (paramAsListOfInt("cropStart"), paramAsListOfInt("cropEnd")) match {
-        case (List(x1, y1), List(x2, y2)) => imageConverter.crop(image, CropOptions(x1, y1, x2, y2))
-        case _ => Success(image)
-      }
-    }
-
-    def resize(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
-     extractIntOpts("width", "height") match {
-        case Seq(Some(width), _) => imageConverter.resize(image, width)
-        case Seq(_, Some(height)) => imageConverter.resize(image, height)
-        case Seq(Some(width), Some(height)) => imageConverter.resize(image, width, height)
-        case _ => Success(image)
       }
     }
 
