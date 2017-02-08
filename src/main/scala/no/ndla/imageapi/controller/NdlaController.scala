@@ -67,7 +67,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     }
   }
 
-  def intOpts(paramNames: String*)(implicit request: HttpServletRequest): Seq[Option[Int]] = {
+  def extractIntOpts(paramNames: String*)(implicit request: HttpServletRequest): Seq[Option[Int]] = {
     paramNames.map(paramName => {
       params.get(paramName) match {
         case Some(value) =>

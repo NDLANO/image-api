@@ -125,7 +125,7 @@ trait ImageController {
     }
 
     def resize(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
-     intOpts("width", "height") match {
+     extractIntOpts("width", "height") match {
         case Seq(Some(width), _) => imageConverter.resize(image, width)
         case Seq(_, Some(height)) => imageConverter.resize(image, height)
         case Seq(Some(width), Some(height)) => imageConverter.resize(image, width, height)

@@ -51,11 +51,9 @@ trait ImageConverter {
       val (x1, y1) = (min(opts.x1, opts.x2), min(opts.y1, opts.y2))
       val (x2, y2) = (max(opts.x1, opts.x2), max(opts.y1, opts.y2))
 
-      CropOptions(valueOrMinimum0(x1), valueOrMinimum0(y1),
-                  valueOrMinimum0(x2), valueOrMinimum0(y2))
+      CropOptions(max(x1, 0), max(y1, 0),
+                  max(x2, 0), max(y2, 0))
     }
-
-    private def valueOrMinimum0(value: Int): Int = max(value, 0)
 
     private[service] def getWidthHeight(opts: CropOptions, image: BufferedImage): (Int, Int) = {
       val width = abs(opts.x2 - opts.x1)
