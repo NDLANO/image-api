@@ -2,6 +2,7 @@ package no.ndla.imageapi.controller
 
 import javax.servlet.http.HttpServletRequest
 
+import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.model.api.ImageMetaInformation
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.service.{ImageConverter, ImageStorageService}
@@ -37,10 +38,11 @@ trait RawController {
       ))
 
     get("/:name", operation(getImageFile)) {
-      val filepath = s"full/${params("name")}"
-      imageStorage.get(filepath).flatMap(crop).flatMap(resize) match {
+      val imageName = params("name")
+      logger.info(s"Fetching '$imageName'")
+      imageStorage.get(imageName).flatMap(crop).flatMap(resize) match {
         case Success(img) => img
-        case Failure(e) => errorHandler(e)
+        case Failure(e) => errorHandler(new ImageNotFoundException(s"image $imageName as not found"))
       }
     }
 
