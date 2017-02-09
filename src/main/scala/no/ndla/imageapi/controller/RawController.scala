@@ -35,11 +35,11 @@ trait RawController {
         queryParam[Option[Int]]("height").description("The target height to resize the image. Image proportions are kept intact"),
         queryParam[Option[String]]("cropStart").description(
           """The first image coordinate (X,Y) specifying the crop start position.
-            |The coordinate is a comma separated value of the form row,column (e.g 100,10).
+            |The coordinate is a comma separated value of the form column,row (e.g 100,10).
             |If cropStart is specified cropEnd must also be specified""".stripMargin),
         queryParam[Option[String]]("cropEnd").description(
           """The second image coordinate (X,Y) specifying the crop end position, forming a square cutout.
-            |The coordinate is a comma separated value of the form row,column (e.g 200,100).
+            |The coordinate is a comma separated value of the form column,row (e.g 200,100).
             |If cropEnd is specified cropStart must also be specified""".stripMargin)
         )
         responseMessages(response404, response500))
