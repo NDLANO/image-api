@@ -6,7 +6,7 @@ import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.model.api.ImageMetaInformation
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.service.{ImageConverter, ImageStorageService}
-import org.scalatra.swagger.{Swagger, SwaggerSupport}
+import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 import scala.util.{Failure, Success, Try}
 
@@ -16,6 +16,12 @@ trait RawController {
 
   class RawController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
     protected val applicationDescription = "API for accessing image files from ndla.no."
+
+    // Additional models used in error responses
+    registerModel[Error]()
+
+    val response404 = ResponseMessage(404, "Not found", Some("Error"))
+    val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
     val getImageFile =
       (apiOperation[ImageMetaInformation]("getImageFile")
@@ -35,14 +41,15 @@ trait RawController {
           """The second image coordinate (X,Y) specifying the crop end position, forming a square cutout.
             |The coordinate is a comma separated value of the form row,column (e.g 200,100).
             |If cropEnd is specified cropStart must also be specified""".stripMargin)
-      ))
+        )
+        responseMessages(response404, response500))
 
     get("/:name", operation(getImageFile)) {
       val imageName = params("name")
       logger.info(s"Fetching '$imageName'")
       imageStorage.get(imageName).flatMap(crop).flatMap(resize) match {
         case Success(img) => img
-        case Failure(e) => errorHandler(new ImageNotFoundException(s"image $imageName as not found"))
+        case Failure(_) => errorHandler(new ImageNotFoundException(s"image $imageName does not exist"))
       }
     }
 

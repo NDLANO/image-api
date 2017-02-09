@@ -41,7 +41,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   error {
     case v: ValidationException => BadRequest(Error(Error.VALIDATION, v.getMessage))
     case e: IndexNotFoundException => InternalServerError(Error.IndexMissingError)
-    case i: ImageNotFoundException => NotFound(Error.NOT_FOUND)
+    case i: ImageNotFoundException => NotFound(Error(Error.NOT_FOUND, i.getMessage))
     case t: Throwable => {
       logger.error(Error.GenericError.toString, t)
       halt(status = 500, body = Error.GenericError)
