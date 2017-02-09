@@ -33,12 +33,21 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
     }
   }
 
-  test("That GET /image.jpg with resizing returns a resized image") {
+  test("That GET /image.jpg with width resizing returns a resized image") {
     get(s"/$imageName?width=100") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
       image.getWidth should equal(100)
+    }
+  }
+
+  test("That GET /image.jpg with height resizing returns a resized image") {
+    get(s"/$imageName?height=40") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getHeight should equal(40)
     }
   }
 

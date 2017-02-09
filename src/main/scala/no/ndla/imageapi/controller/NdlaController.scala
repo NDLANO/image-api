@@ -56,25 +56,23 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
 
   override def renderPipeline = streamRenderer orElse super.renderPipeline
 
-  def isNumber(value: String): Boolean = {
-    value.forall(_.isDigit)
-  }
+  def isNumber(value: String): Boolean = value.forall(_.isDigit)
 
   def long(paramName: String)(implicit request: HttpServletRequest): Long = {
     val paramValue = params(paramName)
-    isNumber(paramValue) match {
-      case true => paramValue.toLong
-      case false => throw new ValidationException(s"Invalid value for $paramName. Only digits are allowed.")
-    }
+    if (!isNumber(paramValue))
+      throw new ValidationException(s"Invalid value for $paramName. Only digits are allowed.")
+
+    paramValue.toLong
   }
 
   def extractIntOpts(paramNames: String*)(implicit request: HttpServletRequest): Seq[Option[Int]] = {
     paramNames.map(paramName => {
       params.get(paramName) match {
         case Some(value) =>
-          if (!isNumber(value)) {
+          if (!isNumber(value))
             throw new ValidationException(s"Invalid value for $paramName. Only digits are allowed.")
-          }
+
           Some(value.toInt)
         case _ => None
       }
@@ -82,16 +80,13 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   }
 
   def paramAsListOfInt(paramName: String)(implicit request: HttpServletRequest): List[Int] = {
-    params.get(paramName) match {
-      case None => List()
-      case Some(param) => {
-        val paramAsListOfStrings = param.split(",").toList.map(_.trim)
-        if (!paramAsListOfStrings.forall(isNumber)) {
-          throw new ValidationException(s"Invalid value for $paramName. Only (list of) digits are allowed.")
-        }
-        paramAsListOfStrings.map(_.toInt)
-      }
-    }
+    params.get(paramName).map(param => {
+      val paramAsListOfStrings = param.split(",").toList.map(_.trim)
+      if (!paramAsListOfStrings.forall(isNumber))
+        throw new ValidationException(s"Invalid value for $paramName. Only (list of) digits are allowed.")
+
+      paramAsListOfStrings.map(_.toInt)
+    }).getOrElse(List.empty)
   }
 
 }

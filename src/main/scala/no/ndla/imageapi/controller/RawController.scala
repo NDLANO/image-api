@@ -17,7 +17,6 @@ trait RawController {
   class RawController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
     protected val applicationDescription = "API for accessing image files from ndla.no."
 
-    // Additional models used in error responses
     registerModel[Error]()
 
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
@@ -46,7 +45,6 @@ trait RawController {
 
     get("/:name", operation(getImageFile)) {
       val imageName = params("name")
-      logger.info(s"Fetching '$imageName'")
       imageStorage.get(imageName).flatMap(crop).flatMap(resize) match {
         case Success(img) => img
         case Failure(_) => errorHandler(new ImageNotFoundException(s"image $imageName does not exist"))
@@ -55,15 +53,15 @@ trait RawController {
 
     def crop(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
       (paramAsListOfInt("cropStart"), paramAsListOfInt("cropEnd")) match {
-        case (List(x1, y1), List(x2, y2)) => imageConverter.crop(image, CropOptions(x1, y1, x2, y2))
+        case (List(startX, startY), List(endX, endY)) => imageConverter.crop(image, Point(startX, startY), Point(endX, endY))
         case _ => Success(image)
       }
     }
 
     def resize(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
       extractIntOpts("width", "height") match {
-        case Seq(Some(width), _) => imageConverter.resize(image, width)
-        case Seq(_, Some(height)) => imageConverter.resize(image, height)
+        case Seq(Some(width), _) => imageConverter.resizeWidth(image, width)
+        case Seq(_, Some(height)) => imageConverter.resizeHeight(image, height)
         case Seq(Some(width), Some(height)) => imageConverter.resize(image, width, height)
         case _ => Success(image)
       }

@@ -31,10 +31,7 @@ trait ImageStorageService {
     }
 
     def get(imageKey: String): Try[ImageStream] = {
-      Try(amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))) match {
-        case Success(s3Object) => Success(NdlaImage(s3Object, imageKey))
-        case Failure(e) => Failure(e)
-      }
+      Try(amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))).map(s3Object => NdlaImage(s3Object, imageKey))
     }
 
     def upload(imageMetaInformation: ImageMetaInformation, imageDirectory: String) = {
