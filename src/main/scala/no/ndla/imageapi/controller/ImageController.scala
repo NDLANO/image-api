@@ -8,23 +8,30 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.model.Error
+import java.io.File
+
+import no.ndla.imageapi.model.{Error, ValidationException, ValidationMessage}
 import no.ndla.imageapi.model.Error._
-import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
+import no.ndla.imageapi.model.api.{ImageMetaInformation, NewImageMetaInformation, SearchResult}
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.ConverterService
+import no.ndla.imageapi.service.{ConverterService, WriteService}
 import no.ndla.imageapi.service.search.SearchService
+import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
+import org.json4s.{DefaultFormats, Formats}
+import org.json4s.native.Serialization.read
+import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait ImageController {
-  this: ImageRepository with SearchService with ConverterService =>
+  this: ImageRepository with SearchService with ConverterService with WriteService =>
   val imageController: ImageController
 
-  class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
+  class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
     // Swagger-stuff
     protected val applicationDescription = "API for accessing images from ndla.no."
+    protected implicit override val jsonFormats: Formats = DefaultFormats
 
     val getImages =
       (apiOperation[SearchResult]("getImages")
@@ -50,6 +57,19 @@ trait ImageController {
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
         pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."))
         )
+
+    val newImage =
+      (apiOperation[ImageMetaInformation]("newImage")
+        summary "Upload a new image file with meta data"
+        notes "Upload a new image file with meta data"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
+        formParam[NewImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
+        formParam[File]("file").description("The image file(s) to upload.")
+      ))
+
+    configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
 
     get("/", operation(getImages)) {
@@ -85,5 +105,27 @@ trait ImageController {
         case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
       }
     }
+
+    post("/") {
+      val newImage = params.get("metadata")
+        .map(extract[NewImageMetaInformation])
+        .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain audio metadata"))))
+      val files = fileMultiParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain one or more files"))))
+
+      writeService.storeNewImage(newImage, files) match {
+        case Success(imageMeta) => imageMeta
+        case Failure(e) => errorHandler(e)
+      }
+    }
+
+    def extract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): T = {
+      Try(read[T](json)) match {
+        case Success(data) => data
+        case Failure(e) =>
+          logger.error(e.getMessage, e)
+          throw new ValidationException(errors=Seq(ValidationMessage("body", e.getMessage)))
+      }
+    }
+
   }
 }

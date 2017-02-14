@@ -11,13 +11,14 @@ package no.ndla.imageapi.controller
 import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.model.{Error, ValidationException}
+import no.ndla.imageapi.model.{Error, ValidationException, ValidationMessage}
 import no.ndla.network.{ApplicationUrl, CorrelationID}
 import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKey}
+import no.ndla.imageapi.model.api.ValidationError
 import org.apache.logging.log4j.ThreadContext
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.ScalatraServlet
+import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
@@ -38,7 +39,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   }
 
   error {
-    case v: ValidationException => halt(status = 400, body = Error(Error.VALIDATION, v.getMessage))
+    case v: ValidationException => BadRequest(body=ValidationError(messages=v.errors))
     case e: IndexNotFoundException => halt(status = 500, body = Error.IndexMissingError)
     case t: Throwable => {
       logger.error(Error.GenericError.toString, t)
@@ -50,7 +51,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     val paramValue = params(paramName)
     paramValue.forall(_.isDigit) match {
       case true => paramValue.toLong
-      case false => throw new ValidationException(s"Invalid value for $paramName. Only digits are allowed.")
+      case false => throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only digits are allowed.")))
     }
   }
 }

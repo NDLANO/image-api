@@ -10,7 +10,6 @@ package no.ndla.imageapi
 
 
 import com.amazonaws.services.s3.AmazonS3Client
-import io.searchbox.client.JestClient
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository._
@@ -26,7 +25,9 @@ trait TestEnvironment
     with SearchConverterService
     with DataSource
     with ConverterService
+    with ValidationService
     with ImageRepository
+    with WriteService
     with AmazonClient
     with ImageStorageService
     with IndexBuilderService
@@ -46,6 +47,7 @@ trait TestEnvironment
   val searchService = mock[SearchService]
   val indexBuilderService = mock[IndexBuilderService]
   val imageRepository = mock[ImageRepository]
+  val writeService = mock[WriteService]
   val imageStorage = new AmazonImageStorageService
 
   val importService = mock[ImportService]
@@ -55,6 +57,7 @@ trait TestEnvironment
   val internController = mock[InternController]
   val healthController = mock[HealthController]
   val converterService = mock[ConverterService]
+  val validationService = mock[ValidationService]
   val tagsService = mock[TagsService]
   val jestClient = mock[NdlaJestClient]
   val searchConverterService = mock[SearchConverterService]

@@ -25,6 +25,7 @@ object ComponentRegistry
   with SearchConverterService
   with DataSource
   with ImageRepository
+  with WriteService
   with AmazonClient
   with ImageStorageService
   with IndexBuilderService
@@ -34,6 +35,7 @@ object ComponentRegistry
   with InternController
   with ImageController
   with ConverterService
+  with ValidationService
   with TagsService
   with HealthController
 {
@@ -55,6 +57,8 @@ object ComponentRegistry
   lazy val searchService = new SearchService
   lazy val indexBuilderService = new IndexBuilderService
   lazy val imageRepository = new ImageRepository
+  lazy val writeService = new WriteService
+  lazy val validationService = new ValidationService
   lazy val imageStorage = new AmazonImageStorageService
   lazy val importService = new ImportService
   lazy val ndlaClient = new NdlaClient

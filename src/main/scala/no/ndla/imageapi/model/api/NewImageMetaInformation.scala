@@ -10,4 +10,5 @@ case class NewImageMetaInformation(@(ApiModelProperty@field)(description = "Avai
                                    @(ApiModelProperty@field)(description = "Available alternative texts for the image") alttexts: Seq[ImageAltText],
                                    @(ApiModelProperty@field)(description = "Describes the copyright information for the image") copyright: Copyright,
                                    @(ApiModelProperty@field)(description = "Searchable tags for the image") tags: Option[Seq[ImageTag]],
-                                   @(ApiModelProperty@field)(description = "Searchable tags for the image") captions: Option[Seq[ImageCaption]])
+                                   @(ApiModelProperty@field)(description = "Searchable tags for the image") captions: Option[Seq[ImageCaption]],
+                                   @(ApiModelProperty@field)(description = "The audio files in different languages") imageFiles: Seq[NewImageFile])

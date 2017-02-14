@@ -32,7 +32,7 @@ object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
   def apply(im: SyntaxProvider[ImageMetaInformation])(rs:WrappedResultSet): ImageMetaInformation = apply(im.resultName)(rs)
   def apply(im: ResultName[ImageMetaInformation])(rs: WrappedResultSet): ImageMetaInformation = {
     val meta = read[ImageMetaInformation](rs.string(im.c("metadata")))
-    ImageMetaInformation(Some(rs.long(im.c("id"))), meta.titles, meta.alttexts, meta.imageUrl, meta.size, meta.contentType , meta.copyright, meta.tags, meta.captions)
+    ImageMetaInformation(Some(rs.long(im.c("id"))), meta.titles, meta.alttexts, meta.imageUrl, meta.size, meta.contentType, meta.copyright, meta.tags, meta.captions)
   }
 
   val JSonSerializer = FieldSerializer[ImageMetaInformation](ignore("id"))
