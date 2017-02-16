@@ -35,7 +35,9 @@ trait ValidationService {
     def validate(image: ImageMetaInformation): Try[ImageMetaInformation] = {
       val validationMessages = image.titles.flatMap(title => validateTitle("title", title))  ++
         validateCopyright(image.copyright) ++
-        validateTags(image.tags)
+        validateTags(image.tags) ++
+        image.alttexts.flatMap(alt => validateAltText("altTexts", alt)) ++
+        image.captions.flatMap(caption => validateCaption("captions", caption))
 
       if (validationMessages.isEmpty)
         return Success(image)
@@ -48,6 +50,16 @@ trait ValidationService {
         validateLanguage(fieldPath, title.language)
     }
 
+    private def validateAltText(fieldPath: String, altText: ImageAltText): Seq[ValidationMessage] = {
+      containsNoHtml(fieldPath, altText.alttext).toList ++
+        validateLanguage(fieldPath, altText.language)
+    }
+
+    private def validateCaption(fieldPath: String, caption: ImageCaption): Seq[ValidationMessage] = {
+      containsNoHtml(fieldPath, caption.caption).toList ++
+        validateLanguage(fieldPath, caption.language)
+    }
+
     def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
       validateLicense(copyright.license).toList ++
       copyright.authors.flatMap(validateAuthor) ++
@@ -56,7 +68,7 @@ trait ValidationService {
 
     def validateLicense(license: License): Seq[ValidationMessage] = {
       getLicense(license.license) match {
-        case None => Seq(ValidationMessage("license.license", s"$license is not a valid license"))
+        case None => Seq(ValidationMessage("license.license", s"${license.license} is not a valid license"))
         case _ => Seq()
       }
     }
@@ -84,7 +96,7 @@ trait ValidationService {
       languageCode.flatMap(lang =>
         languageCodeSupported6391(lang) match {
           case true => None
-          case false => Some(ValidationMessage(fieldPath, s"Language '$languageCode' is not a supported value."))
+          case false => Some(ValidationMessage(fieldPath, s"Language '${languageCode.getOrElse("")}' is not a supported value."))
         })
     }
 
