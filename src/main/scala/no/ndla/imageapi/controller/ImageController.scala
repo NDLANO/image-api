@@ -10,15 +10,14 @@ package no.ndla.imageapi.controller
 
 import java.io.File
 
-import no.ndla.imageapi.model.{Error, ValidationException, ValidationMessage}
-import no.ndla.imageapi.model.Error._
-import no.ndla.imageapi.model.api.{ImageMetaInformation, NewImageMetaInformation, SearchResult}
-import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.{ConverterService, WriteService}
-import no.ndla.imageapi.service.search.SearchService
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
-import org.json4s.{DefaultFormats, Formats}
+import no.ndla.imageapi.model.api.{ImageMetaInformation, NewImageMetaInformation, SearchResult}
+import no.ndla.imageapi.model.{Error, ValidationException, ValidationMessage}
+import no.ndla.imageapi.repository.ImageRepository
+import no.ndla.imageapi.service.search.SearchService
+import no.ndla.imageapi.service.{ConverterService, WriteService}
 import org.json4s.native.Serialization.read
+import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
@@ -71,7 +70,6 @@ trait ImageController {
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
-
     get("/", operation(getImages)) {
       val minimumSize = params.get("minimum-size")
       val query = params.get("query")
@@ -102,7 +100,7 @@ trait ImageController {
       val imageId = long("image_id")
       imageRepository.withId(imageId) match {
         case Some(image) => converterService.asApiImageMetaInformationWithApplicationUrl(image)
-        case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId not found"))
       }
     }
 
@@ -110,9 +108,9 @@ trait ImageController {
       val newImage = params.get("metadata")
         .map(extract[NewImageMetaInformation])
         .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain audio metadata"))))
-      val files = fileMultiParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain one or more files"))))
+      val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain one or more files"))))
 
-      writeService.storeNewImage(newImage, files) match {
+      writeService.storeNewImage(newImage, file) match {
         case Success(imageMeta) => imageMeta
         case Failure(e) => errorHandler(e)
       }

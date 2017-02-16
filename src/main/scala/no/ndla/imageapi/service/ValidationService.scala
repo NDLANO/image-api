@@ -15,17 +15,21 @@ trait ValidationService {
 
   class ValidationService {
     def validateImageFile(imageFile: FileItem): Option[ValidationMessage] = {
+      val validFileExtensions = Seq(".jpg", ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg")
+      if (!hasValidFileExtension(imageFile.name.toLowerCase, validFileExtensions))
+        return Some(ValidationMessage("file", s"The file ${imageFile.name} does not have a known file extension. Must be one of ${validFileExtensions.mkString(",")}"))
+
       val validMimeTypes = Seq("image/bmp", "image/gif", "image/jpeg", "image/x-citrix-jpeg", "image/pjpeg", "image/png", "image/x-citrix-png", "image/x-png", "image/svg+xml")
       val actualMimeType = imageFile.contentType.getOrElse("")
 
       if (!validMimeTypes.contains(actualMimeType))
         return Some(ValidationMessage("file", s"The file ${imageFile.name} is not a valid image file. Only valid type is '${validMimeTypes.mkString(",")}', but was '$actualMimeType'"))
 
-      val validFileExtensions = Seq(".jpg", ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg")
-      if (imageFile.name.toLowerCase.endsWith(validFileExtensions))
-        return None
+      None
+    }
 
-      Some(ValidationMessage("file", s"The file ${imageFile.name} does not have a known file extension. Must be one of ${validFileExtensions.mkString(",")}"))
+    private def hasValidFileExtension(filename: String, extensions: Seq[String]): Boolean = {
+      extensions.exists(extension => filename.toLowerCase.endsWith(extension))
     }
 
     def validate(image: ImageMetaInformation): Try[ImageMetaInformation] = {

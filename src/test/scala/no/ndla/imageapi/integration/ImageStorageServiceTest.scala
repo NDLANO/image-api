@@ -29,31 +29,28 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
 
   test("That AmazonImageStorage.exists returns true when bucket exists") {
     when(amazonClient.doesBucketExist(ImageStorageName)).thenReturn(true)
-    assert(imageStorage.exists())
+    assert(imageStorage.bucketExists)
   }
 
   test("That AmazonImageStorage.exists returns false when bucket does not exist") {
     when(amazonClient.doesBucketExist(ImageStorageName)).thenReturn(false)
-    assert(!imageStorage.exists())
+    assert(!imageStorage.bucketExists)
   }
 
-  test("That AmazonImageStorage.contains returns true when image exists") {
-    val s3ObjectMock = mock[S3Object]
-    when(amazonClient.getObject(any[GetObjectRequest])).thenReturn(s3ObjectMock)
-    assert(imageStorage.contains("existingKey"))
+  test("That AmazonImageStorage.objectExists returns true when image exists") {
+    when(amazonClient.doesObjectExist(any[String], any[String])).thenReturn(true)
+    assert(imageStorage.objectExists("existingKey"))
   }
 
-  test("That AmazonImageStorage.contains returns false when image does not exist") {
-    val ase = new AmazonServiceException("Exception")
-    ase.setErrorCode("NoSuchKey")
-    when(amazonClient.getObject(any[GetObjectRequest])).thenThrow(ase)
-    assert(!imageStorage.contains("nonExistingKey"))
+  test("That AmazonImageStorage.objectExists returns false when image does not exist") {
+    when(amazonClient.doesObjectExist(any[String], any[String])).thenThrow(mock[AmazonServiceException])
+    assert(!imageStorage.objectExists("nonExistingKey"))
   }
 
   test("That AmazonImageStorage.get returns a tuple with contenttype and data when the key exists") {
     val s3object = new S3Object()
     s3object.setObjectMetadata(new ObjectMetadata())
-    s3object.getObjectMetadata().setContentType(ContentType)
+    s3object.getObjectMetadata.setContentType(ContentType)
     s3object.setObjectContent(new ByteArrayInputStream(Content.getBytes()))
     when(amazonClient.getObject(any[GetObjectRequest])).thenReturn(s3object)
 
@@ -66,11 +63,6 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
   test("That AmazonImageStorage.get returns None when the key does not exist") {
     when(amazonClient.getObject(any[GetObjectRequest])).thenThrow(new RuntimeException("Exception"))
     assert(imageStorage.get("nonexisting").isEmpty)
-  }
-
-  test("That AmazonImageStorage.upload only uploads image when thumb is not defined") {
-    imageStorage.upload(ImageWithNoThumb, "test")
-    verify(amazonClient, times(1)).putObject(any[PutObjectRequest])
   }
 
 }

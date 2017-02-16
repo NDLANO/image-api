@@ -83,11 +83,11 @@ trait ImportService {
           val fullKey = "full/" + imageMeta.mainImage.originalFile
           val full = domain.Image(fullKey, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
 
-          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, full.url, full.size, full.contentType, copyright, tags, captions.flatten)
+          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, full.fileName, full.size, full.contentType, copyright, tags, captions.flatten)
 
-          if (!imageStorage.contains(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
+          if (!imageStorage.objectExists(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
 
-          val inserted = imageRepository.insert(imageMetaInformation, imageMeta.mainImage.nid)
+          val inserted = imageRepository.insertWithExternalId(imageMetaInformation, imageMeta.mainImage.nid)
           logger.info(s"Inserted ID = ${inserted.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
           inserted
         }

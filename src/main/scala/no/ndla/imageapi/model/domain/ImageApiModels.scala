@@ -18,11 +18,11 @@ case class ImageTitle(title: String, language: Option[String])
 case class ImageAltText(alttext: String, language: Option[String])
 case class ImageCaption(caption: String, language: Option[String])
 case class ImageTag(tags: Seq[String], language: Option[String])
-case class Image(url: String, size: Int, contentType: String)
-case class Copyright(license: License, origin: String, authors: List[Author])
+case class Image(fileName: String, size: Long, contentType: String)
+case class Copyright(license: License, origin: String, authors: Seq[Author])
 case class License(license: String, description: String, url: Option[String])
 case class Author(`type`: String, name: String)
-case class ImageMetaInformation(id: Option[Long], titles: Seq[ImageTitle], alttexts: Seq[ImageAltText], imageUrl: String, size: Int, contentType: String, copyright: Copyright, tags: Seq[ImageTag], captions: Seq[ImageCaption])
+case class ImageMetaInformation(id: Option[Long], titles: Seq[ImageTitle], alttexts: Seq[ImageAltText], imageUrl: String, size: Long, contentType: String, copyright: Copyright, tags: Seq[ImageTag], captions: Seq[ImageCaption])
 
 object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
   implicit val formats = org.json4s.DefaultFormats

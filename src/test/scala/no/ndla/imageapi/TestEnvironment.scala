@@ -9,7 +9,7 @@
 package no.ndla.imageapi
 
 
-import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.AmazonS3
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository._
@@ -40,7 +40,7 @@ trait TestEnvironment
     with HealthController
     with MockitoSugar
 {
-  val amazonClient = mock[AmazonS3Client]
+  val amazonClient = mock[AmazonS3]
 
   val dataSource = mock[javax.sql.DataSource]
   val indexService = mock[IndexService]

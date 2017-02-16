@@ -27,7 +27,7 @@ trait ConverterService {
     }
 
     def asApiImage(domainImage: domain.Image, baseUrl: Option[String] = None): api.Image = {
-      api.Image(baseUrl.getOrElse("") + domainImage.url, domainImage.size, domainImage.contentType)
+      api.Image(baseUrl.getOrElse("") + domainImage.fileName, domainImage.size, domainImage.contentType)
     }
 
     def asApiImageAltText(domainImageAltText: domain.ImageAltText): api.ImageAltText = {
@@ -74,6 +74,48 @@ trait ConverterService {
     def asApiUrl(url: String, baseUrl: Option[String] = None): String = {
       baseUrl.getOrElse("") + url
     }
-  }
 
+    def asDomainImageMetaInformation(imageMeta: api.NewImageMetaInformation, image: domain.Image): domain.ImageMetaInformation = {
+      domain.ImageMetaInformation(
+        None,
+        imageMeta.titles.map(asDomainTitle),
+        imageMeta.alttexts.map(asDomainAltText),
+        image.fileName,
+        image.size,
+        image.contentType,
+        toDomainCopyright(imageMeta.copyright),
+        imageMeta.tags.getOrElse(Seq.empty).map(toDomainTag),
+        imageMeta.captions.getOrElse(Seq.empty).map(toDomainCaption)
+      )
+    }
+
+    def asDomainTitle(title: api.ImageTitle): domain.ImageTitle = {
+      domain.ImageTitle(title.title, title.language)
+    }
+
+    def asDomainAltText(alt: api.ImageAltText): domain.ImageAltText = {
+      domain.ImageAltText(alt.alttext, alt.language)
+    }
+
+    def toDomainCopyright(copyright: api.Copyright): domain.Copyright = {
+      domain.Copyright(toDomainLicense(copyright.license), copyright.origin, copyright.authors.map(toDomainAuthor))
+    }
+
+    def toDomainLicense(license: api.License): domain.License = {
+      domain.License(license.license, license.description, license.url)
+    }
+
+    def toDomainAuthor(author: api.Author): domain.Author = {
+      domain.Author(author.`type`, author.name)
+    }
+
+    def toDomainTag(tag: api.ImageTag): domain.ImageTag = {
+      domain.ImageTag(tag.tags, tag.language)
+    }
+
+    def toDomainCaption(caption: api.ImageCaption): domain.ImageCaption = {
+      domain.ImageCaption(caption.caption, caption.language)
+    }
+
+  }
 }
