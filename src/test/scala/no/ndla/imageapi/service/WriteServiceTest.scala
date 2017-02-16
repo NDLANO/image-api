@@ -43,7 +43,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(fileMock1.size).thenReturn(1024)
     when(fileMock1.name).thenReturn("file.jpg")
 
-    reset(imageRepository, indexService)
+    reset(imageRepository, indexService, imageStorage)
     when(imageRepository.insert(any[ImageMetaInformation])(any[DBSession])).thenReturn(domainImageMeta.copy(id=Some(1)))
   }
 
