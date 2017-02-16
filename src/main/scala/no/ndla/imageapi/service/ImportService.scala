@@ -80,12 +80,12 @@ trait ImportService {
         case None => {
           val sourceUrlFull = DownloadUrlPrefix + imageMeta.mainImage.originalFile
 
-          val fullKey = "full/" + imageMeta.mainImage.originalFile
-          val full = domain.Image(fullKey, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
+          val key = imageMeta.mainImage.originalFile
+          val image = domain.Image(key, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
 
-          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, full.fileName, full.size, full.contentType, copyright, tags, captions.flatten)
+          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, image.fileName, image.size, image.contentType, copyright, tags, captions.flatten)
 
-          if (!imageStorage.objectExists(fullKey)) imageStorage.uploadFromUrl(full, fullKey, sourceUrlFull)
+          if (!imageStorage.objectExists(key)) imageStorage.uploadFromUrl(image, key, sourceUrlFull)
 
           val inserted = imageRepository.insertWithExternalId(imageMetaInformation, imageMeta.mainImage.nid)
           logger.info(s"Inserted ID = ${inserted.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")

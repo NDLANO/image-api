@@ -15,7 +15,7 @@ import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.StorageName
 import no.ndla.imageapi.integration.AmazonClient
-import no.ndla.imageapi.model.domain.Image
+import no.ndla.imageapi.model.domain.{Image, ImageStream}
 
 import scala.util.Try
 
@@ -24,19 +24,13 @@ trait ImageStorageService {
   val imageStorage: AmazonImageStorageService
 
   class AmazonImageStorageService extends LazyLogging {
+    case class NdlaImage(s3Object: S3Object, fileName: String) extends ImageStream {
+      override def contentType: String = s3Object.getObjectMetadata.getContentType
+      override def stream: InputStream = s3Object.getObjectContent
+    }
 
-    def get(imageKey: String): Option[(String, InputStream)] = {
-      try {
-        val s3Object = amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))
-        Option(
-          s3Object.getObjectMetadata.getContentType,
-          s3Object.getObjectContent)
-      } catch {
-        case e: Exception => {
-          logger.warn("Could not get image with key {}", imageKey, e)
-          None
-        }
-      }
+    def get(imageKey: String): Try[ImageStream] = {
+      Try(amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))).map(s3Object => NdlaImage(s3Object, imageKey))
     }
 
     def uploadFromUrl(image: Image, storageKey: String, urlOfImage: String): Try[_] = {

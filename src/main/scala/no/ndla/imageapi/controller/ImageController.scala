@@ -14,7 +14,9 @@ import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
 import no.ndla.imageapi.model.api.{ImageMetaInformation, NewImageMetaInformation, SearchResult}
 import no.ndla.imageapi.model.{Error, ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
+import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.SearchService
+import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 import no.ndla.imageapi.service.{ConverterService, WriteService}
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
@@ -32,6 +34,14 @@ trait ImageController {
     protected val applicationDescription = "API for accessing images from ndla.no."
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
+    // Additional models used in error responses
+    registerModel[Error]()
+
+    val response404 = ResponseMessage(404, "Not found", Some("Error"))
+    val response400 = ResponseMessage(400, "Validation error", Some("Error"))
+    val response413 = ResponseMessage(413, "File too big", Some("Error"))
+    val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
+
     val getImages =
       (apiOperation[SearchResult]("getImages")
         summary "Show all images"
@@ -45,7 +55,8 @@ trait ImageController {
         queryParam[Option[String]]("license").description("Return only images with provided license."),
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
-        ))
+        )
+        responseMessages(response500))
 
     val getByImageId =
       (apiOperation[ImageMetaInformation]("findByImageId")
@@ -54,8 +65,9 @@ trait ImageController {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."))
+        pathParam[String]("image_id").description("Image_id of the image that needs to be fetched.")
         )
+        responseMessages(response404, response500))
 
     val newImage =
       (apiOperation[ImageMetaInformation]("newImage")
@@ -66,7 +78,8 @@ trait ImageController {
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
         formParam[NewImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
         formParam[File]("file").description("The image file(s) to upload.")
-      ))
+      )
+      responseMessages(response400, response413, response500))
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
