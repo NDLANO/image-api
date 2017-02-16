@@ -12,19 +12,25 @@ import no.ndla.imageapi.model.Error
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.ConverterService
+import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.SearchService
-import org.scalatra.swagger.{Swagger, SwaggerSupport}
+import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 import scala.util.Try
 
 trait ImageController {
-  this: ImageRepository with SearchService with ConverterService =>
+  this: ImageRepository with SearchService with ConverterService with ImageStorageService =>
   val imageController: ImageController
 
   class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
     // Swagger-stuff
     protected val applicationDescription = "API for accessing images from ndla.no."
+
+    // Additional models used in error responses
+    registerModel[Error]()
+
+    val response404 = ResponseMessage(404, "Not found", Some("Error"))
+    val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
     val getImages =
       (apiOperation[SearchResult]("getImages")
@@ -39,7 +45,8 @@ trait ImageController {
         queryParam[Option[String]]("license").description("Return only images with provided license."),
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
-        ))
+        )
+        responseMessages(response500))
 
     val getByImageId =
       (apiOperation[ImageMetaInformation]("findByImageId")
@@ -48,9 +55,9 @@ trait ImageController {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."))
+        pathParam[String]("image_id").description("Image_id of the image that needs to be fetched.")
         )
-
+        responseMessages(response404, response500))
 
     get("/", operation(getImages)) {
       val minimumSize = params.get("minimum-size")
@@ -85,5 +92,6 @@ trait ImageController {
         case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
       }
     }
+
   }
 }

@@ -10,7 +10,7 @@ package no.ndla.imageapi
 
 import no.ndla.network.secrets.PropertyKeys
 import org.scalatest._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
 object IntegrationTest extends Tag("no.ndla.IntegrationTest")
 

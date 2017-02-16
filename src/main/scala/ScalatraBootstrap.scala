@@ -15,6 +15,7 @@ class ScalatraBootstrap extends LifeCycle {
 
   override def init(context: ServletContext) {
     context.mount(ComponentRegistry.imageController, ImageApiProperties.ImageControllerPath, "images")
+    context.mount(ComponentRegistry.rawController, ImageApiProperties.RawControllerPath, "raw")
     context.mount(ComponentRegistry.resourcesApp, "/api-docs")
     context.mount(ComponentRegistry.internController, "/intern")
     context.mount(ComponentRegistry.healthController, ImageApiProperties.HealthControllerPath)
