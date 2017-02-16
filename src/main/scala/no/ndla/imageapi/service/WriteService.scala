@@ -29,17 +29,17 @@ trait WriteService {
         case Success(image) => image
       }
 
-      val result = for {
+      val imageMetaInformation = for {
         imageMeta <- Try(converterService.asDomainImageMetaInformation(newImage, uploadedImage))
         _ <- validationService.validate(imageMeta)
         r <- Try(imageRepository.insert(imageMeta))
         _ <- indexService.indexDocument(r)
       } yield converterService.asApiImageMetaInformationWithApplicationUrl(r)
 
-      if (result.isFailure)
+      if (imageMetaInformation.isFailure)
         imageStorage.deleteObject(uploadedImage.fileName)
 
-      result
+      imageMetaInformation
     }
 
     private[service] def getFileExtension(fileName: String): Option[String] = {
