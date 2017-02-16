@@ -42,14 +42,14 @@ trait WriteService {
       result
     }
 
-    def getFileExtension(fileName: String): Option[String] = {
+    private[service] def getFileExtension(fileName: String): Option[String] = {
       fileName.lastIndexOf(".") match {
         case index: Int if index > -1 => Some(fileName.substring(index))
         case _ => None
       }
     }
 
-    def uploadImage(file: FileItem): Try[Image] = {
+    private[service] def uploadImage(file: FileItem): Try[Image] = {
       val extension = getFileExtension(file.name).getOrElse("")
       val contentType = file.getContentType.getOrElse("")
       val fileName = Stream.continually(randomFileName(extension)).dropWhile(imageStorage.objectExists).head

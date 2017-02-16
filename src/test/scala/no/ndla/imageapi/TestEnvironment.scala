@@ -48,7 +48,7 @@ trait TestEnvironment
   val indexBuilderService = mock[IndexBuilderService]
   val imageRepository = mock[ImageRepository]
   val writeService = mock[WriteService]
-  val imageStorage = new AmazonImageStorageService
+  val imageStorage = mock[AmazonImageStorageService]
 
   val importService = mock[ImportService]
   val ndlaClient = mock[NdlaClient]

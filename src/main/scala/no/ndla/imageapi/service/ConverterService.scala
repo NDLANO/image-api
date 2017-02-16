@@ -42,7 +42,7 @@ trait ConverterService {
       asApiImageMetaInformation(domainImageMetaInformation, Some(ImageApiProperties.ImageUrlBase))
     }
 
-    private def asApiImageMetaInformation(domainImageMetaInformation: domain.ImageMetaInformation, baseUrl: Option[String] = None): api.ImageMetaInformation = {
+    def asApiImageMetaInformation(domainImageMetaInformation: domain.ImageMetaInformation, baseUrl: Option[String] = None): api.ImageMetaInformation = {
       api.ImageMetaInformation(
         domainImageMetaInformation.id.get.toString,
         baseUrl.getOrElse("") + domainImageMetaInformation.id.get,
