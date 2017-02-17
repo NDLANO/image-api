@@ -4,12 +4,13 @@ import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 
 import no.ndla.imageapi.TestData.NdlaLogoImage
+import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.{ImageSwagger, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatra.test.scalatest.ScalatraSuite
 
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironment {
   implicit val swagger = new ImageSwagger
@@ -33,6 +34,13 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
     }
   }
 
+  test("That GET /image.jpg returns 404 if image was not found") {
+    when(imageStorage.get(any[String])).thenReturn(Failure(mock[ImageNotFoundException]))
+    get(s"/$imageName") {
+      status should equal (404)
+    }
+  }
+
   test("That GET /image.jpg with width resizing returns a resized image") {
     get(s"/$imageName?width=100") {
       status should equal (200)
@@ -48,6 +56,12 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
       image.getHeight should equal(40)
+    }
+  }
+
+  test("That GET /image.jpg with an invalid value for width returns 400") {
+    get(s"/$imageName?width=twohundredandone") {
+      status should equal (400)
     }
   }
 
@@ -70,4 +84,5 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
       image.getHeight should equal(10)
     }
   }
+
 }

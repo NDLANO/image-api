@@ -7,15 +7,17 @@
 
 package no.ndla.imageapi.service.search
 
-import java.text.SimpleDateFormat
-import java.util.Calendar
+import javax.servlet.http.HttpServletRequest
 
 import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
 import no.ndla.imageapi.integration.JestClientFactory
 import no.ndla.imageapi.model.domain._
-import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
+import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.node.{Node, NodeBuilder}
+import no.ndla.network.ApplicationUrl
+import org.mockito.Mockito._
+import org.mockito.Matchers._
 
 import scala.reflect.io.Path
 import scala.util.Random
@@ -65,6 +67,12 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     indexService.indexDocument(image2)
     indexService.indexDocument(image3)
     indexService.indexDocument(image4)
+
+    val servletRequest = mock[HttpServletRequest]
+    when(servletRequest.getHeader(any[String])).thenReturn("http")
+    when(servletRequest.getServerName).thenReturn("localhost")
+    when(servletRequest.getServletPath).thenReturn("/image-api/v1/images/")
+    ApplicationUrl.set(servletRequest)
 
     blockUntil(() => searchService.countDocuments() == 4)
   }

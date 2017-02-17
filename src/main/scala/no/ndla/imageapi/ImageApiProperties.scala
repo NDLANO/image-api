@@ -61,7 +61,8 @@ object ImageApiProperties extends LazyLogging {
   val MigrationPassword = prop("MIGRATION_PASSWORD")
 
   val Domain = Domains.get(Environment)
-  val ImageUrlBase = Domain + ImageControllerPath + "/"
+  val ImageApiUrlBase = Domain + ImageControllerPath + "/"
+  val RawImageUrlBase = Domain + RawControllerPath + "/"
 
   lazy val secrets = readSecrets(SecretsFile) match {
      case Success(values) => values
