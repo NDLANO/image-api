@@ -14,7 +14,7 @@ import io.swagger.annotations._
 import no.ndla.imageapi.model.{api, Error}
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.ConverterService
+import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.SearchService
 
 import scala.util.Try
@@ -78,5 +78,6 @@ trait ImageController {
         case None => halt(status = 404, body = api.Error(NOT_FOUND, s"Image with id $imageId not found"))
       }
     }
+
   }
 }

@@ -22,6 +22,7 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
   val ImageWithNoThumb = TestData.nonexistingWithoutThumb
   val Content = "content"
   val ContentType = "image/jpeg"
+  override val imageStorage = new AmazonImageStorageService
 
   override def beforeEach() = {
     reset(amazonClient)
@@ -53,19 +54,19 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
   test("That AmazonImageStorage.get returns a tuple with contenttype and data when the key exists") {
     val s3object = new S3Object()
     s3object.setObjectMetadata(new ObjectMetadata())
-    s3object.getObjectMetadata().setContentType(ContentType)
+    s3object.getObjectMetadata.setContentType(ContentType)
     s3object.setObjectContent(new ByteArrayInputStream(Content.getBytes()))
     when(amazonClient.getObject(any[GetObjectRequest])).thenReturn(s3object)
 
     val image = imageStorage.get("existing")
-    assert(image.isDefined)
-    assert(image.get._1 == ContentType)
-    assert(scala.io.Source.fromInputStream(image.get._2).mkString == Content)
+    assert(image.isSuccess)
+    assert(image.get.contentType == ContentType)
+    assert(scala.io.Source.fromInputStream(image.get.stream).mkString == Content)
   }
 
   test("That AmazonImageStorage.get returns None when the key does not exist") {
     when(amazonClient.getObject(any[GetObjectRequest])).thenThrow(new RuntimeException("Exception"))
-    assert(imageStorage.get("nonexisting").isEmpty)
+    assert(imageStorage.get("nonexisting").isFailure)
   }
 
   test("That AmazonImageStorage.upload only uploads image when thumb is not defined") {
