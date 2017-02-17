@@ -13,7 +13,7 @@ import java.util.Calendar
 import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
 import no.ndla.imageapi.integration.JestClientFactory
 import no.ndla.imageapi.model.domain._
-import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
+import no.ndla.imageapi.{ImageApiProperties, IntegrationTest, TestEnvironment, UnitSuite}
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.node.{Node, NodeBuilder}
 
@@ -23,10 +23,11 @@ import scala.util.Random
 class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   val esHttpPort = new Random(System.currentTimeMillis()).nextInt(30000 - 20000) + 20000
+  val esPort = 9200
   val esDataDir = "esTestData"
   var esNode: Node = _
 
-  override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esHttpPort")
+  override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esPort")
   override val searchConverterService = new SearchConverterService
   override val converterService = new ConverterService
   override val indexService = new IndexService
@@ -46,21 +47,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", None)), Seq(), smallImage.url, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq())
 
   override def beforeAll() = {
-    Path(esDataDir).deleteRecursively()
-    val settings = Settings.settingsBuilder()
-      .put("path.home", esDataDir)
-      .put("index.number_of_shards", "1")
-      .put("index.number_of_replicas", "0")
-      .put("http.port", esHttpPort)
-      .put("cluster.name", getClass.getName)
-      .build()
+    val newIndex = indexService.createIndexWithName(ImageApiProperties.SearchIndex)
 
-    esNode = new NodeBuilder().settings(settings).node()
-    esNode.start()
-
-
-    val indexName = indexService.createIndex().get
-    indexService.updateAliasTarget(None, indexName)
     indexService.indexDocument(image1)
     indexService.indexDocument(image2)
     indexService.indexDocument(image3)
@@ -70,32 +58,31 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   override def afterAll() = {
-    esNode.close()
-    Path(esDataDir).deleteRecursively()
+    indexService.deleteIndex(Some(ImageApiProperties.SearchIndex))
   }
 
-  test("That getStartAtAndNumResults returns default values for None-input") {
+  test("That getStartAtAndNumResults returns default values for None-input", IntegrationTest) {
     searchService invokePrivate getStartAtAndNumResults(None, None) should equal((0, DefaultPageSize))
   }
 
-  test("That getStartAtAndNumResults returns SEARCH_MAX_PAGE_SIZE for value greater than SEARCH_MAX_PAGE_SIZE") {
+  test("That getStartAtAndNumResults returns SEARCH_MAX_PAGE_SIZE for value greater than SEARCH_MAX_PAGE_SIZE", IntegrationTest) {
     searchService invokePrivate getStartAtAndNumResults(None, Some(1000)) should equal((0, MaxPageSize))
   }
 
-  test("That getStartAtAndNumResults returns the correct calculated start at for page and page-size with default page-size") {
+  test("That getStartAtAndNumResults returns the correct calculated start at for page and page-size with default page-size", IntegrationTest) {
     val page = 74
     val expectedStartAt = (page - 1) * DefaultPageSize
     searchService invokePrivate getStartAtAndNumResults(Some(page), None) should equal((expectedStartAt, DefaultPageSize))
   }
 
-  test("That getStartAtAndNumResults returns the correct calculated start at for page and page-size") {
+  test("That getStartAtAndNumResults returns the correct calculated start at for page and page-size", IntegrationTest) {
     val page = 123
     val pageSize = 43
     val expectedStartAt = (page - 1) * pageSize
     searchService invokePrivate getStartAtAndNumResults(Some(page), Some(pageSize)) should equal((expectedStartAt, pageSize))
   }
 
-  test("That all returns all documents ordered by id ascending") {
+  test("That all returns all documents ordered by id ascending", IntegrationTest) {
     val searchResult = searchService.all(None, None, None, None)
     searchResult.totalCount should be(4)
     searchResult.results.size should be(4)
@@ -104,7 +91,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     searchResult.results.last.id should be("4")
   }
 
-  test("That all filtering on minimumsize only returns images larger than minimumsize") {
+  test("That all filtering on minimumsize only returns images larger than minimumsize", IntegrationTest) {
     val searchResult = searchService.all(Some(500), None, None, None)
     searchResult.totalCount should be(2)
     searchResult.results.size should be(2)
@@ -112,14 +99,14 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     searchResult.results.last.id should be("2")
   }
 
-  test("That all filtering on license only returns images with given license") {
+  test("That all filtering on license only returns images with given license", IntegrationTest) {
     val searchResult = searchService.all(None, Some("publicdomain"), None, None)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
-  test("That paging returns only hits on current page and not more than page-size") {
+  test("That paging returns only hits on current page and not more than page-size", IntegrationTest) {
     val searchResultPage1 = searchService.all(None, None, Some(1), Some(2))
     val searchResultPage2 = searchService.all(None, None, Some(2), Some(2))
     searchResultPage1.totalCount should be(4)
@@ -137,14 +124,14 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     searchResultPage2.results.last.id should be("4")
   }
 
-  test("That both minimum-size and license filters are applied.") {
+  test("That both minimum-size and license filters are applied.", IntegrationTest) {
     val searchResult = searchService.all(Some(500), Some("publicdomain"), None, None)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
-  test("That search matches title and alttext ordered by relevance") {
+  test("That search matches title and alttext ordered by relevance", IntegrationTest) {
     val searchResult = searchService.matchingQuery("bil", None, None, None, None, None)
     searchResult.totalCount should be(2)
     searchResult.results.size should be(2)
@@ -152,28 +139,28 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     searchResult.results.last.id should be("3")
   }
 
-  test("That search matches title") {
+  test("That search matches title", IntegrationTest) {
     val searchResult = searchService.matchingQuery("Pingvinen", None, Some("nb"), None, None, None)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
-  test("That search matches tags") {
+  test("That search matches tags", IntegrationTest) {
     val searchResult = searchService.matchingQuery("and", None, Some("nb"), None, None, None)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("3")
   }
 
-  test("That search matches alttext without specifying language") {
+  test("That search matches alttext without specifying language", IntegrationTest) {
     val searchResult = searchService.matchingQuery("Bilde av en and", None, None, None, None, None)
     searchResult.totalCount should be (1)
     searchResult.results.size should be (1)
     searchResult.results.head.id should be ("3")
   }
 
-  test("That search matches title with unknown language analyzed in Norwegian") {
+  test("That search matches title with unknown language analyzed in Norwegian", IntegrationTest) {
     val searchResult = searchService.matchingQuery("blomst", None, None, None, None, None)
     searchResult.totalCount should be (1)
     searchResult.results.size should be (1)

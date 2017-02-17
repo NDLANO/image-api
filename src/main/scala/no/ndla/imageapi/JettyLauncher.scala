@@ -9,6 +9,8 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
+import io.swagger.servlet.listing.ApiDeclarationServlet
+import no.ndla.imageapi.swagger.{SwaggerInfo, SwaggerScanner}
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.{DefaultServlet, ServletContextHandler}
 import org.scalatra.servlet.ScalatraListener
@@ -32,6 +34,10 @@ object JettyLauncher extends LazyLogging {
     servletContext.addServlet(classOf[DefaultServlet], "/")
     servletContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
 
+    servletContext.setAttribute("scanner", new SwaggerScanner("no.ndla.imageapi.controller"))
+    servletContext.setAttribute("swagger", SwaggerInfo.swagger)
+    servletContext.addServlet(classOf[ApiDeclarationServlet], "/api-docs/*")
+
     val server = new Server(port)
     server.setHandler(servletContext)
     server.start()
@@ -41,4 +47,5 @@ object JettyLauncher extends LazyLogging {
 
     server.join()
   }
+
 }

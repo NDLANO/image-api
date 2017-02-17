@@ -10,9 +10,9 @@ package no.ndla.imageapi
 
 import no.ndla.network.secrets.PropertyKeys
 import org.scalatest._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
-object IntegrationTest extends Tag("no.ndla.IntegrationTest")
+object IntegrationTest extends Tag("no.ndla.imageapi.IntegrationTest")
 
 abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfterAll with PrivateMethodTester {
 
@@ -29,6 +29,7 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
   setEnv("MIGRATION_HOST", "some-host")
   setEnv("MIGRATION_USER", "some-user")
   setEnv("MIGRATION_PASSWORD", "some-password")
+  setEnv("SEARCH_ALIAS", "integration-test-index")
 
   def setEnv(key: String, value: String) = {
     val field = System.getenv().getClass.getDeclaredField("m")
@@ -36,4 +37,5 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
     val map = field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
     map.put(key, value)
   }
+
 }

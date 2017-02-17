@@ -8,7 +8,7 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.model.Error
+import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.Error._
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexBuilderService
@@ -41,7 +41,7 @@ trait InternController {
       val externalId = params("image_id")
       imageRepository.withExternalId(externalId) match {
         case Some(image) => converterService.asApiImageMetaInformationWithDomainUrl(image)
-        case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with external id $externalId not found"))
+        case None => halt(status = 404, body = api.Error(NOT_FOUND, s"Image with external id $externalId not found"))
       }
     }
 

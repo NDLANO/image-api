@@ -8,13 +8,14 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.model.Error
+import javax.servlet.http.HttpServletRequest
+
+import io.swagger.annotations._
+import no.ndla.imageapi.model.{api, Error}
 import no.ndla.imageapi.model.Error._
-import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.ConverterService
 import no.ndla.imageapi.service.search.SearchService
-import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 import scala.util.Try
 
@@ -22,37 +23,22 @@ trait ImageController {
   this: ImageRepository with SearchService with ConverterService =>
   val imageController: ImageController
 
-  class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
-    // Swagger-stuff
-    protected val applicationDescription = "API for accessing images from ndla.no."
+  @Api(value = "/image-api/v1/images", authorizations = Array(new Authorization(value = "imageapi_auth")))
+  class ImageController extends NdlaController {
+    get("/") (getImages)
+    get("/:image_id")(getImage)
 
-    val getImages =
-      (apiOperation[SearchResult]("getImages")
-        summary "Show all images"
-        notes "Shows all the images in the ndla.no database. You can search it too."
-        parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        queryParam[Option[String]]("query").description("Return only images with titles, alt-texts or tags matching the specified query."),
-        queryParam[Option[String]]("minimum-size").description("Return only images with full size larger than submitted value in bytes."),
-        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
-        queryParam[Option[String]]("license").description("Return only images with provided license."),
-        queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
-        queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
-        ))
-
-    val getByImageId =
-      (apiOperation[ImageMetaInformation]("findByImageId")
-        summary "Show image info"
-        notes "Shows info of the image with submitted id."
-        parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."))
-        )
-
-
-    get("/", operation(getImages)) {
+    @ApiOperation(nickname = "/", httpMethod = "get", value = "Show all images", notes = "Shows all the images in the ndla.no database. You can search it too.", tags = Array("ImageApi-V1"))
+    @ApiImplicitParams(value = Array(
+      new ApiImplicitParam(name = "X-Correlation-ID", value = "User supplied correlation-id. May be omitted.", dataType = "string", paramType = "header"),
+      new ApiImplicitParam(name = "query", value = "Return only images with titles, alt-texts or tags matching the specified query.", dataType = "string", paramType = "query"),
+      new ApiImplicitParam(name = "minimum-size", value = "Return only images with full size larger than submitted value in bytes.", dataType = "string", paramType = "query"),
+      new ApiImplicitParam(name = "language", value = "The ISO 639-1 language code describing language used in query-params.", dataType = "string", paramType = "query"),
+      new ApiImplicitParam(name = "license", value = "Return only images with provided license.", dataType = "string", paramType = "query"),
+      new ApiImplicitParam(name = "page", value = "The page number of the search hits to display.", dataType = "integer", paramType = "query"),
+      new ApiImplicitParam(name = "page-size", value = "The number of search hits to display for each page.", dataType = "integer", paramType = "query")))
+    @ApiResponses(Array(new ApiResponse(code = 500, message = "Internal server error", response = classOf[api.Error])))
+    private def getImages(implicit request: HttpServletRequest) = {
       val minimumSize = params.get("minimum-size")
       val query = params.get("query")
       val language = params.get("language")
@@ -78,11 +64,18 @@ trait ImageController {
       }
     }
 
-    get("/:image_id", operation(getByImageId)) {
+    @ApiOperation(nickname = "/{image_id}", httpMethod = "get", value = "Show image info", notes = "Show image info", tags = Array("ImageApi-V1"))
+    @ApiImplicitParams(value = Array(
+      new ApiImplicitParam(name = "X-Correlation-ID", value = "User supplied correlation-id. May be omitted.", dataType = "string", paramType = "header"),
+      new ApiImplicitParam(name = "image_id", value = "Image_id of the image that needs to be fetched.", dataType = "string", paramType = "path")))
+    @ApiResponses(Array(
+      new ApiResponse(code = 404, message = "Not Found", response = classOf[api.Error]),
+      new ApiResponse(code = 500, message = "Internal server error", response = classOf[api.Error])))
+    private def getImage(implicit request: HttpServletRequest)  = {
       val imageId = long("image_id")
       imageRepository.withId(imageId) match {
         case Some(image) => converterService.asApiImageMetaInformationWithApplicationUrl(image)
-        case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
+        case None => halt(status = 404, body = api.Error(NOT_FOUND, s"Image with id $imageId not found"))
       }
     }
   }

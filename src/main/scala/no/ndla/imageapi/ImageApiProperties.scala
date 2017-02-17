@@ -21,11 +21,11 @@ object ImageApiProperties extends LazyLogging {
   val SecretsFile = "image-api.secrets"
 
   val ApplicationPort = 80
+  val ContactName = "Christer Gundersen"
   val ContactEmail = "christergundersen@ndla.no"
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
   val HealthControllerPath = "/health"
-  val ImageControllerPath = s"/image-api/v1/images"
 
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
@@ -42,7 +42,7 @@ object ImageApiProperties extends LazyLogging {
 
   val StorageName = s"$Environment.images.ndla"
 
-  val SearchIndex = "images"
+  lazy val SearchIndex = propOrElse("SEARCH_ALIAS", "images")
   val SearchDocument = "image"
   val DefaultPageSize: Int = 10
   val MaxPageSize: Int = 100
@@ -59,7 +59,7 @@ object ImageApiProperties extends LazyLogging {
   val MigrationPassword = prop("MIGRATION_PASSWORD")
 
   val Domain = Domains.get(Environment)
-  val ImageUrlBase = Domain + ImageControllerPath + "/"
+  val ImageUrlBase = Domain + "/image-api/v1/images" + "/"
 
   lazy val secrets = readSecrets(SecretsFile) match {
      case Success(values) => values

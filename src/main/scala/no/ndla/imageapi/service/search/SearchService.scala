@@ -108,10 +108,8 @@ trait SearchService {
     }
 
     def countDocuments(): Int = {
-      val ret = jestClient.execute(
-        new Count.Builder().addIndex(ImageApiProperties.SearchIndex).build()
-      ).map(result => result.getCount.toInt)
-      ret.getOrElse(0)
+      val res = jestClient.execute(new Count.Builder().addIndex(ImageApiProperties.SearchIndex).build()).map(_.getCount.toInt)
+      res.getOrElse(0)
     }
 
     private def getStartAtAndNumResults(page: Option[Int], pageSize: Option[Int]): (Int, Int) = {
