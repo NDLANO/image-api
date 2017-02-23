@@ -31,7 +31,7 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
 
   val sampleUploadFile = PretendFile(Array[Byte](-1, -40, -1), "image/jpeg", "image.jpg")
 
-  val sampleNewAudioMeta =
+  val sampleNewImageMeta =
     """
       |{
       |    "titles": [{
@@ -57,23 +57,23 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
     """.stripMargin
 
   test("That POST / returns 400 if parameters are missing") {
-    post("/", ("metadata", sampleNewAudioMeta)) {
+    post("/", ("metadata", sampleNewImageMeta)) {
       status should equal (400)
     }
   }
 
   test("That POST / returns 200 if everything went well") {
-    val sampleAudioMeta = ImageMetaInformation("1", "http://some.url/id", Seq.empty, Seq.empty, "http://some.url/img.jpg", 1024, "image/jpeg", Copyright(License("by", "description", None), "", Seq.empty), Seq.empty, Seq.empty)
-    when(writeService.storeNewImage(any[NewImageMetaInformation], any[FileItem])).thenReturn(Success(sampleAudioMeta))
+    val sampleImageMeta = ImageMetaInformation("1", "http://some.url/id", Seq.empty, Seq.empty, "http://some.url/img.jpg", 1024, "image/jpeg", Copyright(License("by", "description", None), "", Seq.empty), Seq.empty, Seq.empty)
+    when(writeService.storeNewImage(any[NewImageMetaInformation], any[FileItem])).thenReturn(Success(sampleImageMeta))
 
-    post("/", Map("metadata" -> sampleNewAudioMeta), Map("file" -> sampleUploadFile)) {
+    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile)) {
       status should equal (200)
     }
   }
 
   test("That POST / returns 413 if file is too big") {
     val content: Array[Byte] = Array.fill(MaxImageFileSizeBytes + 1) { 0 }
-    post("/", Map("metadata" -> sampleNewAudioMeta), Map("file" -> sampleUploadFile.copy(content))) {
+    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile.copy(content))) {
       status should equal (413)
     }
   }
@@ -81,7 +81,7 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
   test("That POST / returns 500 if an unexpected error occurs") {
     when(writeService.storeNewImage(any[NewImageMetaInformation], any[FileItem])).thenReturn(Failure(mock[RuntimeException]))
 
-    post("/", Map("metadata" -> sampleNewAudioMeta), Map("file" -> sampleUploadFile)) {
+    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile)) {
       status should equal (500)
     }
   }

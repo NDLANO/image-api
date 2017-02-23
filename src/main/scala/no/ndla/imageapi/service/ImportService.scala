@@ -71,6 +71,14 @@ trait ImportService {
         captions :+ translation.caption.map(x => domain.ImageCaption(x, transLang)))
       })
 
+      val sourceUrlFull = DownloadUrlPrefix + imageMeta.mainImage.originalFile
+      val key = imageMeta.mainImage.originalFile
+      val image = domain.Image(key, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
+
+      if (!imageStorage.objectExists(key) || imageStorage.objectSize(key) != image.size) {
+        imageStorage.uploadFromUrl(image, key, sourceUrlFull)
+      }
+
       val persistedImageMetaInformation = imageRepository.withExternalId(imageMeta.mainImage.nid) match {
         case Some(dbMeta) => {
           val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts.flatten, dbMeta.imageUrl, dbMeta.size, dbMeta.contentType, copyright, tags, captions.flatten), dbMeta.id.get)
@@ -78,15 +86,7 @@ trait ImportService {
           updated
         }
         case None => {
-          val sourceUrlFull = DownloadUrlPrefix + imageMeta.mainImage.originalFile
-
-          val key = imageMeta.mainImage.originalFile
-          val image = domain.Image(key, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
-
           val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, image.fileName, image.size, image.contentType, copyright, tags, captions.flatten)
-
-          if (!imageStorage.objectExists(key)) imageStorage.uploadFromUrl(image, key, sourceUrlFull)
-
           val inserted = imageRepository.insertWithExternalId(imageMetaInformation, imageMeta.mainImage.nid)
           logger.info(s"Inserted ID = ${inserted.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
           inserted

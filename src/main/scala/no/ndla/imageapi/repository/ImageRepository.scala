@@ -73,6 +73,10 @@ trait ImageRepository {
       }
     }
 
+    def delete(imageId: Long)(implicit session: DBSession = AutoSession) = {
+      sql"delete from imagemetadata where id = ${imageId}".update.apply
+    }
+
     def minMaxId: (Long, Long) = {
       DB readOnly { implicit session =>
         sql"select coalesce(MIN(id),0) as mi, coalesce(MAX(id),0) as ma from imagemetadata".map(rs => {

@@ -24,22 +24,33 @@ trait WriteService {
         case _ =>
       }
 
-      val uploadedImage = uploadImage(file) match {
+      val domainImage = uploadImage(file).map(uploadedImage =>
+          converterService.asDomainImageMetaInformation(newImage, uploadedImage)) match {
         case Failure(e) => return Failure(e)
         case Success(image) => image
       }
 
-      val imageMetaInformation = for {
-        imageMeta <- Try(converterService.asDomainImageMetaInformation(newImage, uploadedImage))
-        _ <- validationService.validate(imageMeta)
-        r <- Try(imageRepository.insert(imageMeta))
-        _ <- indexService.indexDocument(r)
-      } yield converterService.asApiImageMetaInformationWithApplicationUrl(r)
+      validationService.validate(domainImage) match {
+        case Failure(e) =>
+          imageStorage.deleteObject(domainImage.imageUrl)
+          return Failure(e)
+        case _ =>
+      }
 
-      if (imageMetaInformation.isFailure)
-        imageStorage.deleteObject(uploadedImage.fileName)
+      val imageMeta = Try(imageRepository.insert(domainImage)) match {
+        case Success(meta) => meta
+        case Failure(e) =>
+          imageStorage.deleteObject(domainImage.imageUrl)
+          return Failure(e)
+      }
 
-      imageMetaInformation
+      indexService.indexDocument(imageMeta) match {
+        case Success(_) => Success(converterService.asApiImageMetaInformationWithApplicationUrl(imageMeta))
+        case Failure(e) =>
+          imageStorage.deleteObject(domainImage.imageUrl)
+          imageRepository.delete(imageMeta.id.get)
+          Failure(e)
+      }
     }
 
     private[service] def getFileExtension(fileName: String): Option[String] = {

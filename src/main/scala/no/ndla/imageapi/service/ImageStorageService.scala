@@ -49,6 +49,10 @@ trait ImageStorageService {
       Try(amazonClient.doesObjectExist(StorageName, storageKey)).getOrElse(false)
     }
 
+    def objectSize(storageKey: String): Long = {
+      Try(amazonClient.getObjectMetadata(StorageName, storageKey)).map(_.getContentLength).getOrElse(0)
+    }
+
     def deleteObject(storageKey: String): Try[_] = Try(amazonClient.deleteObject(StorageName, storageKey))
 
     def createBucket: Bucket =  amazonClient.createBucket(new CreateBucketRequest(StorageName))

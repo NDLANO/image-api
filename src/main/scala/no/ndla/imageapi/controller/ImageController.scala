@@ -120,8 +120,8 @@ trait ImageController {
     post("/") {
       val newImage = params.get("metadata")
         .map(extract[NewImageMetaInformation])
-        .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain audio metadata"))))
-      val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain one or more files"))))
+        .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
+      val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
 
       writeService.storeNewImage(newImage, file) match {
         case Success(imageMeta) => imageMeta

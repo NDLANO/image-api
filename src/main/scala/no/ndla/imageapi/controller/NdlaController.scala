@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKey}
+import no.ndla.imageapi.model.api.ValidationError
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.model.{Error, ImageNotFoundException, ValidationException, ValidationMessage}
 import no.ndla.network.{ApplicationUrl, CorrelationID}
@@ -40,7 +41,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   }
 
   error {
-    case v: ValidationException => BadRequest(Error(Error.VALIDATION, v.getMessage))
+    case v: ValidationException => BadRequest(body=ValidationError(messages=v.errors))
     case e: IndexNotFoundException => InternalServerError(Error.IndexMissingError)
     case i: ImageNotFoundException => NotFound(Error(Error.NOT_FOUND, i.getMessage))
     case _: SizeConstraintExceededException =>
