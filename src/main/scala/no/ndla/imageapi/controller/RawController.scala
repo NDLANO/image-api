@@ -17,21 +17,25 @@ trait RawController {
   class RawController extends NdlaController {
     get("/:name")(getRaw)
 
-    @ApiOperation(nickname = "/{name}", httpMethod = "get", value = "Fetches a raw image", notes = "Fetches an image with options to resize and crop", tags = Array("ImageApi-V1"))
+    @ApiOperation(nickname = "/{name}", httpMethod = "get", value = "Fetches a raw image", notes = "Fetches an image with options to resize and crop", tags = Array("ImageApi-V1"), produces = "application/octet-stream")
     @ApiImplicitParams(value = Array(
       new ApiImplicitParam(name = "X-Correlation-ID", value = "User supplied correlation-id. May be omitted.", dataType = "string", paramType = "header"),
       new ApiImplicitParam(name = "name", value = "The name of the image", dataType = "string", paramType = "path"),
-      new ApiImplicitParam(name = "width", value = "The target width to resize the image. Image proportions are kept intact.", dataType = "Integer", paramType = "query"),
-      new ApiImplicitParam(name = "height", value = "The target height to resize the image. Image proportions are kept intact", dataType = "Integer", paramType = "query"),
+      new ApiImplicitParam(name = "width", value = "The target width to resize the image. Image proportions are kept intact.", dataType = "integer", paramType = "query"),
+      new ApiImplicitParam(name = "height", value = "The target height to resize the image. Image proportions are kept intact", dataType = "integer", paramType = "query"),
       new ApiImplicitParam(name = "cropStart", value = "The first image coordinate (X,Y) specifying the crop start position. The coordinate is a comma separated value of the form column,row (e.g 100,10). If cropStart is specified cropEnd must also be specified", dataType = "string", paramType = "query"),
-      new ApiImplicitParam(name = "cropEnd", value = "The second image coordinate (X,Y) specifying the crop end position, forming a square cutout. The coordinate is a comma separated value of the form column,row (e.g 200,100). If cropEnd is specified cropStart must also be specified", dataType = "integer", paramType = "query")))
+      new ApiImplicitParam(name = "cropEnd", value = "The second image coordinate (X,Y) specifying the crop end position, forming a square cutout. The coordinate is a comma separated value of the form column,row (e.g 200,100). If cropEnd is specified cropStart must also be specified", dataType = "string", paramType = "query")))
     @ApiResponses(Array(
+      new ApiResponse(code = 200, message = "OK", response = classOf[java.io.File]),
       new ApiResponse(code = 404, message = "Not found", response = classOf[api.Error]),
       new ApiResponse(code = 500, message = "Internal server error", response = classOf[api.Error])))
     private def getRaw(implicit request: HttpServletRequest) = {
       val imageName = params("name")
       imageStorage.get(imageName).flatMap(crop).flatMap(resize) match {
-        case Success(img) => img
+        case Success(img) =>
+          contentType = img.contentType
+          org.scalatra.util.io.copy(img.stream, response.getOutputStream)
+
         case Failure(_) => errorHandler(new ImageNotFoundException(s"image $imageName does not exist"))
       }
     }

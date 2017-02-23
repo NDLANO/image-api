@@ -9,8 +9,7 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
-import io.swagger.servlet.listing.ApiDeclarationServlet
-import no.ndla.imageapi.swagger.{SwaggerInfo, SwaggerScanner}
+import no.ndla.imageapi.swagger.{ApiDeclarationServlet, SwaggerInfo, SwaggerScanner}
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.{DefaultServlet, ServletContextHandler}
 import org.scalatra.servlet.ScalatraListener
