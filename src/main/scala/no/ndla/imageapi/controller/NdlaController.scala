@@ -11,6 +11,7 @@ package no.ndla.imageapi.controller
 import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.model.{api}
 import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKey}
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.model.{Error, ImageNotFoundException, ValidationException}
@@ -20,6 +21,7 @@ import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra._
+
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
   protected implicit override val jsonFormats: Formats = DefaultFormats
@@ -39,9 +41,9 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   }
 
   error {
-    case v: ValidationException => BadRequest(Error(Error.VALIDATION, v.getMessage))
+    case v: ValidationException => BadRequest(api.Error(Error.VALIDATION, v.getMessage))
     case e: IndexNotFoundException => InternalServerError(Error.IndexMissingError)
-    case i: ImageNotFoundException => NotFound(Error(Error.NOT_FOUND, i.getMessage))
+    case i: ImageNotFoundException => NotFound(api.Error(Error.NOT_FOUND, i.getMessage))
     case t: Throwable => {
       logger.error(Error.GenericError.toString, t)
       halt(status = 500, body = Error.GenericError)

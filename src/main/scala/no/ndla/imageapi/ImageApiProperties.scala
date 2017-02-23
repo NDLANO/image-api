@@ -21,6 +21,7 @@ object ImageApiProperties extends LazyLogging {
   val SecretsFile = "image-api.secrets"
 
   val ApplicationPort = 80
+  val ContactName = "Christer Gundersen"
   val ContactEmail = "christergundersen@ndla.no"
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
@@ -44,7 +45,7 @@ object ImageApiProperties extends LazyLogging {
 
   val StorageName = s"$Environment.images.ndla"
 
-  val SearchIndex = "images"
+  lazy val SearchIndex = propOrElse("SEARCH_ALIAS", "images")
   val SearchDocument = "image"
   val DefaultPageSize: Int = 10
   val MaxPageSize: Int = 100

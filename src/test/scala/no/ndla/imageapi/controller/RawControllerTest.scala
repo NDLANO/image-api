@@ -4,7 +4,7 @@ import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 
 import no.ndla.imageapi.TestData.NdlaLogoImage
-import no.ndla.imageapi.{ImageSwagger, TestEnvironment, UnitSuite}
+import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatra.test.scalatest.ScalatraSuite
@@ -12,7 +12,6 @@ import org.scalatra.test.scalatest.ScalatraSuite
 import scala.util.Success
 
 class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironment {
-  implicit val swagger = new ImageSwagger
   val imageName = "ndla_logo.jpg"
 
   override val imageConverter = new ImageConverter

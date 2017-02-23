@@ -39,7 +39,6 @@ object ComponentRegistry
   with HealthController
   with ImageConverter
 {
-  implicit val swagger = new ImageSwagger
 
   val dataSource = new PGPoolingDataSource()
   dataSource.setUser(ImageApiProperties.MetaUserName)
@@ -65,7 +64,6 @@ object ComponentRegistry
   lazy val rawController = new RawController
   lazy val internController = new InternController
   lazy val healthController = new HealthController
-  lazy val resourcesApp = new ResourcesApp
   lazy val converterService = new ConverterService
   lazy val tagsService = new TagsService
   lazy val jestClient = JestClientFactory.getClient()

@@ -30,7 +30,7 @@ lazy val image_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
-      "ndla" %% "network" % "0.7",
+      "ndla" %% "network" % "0.11",
       "ndla" %% "mapping" % "0.2",
       "joda-time" % "joda-time" % "2.8.2",
       "org.scalatra" %% "scalatra" % Scalatraversion,
@@ -54,11 +54,12 @@ lazy val image_api = (project in file(".")).
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
       "org.flywaydb" % "flyway-core" % "4.0",
       "io.searchbox" % "jest" % "2.0.0",
-      "org.elasticsearch" % "elasticsearch" % "2.3.3",
       "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0",
       "org.elasticsearch" % "elasticsearch" % "2.3.3" % "test",
       "org.apache.lucene" % "lucene-test-framework" % "5.5.0" % "test",
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.14",
+      "io.swagger" %% "swagger-scala-module" % "1.0.3",
+      "io.swagger" % "swagger-servlet" % "1.5.12",
       "org.imgscalr" % "imgscalr-lib" % "4.2"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
@@ -76,7 +77,7 @@ assemblyMergeStrategy in assembly := {
 }
 
 // Don't run Integration tests in default run
-testOptions in Test += Tests.Argument("-l", "no.ndla.IntegrationTest")
+testOptions in Test += Tests.Argument("-l", "no.ndla.imageapi.IntegrationTest")
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker <<= (docker dependsOn assembly)

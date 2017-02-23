@@ -2,11 +2,10 @@ package no.ndla.imageapi.controller
 
 import javax.servlet.http.HttpServletRequest
 
-import no.ndla.imageapi.model.ImageNotFoundException
-import no.ndla.imageapi.model.api.ImageMetaInformation
+import io.swagger.annotations._
 import no.ndla.imageapi.model.domain.ImageStream
+import no.ndla.imageapi.model.{ImageNotFoundException, api}
 import no.ndla.imageapi.service.{ImageConverter, ImageStorageService}
-import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 import scala.util.{Failure, Success, Try}
 
@@ -14,39 +13,29 @@ trait RawController {
   this: ImageStorageService with ImageConverter =>
   val rawController: RawController
 
-  class RawController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
-    protected val applicationDescription = "API for accessing image files from ndla.no."
+  @Api(value = "/image-api/v1/raw", authorizations = Array(new Authorization(value = "imageapi_auth")))
+  class RawController extends NdlaController {
+    get("/:name")(getRaw)
 
-    registerModel[Error]()
-
-    val response404 = ResponseMessage(404, "Not found", Some("Error"))
-    val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
-
-    val getImageFile =
-      (apiOperation[ImageMetaInformation]("getImageFile")
-        summary "Fetches a raw image"
-        notes "Fetches an image with options to resize and crop"
-        parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        pathParam[String]("name").description("The name of the image"),
-        queryParam[Option[Int]]("width").description("The target width to resize the image. Image proportions are kept intact"),
-        queryParam[Option[Int]]("height").description("The target height to resize the image. Image proportions are kept intact"),
-        queryParam[Option[String]]("cropStart").description(
-          """The first image coordinate (X,Y) specifying the crop start position.
-            |The coordinate is a comma separated value of the form column,row (e.g 100,10).
-            |If cropStart is specified cropEnd must also be specified""".stripMargin),
-        queryParam[Option[String]]("cropEnd").description(
-          """The second image coordinate (X,Y) specifying the crop end position, forming a square cutout.
-            |The coordinate is a comma separated value of the form column,row (e.g 200,100).
-            |If cropEnd is specified cropStart must also be specified""".stripMargin)
-        )
-        responseMessages(response404, response500))
-
-    get("/:name", operation(getImageFile)) {
+    @ApiOperation(nickname = "/{name}", httpMethod = "get", value = "Fetches a raw image", notes = "Fetches an image with options to resize and crop", tags = Array("ImageApi-V1"), produces = "application/octet-stream")
+    @ApiImplicitParams(value = Array(
+      new ApiImplicitParam(name = "X-Correlation-ID", value = "User supplied correlation-id. May be omitted.", dataType = "string", paramType = "header"),
+      new ApiImplicitParam(name = "name", value = "The name of the image", dataType = "string", paramType = "path"),
+      new ApiImplicitParam(name = "width", value = "The target width to resize the image. Image proportions are kept intact.", dataType = "integer", paramType = "query"),
+      new ApiImplicitParam(name = "height", value = "The target height to resize the image. Image proportions are kept intact", dataType = "integer", paramType = "query"),
+      new ApiImplicitParam(name = "cropStart", value = "The first image coordinate (X,Y) specifying the crop start position. The coordinate is a comma separated value of the form column,row (e.g 100,10). If cropStart is specified cropEnd must also be specified", dataType = "string", paramType = "query"),
+      new ApiImplicitParam(name = "cropEnd", value = "The second image coordinate (X,Y) specifying the crop end position, forming a square cutout. The coordinate is a comma separated value of the form column,row (e.g 200,100). If cropEnd is specified cropStart must also be specified", dataType = "string", paramType = "query")))
+    @ApiResponses(Array(
+      new ApiResponse(code = 200, message = "OK", response = classOf[java.io.File]),
+      new ApiResponse(code = 404, message = "Not found", response = classOf[api.Error]),
+      new ApiResponse(code = 500, message = "Internal server error", response = classOf[api.Error])))
+    private def getRaw(implicit request: HttpServletRequest) = {
       val imageName = params("name")
       imageStorage.get(imageName).flatMap(crop).flatMap(resize) match {
-        case Success(img) => img
+        case Success(img) =>
+          contentType = img.contentType
+          org.scalatra.util.io.copy(img.stream, response.getOutputStream)
+
         case Failure(_) => errorHandler(new ImageNotFoundException(s"image $imageName does not exist"))
       }
     }
