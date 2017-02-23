@@ -27,6 +27,8 @@ object ImageApiProperties extends LazyLogging {
   val CorrelationIdHeader = "X-Correlation-ID"
   val HealthControllerPath = "/health"
   val ImageApiBasePath = "/image-api/v1"
+  val ImageControllerPath = s"$ImageApiBasePath/images"
+  val RawControllerPath = s"$ImageApiBasePath/raw"
 
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
@@ -60,7 +62,7 @@ object ImageApiProperties extends LazyLogging {
   val MigrationPassword = prop("MIGRATION_PASSWORD")
 
   val Domain = Domains.get(Environment)
-  val ImageUrlBase = Domain + "/image-api/v1/images" + "/"
+  val ImageUrlBase = Domain + ImageControllerPath + "/"
 
   lazy val secrets = readSecrets(SecretsFile) match {
      case Success(values) => values
