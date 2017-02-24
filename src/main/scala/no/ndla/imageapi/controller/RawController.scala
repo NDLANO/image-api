@@ -47,7 +47,7 @@ trait RawController {
       val imageName = params("name")
       imageStorage.get(imageName).flatMap(crop).flatMap(resize) match {
         case Success(img) => img
-        case Failure(_) => errorHandler(new ImageNotFoundException(s"image $imageName does not exist"))
+        case Failure(e) => throw e
       }
     }
 
@@ -59,10 +59,10 @@ trait RawController {
     }
 
     def resize(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
-      extractIntOpts("width", "height") match {
-        case Seq(Some(width), _) => imageConverter.resizeWidth(image, width)
-        case Seq(_, Some(height)) => imageConverter.resizeHeight(image, height)
-        case Seq(Some(width), Some(height)) => imageConverter.resize(image, width, height)
+      extractDoubleOpts("width", "height") match {
+        case Seq(Some(width), _) => imageConverter.resizeWidth(image, width.toInt)
+        case Seq(_, Some(height)) => imageConverter.resizeHeight(image, height.toInt)
+        case Seq(Some(width), Some(height)) => imageConverter.resize(image, width.toInt, height.toInt)
         case _ => Success(image)
       }
     }
