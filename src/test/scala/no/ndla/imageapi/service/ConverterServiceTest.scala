@@ -19,7 +19,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   override val converterService = new ConverterService
 
-  val full = Image("full/123.png", 200, "image/png")
+  val full = Image("123.png", 200, "image/png")
   val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(), List(), full.fileName, full.size, full.contentType, Copyright(License("", "", None), "", List()), List(), List())
 
   override def beforeEach = {
@@ -39,13 +39,13 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   test("That asApiImageMetaInformationWithApplicationUrl returns links with applicationUrl") {
     val api = converterService.asApiImageMetaInformationWithApplicationUrl(DefaultImageMetaInformation)
     api.metaUrl should equal ("http://image-api/v1/images/1")
-    api.imageUrl should equal ("http://image-api/v1/images/full/123.png")
+    api.imageUrl should equal ("http://image-api/v1/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrl returns links with domain urls") {
     val api = converterService.asApiImageMetaInformationWithDomainUrl(DefaultImageMetaInformation)
-    api.metaUrl should equal (s"${ImageApiProperties.ImageUrlBase}1")
-    api.imageUrl should equal (s"${ImageApiProperties.ImageUrlBase}full/123.png")
+    api.metaUrl should equal (s"${ImageApiProperties.ImageApiUrlBase}1")
+    api.imageUrl should equal (s"${ImageApiProperties.RawImageUrlBase}123.png")
   }
 
 }

@@ -15,9 +15,10 @@ import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.StorageName
 import no.ndla.imageapi.integration.AmazonClient
+import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.model.domain.{Image, ImageStream}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait ImageStorageService {
   this: AmazonClient =>
@@ -30,7 +31,10 @@ trait ImageStorageService {
     }
 
     def get(imageKey: String): Try[ImageStream] = {
-      Try(amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))).map(s3Object => NdlaImage(s3Object, imageKey))
+      Try(amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))).map(s3Object => NdlaImage(s3Object, imageKey)) match {
+        case Success(e) => Success(e)
+        case Failure(e) => Failure(new ImageNotFoundException(s"Image $imageKey does not exist"))
+      }
     }
 
     def uploadFromUrl(image: Image, storageKey: String, urlOfImage: String): Try[_] = {

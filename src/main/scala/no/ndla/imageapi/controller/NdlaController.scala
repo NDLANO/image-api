@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKey}
-import no.ndla.imageapi.model.api.ValidationError
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.model.{Error, ImageNotFoundException, ValidationException, ValidationMessage}
 import no.ndla.network.{ApplicationUrl, CorrelationID}
@@ -22,6 +21,9 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.servlet.SizeConstraintExceededException
 import org.scalatra.{BadRequest, InternalServerError, RequestEntityTooLarge, ScalatraServlet, _}
+
+import scala.util.Try
+import no.ndla.imageapi.model.api.ValidationError
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
   protected implicit override val jsonFormats: Formats = DefaultFormats
@@ -61,24 +63,26 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
 
   override def renderPipeline = streamRenderer orElse super.renderPipeline
 
-  def isNumber(value: String): Boolean = value.forall(_.isDigit)
+  def isInteger(value: String): Boolean = value.forall(_.isDigit)
+
+  def isDouble(value: String): Boolean = Try(value.toDouble).isSuccess
 
   def long(paramName: String)(implicit request: HttpServletRequest): Long = {
     val paramValue = params(paramName)
-    if (!isNumber(paramValue))
+    if (!isInteger(paramValue))
       throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only digits are allowed.")))
 
     paramValue.toLong
   }
 
-  def extractIntOpts(paramNames: String*)(implicit request: HttpServletRequest): Seq[Option[Int]] = {
+  def extractDoubleOpts(paramNames: String*)(implicit request: HttpServletRequest): Seq[Option[Double]] = {
     paramNames.map(paramName => {
       params.get(paramName) match {
         case Some(value) =>
-          if (!isNumber(value))
-            throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only digits are allowed.")))
+          if (!isDouble(value))
+            throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only numbers are allowed.")))
 
-          Some(value.toInt)
+          Some(value.toDouble)
         case _ => None
       }
     })
@@ -87,7 +91,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   def paramAsListOfInt(paramName: String)(implicit request: HttpServletRequest): List[Int] = {
     params.get(paramName).map(param => {
       val paramAsListOfStrings = param.split(",").toList.map(_.trim)
-      if (!paramAsListOfStrings.forall(isNumber))
+      if (!paramAsListOfStrings.forall(isInteger))
         throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only (list of) digits are allowed.")))
 
       paramAsListOfStrings.map(_.toInt)

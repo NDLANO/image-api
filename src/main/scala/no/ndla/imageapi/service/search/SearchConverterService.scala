@@ -32,7 +32,7 @@ trait SearchConverterService {
     def asImageMetaSummary(searchableImage: SearchableImage): ImageMetaSummary = {
       ImageMetaSummary(
         id = searchableImage.id.toString,
-        previewUrl = ApplicationUrl.get + searchableImage.previewUrl,
+        previewUrl = ApplicationUrl.get.replace("/images/", "/raw/") + searchableImage.previewUrl,
         metaUrl = ApplicationUrl.get + searchableImage.id,
         license = searchableImage.license)
     }

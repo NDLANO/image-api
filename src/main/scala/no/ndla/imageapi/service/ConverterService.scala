@@ -35,20 +35,21 @@ trait ConverterService {
     }
 
     def asApiImageMetaInformationWithApplicationUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      asApiImageMetaInformation(domainImageMetaInformation, Some(ApplicationUrl.get))
+      val rawPath = ApplicationUrl.get.replace("/images/", "/raw/")
+      asApiImageMetaInformation(domainImageMetaInformation, Some(ApplicationUrl.get), Some(rawPath))
     }
 
     def asApiImageMetaInformationWithDomainUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      asApiImageMetaInformation(domainImageMetaInformation, Some(ImageApiProperties.ImageUrlBase))
+      asApiImageMetaInformation(domainImageMetaInformation, Some(ImageApiProperties.ImageApiUrlBase), Some(ImageApiProperties.RawImageUrlBase))
     }
 
-    def asApiImageMetaInformation(domainImageMetaInformation: domain.ImageMetaInformation, baseUrl: Option[String] = None): api.ImageMetaInformation = {
+    private def asApiImageMetaInformation(domainImageMetaInformation: domain.ImageMetaInformation, apiBaseUrl: Option[String] = None, rawImageBaseUrl: Option[String] = None): api.ImageMetaInformation = {
       api.ImageMetaInformation(
         domainImageMetaInformation.id.get.toString,
-        baseUrl.getOrElse("") + domainImageMetaInformation.id.get,
+        apiBaseUrl.getOrElse("") + domainImageMetaInformation.id.get,
         domainImageMetaInformation.titles.map(asApiImageTitle),
         domainImageMetaInformation.alttexts.map(asApiImageAltText),
-        asApiUrl(domainImageMetaInformation.imageUrl, baseUrl),
+        asApiUrl(domainImageMetaInformation.imageUrl, rawImageBaseUrl),
         domainImageMetaInformation.size,
         domainImageMetaInformation.contentType,
         asApiCopyright(domainImageMetaInformation.copyright),
