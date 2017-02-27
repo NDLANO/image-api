@@ -8,16 +8,15 @@
 
 package no.ndla.imageapi.service
 
-import java.io.{ByteArrayInputStream, File, InputStream}
+import java.io.InputStream
 import java.net.URL
 
-import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.integration.AmazonClient
-import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, ImageStream}
 import no.ndla.imageapi.ImageApiProperties.StorageName
+import no.ndla.imageapi.integration.AmazonClient
 import no.ndla.imageapi.model.ImageNotFoundException
+import no.ndla.imageapi.model.domain.{Image, ImageStream}
 
 import scala.util.{Failure, Success, Try}
 
@@ -38,50 +37,30 @@ trait ImageStorageService {
       }
     }
 
-    def upload(imageMetaInformation: ImageMetaInformation, imageDirectory: String) = {
-      amazonClient.putObject(new PutObjectRequest(StorageName, imageMetaInformation.imageUrl, new File(imageDirectory + imageMetaInformation.imageUrl)))
+    def uploadFromUrl(image: Image, storageKey: String, urlOfImage: String): Try[_] = {
+      uploadFromStream(new URL(urlOfImage).openStream(), storageKey, image.contentType, image.size)
     }
 
-    def uploadFromByteArray(image: Image, storageKey: String, bytes: Array[Byte]): Unit = {
+    def uploadFromStream(stream: InputStream, storageKey: String, contentType: String, size: Long): Try[String] = {
       val metadata = new ObjectMetadata()
-      metadata.setContentType(image.contentType)
-      metadata.setContentLength(image.size.toLong)
+      metadata.setContentType(contentType)
+      metadata.setContentLength(size)
 
-      val request = new PutObjectRequest(StorageName, storageKey, new ByteArrayInputStream(bytes), metadata)
-      val putResult = amazonClient.putObject(request)
+      Try(amazonClient.putObject(new PutObjectRequest(StorageName, storageKey, stream, metadata))).map(_ => storageKey)
     }
 
-    def uploadFromUrl(image: Image, storageKey: String, urlOfImage: String): Unit = {
-      val imageStream = new URL(urlOfImage).openStream()
-      val metadata = new ObjectMetadata()
-      metadata.setContentType(image.contentType)
-      metadata.setContentLength(image.size.toLong)
-
-      val request = new PutObjectRequest(StorageName, storageKey, imageStream, metadata)
-      val putResult = amazonClient.putObject(request)
+    def objectExists(storageKey: String): Boolean = {
+      Try(amazonClient.doesObjectExist(StorageName, storageKey)).getOrElse(false)
     }
 
-    def contains(storageKey: String): Boolean = {
-      try {
-        val s3Object = Option(amazonClient.getObject(new GetObjectRequest(StorageName, storageKey)))
-        s3Object match {
-          case Some(obj) => {
-            obj.close()
-            true
-          }
-          case None => false
-        }
-      } catch {
-        case ase: AmazonServiceException => if (ase.getErrorCode == "NoSuchKey") false else throw ase
-      }
+    def objectSize(storageKey: String): Long = {
+      Try(amazonClient.getObjectMetadata(StorageName, storageKey)).map(_.getContentLength).getOrElse(0)
     }
 
-    def create() = {
-      amazonClient.createBucket(new CreateBucketRequest(StorageName))
-    }
+    def deleteObject(storageKey: String): Try[_] = Try(amazonClient.deleteObject(StorageName, storageKey))
 
-    def exists(): Boolean = {
-      amazonClient.doesBucketExist(StorageName)
-    }
+    def createBucket: Bucket =  amazonClient.createBucket(new CreateBucketRequest(StorageName))
+
+    def bucketExists: Boolean = amazonClient.doesBucketExist(StorageName)
   }
 }

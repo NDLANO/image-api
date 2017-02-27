@@ -59,7 +59,8 @@ lazy val image_api = (project in file(".")).
       "org.elasticsearch" % "elasticsearch" % "2.3.3" % "test",
       "org.apache.lucene" % "lucene-test-framework" % "5.5.0" % "test",
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.14",
-      "org.imgscalr" % "imgscalr-lib" % "4.2"
+      "org.imgscalr" % "imgscalr-lib" % "4.2",
+      "org.jsoup" % "jsoup" % "1.7.3"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 

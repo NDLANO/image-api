@@ -32,6 +32,8 @@ object ImageApiProperties extends LazyLogging {
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
 
+  val MaxImageFileSizeBytes = 1024 * 1024 * 40 // 40 MiB
+
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
   val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
