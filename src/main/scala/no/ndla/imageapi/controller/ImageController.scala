@@ -117,7 +117,7 @@ trait ImageController {
       }
     }
 
-    post("/") {
+    post("/", operation(newImage)) {
       val newImage = params.get("metadata")
         .map(extract[NewImageMetaInformation])
         .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
