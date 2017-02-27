@@ -9,11 +9,13 @@
 package no.ndla.imageapi.service
 
 import java.io.InputStream
+import javax.servlet.http.HttpServletRequest
 
 import no.ndla.imageapi.model.ValidationException
 import no.ndla.imageapi.model.api._
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
 import no.ndla.imageapi.{TestEnvironment, UnitSuite}
+import no.ndla.network.ApplicationUrl
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatra.servlet.FileItem
@@ -42,6 +44,12 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(fileMock1.get).thenReturn(Array[Byte](-1, -40, -1))
     when(fileMock1.size).thenReturn(1024)
     when(fileMock1.name).thenReturn("file.jpg")
+
+    val applicationUrl = mock[HttpServletRequest]
+    when(applicationUrl.getHeader(any[String])).thenReturn("http")
+    when(applicationUrl.getServerName).thenReturn("localhost")
+    when(applicationUrl.getServletPath).thenReturn("/image-api/v1/images/")
+    ApplicationUrl.set(applicationUrl)
 
     reset(imageRepository, indexService, imageStorage)
     when(imageRepository.insert(any[ImageMetaInformation])(any[DBSession])).thenReturn(domainImageMeta.copy(id=Some(1)))
