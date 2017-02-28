@@ -19,5 +19,5 @@ case class SearchableImage (id: Long,
                             captions: SearchableLanguageValues,
                             tags: SearchableLanguageList,
                             license: String,
-                            imageSize: Int,
+                            imageSize: Long,
                             previewUrl: String)

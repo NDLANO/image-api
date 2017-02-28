@@ -8,28 +8,38 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.model.Error
-import no.ndla.imageapi.model.Error._
-import no.ndla.imageapi.model.api.{ImageMetaInformation, SearchResult}
+import java.io.File
+
+import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
+import no.ndla.imageapi.model.api.{ImageMetaInformation, NewImageMetaInformation, SearchResult}
+import no.ndla.imageapi.model.{Error, ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.SearchService
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
+import no.ndla.imageapi.service.{ConverterService, WriteService}
+import org.json4s.native.Serialization.read
+import org.json4s.{DefaultFormats, Formats}
+import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
+import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait ImageController {
-  this: ImageRepository with SearchService with ConverterService with ImageStorageService =>
+  this: ImageRepository with SearchService with ConverterService with WriteService =>
   val imageController: ImageController
 
-  class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
+  class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
     // Swagger-stuff
     protected val applicationDescription = "API for accessing images from ndla.no."
+    protected implicit override val jsonFormats: Formats = DefaultFormats
 
     // Additional models used in error responses
     registerModel[Error]()
 
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
+    val response400 = ResponseMessage(400, "Validation error", Some("Error"))
+    val response413 = ResponseMessage(413, "File too big", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
     val getImages =
@@ -58,6 +68,20 @@ trait ImageController {
         pathParam[String]("image_id").description("Image_id of the image that needs to be fetched.")
         )
         responseMessages(response404, response500))
+
+    val newImage =
+      (apiOperation[ImageMetaInformation]("newImage")
+        summary "Upload a new image file with meta data"
+        notes "Upload a new image file with meta data"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
+        formParam[NewImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
+        formParam[File]("file").description("The image file(s) to upload.")
+      )
+      responseMessages(response400, response413, response500))
+
+    configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
     get("/", operation(getImages)) {
       val minimumSize = params.get("minimum-size")
@@ -89,7 +113,28 @@ trait ImageController {
       val imageId = long("image_id")
       imageRepository.withId(imageId) match {
         case Some(image) => converterService.asApiImageMetaInformationWithApplicationUrl(image)
-        case None => halt(status = 404, body = Error(NOT_FOUND, s"Image with id $imageId not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId not found"))
+      }
+    }
+
+    post("/", operation(newImage)) {
+      val newImage = params.get("metadata")
+        .map(extract[NewImageMetaInformation])
+        .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
+      val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
+
+      writeService.storeNewImage(newImage, file) match {
+        case Success(imageMeta) => imageMeta
+        case Failure(e) => errorHandler(e)
+      }
+    }
+
+    def extract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): T = {
+      Try(read[T](json)) match {
+        case Success(data) => data
+        case Failure(e) =>
+          logger.error(e.getMessage, e)
+          throw new ValidationException(errors=Seq(ValidationMessage("body", e.getMessage)))
       }
     }
 

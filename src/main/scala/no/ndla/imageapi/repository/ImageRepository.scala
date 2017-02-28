@@ -39,7 +39,16 @@ trait ImageRepository {
       }
     }
 
-    def insert(imageMetaInformation: ImageMetaInformation, externalId: String): ImageMetaInformation = {
+    def insert(imageMeta: ImageMetaInformation)(implicit session: DBSession = AutoSession) = {
+      val dataObject = new PGobject()
+      dataObject.setType("jsonb")
+      dataObject.setValue(write(imageMeta))
+
+      val imageId = sql"insert into imagemetadata(metadata) values (${dataObject})".updateAndReturnGeneratedKey.apply
+      imageMeta.copy(id = Some(imageId))
+    }
+
+    def insertWithExternalId(imageMetaInformation: ImageMetaInformation, externalId: String): ImageMetaInformation = {
       val json = write(imageMetaInformation)
 
       val dataObject = new PGobject()
@@ -62,6 +71,10 @@ trait ImageRepository {
         sql"update imagemetadata set metadata = ${dataObject} where id = ${id}".update.apply
         imageMetaInformation.copy(id = Some(id))
       }
+    }
+
+    def delete(imageId: Long)(implicit session: DBSession = AutoSession) = {
+      sql"delete from imagemetadata where id = ${imageId}".update.apply
     }
 
     def minMaxId: (Long, Long) = {

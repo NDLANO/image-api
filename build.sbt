@@ -56,12 +56,12 @@ lazy val image_api = (project in file(".")).
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
       "org.flywaydb" % "flyway-core" % "4.0",
       "io.searchbox" % "jest" % "2.0.4",
-      "org.elasticsearch" % "elasticsearch" % "2.3.3",
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion % "test",
       "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
+      "org.jsoup" % "jsoup" % "1.7.3",
       "org.imgscalr" % "imgscalr-lib" % "4.2"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
