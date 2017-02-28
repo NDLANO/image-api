@@ -12,23 +12,22 @@ import javax.servlet.http.HttpServletRequest
 import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
 import no.ndla.imageapi.integration.JestClientFactory
 import no.ndla.imageapi.model.domain._
-import no.ndla.imageapi.{TestEnvironment, UnitSuite}
+import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.node.{Node, NodeBuilder}
 import no.ndla.network.ApplicationUrl
+import no.ndla.tag.IntegrationTest
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 
 import scala.reflect.io.Path
 import scala.util.Random
 
+@IntegrationTest
 class SearchServiceTest extends UnitSuite with TestEnvironment {
 
-  val esHttpPort = new Random(System.currentTimeMillis()).nextInt(30000 - 20000) + 20000
-  val esDataDir = "esTestData"
-  var esNode: Node = _
+  val esPort = 9200
 
-  override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esHttpPort")
+  override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esPort")
   override val searchConverterService = new SearchConverterService
   override val converterService = new ConverterService
   override val indexService = new IndexService
@@ -48,21 +47,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", None)), Seq(), smallImage.url, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq())
 
   override def beforeAll() = {
-    Path(esDataDir).deleteRecursively()
-    val settings = Settings.settingsBuilder()
-      .put("path.home", esDataDir)
-      .put("index.number_of_shards", "1")
-      .put("index.number_of_replicas", "0")
-      .put("http.port", esHttpPort)
-      .put("cluster.name", getClass.getName)
-      .build()
+    indexService.createIndexWithName(ImageApiProperties.SearchIndex)
 
-    esNode = new NodeBuilder().settings(settings).node()
-    esNode.start()
-
-
-    val indexName = indexService.createIndex().get
-    indexService.updateAliasTarget(None, indexName)
     indexService.indexDocument(image1)
     indexService.indexDocument(image2)
     indexService.indexDocument(image3)
@@ -78,8 +64,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   override def afterAll() = {
-    esNode.close()
-    Path(esDataDir).deleteRecursively()
+    indexService.deleteIndex(Some(ImageApiProperties.SearchIndex))
   }
 
   test("That getStartAtAndNumResults returns default values for None-input") {

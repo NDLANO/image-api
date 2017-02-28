@@ -57,7 +57,10 @@ trait IndexService {
     }
 
     def createIndex(): Try[String] = {
-      val indexName = ImageApiProperties.SearchIndex + "_" + getTimestamp
+      createIndexWithName(ImageApiProperties.SearchIndex + "_" + getTimestamp)
+    }
+
+    def createIndexWithName(indexName: String): Try[String] = {
       if (indexExists(indexName).getOrElse(false)) {
         Success(indexName)
       } else {

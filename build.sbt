@@ -61,7 +61,7 @@ lazy val image_api = (project in file(".")).
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion % "test",
       "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
-      "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.14",
+      "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
       "org.imgscalr" % "imgscalr-lib" % "4.2"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
@@ -78,8 +78,12 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
-// Don't run Integration tests in default run
-testOptions in Test += Tests.Argument("-l", "no.ndla.IntegrationTest")
+// Don't run Integration tests in default run on Travis as there is no elasticsearch localhost:9200 there yet.
+// NB this line will unfortunalty override runs on your local commandline so that
+// sbt "test-only -- -n no.ndla.tag.IntegrationTest"
+// will not run unless this line gets commented out or you remove the tag over the test class
+// This should be solved better!
+//testOptions in Test += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker <<= (docker dependsOn assembly)

@@ -44,7 +44,7 @@ object ImageApiProperties extends LazyLogging {
 
   val StorageName = s"$Environment.images.ndla"
 
-  val SearchIndex = "images"
+  lazy val SearchIndex = propOrElse("SEARCH_ALIAS", "images")
   val SearchDocument = "image"
   val DefaultPageSize: Int = 10
   val MaxPageSize: Int = 100
