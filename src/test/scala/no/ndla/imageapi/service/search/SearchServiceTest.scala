@@ -16,12 +16,14 @@ import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.node.{Node, NodeBuilder}
 import no.ndla.network.ApplicationUrl
+import no.ndla.tag.IntegrationTest
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 
 import scala.reflect.io.Path
 import scala.util.Random
 
+@IntegrationTest
 class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   val esHttpPort = new Random(System.currentTimeMillis()).nextInt(30000 - 20000) + 20000
