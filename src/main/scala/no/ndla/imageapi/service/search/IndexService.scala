@@ -144,7 +144,7 @@ trait IndexService {
     private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
       val languageSupportedField = new NestedFieldDefinition(fieldName)
       languageSupportedField._fields = keepRaw match {
-        case true => languageAnalyzers.map(langAnalyzer => textField(langAnalyzer.lang).fielddata(true) analyzer langAnalyzer.analyzer fields (textField("raw").fielddata(true) index "not_analyzed"))
+        case true => languageAnalyzers.map(langAnalyzer => textField(langAnalyzer.lang).fielddata(true) analyzer langAnalyzer.analyzer fields (keywordField("raw") index "not_analyzed"))
         case false => languageAnalyzers.map(langAnalyzer => textField(langAnalyzer.lang).fielddata(true) analyzer langAnalyzer.analyzer)
       }
 
