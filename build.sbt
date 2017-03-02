@@ -30,7 +30,7 @@ lazy val image_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
-      "ndla" %% "network" % "0.7",
+      "ndla" %% "network" % "0.16",
       "ndla" %% "mapping" % "0.2",
       "joda-time" % "joda-time" % "2.8.2",
       "org.scalatra" %% "scalatra" % Scalatraversion,
@@ -76,8 +76,13 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
-// Don't run Integration tests in default run
-testOptions in Test += Tests.Argument("-l", "no.ndla.IntegrationTest")
+
+// Don't run Integration tests in default run on Travis as there is no elasticsearch localhost:9200 there yet.
+// NB this line will unfortunalty override runs on your local commandline so that
+// sbt "test-only -- -n no.ndla.tag.IntegrationTest"
+// will not run unless this line gets commented out or you remove the tag over the test class
+// This should be solved better!
+testOptions in Test += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker <<= (docker dependsOn assembly)
