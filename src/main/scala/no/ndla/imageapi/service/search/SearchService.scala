@@ -57,10 +57,10 @@ trait SearchService {
 
     def languageSpecificSearch(searchField: String, language: Option[String], query: String): QueryBuilder = {
       language match {
-        case Some(lang) => QueryBuilders.nestedQuery(searchField, QueryBuilders.matchQuery(s"$searchField.$lang", query).operator(Operator.AND), ScoreMode.None)
+        case Some(lang) => QueryBuilders.nestedQuery(searchField, QueryBuilders.matchQuery(s"$searchField.$lang", query).operator(Operator.AND), ScoreMode.Avg)
         case None => {
           Language.supportedLanguages.foldLeft(QueryBuilders.boolQuery())((result, lang) => {
-            result.should(QueryBuilders.nestedQuery(searchField, QueryBuilders.matchQuery(s"$searchField.$lang", query).operator(Operator.AND), ScoreMode.None))
+            result.should(QueryBuilders.nestedQuery(searchField, QueryBuilders.matchQuery(s"$searchField.$lang", query).operator(Operator.AND), ScoreMode.Avg))
           })
         }
       }
