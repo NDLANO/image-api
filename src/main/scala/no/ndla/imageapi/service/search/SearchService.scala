@@ -16,9 +16,10 @@ import no.ndla.imageapi.integration.ElasticClient
 import no.ndla.imageapi.model.api.{ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
 import no.ndla.imageapi.model.{Language, NdlaSearchException}
+import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
-import org.elasticsearch.index.query.{BoolQueryBuilder, MatchQueryBuilder, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query._
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.sort.SortBuilders
 import org.json4s.native.Serialization.read
@@ -56,10 +57,10 @@ trait SearchService {
 
     def languageSpecificSearch(searchField: String, language: Option[String], query: String): QueryBuilder = {
       language match {
-        case Some(lang) => QueryBuilders.nestedQuery(searchField, QueryBuilders.matchQuery(s"$searchField.$lang", query).operator(MatchQueryBuilder.Operator.AND))
+        case Some(lang) => QueryBuilders.nestedQuery(searchField, QueryBuilders.matchQuery(s"$searchField.$lang", query).operator(Operator.AND), ScoreMode.Avg)
         case None => {
           Language.supportedLanguages.foldLeft(QueryBuilders.boolQuery())((result, lang) => {
-            result.should(QueryBuilders.nestedQuery(searchField, QueryBuilders.matchQuery(s"$searchField.$lang", query).operator(MatchQueryBuilder.Operator.AND)))
+            result.should(QueryBuilders.nestedQuery(searchField, QueryBuilders.matchQuery(s"$searchField.$lang", query).operator(Operator.AND), ScoreMode.Avg))
           })
         }
       }

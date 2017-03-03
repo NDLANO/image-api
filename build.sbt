@@ -1,13 +1,15 @@
 import java.util.Properties
 
-val Scalaversion = "2.11.8"
+val Scalaversion = "2.12.1"
 val Scalatraversion = "2.5.1-NDLA-2"
-val ScalaLoggingVersion = "3.1.0"
-val Log4JVersion = "2.6"
+val ScalaLoggingVersion = "3.5.0"
+val Log4JVersion = "2.7"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.11.46"
-val ScalaTestVersion = "2.2.4"
+val ScalaTestVersion = "3.0.1"
 val MockitoVersion = "1.10.19"
+val Elastic4sVersion = "5.2.8"
+val ElasticsearchVersion = "5.1.1"
 
 val appProperties = settingKey[Properties]("The application properties")
 
@@ -30,8 +32,8 @@ lazy val image_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
-      "ndla" %% "network" % "0.7",
-      "ndla" %% "mapping" % "0.2",
+      "ndla" %% "network" % "0.16",
+      "ndla" %% "mapping" % "0.4",
       "joda-time" % "joda-time" % "2.8.2",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
@@ -45,22 +47,22 @@ lazy val image_api = (project in file(".")).
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",
       "org.json4s"   %% "json4s-native" % "3.5.0",
-      "org.scalikejdbc" %% "scalikejdbc" % "2.2.8",
+      "org.scalikejdbc" %% "scalikejdbc" % "2.5.0",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "mysql" % "mysql-connector-java" % "5.1.36",
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
-      "org.scalaj" %% "scalaj-http" % "1.1.5",
-      "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
+      "org.scalaj" %% "scalaj-http" % "2.3.0",
+      "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
       "org.flywaydb" % "flyway-core" % "4.0",
-      "io.searchbox" % "jest" % "2.0.0",
-      "org.elasticsearch" % "elasticsearch" % "2.3.3",
-      "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0",
-      "org.elasticsearch" % "elasticsearch" % "2.3.3" % "test",
-      "org.apache.lucene" % "lucene-test-framework" % "5.5.0" % "test",
-      "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.14",
-      "org.imgscalr" % "imgscalr-lib" % "4.2",
-      "org.jsoup" % "jsoup" % "1.7.3"
+      "io.searchbox" % "jest" % "2.0.4",
+      "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
+      "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
+      "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion % "test",
+      "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
+      "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
+      "org.jsoup" % "jsoup" % "1.7.3",
+      "org.imgscalr" % "imgscalr-lib" % "4.2"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
@@ -76,8 +78,12 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
-// Don't run Integration tests in default run
-testOptions in Test += Tests.Argument("-l", "no.ndla.IntegrationTest")
+// Don't run Integration tests in default run on Travis as there is no elasticsearch localhost:9200 there yet.
+// NB this line will unfortunalty override runs on your local commandline so that
+// sbt "test-only -- -n no.ndla.tag.IntegrationTest"
+// will not run unless this line gets commented out or you remove the tag over the test class
+// This should be solved better!
+testOptions in Test += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker <<= (docker dependsOn assembly)
