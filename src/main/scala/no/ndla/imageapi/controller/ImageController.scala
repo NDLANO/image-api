@@ -11,17 +11,17 @@ package no.ndla.imageapi.controller
 import java.io.File
 
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
-import no.ndla.imageapi.model.api.{ImageMetaInformation, NewImageMetaInformation, SearchResult}
-import no.ndla.imageapi.model.{Error, ValidationException, ValidationMessage}
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, NewImageMetaInformation, SearchResult, ValidationError}
+import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.SearchService
-import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
+import org.scalatra.swagger._
 import no.ndla.imageapi.service.{ConverterService, WriteService}
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
-import org.scalatra.swagger.{Swagger, SwaggerSupport}
+import org.scalatra.swagger.DataType.ValueDataType
 
 import scala.util.{Failure, Success, Try}
 
@@ -35,10 +35,11 @@ trait ImageController {
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     // Additional models used in error responses
+    registerModel[ValidationError]()
     registerModel[Error]()
 
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
-    val response400 = ResponseMessage(400, "Validation error", Some("Error"))
+    val response400 = ResponseMessage(400, "Validation error", Some("ValidationError"))
     val response413 = ResponseMessage(413, "File too big", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
@@ -56,7 +57,8 @@ trait ImageController {
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
         )
-        responseMessages(response500))
+        authorizations "oauth2"
+        responseMessages response500)
 
     val getByImageId =
       (apiOperation[ImageMetaInformation]("findByImageId")
@@ -67,18 +69,21 @@ trait ImageController {
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
         pathParam[String]("image_id").description("Image_id of the image that needs to be fetched.")
         )
+        authorizations "oauth2"
         responseMessages(response404, response500))
 
     val newImage =
       (apiOperation[ImageMetaInformation]("newImage")
         summary "Upload a new image file with meta data"
         notes "Upload a new image file with meta data"
+        consumes "multipart/form-data"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        formParam[NewImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
-        formParam[File]("file").description("The image file(s) to upload.")
+        formParam[String]("metadata").description("The metadata for the image file to submit."),
+        Parameter(name = "file", `type` = ValueDataType("file"), description = Some("The image file(s) to upload"), paramType = ParamType.Form)
       )
+      authorizations "oauth2"
       responseMessages(response400, response413, response500))
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))

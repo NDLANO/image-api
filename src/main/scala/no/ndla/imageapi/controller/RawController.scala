@@ -2,10 +2,11 @@ package no.ndla.imageapi.controller
 
 import javax.servlet.http.HttpServletRequest
 
-import no.ndla.imageapi.model.ImageNotFoundException
-import no.ndla.imageapi.model.api.ImageMetaInformation
+import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.service.{ImageConverter, ImageStorageService}
+import org.scalatra.swagger.DataType.ValueDataType
+import org.scalatra.swagger.SwaggerSupportSyntax.OperationBuilder
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 import scala.util.{Failure, Success, Try}
@@ -22,11 +23,13 @@ trait RawController {
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
-    val getImageFile =
-      (apiOperation[ImageMetaInformation]("getImageFile")
-        summary "Fetches a raw image"
-        notes "Fetches an image with options to resize and crop"
-        parameters(
+    val getImageFile = new OperationBuilder(ValueDataType("file", Some("binary")))
+      .nickname("getImageFile")
+      .summary("Fetches a raw image")
+      .notes("Fetches a image with options to resize and crop")
+      .produces("application/octet-stream")
+      .authorizations("oauth2")
+      .parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
         pathParam[String]("name").description("The name of the image"),
@@ -40,13 +43,14 @@ trait RawController {
           """The second image coordinate (X,Y) specifying the crop end position, forming a square cutout.
             |The coordinate is a comma separated value of the form column,row (e.g 200,100).
             |If cropEnd is specified cropStart must also be specified""".stripMargin)
-        )
-        responseMessages(response404, response500))
+      ).responseMessages(response404, response500)
 
     get("/:name", operation(getImageFile)) {
       val imageName = params("name")
       imageStorage.get(imageName).flatMap(crop).flatMap(resize) match {
-        case Success(img) => img
+        case Success(img) =>
+          contentType = img.contentType
+          org.scalatra.util.io.copy(img.stream, response.getOutputStream)
         case Failure(e) => throw e
       }
     }
