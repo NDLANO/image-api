@@ -48,9 +48,7 @@ trait RawController {
     get("/:name", operation(getImageFile)) {
       val imageName = params("name")
       imageStorage.get(imageName).flatMap(crop).flatMap(resize) match {
-        case Success(img) =>
-          contentType = img.contentType
-          org.scalatra.util.io.copy(img.stream, response.getOutputStream)
+        case Success(img) => img
         case Failure(e) => throw e
       }
     }

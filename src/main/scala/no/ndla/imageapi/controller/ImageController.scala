@@ -37,6 +37,7 @@ trait ImageController {
     // Additional models used in error responses
     registerModel[ValidationError]()
     registerModel[Error]()
+    registerModel[NewImageMetaInformation]()
 
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
     val response400 = ResponseMessage(400, "Validation error", Some("ValidationError"))
@@ -80,7 +81,7 @@ trait ImageController {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        formParam[String]("metadata").description("The metadata for the image file to submit."),
+        formParam[String]("metadata").description("The metadata for the image file to submit. See NewImageMetaInformation."),
         Parameter(name = "file", `type` = ValueDataType("file"), description = Some("The image file(s) to upload"), paramType = ParamType.Form)
       )
       authorizations "oauth2"
