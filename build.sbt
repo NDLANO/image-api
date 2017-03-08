@@ -32,7 +32,7 @@ lazy val image_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
-      "ndla" %% "network" % "0.16",
+      "ndla" %% "network" % "0.17-SNAPSHOT",
       "ndla" %% "mapping" % "0.4",
       "joda-time" % "joda-time" % "2.8.2",
       "org.scalatra" %% "scalatra" % Scalatraversion,

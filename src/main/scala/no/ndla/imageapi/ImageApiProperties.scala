@@ -20,6 +20,8 @@ import scala.util.Properties._
 object ImageApiProperties extends LazyLogging {
   val SecretsFile = "image-api.secrets"
 
+  val RoleWithWriteAccess = "images:write"
+
   val ApplicationPort = 80
   val ContactEmail = "christergundersen@ndla.no"
   val CorrelationIdKey = "correlationID"
