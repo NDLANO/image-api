@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKey}
 import no.ndla.imageapi.model.domain.ImageStream
-import no.ndla.imageapi.model.{Error, ImageNotFoundException, ValidationException, ValidationMessage}
+import no.ndla.imageapi.model.{ImageNotFoundException, ValidationException, ValidationMessage}
 import no.ndla.network.{ApplicationUrl, CorrelationID}
 import org.apache.logging.log4j.ThreadContext
 import org.elasticsearch.index.IndexNotFoundException
@@ -23,7 +23,7 @@ import org.scalatra.servlet.SizeConstraintExceededException
 import org.scalatra.{BadRequest, InternalServerError, RequestEntityTooLarge, ScalatraServlet, _}
 
 import scala.util.Try
-import no.ndla.imageapi.model.api.ValidationError
+import no.ndla.imageapi.model.api.{Error, ValidationError}
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
   protected implicit override val jsonFormats: Formats = DefaultFormats

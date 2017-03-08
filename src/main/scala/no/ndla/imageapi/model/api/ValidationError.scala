@@ -11,7 +11,6 @@ package no.ndla.imageapi.model.api
 import java.util.Date
 
 import no.ndla.imageapi.model.ValidationMessage
-import no.ndla.imageapi.model.Error
 import org.scalatra.swagger.annotations._
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
