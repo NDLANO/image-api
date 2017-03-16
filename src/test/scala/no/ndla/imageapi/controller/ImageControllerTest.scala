@@ -21,6 +21,16 @@ import scala.util.{Failure, Success}
 
 class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironment {
 
+  val jwtHeader = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
+
+  val jwtClaims = "eyJhcHBfbWV0YWRhdGEiOnsicm9sZXMiOlsiaW1hZ2VzOndyaXRlIl0sIm5kbGFfaWQiOiJhYmMxMjMifSwibmFtZSI6IkRvbmFsZCBEdWNrIiwiaXNzIjoiaHR0cHM6Ly9zb21lLWRvbWFpbi8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEyMyIsImF1ZCI6ImFiYyIsImV4cCI6MTQ4NjA3MDA2MywiaWF0IjoxNDg2MDM0MDYzfQ"
+  val jwtClaimsNoRoles = "eyJhcHBfbWV0YWRhdGEiOnsibmRsYV9pZCI6ImFiYzEyMyJ9LCJuYW1lIjoiRG9uYWxkIER1Y2siLCJpc3MiOiJodHRwczovL3NvbWUtZG9tYWluLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTIzIiwiYXVkIjoiYWJjIiwiZXhwIjoxNDg2MDcwMDYzLCJpYXQiOjE0ODYwMzQwNjN9"
+  val jwtClaimsWrongRole = "eyJhcHBfbWV0YWRhdGEiOnsicm9sZXMiOlsiYXJ0aWNsZXM6d3JpdGUiXSwibmRsYV9pZCI6ImFiYzEyMyJ9LCJuYW1lIjoiRG9uYWxkIER1Y2siLCJpc3MiOiJodHRwczovL3NvbWUtZG9tYWluLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTIzIiwiYXVkIjoiYWJjIiwiZXhwIjoxNDg2MDcwMDYzLCJpYXQiOjE0ODYwMzQwNjN9"
+
+  val authHeaderWithWriteRole = s"Bearer $jwtHeader.$jwtClaims._Hva8XNvTDOtU2nLSnYvqVgtLtAcvGipHFsBXZxJknw"
+  val authHeaderWithoutAnyRoles = s"Bearer $jwtHeader.$jwtClaimsNoRoles.eNEK5datycKuV292kOxT4IhCMvrrq0KpSyH8C69mdnM"
+  val authHeaderWithWrongRole = s"Bearer $jwtHeader.$jwtClaimsWrongRole.VxqM2bu2UF8IAalibIgdRdmsTDDWKEYpKzHPbCJcFzA"
+
   implicit val swagger = new ImageSwagger
   lazy val controller = new ImageController
   addServlet(controller, "/*")
@@ -57,7 +67,7 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
     """.stripMargin
 
   test("That POST / returns 400 if parameters are missing") {
-    post("/", ("metadata", sampleNewImageMeta)) {
+    post("/", Map("metadata" -> sampleNewImageMeta), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
       status should equal (400)
     }
   }
@@ -66,14 +76,32 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
     val sampleImageMeta = ImageMetaInformation("1", "http://some.url/id", Seq.empty, Seq.empty, "http://some.url/img.jpg", 1024, "image/jpeg", Copyright(License("by", "description", None), "", Seq.empty), Seq.empty, Seq.empty)
     when(writeService.storeNewImage(any[NewImageMetaInformation], any[FileItem])).thenReturn(Success(sampleImageMeta))
 
-    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile)) {
+    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
       status should equal (200)
+    }
+  }
+
+  test("That POST / returns 403 if no auth-header") {
+    post("/", Map("metadata" -> sampleNewImageMeta)) {
+      status should equal (403)
+    }
+  }
+
+  test("That POST / returns 403 if auth header does not have expected role") {
+    post("/", Map("metadata" -> sampleNewImageMeta), headers = Map("Authorization" -> authHeaderWithWrongRole)) {
+      status should equal (403)
+    }
+  }
+
+  test("That POST / returns 403 if auth header does not have any roles") {
+    post("/", Map("metadata" -> sampleNewImageMeta), headers = Map("Authorization" -> authHeaderWithoutAnyRoles)) {
+      status should equal (403)
     }
   }
 
   test("That POST / returns 413 if file is too big") {
     val content: Array[Byte] = Array.fill(MaxImageFileSizeBytes + 1) { 0 }
-    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile.copy(content))) {
+    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile.copy(content)), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
       status should equal (413)
     }
   }
@@ -81,7 +109,7 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
   test("That POST / returns 500 if an unexpected error occurs") {
     when(writeService.storeNewImage(any[NewImageMetaInformation], any[FileItem])).thenReturn(Failure(mock[RuntimeException]))
 
-    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile)) {
+    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
       status should equal (500)
     }
   }

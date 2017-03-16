@@ -10,7 +10,8 @@ package no.ndla.imageapi.controller
 
 import java.io.File
 
-import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
+import no.ndla.imageapi.ImageApiProperties
+import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, NewImageMetaInformation, SearchResult, ValidationError}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
@@ -39,6 +40,7 @@ trait ImageController {
     registerModel[Error]()
     registerModel[NewImageMetaInformation]()
 
+    val response403 = ResponseMessage(403, "Access Denied", Some("Error"))
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
     val response400 = ResponseMessage(400, "Validation error", Some("ValidationError"))
     val response413 = ResponseMessage(413, "File too big", Some("Error"))
@@ -85,7 +87,7 @@ trait ImageController {
         Parameter(name = "file", `type` = ValueDataType("file"), description = Some("The image file(s) to upload"), paramType = ParamType.Form)
       )
       authorizations "oauth2"
-      responseMessages(response400, response413, response500))
+      responseMessages(response400, response403, response413, response500))
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
@@ -124,9 +126,12 @@ trait ImageController {
     }
 
     post("/", operation(newImage)) {
+      assertHasRole(RoleWithWriteAccess)
+
       val newImage = params.get("metadata")
         .map(extract[NewImageMetaInformation])
         .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
+
       val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
 
       writeService.storeNewImage(newImage, file) match {
