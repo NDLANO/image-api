@@ -33,5 +33,4 @@ This, it seems, will unfortunalty override runs on your local commandline so tha
         
 ## Test
     curl http://$DOCKER_ADDR:30001/images/
-    
 
