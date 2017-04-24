@@ -28,6 +28,7 @@ object ImageApiProperties extends LazyLogging {
   val CorrelationIdHeader = "X-Correlation-ID"
   val HealthControllerPath = "/health"
   val ImageApiBasePath = "/image-api/v1"
+  val ApiDocsPath = "/image-api/api-docs"
   val ImageControllerPath = s"$ImageApiBasePath/images"
   val RawControllerPath = s"$ImageApiBasePath/raw"
 
