@@ -44,6 +44,9 @@ trait TestEnvironment
     with HealthController
     with ImageConverter
     with MockitoSugar
+    with AuthenticationUser
+    with AuthenticationRole
+    with Clock
 {
   val amazonClient = mock[AmazonS3]
 
@@ -68,4 +71,8 @@ trait TestEnvironment
   val jestClient = mock[NdlaJestClient]
   val searchConverterService = mock[SearchConverterService]
   val imageConverter = mock[ImageConverter]
+
+  val clock = mock[SystemClock]
+  val authUser = mock[AuthUser]
+  val authRole = new AuthRole
 }

@@ -15,6 +15,7 @@ import no.ndla.network.ApplicationUrl
 
 
 trait ConverterService {
+  this: AuthenticationUser with Clock =>
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
@@ -86,7 +87,9 @@ trait ConverterService {
         image.contentType,
         toDomainCopyright(imageMeta.copyright),
         imageMeta.tags.getOrElse(Seq.empty).map(toDomainTag),
-        imageMeta.captions.getOrElse(Seq.empty).map(toDomainCaption)
+        imageMeta.captions.getOrElse(Seq.empty).map(toDomainCaption),
+        authUser.id(),
+        clock.now()
       )
     }
 

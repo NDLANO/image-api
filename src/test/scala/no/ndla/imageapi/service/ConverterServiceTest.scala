@@ -13,14 +13,17 @@ import javax.servlet.http.HttpServletRequest
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
+import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito._
 
 class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   override val converterService = new ConverterService
 
+  def updated() = (new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC)).toDate
+
   val full = Image("123.png", 200, "image/png")
-  val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(), List(), full.fileName, full.size, full.contentType, Copyright(License("", "", None), "", List()), List(), List())
+  val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(), List(), full.fileName, full.size, full.contentType, Copyright(License("", "", None), "", List()), List(), List(), "ndla124", updated())
 
   override def beforeEach = {
     val request = mock[HttpServletRequest]

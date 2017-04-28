@@ -40,6 +40,9 @@ object ComponentRegistry
   with InternController
   with HealthController
   with ImageConverter
+  with AuthenticationUser
+  with AuthenticationRole
+  with Clock
 {
   implicit val swagger = new ImageSwagger
 
@@ -76,4 +79,7 @@ object ComponentRegistry
   lazy val searchConverterService = new SearchConverterService
 
   lazy val imageConverter = new ImageConverter
+  lazy val authUser = new AuthUser
+  lazy val authRole = new AuthRole
+  lazy val clock = new SystemClock
 }

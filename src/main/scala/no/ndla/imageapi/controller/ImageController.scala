@@ -27,7 +27,7 @@ import org.scalatra.swagger.DataType.ValueDataType
 import scala.util.{Failure, Success, Try}
 
 trait ImageController {
-  this: ImageRepository with SearchService with ConverterService with WriteService =>
+  this: ImageRepository with SearchService with ConverterService with WriteService with AuthenticationRole =>
   val imageController: ImageController
 
   class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
@@ -126,7 +126,7 @@ trait ImageController {
     }
 
     post("/", operation(newImage)) {
-      assertHasRole(RoleWithWriteAccess)
+      authRole.assertHasRole(RoleWithWriteAccess)
 
       val newImage = params.get("metadata")
         .map(extract[NewImageMetaInformation])
