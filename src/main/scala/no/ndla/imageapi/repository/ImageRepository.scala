@@ -9,7 +9,6 @@
 package no.ndla.imageapi.repository
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.DataSource
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.service.ConverterService
