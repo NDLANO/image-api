@@ -9,6 +9,7 @@
 package no.ndla.imageapi.service
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.repository.ImageRepository
@@ -20,7 +21,7 @@ import scala.util.{Failure, Success, Try}
 
 trait ImportService {
   this: ImageStorageService with ImageRepository with MigrationApiClient with IndexBuilderService with ConverterService with TagsService
-    with Clock with AuthenticationUser =>
+    with Clock with User =>
   val importService: ImportService
 
   class ImportService extends LazyLogging {

@@ -5,25 +5,14 @@
  * See LICENSE
  */
 
-package no.ndla.imageapi.service
+package no.ndla.imageapi.auth
 
 import no.ndla.imageapi.model.AccessDeniedException
 import no.ndla.network.AuthUser
 
-trait AuthenticationRole {
 
-  val authRole: AuthRole
 
-  class AuthRole {
-    def assertHasRole(role: String): Unit = {
-      if (!AuthUser.hasRole(role))
-        throw new AccessDeniedException("User is missing required role to perform this operation")
-    }
-  }
-
-}
-
-trait AuthenticationUser {
+trait User {
 
   val authUser: AuthUser
 
