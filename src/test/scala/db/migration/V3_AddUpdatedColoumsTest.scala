@@ -8,10 +8,10 @@
 package db.migration
 
 
-import no.ndla.imageapi.{TestEnvironment, UnitSuite}
+import no.ndla.imageapi.UnitSuite
 import org.mockito.Mockito._
 
-class V3_AddUpdatedColoumsTest extends UnitSuite with TestEnvironment{
+class V3_AddUpdatedColoumsTest extends UnitSuite {
 
   val migration = new V3_Test
 

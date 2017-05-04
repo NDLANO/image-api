@@ -37,9 +37,7 @@ class V3_AddUpdatedColoums extends JdbcMigration {
   }
 
   def convertImageUpdate(imageMeta: V3_DBImageMetaInformation): V3_DBImageMetaInformation = {
-
     val oldDocument = parse(imageMeta.document)
-
     val updatedJson = parse(s"""{"updatedBy": "content-import-client", "updated": "${timeService.nowAsString()}"}""")
 
     val mergedDoc = oldDocument merge updatedJson
