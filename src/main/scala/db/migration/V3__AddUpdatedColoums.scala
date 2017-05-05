@@ -18,7 +18,7 @@ import org.postgresql.util.PGobject
 import scalikejdbc._
 
 
-class V3_AddUpdatedColoums extends JdbcMigration {
+class V3__AddUpdatedColoums extends JdbcMigration {
 
   implicit val formats = org.json4s.DefaultFormats
   val timeService = new TimeService()
@@ -32,11 +32,11 @@ class V3_AddUpdatedColoums extends JdbcMigration {
     }
   }
 
-  def allImages(implicit session: DBSession): List[V3_DBImageMetaInformation] = {
-    sql"select id, metadata from imagemetadata".map(rs => V3_DBImageMetaInformation(rs.long("id"), rs.string("metadata"))).list().apply()
+  def allImages(implicit session: DBSession): List[V3__DBImageMetaInformation] = {
+    sql"select id, metadata from imagemetadata".map(rs => V3__DBImageMetaInformation(rs.long("id"), rs.string("metadata"))).list().apply()
   }
 
-  def convertImageUpdate(imageMeta: V3_DBImageMetaInformation): V3_DBImageMetaInformation = {
+  def convertImageUpdate(imageMeta: V3__DBImageMetaInformation): V3__DBImageMetaInformation = {
     val oldDocument = parse(imageMeta.document)
     val updatedJson = parse(s"""{"updatedBy": "content-import-client", "updated": "${timeService.nowAsString()}"}""")
 
@@ -45,7 +45,7 @@ class V3_AddUpdatedColoums extends JdbcMigration {
     imageMeta.copy(document = compact(render(mergedDoc)))
   }
 
-  def update(imageMeta: V3_DBImageMetaInformation)(implicit session: DBSession) = {
+  def update(imageMeta: V3__DBImageMetaInformation)(implicit session: DBSession) = {
     val dataObject = new PGobject()
     dataObject.setType("jsonb")
     dataObject.setValue(imageMeta.document)
@@ -55,7 +55,7 @@ class V3_AddUpdatedColoums extends JdbcMigration {
 
 }
 
-case class V3_DBImageMetaInformation(id: Long, document: String)
+case class V3__DBImageMetaInformation(id: Long, document: String)
 
 class TimeService() {
   def nowAsString(): String = {
