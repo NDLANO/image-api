@@ -59,6 +59,7 @@ case class V3__DBImageMetaInformation(id: Long, document: String)
 
 class TimeService() {
   def nowAsString(): String = {
+    //NB!!! BUG day format is wrong should have been dd
     val formatter: DateTimeFormatter = DateTimeFormat.forPattern("YYYY-MM-DD'T'HH:mm:ssZ")
     (new DateTime).toString(formatter)
   }
