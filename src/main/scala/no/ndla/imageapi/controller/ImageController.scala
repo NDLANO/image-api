@@ -12,6 +12,7 @@ import java.io.File
 
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
+import no.ndla.imageapi.auth.Role
 import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, NewImageMetaInformation, SearchResult, ValidationError}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
@@ -27,7 +28,7 @@ import org.scalatra.swagger.DataType.ValueDataType
 import scala.util.{Failure, Success, Try}
 
 trait ImageController {
-  this: ImageRepository with SearchService with ConverterService with WriteService =>
+  this: ImageRepository with SearchService with ConverterService with WriteService with Role =>
   val imageController: ImageController
 
   class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
@@ -126,7 +127,7 @@ trait ImageController {
     }
 
     post("/", operation(newImage)) {
-      assertHasRole(RoleWithWriteAccess)
+      authRole.assertHasRole(RoleWithWriteAccess)
 
       val newImage = params.get("metadata")
         .map(extract[NewImageMetaInformation])

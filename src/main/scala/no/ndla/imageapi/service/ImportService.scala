@@ -9,6 +9,7 @@
 package no.ndla.imageapi.service
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.repository.ImageRepository
@@ -19,7 +20,8 @@ import no.ndla.mapping.License.getLicense
 import scala.util.{Failure, Success, Try}
 
 trait ImportService {
-  this: ImageStorageService with ImageRepository with MigrationApiClient with IndexBuilderService with ConverterService with TagsService =>
+  this: ImageStorageService with ImageRepository with MigrationApiClient with IndexBuilderService with ConverterService with TagsService
+    with Clock with User =>
   val importService: ImportService
 
   class ImportService extends LazyLogging {
@@ -30,9 +32,6 @@ trait ImportService {
       imported.foreach(indexBuilderService.indexDocument)
       imported
     }
-
-    private def languageCodeSupported(languageCode: String) =
-      get6391CodeFor6392CodeMappings.exists(_._1 == language)
 
     def upload(imageMeta: MainImageImport): domain.ImageMetaInformation = {
       val start = System.currentTimeMillis
@@ -68,7 +67,7 @@ trait ImportService {
 
         (titles :+ domain.ImageTitle(translation.title, transLang),
           alttexts :+ translation.alttext.map(x => domain.ImageAltText(x, transLang)),
-        captions :+ translation.caption.map(x => domain.ImageCaption(x, transLang)))
+          captions :+ translation.caption.map(x => domain.ImageCaption(x, transLang)))
       })
 
       val sourceUrlFull = DownloadUrlPrefix + imageMeta.mainImage.originalFile
@@ -79,14 +78,19 @@ trait ImportService {
         imageStorage.uploadFromUrl(image, key, sourceUrlFull)
       }
 
+      val now = clock.now()
+      val userId = authUser.id()
+
       val persistedImageMetaInformation = imageRepository.withExternalId(imageMeta.mainImage.nid) match {
         case Some(dbMeta) => {
-          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts.flatten, dbMeta.imageUrl, dbMeta.size, dbMeta.contentType, copyright, tags, captions.flatten), dbMeta.id.get)
+          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts.flatten, dbMeta.imageUrl,
+            dbMeta.size, dbMeta.contentType, copyright, tags, captions.flatten, userId, now), dbMeta.id.get)
           logger.info(s"Updated ID = ${updated.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
           updated
         }
         case None => {
-          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, image.fileName, image.size, image.contentType, copyright, tags, captions.flatten)
+          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, image.fileName,
+            image.size, image.contentType, copyright, tags, captions.flatten, userId, now)
           val inserted = imageRepository.insertWithExternalId(imageMetaInformation, imageMeta.mainImage.nid)
           logger.info(s"Inserted ID = ${inserted.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
           inserted
@@ -95,5 +99,9 @@ trait ImportService {
 
       persistedImageMetaInformation
     }
+
+    private def languageCodeSupported(languageCode: String) =
+      get6391CodeFor6392CodeMappings.exists(_._1 == language)
   }
+
 }

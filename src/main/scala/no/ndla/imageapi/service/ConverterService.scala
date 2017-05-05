@@ -10,11 +10,13 @@ package no.ndla.imageapi.service
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
+import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
 
 
 trait ConverterService {
+  this: User with Clock =>
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
@@ -86,7 +88,9 @@ trait ConverterService {
         image.contentType,
         toDomainCopyright(imageMeta.copyright),
         imageMeta.tags.getOrElse(Seq.empty).map(toDomainTag),
-        imageMeta.captions.getOrElse(Seq.empty).map(toDomainCaption)
+        imageMeta.captions.getOrElse(Seq.empty).map(toDomainCaption),
+        authUser.id(),
+        clock.now()
       )
     }
 

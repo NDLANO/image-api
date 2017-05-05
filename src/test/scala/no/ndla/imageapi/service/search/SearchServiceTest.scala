@@ -16,6 +16,7 @@ import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import org.elasticsearch.common.settings.Settings
 import no.ndla.network.ApplicationUrl
 import no.ndla.tag.IntegrationTest
+import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 
@@ -40,11 +41,12 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None), "Gotham City", List(Author("Forfatter", "DC Comics")))
   val publicDomain = Copyright(License("publicdomain", "Public Domain", None), "Metropolis", List(Author("Forfatter", "Bruce Wayne")))
+  def updated() = (new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC)).toDate
 
-  val image1 = ImageMetaInformation(Some(1), List(ImageTitle("Batmen er på vift med en bil", Some("nb"))), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", Some("nb"))), largeImage.fileName, largeImage.size, largeImage.contentType, byNcSa, List(ImageTag(List("fugl"), Some("nb"))), List())
-  val image2 = ImageMetaInformation(Some(2), List(ImageTitle("Pingvinen er ute og går", Some("nb"))), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", Some("nb"))), largeImage.fileName, largeImage.size, largeImage.contentType, publicDomain, List(ImageTag(List("fugl"), Some("nb"))), List())
-  val image3 = ImageMetaInformation(Some(3), List(ImageTitle("Donald Duck kjører bil", Some("nb"))), List(ImageAltText("Bilde av en en and som kjører en rød bil.", Some("nb"))), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, List(ImageTag(List("and"), Some("nb"))), List())
-  val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", None)), Seq(), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq())
+  val image1 = ImageMetaInformation(Some(1), List(ImageTitle("Batmen er på vift med en bil", Some("nb"))), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", Some("nb"))), largeImage.fileName, largeImage.size, largeImage.contentType, byNcSa, List(ImageTag(List("fugl"), Some("nb"))), List(), "ndla124", updated())
+  val image2 = ImageMetaInformation(Some(2), List(ImageTitle("Pingvinen er ute og går", Some("nb"))), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", Some("nb"))), largeImage.fileName, largeImage.size, largeImage.contentType, publicDomain, List(ImageTag(List("fugl"), Some("nb"))), List(), "ndla124", updated())
+  val image3 = ImageMetaInformation(Some(3), List(ImageTitle("Donald Duck kjører bil", Some("nb"))), List(ImageAltText("Bilde av en en and som kjører en rød bil.", Some("nb"))), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, List(ImageTag(List("and"), Some("nb"))), List(), "ndla124", updated())
+  val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", None)), Seq(), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq(), "ndla124", updated())
 
   override def beforeAll() = {
     indexService.createIndexWithName(ImageApiProperties.SearchIndex)

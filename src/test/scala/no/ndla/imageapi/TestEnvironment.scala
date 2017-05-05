@@ -13,6 +13,7 @@ import com.amazonaws.services.s3.AmazonS3
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController}
 import com.amazonaws.services.s3.AmazonS3Client
 import io.searchbox.client.JestClient
+import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController, RawController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository._
@@ -44,6 +45,9 @@ trait TestEnvironment
     with HealthController
     with ImageConverter
     with MockitoSugar
+    with User
+    with Role
+    with Clock
 {
   val amazonClient = mock[AmazonS3]
 
@@ -68,4 +72,8 @@ trait TestEnvironment
   val jestClient = mock[NdlaJestClient]
   val searchConverterService = mock[SearchConverterService]
   val imageConverter = mock[ImageConverter]
+
+  val clock = mock[SystemClock]
+  val authUser = mock[AuthUser]
+  val authRole = new AuthRole
 }

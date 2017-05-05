@@ -16,6 +16,7 @@ import no.ndla.imageapi.model.api._
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
 import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
+import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatra.servlet.FileItem
@@ -36,6 +37,8 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     None,
     None
   )
+
+  def updated() = (new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC)).toDate
 
   val domainImageMeta = converterService.asDomainImageMetaInformation(newImageMeta, Image(newFileName, 1024, "image/jpeg"))
 
@@ -148,4 +151,13 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     writeService.getFileExtension("image-jpg") should equal(None)
     writeService.getFileExtension("jpeg") should equal(None)
   }
+
+  test("converter to domain should set updatedBy from authUser and updated date"){
+    when(authUser.id()).thenReturn("ndla54321")
+    when(clock.now()).thenReturn(updated())
+    val domain = converterService.asDomainImageMetaInformation(newImageMeta, Image(newFileName, 1024, "image/jpeg"))
+    domain.updatedBy should equal ("ndla54321")
+    domain.updated should equal(updated())
+  }
+
 }

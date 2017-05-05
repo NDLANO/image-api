@@ -10,6 +10,7 @@ package no.ndla.imageapi
 
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.controller.{HealthController, ImageController, InternController, RawController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.ImageRepository
@@ -40,6 +41,9 @@ object ComponentRegistry
   with InternController
   with HealthController
   with ImageConverter
+  with User
+  with Role
+  with Clock
 {
   implicit val swagger = new ImageSwagger
 
@@ -76,4 +80,7 @@ object ComponentRegistry
   lazy val searchConverterService = new SearchConverterService
 
   lazy val imageConverter = new ImageConverter
+  lazy val authUser = new AuthUser
+  lazy val authRole = new AuthRole
+  lazy val clock = new SystemClock
 }
