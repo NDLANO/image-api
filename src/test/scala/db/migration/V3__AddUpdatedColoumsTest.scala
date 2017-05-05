@@ -11,11 +11,11 @@ package db.migration
 import no.ndla.imageapi.UnitSuite
 import org.mockito.Mockito._
 
-class V3_AddUpdatedColoumsTest extends UnitSuite {
+class V3__AddUpdatedColoumsTest extends UnitSuite {
 
   val migration = new V3_Test
 
-  class V3_Test extends V3_AddUpdatedColoums {
+  class V3_Test extends V3__AddUpdatedColoums {
     override val timeService = mock[TimeService]
   }
 
@@ -25,7 +25,7 @@ class V3_AddUpdatedColoumsTest extends UnitSuite {
 
     when(migration.timeService.nowAsString()).thenReturn("2017-05-124T14:22:55+0200")
 
-    val image = V3_DBImageMetaInformation(1, before)
+    val image = V3__DBImageMetaInformation(1, before)
     val converted = migration.convertImageUpdate(image)
     converted.document should equal(expectedAfter)
 
