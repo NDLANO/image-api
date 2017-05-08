@@ -62,7 +62,7 @@ case class V4__DBImageMetaInformation(id: Long, document: String)
 
 class TimeService2() {
   def nowAsString(): String = {
-    val formatter: DateTimeFormatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ssZ")
+    val formatter: DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
     val now = (new DateTime).toString(formatter)
     now
   }
