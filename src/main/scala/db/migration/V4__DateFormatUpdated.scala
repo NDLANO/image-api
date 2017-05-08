@@ -9,18 +9,15 @@ package db.migration
 
 import java.sql.Connection
 
-import java.sql.Connection
-
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
 class V4__DateFormatUpdated extends JdbcMigration {
-//There was a bug in the dateformat of V3__AddUpdatedColoums had days as DD and the 'Z' got stored as +0000 not as 'Z'.
+  //There was a bug in the dateformat of V3__AddUpdatedColoums had days as DD and the 'Z' got stored as +0000 not as 'Z'.
   implicit val formats = org.json4s.DefaultFormats
   val timeService = new TimeService2()
 
@@ -62,8 +59,7 @@ case class V4__DBImageMetaInformation(id: Long, document: String)
 
 class TimeService2() {
   def nowAsString(): String = {
-    val formatter: DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-    val now = (new DateTime).toString(formatter)
-    now
+    (new DateTime()).toString("yyyy-MM-dd'T'HH:mm:ss'Z'")
   }
+
 }
