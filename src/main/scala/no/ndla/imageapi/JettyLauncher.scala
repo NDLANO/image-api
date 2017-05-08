@@ -20,10 +20,7 @@ object JettyLauncher extends LazyLogging {
   def main(args: Array[String]) {
     logger.info(Source.fromInputStream(getClass.getResourceAsStream("/log-license.txt")).mkString)
 
-    logger.info("Starting DB Migration")
-    val dBstartMillis = System.currentTimeMillis()
     DBMigrator.migrate(ComponentRegistry.dataSource)
-    logger.info(s"Done DB Migration tok ${System.currentTimeMillis() - dBstartMillis} ms")
 
     val startMillis = System.currentTimeMillis()
     val port = ImageApiProperties.ApplicationPort

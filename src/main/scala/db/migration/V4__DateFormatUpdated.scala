@@ -9,6 +9,7 @@ package db.migration
 
 import java.sql.Connection
 
+import com.typesafe.scalalogging.LazyLogging
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration
 import org.joda.time.DateTime
 import org.json4s._
@@ -16,7 +17,7 @@ import org.json4s.native.JsonMethods._
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
-class V4__DateFormatUpdated extends JdbcMigration {
+class V4__DateFormatUpdated extends JdbcMigration with LazyLogging  {
   //There was a bug in the dateformat of V3__AddUpdatedColoums had days as DD and the 'Z' got stored as +0000 not as 'Z'.
   implicit val formats = org.json4s.DefaultFormats
   val timeService = new TimeService2()
@@ -24,10 +25,13 @@ class V4__DateFormatUpdated extends JdbcMigration {
   override def migrate(connection: Connection) = {
     val db = DB(connection)
     db.autoClose(false)
+    logger.info("Starting V4__DateFormatUpdated DB Migration")
+    val dBstartMillis = System.currentTimeMillis()
 
     db.withinTx { implicit session =>
       allImages.map(fixImageUpdatestring).foreach(update)
     }
+    logger.info(s"Done V4__DateFormatUpdated DB Migration tok ${System.currentTimeMillis() - dBstartMillis} ms")
   }
 
   def allImages(implicit session: DBSession): List[V4__DBImageMetaInformation] = {
