@@ -79,7 +79,7 @@ trait ImportService {
       }
 
       val now = clock.now()
-      val userId = authUser.id()
+      val userId = "content-import-client"
 
       val persistedImageMetaInformation = imageRepository.withExternalId(imageMeta.mainImage.nid) match {
         case Some(dbMeta) => {
