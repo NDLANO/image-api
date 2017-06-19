@@ -23,9 +23,9 @@ trait MigrationApiClient {
     val imageMetadataEndpoint = s"${ImageApiProperties.MigrationHost}/images/:image_nid"
 
     def getMetaDataForImage(imageNid: String): Try[MainImageImport] = {
-      ndlaClient.fetch[MainImageImport](
+      ndlaClient.fetchWithBasicAuth[MainImageImport](
         Http(imageMetadataEndpoint.replace(":image_nid", imageNid)),
-        Some(ImageApiProperties.MigrationUser), Some(ImageApiProperties.MigrationPassword))
+        ImageApiProperties.MigrationUser, ImageApiProperties.MigrationPassword)
     }
   }
 }
