@@ -37,7 +37,7 @@ trait ConverterService {
     }
 
     def asApiImageMetaInformationWithApplicationUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      val rawPath = ApplicationUrl.get.replace("/images/", "/raw/")
+      val rawPath = ApplicationUrl.get.replace("/v1/images/", "/raw/")
       asApiImageMetaInformation(domainImageMetaInformation, Some(ApplicationUrl.get), Some(rawPath))
     }
 
