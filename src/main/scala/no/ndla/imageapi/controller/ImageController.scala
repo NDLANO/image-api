@@ -8,22 +8,18 @@
 
 package no.ndla.imageapi.controller
 
-import java.io.File
-
-import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.auth.Role
-import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, NewImageMetaInformation, SearchResult, ValidationError}
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, NewImageMetaInformation, SearchParams, SearchResult, ValidationError}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.SearchService
-import org.scalatra.swagger._
 import no.ndla.imageapi.service.{ConverterService, WriteService}
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
+import org.scalatra.swagger._
 
 import scala.util.{Failure, Success, Try}
 
@@ -64,6 +60,18 @@ trait ImageController {
         authorizations "oauth2"
         responseMessages response500)
 
+    val getImagesPost =
+      (apiOperation[List[SearchResult]]("getImagesPost")
+        summary "Show all images"
+        notes "Shows all the images in the ndla.no database. You can search it too."
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id"),
+        headerParam[Option[String]]("app-key").description("Your app-key"),
+        bodyParam[SearchParams]
+      )
+        authorizations "oauth2"
+        responseMessages(response400, response500))
+
     val getByImageId =
       (apiOperation[ImageMetaInformation]("findByImageId")
         summary "Show image info"
@@ -92,14 +100,7 @@ trait ImageController {
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
-    get("/", operation(getImages)) {
-      val minimumSize = params.get("minimum-size")
-      val query = params.get("query")
-      val language = params.get("language")
-      val license = params.get("license")
-      val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
-      val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
-
+    private def search(minimumSize: Option[String], query: Option[String], language: Option[String], license: Option[String], pageSize: Option[Int], page: Option[Int]) = {
       val size = minimumSize match {
         case Some(toCheck) => if (toCheck.forall(_.isDigit)) Option(toCheck.toInt) else None
         case None => None
@@ -116,6 +117,30 @@ trait ImageController {
 
         case None => searchService.all(minimumSize = size, license = license, page, pageSize)
       }
+    }
+
+    get("/", operation(getImages)) {
+      val minimumSize = params.get("minimum-size")
+      val query = params.get("query")
+      val language = params.get("language")
+      val license = params.get("license")
+      val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
+      val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
+
+
+      search(minimumSize, query, language, license, pageSize, page)
+    }
+
+    post("/search/", operation(getImagesPost)) {
+      val searchParams = extract[SearchParams](request.body)
+      val minimumSize = searchParams.minimumSize
+      val query = searchParams.query
+      val language = searchParams.language
+      val license = searchParams.license
+      val pageSize = searchParams.pageSize
+      val page = searchParams.page
+
+      search(minimumSize, query, language, license, pageSize, page)
     }
 
     get("/:image_id", operation(getByImageId)) {
