@@ -11,6 +11,7 @@ package no.ndla.imageapi.service
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.auth.User
+import no.ndla.imageapi.model.Language.{AllLanguages, DefaultLanguage, NoLanguage}
 import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
 
@@ -57,6 +58,52 @@ trait ConverterService {
         asApiCopyright(domainImageMetaInformation.copyright),
         domainImageMetaInformation.tags.map(asApiImageTag),
         domainImageMetaInformation.captions.map(asApiCaption))
+    }
+
+    def asApiImageMetaInformationWithSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation,
+                                                            language: String = AllLanguages): Option[api.ImageMetaInformationSingleLanguage] = {
+
+      val supportedLanguages = domainImageMetaInformation.titles.map(_.language.getOrElse(NoLanguage))
+        .++:(domainImageMetaInformation.alttexts.map(_.language.getOrElse(NoLanguage)))
+        .++:(domainImageMetaInformation.tags.map(_.language.getOrElse(NoLanguage)))
+        .++:(domainImageMetaInformation.captions.map(_.language.getOrElse(NoLanguage)))
+        .distinct
+        .filterNot(lang => lang.isEmpty)
+
+      val searchLanguage = if (language == AllLanguages) DefaultLanguage else language
+
+      if (!supportedLanguages.contains(searchLanguage)) {
+        None
+      }
+
+      val rawPath = Some(ApplicationUrl.get.replace("/v1/images/", "/raw/"))
+      val title = domainImageMetaInformation.titles.map(asApiImageTitle).find(imageTitle => imageTitle.language.getOrElse(DefaultLanguage) == searchLanguage)
+      val altText = domainImageMetaInformation.alttexts.map(asApiImageAltText).find(imageAltText => imageAltText.language.getOrElse(DefaultLanguage) == searchLanguage)
+      val tags = domainImageMetaInformation.tags.map(asApiImageTag).find(imageTags => imageTags.language.getOrElse(DefaultLanguage) == searchLanguage)
+      val caption = domainImageMetaInformation.captions.map(asApiCaption).find(imageCaption => imageCaption.language.getOrElse(DefaultLanguage) == searchLanguage)
+
+      if (title.isDefined || altText.isDefined || tags.isDefined || caption.isDefined) {
+        val titleString = if (title.isDefined) title.get.title else ""
+        val altTextString = if (altText.isDefined) altText.get.alttext else ""
+        val tagsSeq = if (tags.isDefined) tags.get.tags else Seq.empty[String]
+        val captionString = if (caption.isDefined) caption.get.caption else ""
+
+        Some(api.ImageMetaInformationSingleLanguage(
+          domainImageMetaInformation.id.get.toString,
+          Some(ApplicationUrl.get).getOrElse("") + domainImageMetaInformation.id.get,
+          language,
+          titleString,
+          altTextString,
+          asApiUrl(domainImageMetaInformation.imageUrl, rawPath),
+          domainImageMetaInformation.size,
+          domainImageMetaInformation.contentType,
+          asApiCopyright(domainImageMetaInformation.copyright),
+          tagsSeq,
+          captionString,
+          supportedLanguages))
+      } else {
+        None
+      }
     }
 
     def asApiImageTag(domainImageTag: domain.ImageTag): api.ImageTag = {

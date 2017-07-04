@@ -12,6 +12,8 @@ import com.sksamuel.elastic4s.analyzers._
 object Language {
   val DefaultLanguage = "nb"
   val UnknownLanguage = "unknown"
+  val AllLanguages = "all"
+  val NoLanguage = ""
 
   val languageAnalyzers = Seq(
     LanguageAnalyzer(DefaultLanguage, NorwegianLanguageAnalyzer),
