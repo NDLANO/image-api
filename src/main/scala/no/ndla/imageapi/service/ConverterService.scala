@@ -61,19 +61,20 @@ trait ConverterService {
         domainImageMetaInformation.captions.map(asApiCaption))
     }
 
-    def asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: String): Option[api.ImageMetaInformation] = {
+    def asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: String): Option[api.ImageMetaInformationSingleLanguage] = {
       val rawPath = ApplicationUrl.get.replace("/v2/images/", "/raw/")
       asApiImageMetaInformationWithSingleLanguage(domainImageMetaInformation, language, Some(ApplicationUrl.get), Some(rawPath))
     }
 
-    def asApiImageMetaInformationWithDomainUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: String): Option[api.ImageMetaInformation] = {
-      asApiImageMetaInformationWithSingleLanguage(domainImageMetaInformation, language, Some(ImageApiProperties.ImageApiUrlBase), Some(ImageApiProperties.RawImageUrlBase))
+    def asApiImageMetaInformationWithDomainUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: String): Option[api.ImageMetaInformationSingleLanguage] = {
+      asApiImageMetaInformationWithSingleLanguage(domainImageMetaInformation, language, Some(ImageApiProperties.ImageApiUrlBase.replace("v1", "v2")), Some(ImageApiProperties.RawImageUrlBase))
     }
 
-    private def asApiImageMetaInformationWithSingleLanguage(
-      domainImageMetaInformation: domain.ImageMetaInformation,
-      language: String, domainUrl: Option[String],
-      apiBaseUrl: Option[String] = None, rawImageBaseUrl: Option[String] = None): Option[api.ImageMetaInformationSingleLanguage] = {
+    private def asApiImageMetaInformationWithSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation,
+                                                            language: String,
+                                                            apiBaseUrl: Option[String] = None,
+                                                            rawImageBaseUrl: Option[String] = None
+                                                           ): Option[api.ImageMetaInformationSingleLanguage] = {
 
       val supportedLanguages = getSupportedLanguages(domainImageMetaInformation)
       val searchLanguage = if (language == AllLanguages) DefaultLanguage else language
@@ -88,7 +89,6 @@ trait ConverterService {
           findValueByLanguage[T](seq, searchLanguage)
       }
 
-      val rawPath = Some(ApplicationUrl.get.replace("/v2/images/", "/raw/"))
       val title =   setByLanguage[String](domainImageMetaInformation.titles)
       val altText = setByLanguage[String](domainImageMetaInformation.alttexts)
       val caption = setByLanguage[String](domainImageMetaInformation.captions)
@@ -102,11 +102,11 @@ trait ConverterService {
 
         Some(api.ImageMetaInformationSingleLanguage(
           domainImageMetaInformation.id.get.toString,
-          Some(ApplicationUrl.get).getOrElse("") + domainImageMetaInformation.id.get,
+          apiBaseUrl.getOrElse("") + domainImageMetaInformation.id.get,
           language,
           titleString,
           altTextString,
-          asApiUrl(domainImageMetaInformation.imageUrl, rawPath),
+          asApiUrl(domainImageMetaInformation.imageUrl, rawImageBaseUrl),
           domainImageMetaInformation.size,
           domainImageMetaInformation.contentType,
           asApiCopyright(domainImageMetaInformation.copyright),
