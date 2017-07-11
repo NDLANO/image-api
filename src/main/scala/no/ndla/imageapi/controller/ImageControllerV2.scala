@@ -147,7 +147,7 @@ trait ImageControllerV2 {
     get("/:image_id", operation(getByImageId)) {
       val imageId = long("image_id")
       val language = params.get("language").getOrElse(AllLanguages)
-      imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithSingleLanguage(image, language)) match {
+      imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(image, language)) match {
         case Some(image) => image
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId not found"))
       }
