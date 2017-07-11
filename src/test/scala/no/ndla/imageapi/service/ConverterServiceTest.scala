@@ -26,7 +26,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   val full = Image("123.png", 200, "image/png")
   val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(ImageTitle("test", Some("nb"))), List(), full.fileName, full.size, full.contentType, Copyright(License("", "", None), "", List()), List(), List(), "ndla124", updated)
 
-  override def beforeEach = {
+  override def beforeEach: Unit = {
     val request = mock[HttpServletRequest]
     when(request.getServerPort).thenReturn(80)
     when(request.getScheme).thenReturn("http")
@@ -36,7 +36,17 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     ApplicationUrl.set(request)
   }
 
-  override def afterEach = {
+  def beforeV2(): Unit = {
+    val request = mock[HttpServletRequest]
+    when(request.getServerPort).thenReturn(80)
+    when(request.getScheme).thenReturn("http")
+    when(request.getServerName).thenReturn("image-api")
+    when(request.getServletPath).thenReturn("/v2/images")
+
+    ApplicationUrl.set(request)
+  }
+
+  override def afterEach: Unit = {
     ApplicationUrl.clear()
   }
 
@@ -52,14 +62,12 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     api.imageUrl should equal (s"${ImageApiProperties.RawImageUrlBase}123.png")
   }
 
-  test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links with applicationUrl") {
-    val request = mock[HttpServletRequest]
-    when(request.getServerPort).thenReturn(80)
-    when(request.getScheme).thenReturn("http")
-    when(request.getServerName).thenReturn("image-api")
-    when(request.getServletPath).thenReturn("/v2/images")
+  /*
+  * Note that the next two tests overrides ApplicationUrl by using the 'beforeV2' function.
+  * */
 
-    ApplicationUrl.set(request)
+  test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links with applicationUrl") {
+    beforeV2()
 
     val api = converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(DefaultImageMetaInformation, "all")
     api.get.metaUrl should equal ("http://image-api/v2/images/1")
@@ -67,16 +75,9 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns links with domain urls") {
-    val request = mock[HttpServletRequest]
-    when(request.getServerPort).thenReturn(80)
-    when(request.getScheme).thenReturn("http")
-    when(request.getServerName).thenReturn("image-api")
-    when(request.getServletPath).thenReturn("/v2/images")
-
-    ApplicationUrl.set(request)
+    beforeV2()
 
     val api = converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, "all")
-    println(api.get.metaUrl)
     api.get.metaUrl should equal ("http://proxy.ndla-local/image-api/v2/images/1")
     api.get.imageUrl should equal ("http://proxy.ndla-local/image-api/raw/123.png")
   }
