@@ -11,7 +11,7 @@ package no.ndla.imageapi
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import no.ndla.imageapi.auth.{Role, User}
-import no.ndla.imageapi.controller.{HealthController, ImageController, InternController, RawController}
+import no.ndla.imageapi.controller._
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service._
@@ -37,6 +37,7 @@ object ComponentRegistry
   with ValidationService
   with TagsService
   with ImageController
+  with ImageControllerV2
   with RawController
   with InternController
   with HealthController
@@ -70,6 +71,7 @@ object ComponentRegistry
   lazy val ndlaClient = new NdlaClient
   lazy val migrationApiClient = new MigrationApiClient
   lazy val imageController = new ImageController
+  lazy val imageControllerV2 = new ImageControllerV2
   lazy val rawController = new RawController
   lazy val internController = new InternController
   lazy val healthController = new HealthController

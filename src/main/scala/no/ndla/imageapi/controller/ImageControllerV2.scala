@@ -24,11 +24,11 @@ import org.scalatra.swagger._
 
 import scala.util.{Failure, Success, Try}
 
-trait ImageController {
+trait ImageControllerV2 {
   this: ImageRepository with SearchService with ConverterService with WriteService with Role =>
-  val imageController: ImageController
+  val imageControllerV2: ImageControllerV2
 
-  class ImageController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
+  class ImageControllerV2(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
     // Swagger-stuff
     protected val applicationDescription = "API for accessing images from ndla.no."
     protected implicit override val jsonFormats: Formats = DefaultFormats
@@ -57,7 +57,7 @@ trait ImageController {
         queryParam[Option[String]]("license").description("Return only images with provided license."),
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
-        )
+      )
         authorizations "oauth2"
         responseMessages response500)
 
@@ -81,7 +81,7 @@ trait ImageController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
         pathParam[String]("image_id").description("Image_id of the image that needs to be fetched.")
-        )
+      )
         authorizations "oauth2"
         responseMessages(response404, response500))
 
@@ -96,8 +96,8 @@ trait ImageController {
         formParam[String]("metadata").description("The metadata for the image file to submit. See NewImageMetaInformation."),
         Parameter(name = "file", `type` = ValueDataType("file"), description = Some("The image file(s) to upload"), paramType = ParamType.Form)
       )
-      authorizations "oauth2"
-      responseMessages(response400, response403, response413, response500))
+        authorizations "oauth2"
+        responseMessages(response400, response403, response413, response500))
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
@@ -146,8 +146,9 @@ trait ImageController {
 
     get("/:image_id", operation(getByImageId)) {
       val imageId = long("image_id")
-      imageRepository.withId(imageId) match {
-        case Some(image) => converterService.asApiImageMetaInformationWithApplicationUrl(image)
+      val language = params.get("language").getOrElse(AllLanguages)
+      imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithSingleLanguage(image, language)) match {
+        case Some(image) => image
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId not found"))
       }
     }

@@ -63,38 +63,43 @@ trait ConverterService {
 
     def asApiImageMetaInformationWithSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: String): Option[api.ImageMetaInformationSingleLanguage] = {
 
-      val supportedLanguages = domainImageMetaInformation.titles.map(_.language.getOrElse(NoLanguage))
-        .++:(domainImageMetaInformation.alttexts.map(_.language.getOrElse(NoLanguage)))
-        .++:(domainImageMetaInformation.tags.map(_.language.getOrElse(NoLanguage)))
-        .++:(domainImageMetaInformation.captions.map(_.language.getOrElse(NoLanguage)))
-        .distinct
-        .filterNot(lang => lang.isEmpty)
-
+      val supportedLanguages = getSupportedLanguages(domainImageMetaInformation)
       val searchLanguage = if (language == AllLanguages) DefaultLanguage else language
-
       if (!supportedLanguages.contains(searchLanguage)) {
         return None
       }
 
-      val rawPath = Some(ApplicationUrl.get.replace("/v1/images/", "/raw/"))
-      val title =   findValueByLanguage[String](domainImageMetaInformation.titles, searchLanguage)
-      val altText = findValueByLanguage[String](domainImageMetaInformation.alttexts, searchLanguage)
-      val caption = findValueByLanguage[String](domainImageMetaInformation.captions, searchLanguage)
-      val tags =    findValueByLanguage[Seq[String]](domainImageMetaInformation.tags, searchLanguage)
+      def setByLanguage[T](seq: Seq[LanguageField[T]]) = {
+        if (language == AllLanguages)
+          getByLanguageOrHead[T](seq, searchLanguage)
+        else
+          findValueByLanguage[T](seq, searchLanguage)
+      }
 
-      if (title.isDefined || altText.isDefined || tags.isDefined || caption.isDefined) {
+      val rawPath = Some(ApplicationUrl.get.replace("/v2/images/", "/raw/"))
+      val title =   setByLanguage[String](domainImageMetaInformation.titles)
+      val altText = setByLanguage[String](domainImageMetaInformation.alttexts)
+      val caption = setByLanguage[String](domainImageMetaInformation.captions)
+      val tags =    setByLanguage[Seq[String]](domainImageMetaInformation.tags)
+
+      if (title.isDefined || altText.isDefined || caption.isDefined || tags.isDefined) {
+        val titleString = title.getOrElse("")
+        val altTextString = altText.getOrElse("")
+        val captionString = caption.getOrElse("")
+        val tagsSeq = tags.getOrElse(Seq.empty[String])
+
         Some(api.ImageMetaInformationSingleLanguage(
           domainImageMetaInformation.id.get.toString,
           Some(ApplicationUrl.get).getOrElse("") + domainImageMetaInformation.id.get,
           language,
-          title.get,
-          altText.get,
+          titleString,
+          altTextString,
           asApiUrl(domainImageMetaInformation.imageUrl, rawPath),
           domainImageMetaInformation.size,
           domainImageMetaInformation.contentType,
           asApiCopyright(domainImageMetaInformation.copyright),
-          tags.get,
-          caption.get,
+          tagsSeq,
+          captionString,
           supportedLanguages))
       } else {
         None
@@ -164,8 +169,27 @@ trait ConverterService {
       domain.ImageCaption(caption.caption, caption.language)
     }
 
-    def findValueByLanguage[T](sequence: Seq[LanguageField[T]], lang: String): Option[T] = {
-      sequence.find(_.language.getOrElse("") == lang).map(_.value)
+    def getByLanguageOrHead[T](sequence: Seq[LanguageField[T]], language: String): Option[T] = {
+      findValueByLanguage(sequence, language) match {
+        case Some(e) => Some(e)
+        case None => sequence.headOption.map(lf => lf.value)
+      }
+    }
+
+    def findValueByLanguage[T](sequence: Seq[LanguageField[T]], language: String): Option[T] = {
+      sequence.find(_.language.getOrElse("") == language).map(_.value) match {
+        case Some(e) => Some(e)
+        case None => sequence.find(_.language.getOrElse(DefaultLanguage) == language).map(_.value)
+      }
+    }
+
+    def getSupportedLanguages(domainImageMetaInformation: domain.ImageMetaInformation): Seq[String] = {
+      domainImageMetaInformation.titles.map(_.language.getOrElse(NoLanguage))
+        .++:(domainImageMetaInformation.alttexts.map(_.language.getOrElse(NoLanguage)))
+        .++:(domainImageMetaInformation.tags.map(_.language.getOrElse(NoLanguage)))
+        .++:(domainImageMetaInformation.captions.map(_.language.getOrElse(NoLanguage)))
+        .distinct
+        .filterNot(lang => lang.isEmpty)
     }
 
   }
