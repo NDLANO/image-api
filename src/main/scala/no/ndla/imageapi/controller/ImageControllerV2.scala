@@ -12,7 +12,7 @@ import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWrite
 import no.ndla.imageapi.auth.Role
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, NewImageMetaInformation, SearchParams, SearchResult, ValidationError}
-import no.ndla.imageapi.model.Language.AllLanguages
+import no.ndla.imageapi.model.Language.{DefaultLanguage, AllLanguages}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.SearchService
 import no.ndla.imageapi.service.{ConverterService, WriteService}
@@ -146,7 +146,7 @@ trait ImageControllerV2 {
 
     get("/:image_id", operation(getByImageId)) {
       val imageId = long("image_id")
-      val language = params.get("language").getOrElse(AllLanguages)
+      val language = paramOrDefault("language", DefaultLanguage)
       imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(image, language)) match {
         case Some(image) => image
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId not found"))
