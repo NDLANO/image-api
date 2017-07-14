@@ -55,36 +55,32 @@ trait SearchService {
       searchConverterService.asImageMetaSummary(read[SearchableImage](hit))
     }
 
-    def languageSpecificSearch(searchField: String, language: Option[String], query: String): QueryBuilder = {
+    private def languageSpecificSearch(searchField: String, language: Option[String], query: String, boost: Float): QueryBuilder = {
       language match {
-        case Some(lang) => QueryBuilders.nestedQuery(searchField, QueryBuilders.matchQuery(s"$searchField.$lang", query).operator(Operator.AND), ScoreMode.Avg)
-        case None => {
+        case Some(lang) =>
+          val searchQuery = QueryBuilders.simpleQueryStringQuery(query).field(s"$searchField.$lang")
+          QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost)
+        case None =>
           Language.supportedLanguages.foldLeft(QueryBuilders.boolQuery())((result, lang) => {
-            result.should(QueryBuilders.nestedQuery(searchField, QueryBuilders.matchQuery(s"$searchField.$lang", query).operator(Operator.AND), ScoreMode.Avg))
+            val searchQuery = QueryBuilders.simpleQueryStringQuery(query).field(s"$searchField.$lang")
+            result.should(QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost))
           })
-        }
       }
     }
 
     def matchingQuery(query: String, minimumSize: Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val fullSearch = QueryBuilders.boolQuery()
         .must(QueryBuilders.boolQuery()
-          .should(languageSpecificSearch("titles", language, query))
-          .should(languageSpecificSearch("alttexts", language, query))
-          .should(languageSpecificSearch("captions", language, query))
-          .should(languageSpecificSearch("tags", language, query)))
+          .should(languageSpecificSearch("titles", language, query, 2))
+          .should(languageSpecificSearch("alttexts", language, query, 1))
+          .should(languageSpecificSearch("captions", language, query, 2))
+          .should(languageSpecificSearch("tags", language, query, 2)))
 
       executeSearch(fullSearch, minimumSize, license, page, pageSize)
     }
 
-    def all(minimumSize: Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      executeSearch(
-        QueryBuilders.boolQuery(),
-        minimumSize,
-        license,
-        page,
-        pageSize)
-    }
+    def all(minimumSize: Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult =
+      executeSearch(QueryBuilders.boolQuery(), minimumSize, license, page, pageSize)
 
     def executeSearch(queryBuilder: BoolQueryBuilder, minimumSize: Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val licensedFiltered = license match {
