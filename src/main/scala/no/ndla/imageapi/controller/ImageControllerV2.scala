@@ -80,7 +80,8 @@ trait ImageControllerV2 {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        pathParam[String]("image_id").description("Image_id of the image that needs to be fetched.")
+        pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."),
+        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params.")
       )
         authorizations "oauth2"
         responseMessages(response404, response500))
