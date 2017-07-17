@@ -135,7 +135,7 @@ trait ImageControllerV2 {
 
     post("/search/", operation(getImagesPost)) {
       val searchParams = extract[SearchParams](request.body)
-      val minimumSize = searchParams.minimumSize
+      val minimumSize = searchParams.minimumSize.map(_.toString)
       val query = searchParams.query
       val language = searchParams.language
       val license = searchParams.license
