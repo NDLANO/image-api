@@ -101,32 +101,27 @@ trait ImageController {
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
-    private def search(minimumSize: Option[String], query: Option[String], language: Option[String], license: Option[String], pageSize: Option[Int], page: Option[Int]) = {
-      val size = minimumSize match {
-        case Some(toCheck) => if (toCheck.forall(_.isDigit)) Option(toCheck.toInt) else None
-        case None => None
-      }
-
+    private def search(minimumSize: Option[Int], query: Option[String], language: Option[String], license: Option[String], pageSize: Option[Int], page: Option[Int]) = {
       query match {
         case Some(searchString) => searchService.matchingQuery(
           query = searchString.trim,
-          minimumSize = size,
+          minimumSize = minimumSize,
           language = language,
           license = license,
           page,
           pageSize)
 
-        case None => searchService.all(minimumSize = size, license = license, page, pageSize)
+        case None => searchService.all(minimumSize = minimumSize, license = license, page, pageSize)
       }
     }
 
     get("/", operation(getImages)) {
-      val minimumSize = params.get("minimum-size")
+      val minimumSize = intOrNone("minimum-size")
       val query = params.get("query")
       val language = params.get("language")
       val license = params.get("license")
-      val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
-      val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
+      val pageSize = intOrNone("page-size")
+      val page = intOrNone("page")
 
 
       search(minimumSize, query, language, license, pageSize, page)

@@ -41,12 +41,12 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None), "Gotham City", List(Author("Forfatter", "DC Comics")))
   val publicDomain = Copyright(License("publicdomain", "Public Domain", None), "Metropolis", List(Author("Forfatter", "Bruce Wayne")))
-  def updated() = (new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC)).toDate
+  val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
-  val image1 = ImageMetaInformation(Some(1), List(ImageTitle("Batmen er på vift med en bil", Some("nb"))), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", Some("nb"))), largeImage.fileName, largeImage.size, largeImage.contentType, byNcSa, List(ImageTag(List("fugl"), Some("nb"))), List(), "ndla124", updated())
-  val image2 = ImageMetaInformation(Some(2), List(ImageTitle("Pingvinen er ute og går", Some("nb"))), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", Some("nb"))), largeImage.fileName, largeImage.size, largeImage.contentType, publicDomain, List(ImageTag(List("fugl"), Some("nb"))), List(), "ndla124", updated())
-  val image3 = ImageMetaInformation(Some(3), List(ImageTitle("Donald Duck kjører bil", Some("nb"))), List(ImageAltText("Bilde av en en and som kjører en rød bil.", Some("nb"))), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, List(ImageTag(List("and"), Some("nb"))), List(), "ndla124", updated())
-  val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", None)), Seq(), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq(), "ndla124", updated())
+  val image1 = ImageMetaInformation(Some(1), List(ImageTitle("Batmen er på vift med en bil", Some("nb"))), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", Some("nb"))), largeImage.fileName, largeImage.size, largeImage.contentType, byNcSa, List(ImageTag(List("fugl"), Some("nb"))), List(), "ndla124", updated)
+  val image2 = ImageMetaInformation(Some(2), List(ImageTitle("Pingvinen er ute og går", Some("nb"))), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", Some("nb"))), largeImage.fileName, largeImage.size, largeImage.contentType, publicDomain, List(ImageTag(List("fugl"), Some("nb"))), List(), "ndla124", updated)
+  val image3 = ImageMetaInformation(Some(3), List(ImageTitle("Donald Duck kjører bil", Some("nb"))), List(ImageAltText("Bilde av en en and som kjører en rød bil.", Some("nb"))), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, List(ImageTag(List("and"), Some("nb"))), List(), "ndla124", updated)
+  val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", None)), Seq(), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq(), "ndla124", updated)
 
   override def beforeAll() = {
     indexService.createIndexWithName(ImageApiProperties.SearchIndex)
@@ -161,11 +161,13 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     searchResult.results.head.id should be("3")
   }
 
-  test("That search matches alttext without specifying language") {
+  test("That search defaults to nb if no language is specified") {
     val searchResult = searchService.matchingQuery("Bilde av en and", None, None, None, None, None)
-    searchResult.totalCount should be (1)
-    searchResult.results.size should be (1)
-    searchResult.results.head.id should be ("3")
+    searchResult.totalCount should be (3)
+    searchResult.results.size should be (3)
+    searchResult.results.head.id should be ("1")
+    searchResult.results(1).id should be ("2")
+    searchResult.results.last.id should be ("3")
   }
 
   test("That search matches title with unknown language analyzed in Norwegian") {
@@ -173,6 +175,20 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     searchResult.totalCount should be (1)
     searchResult.results.size should be (1)
     searchResult.results.head.id should be ("4")
+  }
+
+  test("Searching with logical AND only returns results with all terms") {
+    val search1 = searchService.matchingQuery("batmen AND bil", None, Some("nb"), None, Some(1), Some(10))
+    search1.results.map(_.id) should equal (Seq("1", "3"))
+
+    val search2 = searchService.matchingQuery("batmen | pingvinen", None, Some("nb"), None, Some(1), Some(10))
+    search2.results.map(_.id) should equal (Seq("1", "2"))
+
+    val search3 = searchService.matchingQuery("bilde + -flaggermusmann", None, Some("nb"), None, Some(1), Some(10))
+    search3.results.map(_.id) should equal (Seq("2", "3"))
+
+    val search4 = searchService.matchingQuery("batmen + bil", None, Some("nb"), None, Some(1), Some(10))
+    search4.results.map(_.id) should equal (Seq("1"))
   }
 
   def blockUntil(predicate: () => Boolean) = {
