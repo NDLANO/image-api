@@ -63,59 +63,41 @@ trait ConverterService {
 
     def asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: String): Option[api.ImageMetaInformationSingleLanguage] = {
       val rawPath = ApplicationUrl.get.replace("/v2/images/", "/raw/")
-      asApiImageMetaInformationWithSingleLanguage(domainImageMetaInformation, language, Some(ApplicationUrl.get), Some(rawPath))
+      asImageMetaInformationV2(domainImageMetaInformation, language, ApplicationUrl.get, Some(rawPath))
     }
 
     def asApiImageMetaInformationWithDomainUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: String): Option[api.ImageMetaInformationSingleLanguage] = {
-      asApiImageMetaInformationWithSingleLanguage(domainImageMetaInformation, language, Some(ImageApiProperties.ImageApiUrlBase.replace("v1", "v2")), Some(ImageApiProperties.RawImageUrlBase))
+      asImageMetaInformationV2(domainImageMetaInformation, language, ImageApiProperties.ImageApiUrlBase.replace("v1", "v2"), Some(ImageApiProperties.RawImageUrlBase))
     }
 
-    private def asApiImageMetaInformationWithSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation,
-                                                            language: String,
-                                                            apiBaseUrl: Option[String] = None,
-                                                            rawImageBaseUrl: Option[String] = None
-                                                           ): Option[api.ImageMetaInformationSingleLanguage] = {
+    def getByLanguage[T](sequence: Seq[LanguageField[T]], language: String): Option[T] =
+      sequence.find(_.language.getOrElse(NoLanguage) == language).map(_.value)
 
-      val supportedLanguages = getSupportedLanguages(domainImageMetaInformation)
-      val searchLanguage = if (language == AllLanguages) DefaultLanguage else language
-      if (!supportedLanguages.contains(searchLanguage)) {
-        return None
+    private def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation, language: String, baseUrl: String, rawBaseUrl: Option[String]): Option[api.ImageMetaInformationSingleLanguage] = {
+      val supportedLanguages = getSupportedLanguages(imageMeta)
+      if (supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)) return None
+
+
+      val searchLanguage = language match {
+        case AllLanguages if supportedLanguages.contains(DefaultLanguage) => DefaultLanguage
+        case AllLanguages if supportedLanguages.nonEmpty => supportedLanguages.head
+        case _ => language
       }
 
-      def setByLanguage[T](seq: Seq[LanguageField[T]]) = {
-        if (language == AllLanguages)
-          getByLanguageOrHead[T](seq, searchLanguage)
-        else
-          findValueByLanguage[T](seq, searchLanguage)
-      }
+      Some(api.ImageMetaInformationSingleLanguage(
+        imageMeta.id.get.toString,
+        baseUrl + imageMeta.id.get,
+        searchLanguage,
+        getByLanguage(imageMeta.titles, searchLanguage).getOrElse(""),
+        getByLanguage(imageMeta.alttexts, searchLanguage).getOrElse(""),
+        asApiUrl(imageMeta.imageUrl, rawBaseUrl),
+        imageMeta.size,
+        imageMeta.contentType,
+        asApiCopyright(imageMeta.copyright),
+        getByLanguage(imageMeta.tags, searchLanguage).getOrElse(Seq.empty),
+        getByLanguage(imageMeta.captions, searchLanguage).getOrElse(""),
+        getSupportedLanguages(imageMeta)))
 
-      val title =   setByLanguage[String](domainImageMetaInformation.titles)
-      val altText = setByLanguage[String](domainImageMetaInformation.alttexts)
-      val caption = setByLanguage[String](domainImageMetaInformation.captions)
-      val tags =    setByLanguage[Seq[String]](domainImageMetaInformation.tags)
-
-      if (title.isDefined || altText.isDefined || caption.isDefined || tags.isDefined) {
-        val titleString = title.getOrElse("")
-        val altTextString = altText.getOrElse("")
-        val captionString = caption.getOrElse("")
-        val tagsSeq = tags.getOrElse(Seq.empty[String])
-
-        Some(api.ImageMetaInformationSingleLanguage(
-          domainImageMetaInformation.id.get.toString,
-          apiBaseUrl.getOrElse("") + domainImageMetaInformation.id.get,
-          language,
-          titleString,
-          altTextString,
-          asApiUrl(domainImageMetaInformation.imageUrl, rawImageBaseUrl),
-          domainImageMetaInformation.size,
-          domainImageMetaInformation.contentType,
-          asApiCopyright(domainImageMetaInformation.copyright),
-          tagsSeq,
-          captionString,
-          supportedLanguages))
-      } else {
-        None
-      }
     }
 
     def asApiImageTag(domainImageTag: domain.ImageTag): api.ImageTag = {

@@ -82,4 +82,13 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     api.get.imageUrl should equal ("http://proxy.ndla-local/image-api/raw/123.png")
   }
 
+  test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns None if language is not supported") {
+    beforeV2()
+    converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, "someRandomLangauge") should be(None)
+  }
+
+  test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns None if language is not supported") {
+    beforeV2()
+    converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, "someRandomLangauge") should be(None)
+  }
 }

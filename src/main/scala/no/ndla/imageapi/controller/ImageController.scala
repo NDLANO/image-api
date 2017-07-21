@@ -162,14 +162,5 @@ trait ImageController {
       }
     }
 
-    def extract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): T = {
-      Try(read[T](json)) match {
-        case Success(data) => data
-        case Failure(e) =>
-          logger.error(e.getMessage, e)
-          throw new ValidationException(errors=Seq(ValidationMessage("body", e.getMessage)))
-      }
-    }
-
   }
 }

@@ -18,12 +18,13 @@ import no.ndla.imageapi.model.{AccessDeniedException, ImageNotFoundException, Va
 import no.ndla.network.{ApplicationUrl, AuthUser, CorrelationID}
 import org.apache.logging.log4j.ThreadContext
 import org.elasticsearch.index.IndexNotFoundException
+import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.servlet.SizeConstraintExceededException
 import org.scalatra.{BadRequest, InternalServerError, RequestEntityTooLarge, ScalatraServlet, _}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
   protected implicit override val jsonFormats: Formats = DefaultFormats
@@ -112,4 +113,12 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     paramOrNone(paramName).getOrElse(default)
   }
 
+  def extract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): T = {
+    Try(read[T](json)) match {
+      case Success(data) => data
+      case Failure(e) =>
+        logger.error(e.getMessage, e)
+        throw new ValidationException(errors=Seq(ValidationMessage("body", e.getMessage)))
+    }
+  }
 }

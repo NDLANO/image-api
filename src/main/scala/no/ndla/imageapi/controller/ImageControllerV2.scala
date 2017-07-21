@@ -147,10 +147,10 @@ trait ImageControllerV2 {
 
     get("/:image_id", operation(getByImageId)) {
       val imageId = long("image_id")
-      val language = paramOrDefault("language", DefaultLanguage)
+      val language = paramOrDefault("language", AllLanguages)
       imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(image, language)) match {
         case Some(image) => image
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId and language $language not found"))
       }
     }
 
@@ -166,15 +166,6 @@ trait ImageControllerV2 {
       writeService.storeNewImage(newImage, file) match {
         case Success(imageMeta) => imageMeta
         case Failure(e) => errorHandler(e)
-      }
-    }
-
-    def extract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): T = {
-      Try(read[T](json)) match {
-        case Success(data) => data
-        case Failure(e) =>
-          logger.error(e.getMessage, e)
-          throw new ValidationException(errors=Seq(ValidationMessage("body", e.getMessage)))
       }
     }
 
