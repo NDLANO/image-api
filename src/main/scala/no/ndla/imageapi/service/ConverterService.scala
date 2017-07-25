@@ -163,20 +163,6 @@ trait ConverterService {
       domain.ImageCaption(caption.caption, caption.language)
     }
 
-    def getByLanguageOrHead[T](sequence: Seq[LanguageField[T]], language: String): Option[T] = {
-      findValueByLanguage(sequence, language) match {
-        case Some(e) => Some(e)
-        case None => sequence.headOption.map(lf => lf.value)
-      }
-    }
-
-    def findValueByLanguage[T](sequence: Seq[LanguageField[T]], language: String): Option[T] = {
-      sequence.find(_.language.getOrElse("") == language).map(_.value) match {
-        case Some(e) => Some(e)
-        case None => sequence.find(_.language.getOrElse(DefaultLanguage) == language).map(_.value)
-      }
-    }
-
     def getSupportedLanguages(domainImageMetaInformation: domain.ImageMetaInformation): Seq[String] = {
       domainImageMetaInformation.titles.map(_.language.getOrElse(NoLanguage))
         .++:(domainImageMetaInformation.alttexts.map(_.language.getOrElse(NoLanguage)))
