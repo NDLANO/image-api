@@ -123,7 +123,7 @@ trait ImageControllerV2 {
 
     get("/", operation(getImages)) {
       val minimumSize = params.get("minimum-size")
-      val query = params.get("query")
+      val query = paramOrNone("query")
       val language = params.get("language")
       val license = params.get("license")
       val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
