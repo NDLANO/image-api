@@ -57,8 +57,6 @@ trait InternController {
           Ok(converterService.asApiImageMetaInformationWithDomainUrl(imageMeta))
         }
         case Failure(s: S3UploadException) => {
-          contentType = formats("json")
-          logger.info(s"S3 Fail $s")
           val errMsg = s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${s.getMessage}\n"
           logger.warn(errMsg, s)
           GatewayTimeout(body = Error(Error.GATEWAY_TIMEOUT, errMsg))
