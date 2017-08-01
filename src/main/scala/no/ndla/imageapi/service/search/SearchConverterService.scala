@@ -30,7 +30,7 @@ trait SearchConverterService {
     }
 
     def asImageMetaSummary(searchableImage: SearchableImage): ImageMetaSummary = {
-      val apiToRawRegex = "/v[1,2]/images/".r
+      val apiToRawRegex = "/v\\d+/images/".r
 
       ImageMetaSummary(
         id = searchableImage.id.toString,
