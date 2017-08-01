@@ -11,7 +11,7 @@ package no.ndla.imageapi.service
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
-import no.ndla.imageapi.model.domain
+import no.ndla.imageapi.model.{S3UploadException, domain}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexBuilderService
 import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
@@ -75,7 +75,11 @@ trait ImportService {
       val image = domain.Image(key, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
 
       if (!imageStorage.objectExists(key) || imageStorage.objectSize(key) != image.size) {
-        imageStorage.uploadFromUrl(image, key, sourceUrlFull)
+        val tryResUpload = imageStorage.uploadFromUrl(image, key, sourceUrlFull)
+        tryResUpload match {
+          case Failure(f) => throw new S3UploadException(s"Upload of image :[$key] to S3 failed.")
+          case Success(s) =>
+        }
       }
 
       val now = clock.now()

@@ -14,7 +14,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKey}
 import no.ndla.imageapi.model.api.{Error, ValidationError}
 import no.ndla.imageapi.model.domain.ImageStream
-import no.ndla.imageapi.model.{AccessDeniedException, ImageNotFoundException, ValidationException, ValidationMessage}
+import no.ndla.imageapi.model.{AccessDeniedException, ImageNotFoundException, S3UploadException, ValidationException, ValidationMessage}
 import no.ndla.network.{ApplicationUrl, AuthUser, CorrelationID}
 import org.apache.logging.log4j.ThreadContext
 import org.elasticsearch.index.IndexNotFoundException
@@ -46,16 +46,20 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   }
 
   error {
-    case v: ValidationException => BadRequest(body=ValidationError(messages=v.errors))
+    case v: ValidationException => BadRequest(body = ValidationError(messages = v.errors))
     case a: AccessDeniedException => Forbidden(body = Error(Error.ACCESS_DENIED, a.getMessage))
-    case e: IndexNotFoundException => InternalServerError(Error.IndexMissingError)
-    case i: ImageNotFoundException => NotFound(Error(Error.NOT_FOUND, i.getMessage))
+    case e: IndexNotFoundException => InternalServerError(body = Error.IndexMissingError)
+    case i: ImageNotFoundException => NotFound(body = Error(Error.NOT_FOUND, i.getMessage))
+    case s: S3UploadException => {
+      contentType = formats("json")
+      GatewayTimeout(body = Error(Error.GATEWAY_TIMEOUT, s.getMessage))
+    }
     case _: SizeConstraintExceededException =>
       contentType = formats("json")
-      RequestEntityTooLarge(body=Error.FileTooBigError)
+      RequestEntityTooLarge(body = Error.FileTooBigError)
     case t: Throwable => {
       logger.error(Error.GenericError.toString, t)
-      InternalServerError(body=Error.GenericError)
+      InternalServerError(body = Error.GenericError)
     }
   }
 
