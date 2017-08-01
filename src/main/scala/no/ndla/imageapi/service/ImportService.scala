@@ -29,17 +29,11 @@ trait ImportService {
 
     def importImage(imageId: String): Try[domain.ImageMetaInformation] = {
       val imported = migrationApiClient.getMetaDataForImage(imageId).map(upload)
-
-      imported match {
-        case Success(imp) => {
-          imp.foreach(indexBuilderService.indexDocument)
-          imp
-        }
-        case Failure(f) => Failure(f)
-      }
+      imported.foreach(indexBuilderService.indexDocument)
+      imported
     }
 
-    def upload(imageMeta: MainImageImport): Try[domain.ImageMetaInformation] = {
+    def upload(imageMeta: MainImageImport): domain.ImageMetaInformation = {
       val start = System.currentTimeMillis
 
       val tags = tagsService.forImage(imageMeta.mainImage.nid) match {
@@ -107,7 +101,7 @@ trait ImportService {
         }
       }
 
-      Success(persistedImageMetaInformation)
+      persistedImageMetaInformation
     }
 
     private def languageCodeSupported(languageCode: String) =
