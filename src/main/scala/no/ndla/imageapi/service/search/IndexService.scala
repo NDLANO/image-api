@@ -94,7 +94,7 @@ trait IndexService {
 
     def deleteIndex(optIndexName: Option[String]): Try[_] = {
       optIndexName match {
-        case None => Success()
+        case None => Success(optIndexName)
         case Some(indexName) => {
           if (!indexExists(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))

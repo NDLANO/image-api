@@ -151,8 +151,8 @@ trait SearchService {
         indexBuilderService.indexDocuments
       }
 
-      f onFailure { case t => logger.warn("Unable to create index: " + t.getMessage, t) }
-      f onSuccess {
+      f.failed.foreach(t => logger.warn("Unable to create index: " + t.getMessage, t))
+      f.foreach {
         case Success(reindexResult) => logger.info(s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms.")
         case Failure(ex) => logger.warn(ex.getMessage, ex)
       }
