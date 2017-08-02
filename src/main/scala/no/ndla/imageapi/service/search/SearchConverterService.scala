@@ -30,9 +30,11 @@ trait SearchConverterService {
     }
 
     def asImageMetaSummary(searchableImage: SearchableImage): ImageMetaSummary = {
+      val apiToRawRegex = "/v\\d+/images/".r
+
       ImageMetaSummary(
         id = searchableImage.id.toString,
-        previewUrl = ApplicationUrl.get.replace("/v1/images/", "/raw/") + searchableImage.previewUrl,
+        previewUrl = apiToRawRegex.replaceFirstIn(ApplicationUrl.get, "/raw/") + searchableImage.previewUrl,
         metaUrl = ApplicationUrl.get + searchableImage.id,
         license = searchableImage.license)
     }

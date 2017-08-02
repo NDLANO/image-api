@@ -75,9 +75,6 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
 
   def isDouble(value: String): Boolean = Try(value.toDouble).isSuccess
 
-  def intOrNone(name: String)(implicit request: HttpServletRequest): Option[Int] =
-    params.get(name).flatMap(i => Try(i.toInt).toOption)
-
   def long(paramName: String)(implicit request: HttpServletRequest): Long = {
     val paramValue = params(paramName)
     if (!isInteger(paramValue))
@@ -111,6 +108,10 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
 
   def paramOrNone(paramName: String)(implicit request: HttpServletRequest): Option[String] = {
     params.get(paramName).map(_.trim).filterNot(_.isEmpty())
+  }
+
+  def intOrNone(name: String)(implicit request: HttpServletRequest): Option[Int] = {
+    paramOrNone(name).flatMap(i => Try(i.toInt).toOption)
   }
 
   def paramOrDefault(paramName: String, default: String)(implicit request: HttpServletRequest): String = {
