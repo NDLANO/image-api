@@ -36,7 +36,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     ApplicationUrl.set(request)
   }
 
-  def beforeV2(): Unit = {
+  def setApplicationUrl(): Unit = {
     val request = mock[HttpServletRequest]
     when(request.getServerPort).thenReturn(80)
     when(request.getScheme).thenReturn("http")
@@ -62,12 +62,8 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     api.imageUrl should equal (s"${ImageApiProperties.RawImageUrlBase}123.png")
   }
 
-  /*
-  * Note that the next two tests overrides ApplicationUrl by using the 'beforeV2' function.
-  * */
-
   test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links with applicationUrl") {
-    beforeV2()
+    setApplicationUrl()
 
     val api = converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(DefaultImageMetaInformation, "all")
     api.get.metaUrl should equal ("http://image-api/v2/images/1")
@@ -75,20 +71,20 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns links with domain urls") {
-    beforeV2()
+    setApplicationUrl()
 
     val api = converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, "all")
-    api.get.metaUrl should equal ("http://proxy.ndla-local/image-api/v2/images/1")
-    api.get.imageUrl should equal ("http://proxy.ndla-local/image-api/raw/123.png")
+    api.get.metaUrl should equal ("http://api-gateway.ndla-local/image-api/v2/images/1")
+    api.get.imageUrl should equal ("http://api-gateway.ndla-local/image-api/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns None if language is not supported") {
-    beforeV2()
+    setApplicationUrl()
     converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, "someRandomLangauge") should be(None)
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns None if language is not supported") {
-    beforeV2()
+    setApplicationUrl()
     converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, "someRandomLangauge") should be(None)
   }
 }
