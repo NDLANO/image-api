@@ -31,8 +31,8 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   val fileMock1: FileItem = mock[FileItem]
 
   val newImageMeta = NewImageMetaInformation(
-    Seq(ImageTitle("title", Some("en"))),
-    Seq(ImageAltText("alt text", Some("en"))),
+    Seq(ImageTitle("title", "en")),
+    Seq(ImageAltText("alt text", "en")),
     Copyright(License("by", "", None), "", Seq.empty),
     None,
     None
@@ -135,7 +135,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
     val result = writeService.storeNewImage(newImageMeta, fileMock1)
     result.isSuccess should be (true)
-    result should equal(Success(converterService.asApiImageMetaInformationWithApplicationUrl(afterInsert)))
+    result should equal(Success(afterInsert))
 
     verify(imageRepository, times(1)).insert(any[ImageMetaInformation])(any[DBSession])
     verify(indexService, times(1)).indexDocument(any[ImageMetaInformation])

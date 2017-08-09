@@ -111,7 +111,7 @@ trait ImageController {
           page,
           pageSize)
 
-        case None => searchService.all(minimumSize = minimumSize, license = license, page, pageSize)
+        case None => searchService.all(minimumSize = minimumSize, license = license, language = language, page, pageSize)
       }
     }
 
@@ -156,7 +156,7 @@ trait ImageController {
 
       val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
 
-      writeService.storeNewImage(newImage, file) match {
+      writeService.storeNewImage(newImage, file).map(converterService.asApiImageMetaInformationWithApplicationUrl) match {
         case Success(imageMeta) => imageMeta
         case Failure(e) => errorHandler(e)
       }

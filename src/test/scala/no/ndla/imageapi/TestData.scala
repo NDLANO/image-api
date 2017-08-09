@@ -23,40 +23,40 @@ object TestData {
 
   val ByNcSa = License("by-nc-sa", "Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic", Some("https://creativecommons.org/licenses/by-nc-sa/2.0/"))
 
-  val elg = ImageMetaInformation(Some(1), List(ImageTitle("Elg i busk", Option("nb"))),List(ImageAltText("Elg i busk", Option("nb"))),
+  val elg = ImageMetaInformation(Some(1), List(ImageTitle("Elg i busk", "nb")),List(ImageAltText("Elg i busk", "nb")),
     "Elg.jpg", 2865539, "image/jpeg",
     Copyright(ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag(List("rovdyr", "elg"), Option("nb"))), List(ImageCaption("Elg i busk", Some("nb"))), "ndla124", updated())
+    List(ImageTag(List("rovdyr", "elg"), "nb")), List(ImageCaption("Elg i busk", "nb")), "ndla124", updated())
 
-  val bjorn = ImageMetaInformation(Some(2), List(ImageTitle("Bjørn i busk", Option("nb"))),List(ImageAltText("Elg i busk", Option("nb"))),
+  val bjorn = ImageMetaInformation(Some(2), List(ImageTitle("Bjørn i busk", "nb")),List(ImageAltText("Elg i busk", "nb")),
     "Bjørn.jpg", 141134, "image/jpeg",
     Copyright(ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag(List("rovdyr", "bjørn"), Option("nb"))), List(ImageCaption("Bjørn i busk", Some("nb"))), "ndla124", updated())
+    List(ImageTag(List("rovdyr", "bjørn"), "nb")), List(ImageCaption("Bjørn i busk", "nb")), "ndla124", updated())
 
-  val jerv = ImageMetaInformation(Some(3), List(ImageTitle("Jerv på stein", Option("nb"))),List(ImageAltText("Elg i busk", Option("nb"))),
+  val jerv = ImageMetaInformation(Some(3), List(ImageTitle("Jerv på stein", "nb")),List(ImageAltText("Elg i busk", "nb")),
     "Jerv.jpg", 39061, "image/jpeg",
     Copyright(ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag(List("rovdyr", "jerv"), Option("nb"))), List(ImageCaption("Jerv på stein", Some("nb"))), "ndla124", updated())
+    List(ImageTag(List("rovdyr", "jerv"), "nb")), List(ImageCaption("Jerv på stein", "nb")), "ndla124", updated())
 
-  val mink = ImageMetaInformation(Some(4), List(ImageTitle("Overrasket mink", Option("nb"))),List(ImageAltText("Elg i busk", Option("nb"))),
+  val mink = ImageMetaInformation(Some(4), List(ImageTitle("Overrasket mink", "nb")),List(ImageAltText("Elg i busk", "nb")),
     "Mink.jpg", 102559, "image/jpeg",
     Copyright(ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag(List("rovdyr", "mink"), Option("nb"))), List(ImageCaption("Overrasket mink", Some("nb"))), "ndla124", updated())
+    List(ImageTag(List("rovdyr", "mink"), "nb")), List(ImageCaption("Overrasket mink", "nb")), "ndla124", updated())
 
-  val rein = ImageMetaInformation(Some(5), List(ImageTitle("Rein har fanget rødtopp", Option("nb"))),List(ImageAltText("Elg i busk", Option("nb"))),
+  val rein = ImageMetaInformation(Some(5), List(ImageTitle("Rein har fanget rødtopp", "nb")),List(ImageAltText("Elg i busk", "nb")),
     "Rein.jpg", 504911, "image/jpeg",
     Copyright(ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag(List("rovdyr", "rein", "jakt"), Option("nb"))), List(ImageCaption("Rein har fanget rødtopp", Some("nb"))), "ndla124", updated())
+    List(ImageTag(List("rovdyr", "rein", "jakt"), "nb")), List(ImageCaption("Rein har fanget rødtopp", "nb")), "ndla124", updated())
 
-  val nonexisting = ImageMetaInformation(Some(6), List(ImageTitle("Krokodille på krok", Option("nb"))),List(ImageAltText("Elg i busk", Option("nb"))),
+  val nonexisting = ImageMetaInformation(Some(6), List(ImageTitle("Krokodille på krok", "nb")),List(ImageAltText("Elg i busk", "nb")),
     "Krokodille.jpg", 2865539, "image/jpeg",
     Copyright(ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag(List("rovdyr", "krokodille"), Option("nb"))), List(ImageCaption("Krokodille på krok", Some("nb"))), "ndla124", updated())
+    List(ImageTag(List("rovdyr", "krokodille"), "nb")), List(ImageCaption("Krokodille på krok", "nb")), "ndla124", updated())
 
-  val nonexistingWithoutThumb = ImageMetaInformation(Some(6), List(ImageTitle("Bison på sletten", Option("nb"))),List(ImageAltText("Elg i busk", Option("nb"))),
+  val nonexistingWithoutThumb = ImageMetaInformation(Some(6), List(ImageTitle("Bison på sletten", "nb")),List(ImageAltText("Elg i busk", "nb")),
     "Bison.jpg", 2865539, "image/jpeg",
     Copyright(ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
-    List(ImageTag(List("bison"), Option("nb"))), List(ImageCaption("Bison på sletten", Some("nb"))), "ndla124", updated())
+    List(ImageTag(List("bison"), "nb")), List(ImageCaption("Bison på sletten", "nb")), "ndla124", updated())
 
   val testdata = List(elg, bjorn, jerv, mink, rein)
 

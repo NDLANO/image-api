@@ -86,18 +86,19 @@ trait ValidationService {
     }
 
     private def containsNoHtml(fieldPath: String, text: String): Option[ValidationMessage] = {
-      Jsoup.isValid(text, Whitelist.none()) match {
-        case true => None
-        case false => Some(ValidationMessage(fieldPath, "The content contains illegal html-characters. No HTML is allowed"))
+      if (Jsoup.isValid(text, Whitelist.none())) {
+        None
+      } else {
+        Some(ValidationMessage(fieldPath, "The content contains illegal html-characters. No HTML is allowed"))
       }
     }
 
-    private def validateLanguage(fieldPath: String, languageCode: Option[String]): Option[ValidationMessage] = {
-      languageCode.flatMap(lang =>
-        languageCodeSupported6391(lang) match {
-          case true => None
-          case false => Some(ValidationMessage(fieldPath, s"Language '${languageCode.getOrElse("")}' is not a supported value."))
-        })
+    private def validateLanguage(fieldPath: String, languageCode: String): Option[ValidationMessage] = {
+      if (languageCodeSupported6391(languageCode)) {
+        None
+      } else {
+        Some(ValidationMessage(fieldPath, s"Language '$languageCode' is not a supported value."))
+      }
     }
 
     private def languageCodeSupported6391(languageCode: String): Boolean =

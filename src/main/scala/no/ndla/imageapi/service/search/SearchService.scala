@@ -76,13 +76,13 @@ trait SearchService {
           .should(languageSpecificSearch("captions", language, query, 2))
           .should(languageSpecificSearch("tags", language, query, 2)))
 
-      executeSearch(fullSearch, minimumSize, license, page, pageSize)
+      executeSearch(fullSearch, minimumSize, license, language, page, pageSize)
     }
 
-    def all(minimumSize: Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult =
-      executeSearch(QueryBuilders.boolQuery(), minimumSize, license, page, pageSize)
+    def all(minimumSize: Option[Int], license: Option[String], language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult =
+      executeSearch(QueryBuilders.boolQuery(), minimumSize, license, language, page, pageSize)
 
-    def executeSearch(queryBuilder: BoolQueryBuilder, minimumSize: Option[Int], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
+    def executeSearch(queryBuilder: BoolQueryBuilder, minimumSize: Option[Int], license: Option[String], language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val licensedFiltered = license match {
         case None => queryBuilder.filter(noCopyright)
         case Some(lic) => queryBuilder.filter(QueryBuilders.termQuery("license", lic))
@@ -93,7 +93,12 @@ trait SearchService {
         case Some(size) => licensedFiltered.filter(QueryBuilders.rangeQuery("imageSize").gte(minimumSize.get))
       }
 
-      val search = new SearchSourceBuilder().query(sizeFiltered).sort(SortBuilders.fieldSort("id"))
+      val languageFiltered = language match {
+        case None => sizeFiltered
+        case Some(lang) => sizeFiltered.filter(QueryBuilders.nestedQuery("titles", QueryBuilders.existsQuery(s"titles.$lang"), ScoreMode.Avg))
+      }
+
+      val search = new SearchSourceBuilder().query(languageFiltered).sort(SortBuilders.fieldSort("id"))
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val request = new Search.Builder(search.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
