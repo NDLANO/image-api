@@ -13,6 +13,7 @@ import java.net.URL
 
 import no.ndla.imageapi.model.domain.ImageTag
 import no.ndla.imageapi.ImageApiProperties.TopicAPIUrl
+import no.ndla.imageapi.model.Language
 import no.ndla.mapping.ISO639.get6391CodeFor6392Code
 import org.json4s.native.Serialization.read
 
@@ -40,7 +41,7 @@ trait TagsService {
         .flatMap(_.toIterable)
         .map(t => (getISO639(t._1), t._2.trim.toLowerCase))
         .groupBy(_._1).map(entry => (entry._1, entry._2.map(_._2)))
-        .map(t => ImageTag(t._2, t._1)).toList
+        .map(t => ImageTag(t._2, Language.languageOrUnknown(t._1))).toList
     }
 
     def getISO639(languageUrl: String): Option[String] = {

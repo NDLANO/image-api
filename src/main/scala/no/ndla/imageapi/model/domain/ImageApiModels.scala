@@ -16,10 +16,10 @@ import org.json4s.FieldSerializer._
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
-case class ImageTitle(title: String, language: Option[String]) extends LanguageField[String] { override def value: String = title }
-case class ImageAltText(alttext: String, language: Option[String]) extends LanguageField[String] { override def value: String = alttext }
-case class ImageCaption(caption: String, language: Option[String]) extends LanguageField[String] { override def value: String = caption }
-case class ImageTag(tags: Seq[String], language: Option[String]) extends LanguageField[Seq[String]] { override def value: Seq[String] = tags }
+case class ImageTitle(title: String, language: String) extends LanguageField[String] { override def value: String = title }
+case class ImageAltText(alttext: String, language: String) extends LanguageField[String] { override def value: String = alttext }
+case class ImageCaption(caption: String, language: String) extends LanguageField[String] { override def value: String = caption }
+case class ImageTag(tags: Seq[String], language: String) extends LanguageField[Seq[String]] { override def value: Seq[String] = tags }
 case class Image(fileName: String, size: Long, contentType: String)
 case class Copyright(license: License, origin: String, authors: Seq[Author])
 case class License(license: String, description: String, url: Option[String])

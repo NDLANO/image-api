@@ -43,10 +43,10 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   val publicDomain = Copyright(License("publicdomain", "Public Domain", None), "Metropolis", List(Author("Forfatter", "Bruce Wayne")))
   val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
-  val image1 = ImageMetaInformation(Some(1), List(ImageTitle("Batmen er på vift med en bil", Some("nb"))), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", Some("nb"))), largeImage.fileName, largeImage.size, largeImage.contentType, byNcSa, List(ImageTag(List("fugl"), Some("nb"))), List(), "ndla124", updated)
-  val image2 = ImageMetaInformation(Some(2), List(ImageTitle("Pingvinen er ute og går", Some("nb"))), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", Some("nb"))), largeImage.fileName, largeImage.size, largeImage.contentType, publicDomain, List(ImageTag(List("fugl"), Some("nb"))), List(), "ndla124", updated)
-  val image3 = ImageMetaInformation(Some(3), List(ImageTitle("Donald Duck kjører bil", Some("nb"))), List(ImageAltText("Bilde av en en and som kjører en rød bil.", Some("nb"))), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, List(ImageTag(List("and"), Some("nb"))), List(), "ndla124", updated)
-  val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", None)), Seq(), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq(), "ndla124", updated)
+  val image1 = ImageMetaInformation(Some(1), List(ImageTitle("Batmen er på vift med en bil", "nb")), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", "nb")), largeImage.fileName, largeImage.size, largeImage.contentType, byNcSa, List(ImageTag(List("fugl"), "nb")), List(), "ndla124", updated)
+  val image2 = ImageMetaInformation(Some(2), List(ImageTitle("Pingvinen er ute og går", "nb")), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", "nb")), largeImage.fileName, largeImage.size, largeImage.contentType, publicDomain, List(ImageTag(List("fugl"), "nb")), List(), "ndla124", updated)
+  val image3 = ImageMetaInformation(Some(3), List(ImageTitle("Donald Duck kjører bil", "nb")), List(ImageAltText("Bilde av en en and som kjører en rød bil.", "nb")), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, List(ImageTag(List("and"), "nb")), List(), "ndla124", updated)
+  val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", "unknown")), Seq(), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq(), "ndla124", updated)
 
   override def beforeAll() = {
     indexService.createIndexWithName(ImageApiProperties.SearchIndex)
@@ -91,7 +91,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all returns all documents ordered by id ascending") {
-    val searchResult = searchService.all(None, None, None, None)
+    val searchResult = searchService.all(None, None, None, None, None)
     searchResult.totalCount should be(4)
     searchResult.results.size should be(4)
     searchResult.page should be(1)
@@ -100,7 +100,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all filtering on minimumsize only returns images larger than minimumsize") {
-    val searchResult = searchService.all(Some(500), None, None, None)
+    val searchResult = searchService.all(Some(500), None, None, None, None)
     searchResult.totalCount should be(2)
     searchResult.results.size should be(2)
     searchResult.results.head.id should be("1")
@@ -108,15 +108,15 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all filtering on license only returns images with given license") {
-    val searchResult = searchService.all(None, Some("publicdomain"), None, None)
+    val searchResult = searchService.all(None, Some("publicdomain"), None, None, None)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
   test("That paging returns only hits on current page and not more than page-size") {
-    val searchResultPage1 = searchService.all(None, None, Some(1), Some(2))
-    val searchResultPage2 = searchService.all(None, None, Some(2), Some(2))
+    val searchResultPage1 = searchService.all(None, None, None, Some(1), Some(2))
+    val searchResultPage2 = searchService.all(None, None, None, Some(2), Some(2))
     searchResultPage1.totalCount should be(4)
     searchResultPage1.page should be(1)
     searchResultPage1.pageSize should be(2)
@@ -133,7 +133,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That both minimum-size and license filters are applied.") {
-    val searchResult = searchService.all(Some(500), Some("publicdomain"), None, None)
+    val searchResult = searchService.all(Some(500), Some("publicdomain"), None, None, None)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")

@@ -11,8 +11,8 @@ package no.ndla.imageapi.controller
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.auth.Role
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
-import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, NewImageMetaInformation, SearchParams, SearchResult, ValidationError}
-import no.ndla.imageapi.model.Language.{DefaultLanguage, AllLanguages}
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, ImageMetaInformationSingleLanguage, NewImageMetaInformation, NewImageMetaInformationV2, SearchParams, SearchResult, ValidationError}
+import no.ndla.imageapi.model.Language.{AllLanguages, DefaultLanguage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.SearchService
 import no.ndla.imageapi.service.{ConverterService, WriteService}
@@ -74,7 +74,7 @@ trait ImageControllerV2 {
         responseMessages(response400, response500))
 
     val getByImageId =
-      (apiOperation[ImageMetaInformation]("findByImageId")
+      (apiOperation[ImageMetaInformationSingleLanguage]("findByImageId")
         summary "Show image info"
         notes "Shows info of the image with submitted id."
         parameters(
@@ -112,14 +112,14 @@ trait ImageControllerV2 {
           page,
           pageSize)
 
-        case None => searchService.all(minimumSize = minimumSize, license = license, page, pageSize)
+        case None => searchService.all(minimumSize = minimumSize, license = license, language = language, page, pageSize)
       }
     }
 
     get("/", operation(getImages)) {
       val minimumSize = intOrNone("minimum-size")
       val query = paramOrNone("query")
-      val language = params.get("language")
+      val language = paramOrNone("language")
       val license = params.get("license")
       val pageSize = intOrNone("page-size")
       val page = intOrNone("page")
@@ -141,7 +141,7 @@ trait ImageControllerV2 {
 
     get("/:image_id", operation(getByImageId)) {
       val imageId = long("image_id")
-      val language = paramOrDefault("language", AllLanguages)
+      val language = paramOrNone("language")
       imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(image, language)) match {
         case Some(image) => image
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId and language $language not found"))
@@ -152,12 +152,13 @@ trait ImageControllerV2 {
       authRole.assertHasRole(RoleWithWriteAccess)
 
       val newImage = params.get("metadata")
-        .map(extract[NewImageMetaInformation])
+        .map(extract[NewImageMetaInformationV2])
         .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
 
       val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
 
-      writeService.storeNewImage(newImage, file) match {
+      writeService.storeNewImage(converterService.asNewImageMetaInformation(newImage), file)
+        .map(img => converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(img, Some(newImage.language))) match {
         case Success(imageMeta) => imageMeta
         case Failure(e) => errorHandler(e)
       }

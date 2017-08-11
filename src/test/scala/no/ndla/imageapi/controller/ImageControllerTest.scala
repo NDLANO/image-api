@@ -8,7 +8,10 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.model.api.{Copyright, ImageMetaInformation, License, NewImageMetaInformation}
+import java.util.Date
+
+import no.ndla.imageapi.model.api.NewImageMetaInformation
+import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageSwagger, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
 import org.mockito.Matchers._
@@ -72,8 +75,16 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
     }
   }
 
+
   test("That POST / returns 200 if everything went well") {
-    val sampleImageMeta = ImageMetaInformation("1", "http://some.url/id", Seq.empty, Seq.empty, "http://some.url/img.jpg", 1024, "image/jpeg", Copyright(License("by", "description", None), "", Seq.empty), Seq.empty, Seq.empty)
+    val titles: Seq[ImageTitle] = Seq()
+    val alttexts: Seq[ImageAltText] = Seq()
+    val copyright = Copyright(License("by", "description", None), "", Seq.empty)
+    val tags: Seq[ImageTag] = Seq()
+    val captions: Seq[ImageCaption] = Seq()
+
+    val sampleImageMeta = ImageMetaInformation(Some(1), titles, alttexts, "http://some.url/img.jpg", 1024, "image/jpeg", copyright, tags, captions, "updatedBy", new Date())
+
     when(writeService.storeNewImage(any[NewImageMetaInformation], any[FileItem])).thenReturn(Success(sampleImageMeta))
 
     post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile), headers = Map("Authorization" -> authHeaderWithWriteRole)) {

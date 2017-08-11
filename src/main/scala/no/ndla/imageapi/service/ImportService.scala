@@ -11,7 +11,7 @@ package no.ndla.imageapi.service
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
-import no.ndla.imageapi.model.{S3UploadException, domain}
+import no.ndla.imageapi.model.{Language, S3UploadException, domain}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexBuilderService
 import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
@@ -53,8 +53,8 @@ trait ImportService {
       val copyright = domain.Copyright(license, imageMeta.origin.getOrElse(""), authors)
 
       val imageLang = languageCodeSupported(imageMeta.mainImage.language) match {
-        case true => Some(imageMeta.mainImage.language)
-        case false => None
+        case true => imageMeta.mainImage.language
+        case false => Language.UnknownLanguage
       }
 
       val mainTitle = domain.ImageTitle(imageMeta.mainImage.title, imageLang)
@@ -63,7 +63,7 @@ trait ImportService {
 
       val (titles, alttexts, captions) = imageMeta.translations.foldLeft((Seq(mainTitle), Seq(mainAlttext), Seq(mainCaption)))((result, translation) => {
         val (titles, alttexts, captions) = result
-        val transLang = if (languageCodeSupported(translation.language)) Some(translation.language) else None
+        val transLang = if (languageCodeSupported(translation.language)) translation.language else Language.UnknownLanguage
 
         (titles :+ domain.ImageTitle(translation.title, transLang),
           alttexts :+ translation.alttext.map(x => domain.ImageAltText(x, transLang)),

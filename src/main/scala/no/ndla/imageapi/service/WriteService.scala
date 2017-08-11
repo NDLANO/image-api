@@ -5,8 +5,8 @@ import java.lang.Math.max
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.model.ValidationException
-import no.ndla.imageapi.model.api.{ImageMetaInformation, NewImageMetaInformation}
-import no.ndla.imageapi.model.domain.Image
+import no.ndla.imageapi.model.api.{NewImageMetaInformation}
+import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexService
 import org.scalatra.servlet.FileItem
@@ -45,7 +45,7 @@ trait WriteService {
       }
 
       indexService.indexDocument(imageMeta) match {
-        case Success(_) => Success(converterService.asApiImageMetaInformationWithApplicationUrl(imageMeta))
+        case Success(_) => Success(imageMeta)
         case Failure(e) =>
           imageStorage.deleteObject(domainImage.imageUrl)
           imageRepository.delete(imageMeta.id.get)

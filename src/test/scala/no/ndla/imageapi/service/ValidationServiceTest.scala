@@ -46,7 +46,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns a validation error if title contains html") {
-    val imageMeta = sampleImageMeta.copy(titles=Seq(ImageTitle("<h1>title</h1>", Some("nb"))))
+    val imageMeta = sampleImageMeta.copy(titles=Seq(ImageTitle("<h1>title</h1>", "nb")))
     val result = validationService.validate(imageMeta)
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be (1)
@@ -54,7 +54,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns a validation error if title language is invalid") {
-    val imageMeta = sampleImageMeta.copy(titles=Seq(ImageTitle("title", Some("invalid"))))
+    val imageMeta = sampleImageMeta.copy(titles=Seq(ImageTitle("title", "invalid")))
     val result = validationService.validate(imageMeta)
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be (1)
@@ -63,7 +63,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns success if title is valid") {
-    val imageMeta = sampleImageMeta.copy(titles=Seq(ImageTitle("title", Some("en"))))
+    val imageMeta = sampleImageMeta.copy(titles=Seq(ImageTitle("title", "en")))
     validationService.validate(imageMeta).isSuccess should be (true)
   }
 
@@ -100,7 +100,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns a validation error if tags contain html") {
-    val imageMeta = sampleImageMeta.copy(tags=Seq(ImageTag(Seq("<h1>tag</h1>"), Some("en"))))
+    val imageMeta = sampleImageMeta.copy(tags=Seq(ImageTag(Seq("<h1>tag</h1>"), "en")))
     val result = validationService.validate(imageMeta)
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be (1)
@@ -109,7 +109,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns a validation error if tags language is invalid") {
-    val imageMeta = sampleImageMeta.copy(tags=Seq(ImageTag(Seq("tag"), Some("invalid"))))
+    val imageMeta = sampleImageMeta.copy(tags=Seq(ImageTag(Seq("tag"), "invalid")))
     val result = validationService.validate(imageMeta)
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be (1)
@@ -118,12 +118,12 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns success if tags are valid") {
-    val imageMeta = sampleImageMeta.copy(tags=Seq(ImageTag(Seq("tag"), Some("en"))))
+    val imageMeta = sampleImageMeta.copy(tags=Seq(ImageTag(Seq("tag"), "en")))
     validationService.validate(imageMeta).isSuccess should be (true)
   }
 
   test("validate returns a validation error if alt texts contain html") {
-    val imageMeta = sampleImageMeta.copy(alttexts=Seq(ImageAltText("<h1>alt text</h1>", Some("en"))))
+    val imageMeta = sampleImageMeta.copy(alttexts=Seq(ImageAltText("<h1>alt text</h1>", "en")))
     val result = validationService.validate(imageMeta)
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be (1)
@@ -132,7 +132,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns a validation error if alt texts language is invalid") {
-    val imageMeta = sampleImageMeta.copy(alttexts=Seq(ImageAltText("alt text", Some("invalid"))))
+    val imageMeta = sampleImageMeta.copy(alttexts=Seq(ImageAltText("alt text", "invalid")))
     val result = validationService.validate(imageMeta)
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be (1)
@@ -141,12 +141,12 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns success if alt texts are valid") {
-    val imageMeta = sampleImageMeta.copy(alttexts=Seq(ImageAltText("alt text", Some("en"))))
+    val imageMeta = sampleImageMeta.copy(alttexts=Seq(ImageAltText("alt text", "en")))
     validationService.validate(imageMeta).isSuccess should be (true)
   }
 
   test("validate returns a validation error if captions contain html") {
-    val imageMeta = sampleImageMeta.copy(captions=Seq(ImageCaption("<h1>caption</h1>", Some("en"))))
+    val imageMeta = sampleImageMeta.copy(captions=Seq(ImageCaption("<h1>caption</h1>", "en")))
     val result = validationService.validate(imageMeta)
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be (1)
@@ -155,7 +155,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns a validation error if captions language is invalid") {
-    val imageMeta = sampleImageMeta.copy(captions=Seq(ImageCaption("caption", Some("invalid"))))
+    val imageMeta = sampleImageMeta.copy(captions=Seq(ImageCaption("caption", "invalid")))
     val result = validationService.validate(imageMeta)
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be (1)
@@ -164,7 +164,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns success if captions are valid") {
-    val imageMeta = sampleImageMeta.copy(captions=Seq(ImageCaption("caption", Some("en"))))
+    val imageMeta = sampleImageMeta.copy(captions=Seq(ImageCaption("caption", "en")))
     validationService.validate(imageMeta).isSuccess should be (true)
   }
 
