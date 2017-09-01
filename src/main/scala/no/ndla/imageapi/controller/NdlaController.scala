@@ -23,7 +23,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.servlet.SizeConstraintExceededException
 import org.scalatra.{BadRequest, InternalServerError, RequestEntityTooLarge, ScalatraServlet, _}
-
+import java.lang.Math.{min, max}
 import scala.util.{Failure, Success, Try}
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
@@ -96,18 +96,12 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     })
   }
 
-  def paramAsListOfInt(paramName: String)(implicit request: HttpServletRequest): List[Int] = {
-    params.get(paramName).map(param => {
-      val paramAsListOfStrings = param.split(",").toList.map(_.trim)
-      if (!paramAsListOfStrings.forall(isInteger))
-        throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only (list of) digits are allowed.")))
-
-      paramAsListOfStrings.map(_.toInt)
-    }).getOrElse(List.empty)
-  }
-
   def paramOrNone(paramName: String)(implicit request: HttpServletRequest): Option[String] = {
     params.get(paramName).map(_.trim).filterNot(_.isEmpty())
+  }
+
+  def doubleOrNone(name: String)(implicit request: HttpServletRequest): Option[Double] = {
+    paramOrNone(name).flatMap(i => Try(i.toDouble).toOption)
   }
 
   def intOrNone(name: String)(implicit request: HttpServletRequest): Option[Int] = {
@@ -116,6 +110,14 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
 
   def paramOrDefault(paramName: String, default: String)(implicit request: HttpServletRequest): String = {
     paramOrNone(paramName).getOrElse(default)
+  }
+
+  def doubleInRange(paramName: String, from: Double, to: Double)(implicit request: HttpServletRequest): Option[Double] = {
+    doubleOrNone(paramName) match {
+      case Some(d) if d >= min(from, to) && d <= max(from, to) => Some(d)
+      case Some(d) => throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Must be in range $from-$to but was $d")))
+      case None => None
+    }
   }
 
   def extract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): T = {

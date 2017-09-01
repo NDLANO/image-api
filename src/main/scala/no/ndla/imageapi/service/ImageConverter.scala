@@ -5,6 +5,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.lang.Math.{abs, max, min}
 import javax.imageio.ImageIO
 
+import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.model.domain.ImageStream
 import org.imgscalr.Scalr
 import org.imgscalr.Scalr.Mode
@@ -14,7 +15,13 @@ import scala.util.Try
 
 trait ImageConverter {
   val imageConverter: ImageConverter
-  case class Point(x: Int, y: Int)
+  case class PercentPoint(x: Double, y: Double) { // A point given with values from 0 to 1. 0,0 is top-left, 1,1 is bottom-right
+    private def inRange(n: Double): Boolean = n >= 0 && n <= 1
+
+    if (!inRange(x) || !inRange(y))
+      throw new ValidationException(errors=Seq(ValidationMessage("PercentPoint", s"Invalid value for a PixelPoint. Must be in range 0-1")))
+  }
+  case class PixelPoint(x: Int, y: Int) // A point given with pixles
 
   class ImageConverter {
     private[service] def toImageSteam(bufferedImage: BufferedImage, originalImage: ImageStream): ImageStream = {
@@ -34,22 +41,18 @@ trait ImageConverter {
     }
 
     def resize(originalImage: ImageStream, mode: Mode, targetSize: Int): Try[ImageStream] = {
+      val MaxTargetSize = 2000
       val sourceImage = ImageIO.read(originalImage.stream)
-      val maxSize = mode match {
-        case Mode.FIT_TO_WIDTH => sourceImage.getWidth
-        case Mode.FIT_TO_HEIGHT => sourceImage.getHeight
-        case _ => max(sourceImage.getWidth, sourceImage.getHeight)
-      }
-      Try(Scalr.resize(sourceImage, mode, min(targetSize, maxSize))).map(resized => toImageSteam(resized, originalImage))
+      Try(Scalr.resize(sourceImage, mode, min(targetSize, MaxTargetSize))).map(resized => toImageSteam(resized, originalImage))
     }
 
     def resizeWidth(originalImage: ImageStream, size: Int): Try[ImageStream] = resize(originalImage, Mode.FIT_TO_WIDTH, size)
 
     def resizeHeight(originalImage: ImageStream, size: Int): Try[ImageStream] = resize(originalImage, Mode.FIT_TO_HEIGHT, size)
 
-    def crop(originalImage: ImageStream, start: Point, end: Point): Try[ImageStream] = {
+    def crop(originalImage: ImageStream, start: PercentPoint, end: PercentPoint): Try[ImageStream] = {
       val sourceImage = ImageIO.read(originalImage.stream)
-      val (topLeft, bottomRight) = transformCoordinates(start, end)
+      val (topLeft, bottomRight) = transformCoordinates(sourceImage, start, end)
       val (width, height) = getWidthHeight(topLeft, bottomRight, sourceImage)
 
       Try(Scalr.crop(sourceImage, topLeft.x, topLeft.y, width, height))
@@ -58,14 +61,16 @@ trait ImageConverter {
 
     // Given two sets of coordinates; reorganize them so that the first coordinate is the top-left,
     // and the other coordinate is the bottom-right
-    private[service] def transformCoordinates(start: Point, end: Point): (Point, Point) = {
-      val topLeft = Point(min(start.x, end.x), min(start.y, end.y))
-      val bottomRight = Point(max(start.x, end.x), max(start.y, end.y))
+    private[service] def transformCoordinates(image: BufferedImage, start: PercentPoint, end: PercentPoint): (PixelPoint, PixelPoint) = {
+      val topLeft = PercentPoint(min(start.x, end.x), min(start.y, end.y))
+      val bottomRight = PercentPoint(max(start.x, end.x), max(start.y, end.y))
 
-      (Point(max(topLeft.x, 0), max(topLeft.y, 0)), Point(max(bottomRight.x, 0), max(bottomRight.y, 0)))
+      val (width, height) = (image.getWidth, image.getHeight)
+
+      (PixelPoint((topLeft.x * width).toInt, (topLeft.y * height).toInt), PixelPoint((bottomRight.x * width).toInt, (bottomRight.y * height).toInt))
     }
 
-    private[service] def getWidthHeight(start: Point, end: Point, image: BufferedImage): (Int, Int) = {
+    private[service] def getWidthHeight(start: PixelPoint, end: PixelPoint, image: BufferedImage): (Int, Int) = {
       val width = abs(start.x - end.x)
       val height = abs(start.y - end.y)
       (min(width, image.getWidth - start.x), min(height, image.getHeight - start.y))

@@ -19,23 +19,18 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
   }
 
   test("transformCoordinates returns a CoordOptions object with correctly transformed coordinates") {
-    service.transformCoordinates(Point(100, 50), Point(10, 200)) should equal (Point(10, 50), Point(100, 200))
-    service.transformCoordinates(Point(100, 200), Point(10, 50)) should equal (Point(10, 50), Point(100, 200))
-    service.transformCoordinates(Point(10, 50), Point(100, 200)) should equal (Point(10, 50), Point(100, 200))
-    service.transformCoordinates(Point(10, 200), Point(100, 50)) should equal (Point(10, 50), Point(100, 200))
-  }
-
-  test("transformCoordinates does not return coordinates < 0") {
-    service.transformCoordinates(Point(-10, 200), Point(100, 50)) should equal (Point(0, 50), Point(100, 200))
-    service.transformCoordinates(Point(-10, 200), Point(100, -50)) should equal (Point(0, 0), Point(100, 200))
+    service.transformCoordinates(image, PercentPoint(0.1, 0.05), PercentPoint(0.01, 0.2)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(0.1, 0.2),PercentPoint(0.01, 0.05)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(0.01, 0.05), PercentPoint(0.1, 0.2)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(0.01, 0.2), PercentPoint(0.1, 0.05)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
   }
 
   test("getWidthHeight returns the width and height of a segment to crop") {
-    service.getWidthHeight(Point(10, 200), Point(100, 50), image) should equal ((90, 150))
+    service.getWidthHeight(PixelPoint(10, 200), PixelPoint(100, 50), image) should equal ((90, 150))
   }
 
   test("getWidthHeight returns max values if one coordinate is outside of image") {
-    service.getWidthHeight(Point(10, 200), Point(imageWidth + 1, imageHeight + 1), image) should equal ((990, 800))
+    service.getWidthHeight(PixelPoint(10, 200), PixelPoint(imageWidth + 1, imageHeight + 1), image) should equal ((990, 800))
   }
 
   test("toConvertedImage converts a BufferedImage to an ImageStream") {
@@ -53,12 +48,12 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
   }
 
   test("crop crops an image according to given settings") {
-    val croppedImage = service.crop(NdlaLogoImage, Point(0, 0), Point(100, 50))
+    val croppedImage = service.crop(NdlaLogoImage, PercentPoint(0, 0), PercentPoint(0.5, 0.5))
     croppedImage.isSuccess should equal(true)
 
     val image = ImageIO.read(croppedImage.get.stream)
-    image.getWidth should equal(100)
-    image.getHeight should equal(50)
+    image.getWidth should equal(94)
+    image.getHeight should equal(30)
   }
 
   test("resize resizes image height correctly") {

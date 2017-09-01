@@ -2,6 +2,7 @@ package no.ndla.imageapi.controller
 
 import javax.servlet.http.HttpServletRequest
 
+import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.repository.ImageRepository
@@ -36,14 +37,10 @@ trait RawController {
         pathParam[String]("name").description("The name of the image"),
         queryParam[Option[Int]]("width").description("The target width to resize the image. Image proportions are kept intact"),
         queryParam[Option[Int]]("height").description("The target height to resize the image. Image proportions are kept intact"),
-        queryParam[Option[String]]("cropStart").description(
-          """The first image coordinate (X,Y) specifying the crop start position.
-            |The coordinate is a comma separated value of the form column,row (e.g 100,10).
-            |If cropStart is specified cropEnd must also be specified""".stripMargin),
-        queryParam[Option[String]]("cropEnd").description(
-          """The second image coordinate (X,Y) specifying the crop end position, forming a square cutout.
-            |The coordinate is a comma separated value of the form column,row (e.g 200,100).
-            |If cropEnd is specified cropStart must also be specified""".stripMargin)
+        queryParam[Option[Double]]("cropStartX").description("The first image coordinate X specifying the crop start position. If used the other crop parameters must also be supplied"),
+        queryParam[Option[Double]]("cropStartY").description("The first image coordinate Y specifying the crop start position If used the other crop parameters must also be supplied"),
+        queryParam[Option[Double]]("cropEndX").description("The end image coordinate X specifying the crop end position. If used the other crop parameters must also be supplied"),
+        queryParam[Option[Double]]("cropEndY").description("The end image coordinate Y specifying the crop end position If used the other crop parameters must also be supplied"),
       ).responseMessages(response404, response500)
 
     val getImageFileById = new OperationBuilder(ValueDataType("file", Some("binary")))
@@ -58,14 +55,10 @@ trait RawController {
         pathParam[String]("id").description("The ID of the image"),
         queryParam[Option[Int]]("width").description("The target width to resize the image. Image proportions are kept intact"),
         queryParam[Option[Int]]("height").description("The target height to resize the image. Image proportions are kept intact"),
-        queryParam[Option[String]]("cropStart").description(
-          """The first image coordinate (X,Y) specifying the crop start position.
-            |The coordinate is a comma separated value of the form column,row (e.g 100,10).
-            |If cropStart is specified cropEnd must also be specified""".stripMargin),
-        queryParam[Option[String]]("cropEnd").description(
-          """The second image coordinate (X,Y) specifying the crop end position, forming a square cutout.
-            |The coordinate is a comma separated value of the form column,row (e.g 200,100).
-            |If cropEnd is specified cropStart must also be specified""".stripMargin)
+        queryParam[Option[Double]]("cropStartX").description("The first image coordinate X specifying the crop start position. If used the other crop parameters must also be supplied"),
+        queryParam[Option[Double]]("cropStartY").description("The first image coordinate Y specifying the crop start position If used the other crop parameters must also be supplied"),
+        queryParam[Option[Double]]("cropEndX").description("The end image coordinate X specifying the crop end position. If used the other crop parameters must also be supplied"),
+        queryParam[Option[Double]]("cropEndY").description("The end image coordinate Y specifying the crop end position If used the other crop parameters must also be supplied"),
       ).responseMessages(response404, response500)
 
     get("/:name", operation(getImageFile)) {
@@ -87,8 +80,14 @@ trait RawController {
     }
 
     def crop(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
-      (paramAsListOfInt("cropStart"), paramAsListOfInt("cropEnd")) match {
-        case (List(startX, startY), List(endX, endY)) => imageConverter.crop(image, Point(startX, startY), Point(endX, endY))
+      val startX = doubleInRange("cropStartX", 0, 1)
+      val startY = doubleInRange("cropStartY", 0, 1)
+      val endX = doubleInRange("cropEndX", 0, 1)
+      val endY = doubleInRange("cropEndY", 0, 1)
+
+      (startX, startY, endX, endY) match {
+        case (Some(sx), Some(sy), Some(ex), Some(ey)) =>
+          imageConverter.crop(image, PercentPoint(sx, sy), PercentPoint(ex, ey))
         case _ => Success(image)
       }
     }
