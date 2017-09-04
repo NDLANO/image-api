@@ -27,6 +27,7 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
     when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoImage))
   }
 
+  /*
   test("That GET /image.jpg returns 200 if image was found") {
     get(s"/$imageName") {
       status should equal (200)
@@ -149,5 +150,6 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
       image.getHeight should equal(16)
     }
   }
+  */
 
 }

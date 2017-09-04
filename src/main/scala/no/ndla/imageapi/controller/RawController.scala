@@ -35,12 +35,14 @@ trait RawController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
         pathParam[String]("name").description("The name of the image"),
-        queryParam[Option[Int]]("width").description("The target width to resize the image. Image proportions are kept intact"),
-        queryParam[Option[Int]]("height").description("The target height to resize the image. Image proportions are kept intact"),
-        queryParam[Option[Double]]("cropStartX").description("The first image coordinate X specifying the crop start position. If used the other crop parameters must also be supplied"),
-        queryParam[Option[Double]]("cropStartY").description("The first image coordinate Y specifying the crop start position If used the other crop parameters must also be supplied"),
-        queryParam[Option[Double]]("cropEndX").description("The end image coordinate X specifying the crop end position. If used the other crop parameters must also be supplied"),
-        queryParam[Option[Double]]("cropEndY").description("The end image coordinate Y specifying the crop end position If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("width").description("The target width to resize the image (the unit is pixles). Image proportions are kept intact"),
+        queryParam[Option[Int]]("height").description("The target height to resize the image (the unit is pixles). Image proportions are kept intact"),
+        queryParam[Option[Int]]("cropStartX").description("The first image coordinate X specifying the crop start position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("cropStartY").description("The first image coordinate Y specifying the crop start position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("cropEndX").description("The end image coordinate X specifying the crop end position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("cropEndY").description("The end image coordinate Y specifying the crop end position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("focalX").description("The end image coordinate X specifying the crop end position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("focalY").description("The end image coordinate Y specifying the crop end position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
       ).responseMessages(response404, response500)
 
     val getImageFileById = new OperationBuilder(ValueDataType("file", Some("binary")))
@@ -53,37 +55,42 @@ trait RawController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
         pathParam[String]("id").description("The ID of the image"),
-        queryParam[Option[Int]]("width").description("The target width to resize the image. Image proportions are kept intact"),
-        queryParam[Option[Int]]("height").description("The target height to resize the image. Image proportions are kept intact"),
-        queryParam[Option[Double]]("cropStartX").description("The first image coordinate X specifying the crop start position. If used the other crop parameters must also be supplied"),
-        queryParam[Option[Double]]("cropStartY").description("The first image coordinate Y specifying the crop start position If used the other crop parameters must also be supplied"),
-        queryParam[Option[Double]]("cropEndX").description("The end image coordinate X specifying the crop end position. If used the other crop parameters must also be supplied"),
-        queryParam[Option[Double]]("cropEndY").description("The end image coordinate Y specifying the crop end position If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("width").description("The target width to resize the image (the unit is pixles). Image proportions are kept intact"),
+        queryParam[Option[Int]]("height").description("The target height to resize the image (the unit is pixles). Image proportions are kept intact"),
+        queryParam[Option[Int]]("cropStartX").description("The first image coordinate X specifying the crop start position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("cropStartY").description("The first image coordinate Y specifying the crop start position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("cropEndX").description("The end image coordinate X specifying the crop end position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("cropEndY").description("The end image coordinate Y specifying the crop end position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("focalX").description("The end image coordinate X specifying the crop end position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
+        queryParam[Option[Int]]("focalY").description("The end image coordinate Y specifying the crop end position (A value from 0 to 100). If used the other crop parameters must also be supplied"),
       ).responseMessages(response404, response500)
 
     get("/:name", operation(getImageFile)) {
-      getRawImage(params("name"))
+      getRawImageDynamicCrop(params("name"))
     }
 
     get("/id/:id", operation(getImageFileById)) {
      imageRepository.withId(long("id")) match {
-        case Some(imageMeta) => getRawImage(imageMeta.imageUrl)
+        case Some(imageMeta) => getRawImageDynamicCrop(imageMeta.imageUrl)
         case None => None
       }
     }
 
-    private def getRawImage(imageName: String): ImageStream = {
-      imageStorage.get(imageName).flatMap(crop).flatMap(resize) match {
+    private def getRawImageDynamicCrop(imageName: String): ImageStream = {
+      imageStorage.get(imageName)
+        .flatMap(crop)
+        .flatMap(dynamicCrop)
+        .flatMap(resize) match {
         case Success(img) => img
         case Failure(e) => throw e
       }
     }
 
     def crop(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
-      val startX = doubleInRange("cropStartX", 0, 1)
-      val startY = doubleInRange("cropStartY", 0, 1)
-      val endX = doubleInRange("cropEndX", 0, 1)
-      val endY = doubleInRange("cropEndY", 0, 1)
+      val startX = intInRange("cropStartX", PercentPoint.MinValue, PercentPoint.MaxValue)
+      val startY = intInRange("cropStartY", PercentPoint.MinValue, PercentPoint.MaxValue)
+      val endX = intInRange("cropEndX", PercentPoint.MinValue, PercentPoint.MaxValue)
+      val endY = intInRange("cropEndY", PercentPoint.MinValue, PercentPoint.MaxValue)
 
       (startX, startY, endX, endY) match {
         case (Some(sx), Some(sy), Some(ex), Some(ey)) =>
@@ -92,11 +99,26 @@ trait RawController {
       }
     }
 
+    def dynamicCrop(image: ImageStream): Try[ImageStream] = {
+      val focalX = intInRange("focalX", PercentPoint.MinValue, PercentPoint.MaxValue)
+      val focalY = intInRange("focalY", PercentPoint.MinValue, PercentPoint.MaxValue)
+      val Seq(widthOpt, heightOpt) = extractDoubleOpts("width", "height")
+
+      (focalX, focalY, widthOpt, heightOpt) match {
+        case (Some(fx), Some(fy), Some(w), Some(h)) =>
+          imageConverter.dynamicCrop(image, PercentPoint(fx, fy), w.toInt, h.toInt)
+        case _ => Success(image)
+      }
+    }
+
     def resize(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
-      extractDoubleOpts("width", "height") match {
-        case Seq(Some(width), _) => imageConverter.resizeWidth(image, width.toInt)
-        case Seq(_, Some(height)) => imageConverter.resizeHeight(image, height.toInt)
-        case Seq(Some(width), Some(height)) => imageConverter.resize(image, width.toInt, height.toInt)
+      val Seq(widthOpt, heightOpt) = extractDoubleOpts("width", "height")
+      val focalPointIsDefined = doubleOrNone("focalX").isDefined && doubleOrNone("focalY").isDefined && widthOpt.isDefined && heightOpt.isDefined
+
+      (widthOpt, heightOpt, focalPointIsDefined) match {
+        case (Some(width), Some(height), false) => imageConverter.resize(image, width.toInt, height.toInt)
+        case (Some(width), _, false) => imageConverter.resizeWidth(image, width.toInt)
+        case (_, Some(height), false) => imageConverter.resizeHeight(image, height.toInt)
         case _ => Success(image)
       }
     }
