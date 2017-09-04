@@ -10,7 +10,7 @@ import no.ndla.imageapi.model.domain.ImageStream
 import org.imgscalr.Scalr
 import org.imgscalr.Scalr.Mode
 
-import scala.util.Try
+import scala.util.{Success, Try}
 
 
 trait ImageConverter {
@@ -41,18 +41,19 @@ trait ImageConverter {
         override def stream = new ByteArrayInputStream(outputStream.toByteArray)
         override def contentType: String = originalImage.contentType
         override def fileName: String = originalImage.fileName
+        override lazy val sourceImage = ImageIO.read(stream)
       }
     }
 
     def resize(originalImage: ImageStream, targetWidth: Int, targetHeight: Int): Try[ImageStream] = {
-      val sourceImage = ImageIO.read(originalImage.stream)
+      val sourceImage = originalImage.sourceImage
       Try(Scalr.resize(sourceImage, min(targetWidth, sourceImage.getWidth), min(targetHeight, sourceImage.getHeight)))
         .map(resized => toImageSteam(resized, originalImage))
     }
 
     def resize(originalImage: ImageStream, mode: Mode, targetSize: Int): Try[ImageStream] = {
       val MaxTargetSize = 2000
-      val sourceImage = ImageIO.read(originalImage.stream)
+      val sourceImage = originalImage.sourceImage
       Try(Scalr.resize(sourceImage, mode, min(targetSize, MaxTargetSize))).map(resized => toImageSteam(resized, originalImage))
     }
 
@@ -68,7 +69,7 @@ trait ImageConverter {
     }
 
     def crop(originalImage: ImageStream, start: PercentPoint, end: PercentPoint): Try[ImageStream] = {
-      val sourceImage = ImageIO.read(originalImage.stream)
+      val sourceImage = originalImage.sourceImage
       val (topLeft, bottomRight) = transformCoordinates(sourceImage, start, end)
       crop(originalImage, sourceImage, topLeft, bottomRight)
     }
@@ -82,7 +83,7 @@ trait ImageConverter {
     }
 
     def dynamicCrop(image: ImageStream, percentFocalPoint: PercentPoint, targetWidth: Int, targetHeight: Int): Try[ImageStream] = {
-      val sourceImage = ImageIO.read(image.stream)
+      val sourceImage = image.sourceImage
       val focalPoint = toPixelPoint(percentFocalPoint, sourceImage)
       val (imageWidth, imageHeight) = (sourceImage.getWidth, sourceImage.getHeight)
 
@@ -90,6 +91,22 @@ trait ImageConverter {
       val (startX, endX) = getStartEnd(imageWidth, targetWidth, focalPoint.x)
 
       crop(image, sourceImage, PixelPoint(startX, startY), PixelPoint(endX, endY))
+    }
+
+    def dynamicCropWidth(image: ImageStream, percentFocalPoint: PercentPoint, targetWidth: Int): Try[ImageStream] = {
+      val (imageWidth, imageHeight) = (image.sourceImage.getWidth, image.sourceImage.getHeight)
+      val actualTargetWidth = min(imageWidth, targetWidth)
+
+      val widthReductionPercent: Double = actualTargetWidth.toDouble / imageWidth.toDouble
+      dynamicCrop(image, percentFocalPoint, actualTargetWidth, (imageHeight * widthReductionPercent).toInt)
+    }
+
+    def dynamicCropHeight(image: ImageStream, percentFocalPoint: PercentPoint, targetHeight: Int): Try[ImageStream] = {
+      val (imageWidth, imageHeight) = (image.sourceImage.getWidth, image.sourceImage.getHeight)
+      val actualTargetHeight = min(imageHeight, targetHeight)
+
+      val heightReductionPercent: Double = actualTargetHeight.toDouble / imageHeight.toDouble
+      dynamicCrop(image, percentFocalPoint, (imageWidth * heightReductionPercent).toInt, actualTargetHeight)
     }
 
     // Given two sets of coordinates; reorganize them so that the first coordinate is the top-left,

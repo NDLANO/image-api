@@ -112,8 +112,8 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     paramOrNone(paramName).getOrElse(default)
   }
 
-  def intInRange(paramName: String, from: Int, to: Int)(implicit request: HttpServletRequest): Option[Int] = {
-    intOrNone(paramName) match {
+  def doubleInRange(paramName: String, from: Int, to: Int)(implicit request: HttpServletRequest): Option[Double] = {
+    doubleOrNone(paramName) match {
       case Some(d) if d >= min(from, to) && d <= max(from, to) => Some(d)
       case Some(d) => throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Must be in range $from-$to but was $d")))
       case None => None

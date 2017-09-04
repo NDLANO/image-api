@@ -18,12 +18,12 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
     when(image.getHeight).thenReturn(imageHeight)
   }
 
-  /*
+
   test("transformCoordinates returns a CoordOptions object with correctly transformed coordinates") {
-    service.transformCoordinates(image, PercentPoint(0.1, 0.05), PercentPoint(0.01, 0.2)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
-    service.transformCoordinates(image, PercentPoint(0.1, 0.2),PercentPoint(0.01, 0.05)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
-    service.transformCoordinates(image, PercentPoint(0.01, 0.05), PercentPoint(0.1, 0.2)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
-    service.transformCoordinates(image, PercentPoint(0.01, 0.2), PercentPoint(0.1, 0.05)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(10, 5), PercentPoint(1, 20)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(10, 20),PercentPoint(1, 5)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(1, 5), PercentPoint(10, 20)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(1, 20), PercentPoint(10, 5)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
   }
 
   test("getWidthHeight returns the width and height of a segment to crop") {
@@ -49,7 +49,7 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
   }
 
   test("crop crops an image according to given settings") {
-    val croppedImage = service.crop(NdlaLogoImage, PercentPoint(0, 0), PercentPoint(0.5, 0.5))
+    val croppedImage = service.crop(NdlaLogoImage, PercentPoint(0, 0), PercentPoint(50, 50))
     croppedImage.isSuccess should equal(true)
 
     val image = ImageIO.read(croppedImage.get.stream)
@@ -81,5 +81,12 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
     image.getWidth should equal(100)
     image.getHeight should not equal 60
   }
-  */
+
+  test("dynamic cropping should work as expected") {
+    val croppedImage = service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), 10, 30)
+    val image = ImageIO.read(croppedImage.get.stream)
+    image.getWidth should equal(10)
+    image.getHeight should equal(30)
+  }
+
 }

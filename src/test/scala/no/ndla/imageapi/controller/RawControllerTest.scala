@@ -27,7 +27,6 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
     when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoImage))
   }
 
-  /*
   test("That GET /image.jpg returns 200 if image was found") {
     get(s"/$imageName") {
       status should equal (200)
@@ -70,7 +69,7 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   }
 
   test("That GET /image.jpg with cropping returns a cropped image") {
-    get(s"/$imageName?cropStartX=0&cropStartY=0&cropEndX=0.5&cropEndY=0.5") {
+    get(s"/$imageName?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
@@ -80,7 +79,7 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   }
 
   test("That GET /image.jpg with cropping and resizing returns a cropped and resized image") {
-    get(s"/$imageName?cropStartX=0&cropStartY=0&cropEndX=0.5&cropEndY=0.5&width=50") {
+    get(s"/$imageName?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50&width=50") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
@@ -132,7 +131,7 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   }
 
   test("That GET /id/1 with cropping returns a cropped image") {
-    get(s"/id/$id?cropStartX=0&cropStartY=0&cropEndX=0.5&cropEndY=0.5") {
+    get(s"/id/$id?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
@@ -142,7 +141,7 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   }
 
   test("That GET /id/1 with cropping and resizing returns a cropped and resized image") {
-    get(s"/id/$id?cropStartX=0&cropStartY=0&cropEndX=0.5&cropEndY=0.5&width=50") {
+    get(s"/id/$id?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50&width=50") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
@@ -150,6 +149,5 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
       image.getHeight should equal(16)
     }
   }
-  */
 
 }

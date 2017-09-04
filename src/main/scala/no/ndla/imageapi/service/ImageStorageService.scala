@@ -10,6 +10,7 @@ package no.ndla.imageapi.service
 
 import java.io.InputStream
 import java.net.URL
+import javax.imageio.ImageIO
 
 import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
@@ -28,6 +29,7 @@ trait ImageStorageService {
     case class NdlaImage(s3Object: S3Object, fileName: String) extends ImageStream {
       override def contentType: String = s3Object.getObjectMetadata.getContentType
       override def stream: InputStream = s3Object.getObjectContent
+      override lazy val sourceImage = ImageIO.read(stream)
     }
 
     def get(imageKey: String): Try[ImageStream] = {
