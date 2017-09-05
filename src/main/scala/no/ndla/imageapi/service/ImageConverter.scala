@@ -34,7 +34,7 @@ trait ImageConverter {
   }
 
   class ImageConverter {
-    private[service] def toImageSteam(bufferedImage: BufferedImage, originalImage: ImageStream): ImageStream = {
+    private[service] def toImageStream(bufferedImage: BufferedImage, originalImage: ImageStream): ImageStream = {
       val outputStream = new ByteArrayOutputStream()
       ImageIO.write(bufferedImage, originalImage.format, outputStream)
       new ImageStream {
@@ -48,13 +48,13 @@ trait ImageConverter {
     def resize(originalImage: ImageStream, targetWidth: Int, targetHeight: Int): Try[ImageStream] = {
       val sourceImage = originalImage.sourceImage
       Try(Scalr.resize(sourceImage, min(targetWidth, sourceImage.getWidth), min(targetHeight, sourceImage.getHeight)))
-        .map(resized => toImageSteam(resized, originalImage))
+        .map(resized => toImageStream(resized, originalImage))
     }
 
     def resize(originalImage: ImageStream, mode: Mode, targetSize: Int): Try[ImageStream] = {
       val MaxTargetSize = 2000
       val sourceImage = originalImage.sourceImage
-      Try(Scalr.resize(sourceImage, mode, min(targetSize, MaxTargetSize))).map(resized => toImageSteam(resized, originalImage))
+      Try(Scalr.resize(sourceImage, mode, min(targetSize, MaxTargetSize))).map(resized => toImageStream(resized, originalImage))
     }
 
     def resizeWidth(originalImage: ImageStream, size: Int): Try[ImageStream] = resize(originalImage, Mode.FIT_TO_WIDTH, size)
@@ -65,7 +65,7 @@ trait ImageConverter {
       val (width, height) = getWidthHeight(topLeft, bottomRight, sourceImage)
 
       Try(Scalr.crop(sourceImage, topLeft.x, topLeft.y, width, height))
-        .map(cropped => toImageSteam(cropped, image))
+        .map(cropped => toImageStream(cropped, image))
     }
 
     def crop(originalImage: ImageStream, start: PercentPoint, end: PercentPoint): Try[ImageStream] = {
@@ -74,39 +74,36 @@ trait ImageConverter {
       crop(originalImage, sourceImage, topLeft, bottomRight)
     }
 
-    private def getStartEnd(size: Int, targetSize: Int, focal: Int): (Int, Int) = {
-      val ts = min(targetSize, size) / 2
-      val (start, end) = (focal - ts, focal + ts)
-      val (startRem, endRem) = (abs(min(start, 0)), max(end - size, 0))
+    private def getStartEndCoords(focalPoint: Int, targetDimensionSize: Int, originalDimensionSize: Int): (Int, Int) = {
+      val ts = min(targetDimensionSize.toDouble, originalDimensionSize.toDouble) / 2.0
+      val (start, end) = (focalPoint - ts.floor.toInt, focalPoint + ts.round.toInt)
+      val (startRem, endRem) = (abs(min(start, 0)), max(end - originalDimensionSize, 0))
 
-      (max(start - endRem, 0), min(end + startRem, size))
+      (max(start - endRem, 0), min(end + startRem, originalDimensionSize))
     }
 
-    def dynamicCrop(image: ImageStream, percentFocalPoint: PercentPoint, targetWidth: Int, targetHeight: Int): Try[ImageStream] = {
+    def dynamicCrop(image: ImageStream, percentFocalPoint: PercentPoint, targetWidthOpt: Option[Int], targetHeightOpt: Option[Int]): Try[ImageStream] = {
       val sourceImage = image.sourceImage
       val focalPoint = toPixelPoint(percentFocalPoint, sourceImage)
       val (imageWidth, imageHeight) = (sourceImage.getWidth, sourceImage.getHeight)
 
-      val (startY, endY) = getStartEnd(imageHeight, targetHeight, focalPoint.y)
-      val (startX, endX) = getStartEnd(imageWidth, targetWidth, focalPoint.x)
+      val (targetWidth: Int, targetHeight: Int) = (targetWidthOpt, targetHeightOpt) match {
+        case (None, None) => return Success(image)
+        case (Some(w), Some(h)) => (w, h)
+        case (Some(w), None) =>
+          val actualTargetWidth = min(imageWidth, w)
+          val widthReductionPercent: Double = actualTargetWidth.toDouble / imageWidth.toDouble
+          (w, (imageHeight * widthReductionPercent).toInt)
+        case (None, Some(h)) =>
+          val actualTargetHeight = min(imageHeight, h)
+          val heightReductionPercent: Double = actualTargetHeight.toDouble / imageHeight.toDouble
+          ((imageWidth * heightReductionPercent).toInt, actualTargetHeight)
+      }
+
+      val (startY, endY) = getStartEndCoords(focalPoint.y, targetHeight, imageHeight)
+      val (startX, endX) = getStartEndCoords(focalPoint.x, targetWidth, imageWidth)
 
       crop(image, sourceImage, PixelPoint(startX, startY), PixelPoint(endX, endY))
-    }
-
-    def dynamicCropWidth(image: ImageStream, percentFocalPoint: PercentPoint, targetWidth: Int): Try[ImageStream] = {
-      val (imageWidth, imageHeight) = (image.sourceImage.getWidth, image.sourceImage.getHeight)
-      val actualTargetWidth = min(imageWidth, targetWidth)
-
-      val widthReductionPercent: Double = actualTargetWidth.toDouble / imageWidth.toDouble
-      dynamicCrop(image, percentFocalPoint, actualTargetWidth, (imageHeight * widthReductionPercent).toInt)
-    }
-
-    def dynamicCropHeight(image: ImageStream, percentFocalPoint: PercentPoint, targetHeight: Int): Try[ImageStream] = {
-      val (imageWidth, imageHeight) = (image.sourceImage.getWidth, image.sourceImage.getHeight)
-      val actualTargetHeight = min(imageHeight, targetHeight)
-
-      val heightReductionPercent: Double = actualTargetHeight.toDouble / imageHeight.toDouble
-      dynamicCrop(image, percentFocalPoint, (imageWidth * heightReductionPercent).toInt, actualTargetHeight)
     }
 
     // Given two sets of coordinates; reorganize them so that the first coordinate is the top-left,

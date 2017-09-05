@@ -42,7 +42,7 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
     when(origImage.contentType).thenReturn("image/jpg")
     when(origImage.format).thenReturn("jpg")
 
-    val result = service.toImageSteam(bufferedImage, origImage)
+    val result = service.toImageStream(bufferedImage, origImage)
     result.fileName should equal (origImage.fileName)
     result.contentType should equal (origImage.contentType)
     result.format should equal (origImage.format)
@@ -83,10 +83,26 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
   }
 
   test("dynamic cropping should work as expected") {
-    val croppedImage = service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), 10, 30)
+    val croppedImage = service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), Some(10), Some(30))
     val image = ImageIO.read(croppedImage.get.stream)
     image.getWidth should equal(10)
     image.getHeight should equal(30)
+  }
+
+  test("dynamic cropping should scalale according to original image size if only one dimension size is specified") {
+    val image = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), Some(100), None).get.stream)
+    image.getWidth should equal(100)
+    image.getHeight should equal(31)
+
+    val image2 = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), None, Some(50)).get.stream)
+    image2.getWidth should equal(157)
+    image2.getHeight should equal(50)
+  }
+
+  test("dynamoc crop should not manipulate image if neither target width or target height is specified") {
+    val image = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), None, None).get.stream)
+    image.getWidth should equal(NdlaLogoImage.sourceImage.getWidth)
+    image.getHeight should equal(NdlaLogoImage.sourceImage.getHeight)
   }
 
 }
