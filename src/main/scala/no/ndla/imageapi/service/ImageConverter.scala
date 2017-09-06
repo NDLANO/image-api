@@ -89,7 +89,7 @@ trait ImageConverter {
 
       val (targetWidth: Int, targetHeight: Int) = (targetWidthOpt, targetHeightOpt) match {
         case (None, None) => return Success(image)
-        case (Some(w), Some(h)) => (w, h)
+        case (Some(w), Some(h)) => (min(w, imageWidth), min(h, imageHeight))
         case (Some(w), None) =>
           val actualTargetWidth = min(imageWidth, w)
           val widthReductionPercent: Double = actualTargetWidth.toDouble / imageWidth.toDouble

@@ -89,7 +89,7 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
     image.getHeight should equal(30)
   }
 
-  test("dynamic cropping should scalale according to original image size if only one dimension size is specified") {
+  test("dynamic cropping should scale according to original image size if only one dimension size is specified") {
     val image = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), Some(100), None).get.stream)
     image.getWidth should equal(100)
     image.getHeight should equal(31)
@@ -99,7 +99,7 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
     image2.getHeight should equal(50)
   }
 
-  test("dynamoc crop should not manipulate image if neither target width or target height is specified") {
+  test("dynamic crop should not manipulate image if neither target width or target height is specified") {
     val image = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), None, None).get.stream)
     image.getWidth should equal(NdlaLogoImage.sourceImage.getWidth)
     image.getHeight should equal(NdlaLogoImage.sourceImage.getHeight)
