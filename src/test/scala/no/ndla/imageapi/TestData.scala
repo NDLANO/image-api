@@ -8,7 +8,9 @@
 
 package no.ndla.imageapi
 
+import java.awt.image.BufferedImage
 import java.io.InputStream
+import javax.imageio.ImageIO
 
 import no.ndla.imageapi.model.domain._
 import org.joda.time.{DateTime, DateTimeZone}
@@ -64,6 +66,8 @@ object TestData {
     override def contentType: String = s"image/$format"
     override def stream: InputStream = getClass.getResourceAsStream(s"/$filename")
     override def fileName: String = filename
+
+    override lazy val sourceImage: BufferedImage = ImageIO.read(stream)
   }
 
   val NdlaLogoImage = DiskImage("ndla_logo.jpg")

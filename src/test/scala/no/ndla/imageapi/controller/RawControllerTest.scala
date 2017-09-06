@@ -69,22 +69,22 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   }
 
   test("That GET /image.jpg with cropping returns a cropped image") {
-    get(s"/$imageName?cropStart=0,0&cropEnd=20,20") {
+    get(s"/$imageName?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
-      image.getWidth should equal(20)
-      image.getHeight should equal(20)
+      image.getWidth should equal(94)
+      image.getHeight should equal(30)
     }
   }
 
   test("That GET /image.jpg with cropping and resizing returns a cropped and resized image") {
-    get(s"/$imageName?cropStart=0,0&cropEnd=100,20&width=50") {
+    get(s"/$imageName?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50&width=50") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
       image.getWidth should equal(50)
-      image.getHeight should equal(10)
+      image.getHeight should equal(16)
     }
   }
 
@@ -131,22 +131,22 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   }
 
   test("That GET /id/1 with cropping returns a cropped image") {
-    get(s"/id/$id?cropStart=0,0&cropEnd=20,20") {
+    get(s"/id/$id?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
-      image.getWidth should equal(20)
-      image.getHeight should equal(20)
+      image.getWidth should equal(94)
+      image.getHeight should equal(30)
     }
   }
 
   test("That GET /id/1 with cropping and resizing returns a cropped and resized image") {
-    get(s"/id/$id?cropStart=0,0&cropEnd=100,20&width=50") {
+    get(s"/id/$id?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50&width=50") {
       status should equal (200)
 
       val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
       image.getWidth should equal(50)
-      image.getHeight should equal(10)
+      image.getHeight should equal(16)
     }
   }
 
