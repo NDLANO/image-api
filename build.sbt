@@ -62,7 +62,8 @@ lazy val image_api = (project in file(".")).
       "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
       "org.jsoup" % "jsoup" % "1.7.3",
-      "org.imgscalr" % "imgscalr-lib" % "4.2"
+      "org.imgscalr" % "imgscalr-lib" % "4.2",
+      "com.netaporter" %% "scala-uri" % "0.4.16"
     )
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 

@@ -8,11 +8,12 @@
 
 package no.ndla.imageapi.integration
 
-import no.ndla.imageapi.ImageApiProperties
+import no.ndla.imageapi.ImageApiProperties.{MigrationHost, MigrationUser, MigrationPassword, Environment}
 import no.ndla.network.NdlaClient
 
 import scala.util.Try
 import scalaj.http.Http
+import com.netaporter.uri.dsl._
 
 trait MigrationApiClient {
   this: NdlaClient =>
@@ -20,12 +21,13 @@ trait MigrationApiClient {
   val migrationApiClient: MigrationApiClient
 
   class MigrationApiClient {
-    val imageMetadataEndpoint = s"${ImageApiProperties.MigrationHost}/images/:image_nid"
+    val DBSource = if (Environment == "prod") "cm" else "red"
+    val imageMetadataEndpoint = s"$MigrationHost/images/:image_nid" ? (s"db-source" -> s"$DBSource")
 
     def getMetaDataForImage(imageNid: String): Try[MainImageImport] = {
       ndlaClient.fetchWithBasicAuth[MainImageImport](
         Http(imageMetadataEndpoint.replace(":image_nid", imageNid)),
-        ImageApiProperties.MigrationUser, ImageApiProperties.MigrationPassword)
+        MigrationUser, MigrationPassword)
     }
   }
 }
