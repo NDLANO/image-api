@@ -8,7 +8,7 @@
 package no.ndla.imageapi.service.search
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.model.api.ImageMetaSummary
+import no.ndla.imageapi.model.api.{ImageAltText, ImageMetaSummary, ImageTitle}
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.model.search.{LanguageValue, SearchableImage, SearchableLanguageList, SearchableLanguageValues}
 import no.ndla.network.ApplicationUrl
@@ -34,15 +34,17 @@ trait SearchConverterService {
       val apiToRawRegex = "/v\\d+/images/".r
       val title = searchableImage.titles.languageValues.find(title => title.lang == language.getOrElse(DefaultLanguage))
         .orElse(searchableImage.titles.languageValues.headOption)
-        .map(_.value)
+        .map(res => ImageTitle(res.value, res.lang))
+        .getOrElse(ImageTitle("", DefaultLanguage))
       val altText = searchableImage.alttexts.languageValues.find(title => title.lang == language.getOrElse(DefaultLanguage))
         .orElse(searchableImage.alttexts.languageValues.headOption)
-        .map(_.value)
+        .map(res => ImageAltText(res.value, res.lang))
+        .getOrElse(ImageAltText("", DefaultLanguage))
 
       ImageMetaSummary(
         id = searchableImage.id.toString,
-        title = title.getOrElse(""),
-        altText = altText.getOrElse(""),
+        title = title,
+        altText = altText,
         previewUrl = apiToRawRegex.replaceFirstIn(ApplicationUrl.get, "/raw/") + searchableImage.previewUrl,
         metaUrl = ApplicationUrl.get + searchableImage.id,
         license = searchableImage.license)
