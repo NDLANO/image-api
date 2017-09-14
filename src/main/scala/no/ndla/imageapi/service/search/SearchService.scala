@@ -35,14 +35,14 @@ trait SearchService {
   class SearchService extends LazyLogging {
     private val noCopyright = QueryBuilders.boolQuery().mustNot(QueryBuilders.termQuery("license","copyrighted"))
 
-    def getHits(response: JestSearchResult): Seq[ImageMetaSummary] = {
+    def getHits(response: JestSearchResult, language: Option[String]): Seq[ImageMetaSummary] = {
       var resultList = Seq[ImageMetaSummary]()
       response.getTotal match {
         case count: Integer if count > 0 => {
           val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
           val iterator = resultArray.iterator()
           while(iterator.hasNext) {
-            resultList = resultList :+ hitAsImageMetaSummary(iterator.next().asInstanceOf[JsonObject].get("_source").toString)
+            resultList = resultList :+ hitAsImageMetaSummary(iterator.next().asInstanceOf[JsonObject].get("_source").toString, language)
           }
           resultList
         }
@@ -50,9 +50,9 @@ trait SearchService {
       }
     }
 
-    def hitAsImageMetaSummary(hit: String): ImageMetaSummary = {
+    def hitAsImageMetaSummary(hit: String, language: Option[String]): ImageMetaSummary = {
       implicit val formats = SearchableLanguageFormats.JSonFormats
-      searchConverterService.asImageMetaSummary(read[SearchableImage](hit))
+      searchConverterService.asImageMetaSummary(read[SearchableImage](hit), language)
     }
 
     private def languageSpecificSearch(searchField: String, language: Option[String], query: String, boost: Float): QueryBuilder = {
@@ -104,7 +104,7 @@ trait SearchService {
       val request = new Search.Builder(search.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
 
       jestClient.execute(request) match {
-        case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+        case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response, language))
         case Failure(f) => errorHandler(Failure(f))
       }
     }
