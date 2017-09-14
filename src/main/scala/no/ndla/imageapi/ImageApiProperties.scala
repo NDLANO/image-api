@@ -32,6 +32,8 @@ object ImageApiProperties extends LazyLogging {
   val ImageControllerPath = s"$ImageApiBasePath/v1/images"
   val RawControllerPath = s"$ImageApiBasePath/raw"
 
+  val DefaultLanguage = "nb"
+
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
 
