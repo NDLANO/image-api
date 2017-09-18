@@ -2,7 +2,6 @@ package no.ndla.imageapi.controller
 
 import javax.servlet.http.HttpServletRequest
 
-import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.repository.ImageRepository
@@ -10,7 +9,7 @@ import no.ndla.imageapi.service.{ImageConverter, ImageStorageService}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger.SwaggerSupportSyntax.OperationBuilder
 import org.scalatra.swagger.{Parameter, ResponseMessage, Swagger, SwaggerSupport}
-
+import com.netaporter.uri.Uri.{parse => uriParse}
 import scala.util.{Failure, Success, Try}
 
 trait RawController {
@@ -67,7 +66,7 @@ trait RawController {
 
     get("/id/:id", operation(getImageFileById)) {
      imageRepository.withId(long("id")) match {
-        case Some(imageMeta) => getRawImage(imageMeta.imageUrl)
+        case Some(imageMeta) => getRawImage(uriParse(imageMeta.imageUrl).toStringRaw)
         case None => None
       }
     }
