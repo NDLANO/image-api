@@ -45,7 +45,7 @@ trait SearchConverterService {
         id = searchableImage.id.toString,
         title = title,
         altText = altText,
-        previewUrl = apiToRawRegex.replaceFirstIn(ApplicationUrl.get, "/raw/") + searchableImage.previewUrl,
+        previewUrl = apiToRawRegex.replaceFirstIn(ApplicationUrl.get, "/raw") + searchableImage.previewUrl,
         metaUrl = ApplicationUrl.get + searchableImage.id,
         license = searchableImage.license)
     }

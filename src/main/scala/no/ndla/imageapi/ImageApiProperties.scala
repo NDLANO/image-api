@@ -69,7 +69,7 @@ object ImageApiProperties extends LazyLogging {
 
   val Domain = Domains.get(Environment)
   val ImageApiUrlBase = Domain + ImageControllerPath + "/"
-  val RawImageUrlBase = Domain + RawControllerPath + "/"
+  val RawImageUrlBase = Domain + RawControllerPath
 
   lazy val secrets = readSecrets(SecretsFile) match {
      case Success(values) => values

@@ -66,7 +66,9 @@ trait RawController {
 
     get("/id/:id", operation(getImageFileById)) {
      imageRepository.withId(long("id")) match {
-        case Some(imageMeta) => getRawImage(uriParse(imageMeta.imageUrl).toStringRaw)
+        case Some(imageMeta) =>
+          val imageName = uriParse(imageMeta.imageUrl).toStringRaw.substring(1) // Strip heading '/'
+          getRawImage(imageName)
         case None => None
       }
     }

@@ -14,7 +14,7 @@ import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.Language._
 import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
-
+import com.netaporter.uri.Uri.parse
 
 trait ConverterService {
   this: User with Clock =>
@@ -40,7 +40,7 @@ trait ConverterService {
     }
 
     def asApiImageMetaInformationWithApplicationUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      val rawPath = ApplicationUrl.get.replace("/v1/images/", "/raw/")
+      val rawPath = ApplicationUrl.get.replace("/v1/images/", "/raw")
       asApiImageMetaInformation(domainImageMetaInformation, Some(ApplicationUrl.get), Some(rawPath))
     }
 
@@ -73,7 +73,7 @@ trait ConverterService {
     }
 
     def asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: Option[String]): Option[api.ImageMetaInformationSingleLanguage] = {
-      val rawPath = ApplicationUrl.get.replace("/v2/images/", "/raw/")
+      val rawPath = ApplicationUrl.get.replace("/v2/images/", "/raw")
       asImageMetaInformationV2(domainImageMetaInformation, language, ApplicationUrl.get, Some(rawPath))
     }
 
@@ -82,8 +82,6 @@ trait ConverterService {
     }
 
     private def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation, language: Option[String], baseUrl: String, rawBaseUrl: Option[String]): Option[api.ImageMetaInformationSingleLanguage] = {
-      val supportedLanguages = getSupportedLanguages(imageMeta)
-
       val title = findByLanguageOrBestEffort(imageMeta.titles, language).map(asApiImageTitle).getOrElse(api.ImageTitle("", DefaultLanguage))
       val alttext = findByLanguageOrBestEffort(imageMeta.alttexts, language).map(asApiImageAltText).getOrElse(api.ImageAltText("", DefaultLanguage))
       val tags = findByLanguageOrBestEffort(imageMeta.tags, language).map(asApiImageTag).getOrElse(api.ImageTag(Seq(), DefaultLanguage))
@@ -127,7 +125,7 @@ trait ConverterService {
         None,
         imageMeta.titles.map(asDomainTitle),
         imageMeta.alttexts.map(asDomainAltText),
-        image.fileName,
+        parse(image.fileName).toString,
         image.size,
         image.contentType,
         toDomainCopyright(imageMeta.copyright),
