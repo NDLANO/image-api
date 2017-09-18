@@ -16,6 +16,7 @@ import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexBuilderService
 import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
 import no.ndla.mapping.License.getLicense
+import com.netaporter.uri.Uri.parse
 
 import scala.util.{Failure, Success, Try}
 
@@ -87,13 +88,13 @@ trait ImportService {
 
       val persistedImageMetaInformation = imageRepository.withExternalId(imageMeta.mainImage.nid) match {
         case Some(dbMeta) => {
-          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts.flatten, dbMeta.imageUrl,
+          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts.flatten, parse(dbMeta.imageUrl).toString,
             dbMeta.size, dbMeta.contentType, copyright, tags, captions.flatten, userId, now), dbMeta.id.get)
           logger.info(s"Updated ID = ${updated.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
           updated
         }
         case None => {
-          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, image.fileName,
+          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, parse(image.fileName).toString,
             image.size, image.contentType, copyright, tags, captions.flatten, userId, now)
           val inserted = imageRepository.insertWithExternalId(imageMetaInformation, imageMeta.mainImage.nid)
           logger.info(s"Inserted ID = ${inserted.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
