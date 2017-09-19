@@ -117,7 +117,7 @@ trait ConverterService {
     }
 
     def asApiUrl(url: String, baseUrl: Option[String] = None): String = {
-      baseUrl.getOrElse("") + url
+      baseUrl.getOrElse("") + parse(url).toStringRaw
     }
 
     def asDomainImageMetaInformation(imageMeta: api.NewImageMetaInformation, image: domain.Image): domain.ImageMetaInformation = {
