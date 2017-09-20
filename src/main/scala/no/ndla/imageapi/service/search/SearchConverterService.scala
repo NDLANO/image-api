@@ -13,6 +13,7 @@ import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.model.search.{LanguageValue, SearchableImage, SearchableLanguageList, SearchableLanguageValues}
 import no.ndla.network.ApplicationUrl
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
+import com.netaporter.uri.Uri.parse
 
 trait SearchConverterService {
   val searchConverterService: SearchConverterService
@@ -27,7 +28,7 @@ trait SearchConverterService {
         tags = SearchableLanguageList(image.tags.map(tag => LanguageValue(tag.language, tag.tags))),
         license = image.copyright.license.license,
         imageSize = image.size,
-        previewUrl = image.imageUrl)
+        previewUrl = parse(image.imageUrl).toStringRaw)
     }
 
     def asImageMetaSummary(searchableImage: SearchableImage, language: Option[String]): ImageMetaSummary = {
