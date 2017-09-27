@@ -78,8 +78,8 @@ trait ImportService {
       if (!imageStorage.objectExists(key) || imageStorage.objectSize(key) != image.size) {
         val tryResUpload = imageStorage.uploadFromUrl(image, key, sourceUrlFull)
         tryResUpload match {
-          case Failure(f) => throw new S3UploadException(s"Upload of image :[$key] to S3 failed.")
-          case Success(s) =>
+          case Failure(f) => throw new S3UploadException(s"Upload of image :[$key] to S3 failed.: ${f.getMessage}")
+          case Success(_) =>
         }
       }
 
