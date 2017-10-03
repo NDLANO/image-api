@@ -15,7 +15,7 @@ import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClient
 import no.ndla.imageapi.model.api.{ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
-import no.ndla.imageapi.model.{Language, NdlaSearchException}
+import no.ndla.imageapi.model.{Language, NdlaSearchException, ResultWindowTooLargeException}
 import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
@@ -23,7 +23,7 @@ import org.elasticsearch.index.query._
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.sort.SortBuilders
 import org.json4s.native.Serialization.read
-
+import no.ndla.imageapi.model.api.Error
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -102,6 +102,12 @@ trait SearchService {
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val request = new Search.Builder(search.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
+
+      val requestedResultWindow = page.getOrElse(1)*numResults
+      if(requestedResultWindow > ImageApiProperties.ElasticSearchIndexMaxResultWindow) {
+          logger.info(s"Max supported results are ${ImageApiProperties.ElasticSearchIndexMaxResultWindow}, user requested ${requestedResultWindow}")
+          throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
+      }
 
       jestClient.execute(request) match {
         case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response, language))

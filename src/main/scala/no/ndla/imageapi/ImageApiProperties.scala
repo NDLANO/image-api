@@ -59,6 +59,7 @@ object ImageApiProperties extends LazyLogging {
   val SearchServer = propOrElse("SEARCH_SERVER", "http://search-image-api.ndla-local")
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
   val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
+  val ElasticSearchIndexMaxResultWindow = 10000
 
   val MappingHost = "mapping-api.ndla-local"
   val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"

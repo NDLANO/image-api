@@ -9,6 +9,7 @@
 package no.ndla.imageapi.model
 
 import io.searchbox.client.JestResult
+import no.ndla.imageapi.ImageApiProperties
 
 
 class ImageNotFoundException(message: String) extends RuntimeException(message)
@@ -24,3 +25,6 @@ class NdlaSearchException(jestResponse: JestResult) extends RuntimeException(jes
 }
 
 class S3UploadException(message: String) extends RuntimeException(message)
+
+class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
+
