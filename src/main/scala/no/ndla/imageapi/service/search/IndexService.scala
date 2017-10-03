@@ -64,7 +64,10 @@ trait IndexService {
       if (indexExists(indexName).getOrElse(false)) {
         Success(indexName)
       } else {
-        val createIndexResponse = jestClient.execute(new CreateIndex.Builder(indexName).build())
+        val createIndexResponse = jestClient.execute(
+          new CreateIndex.Builder(indexName)
+            .settings(s"""{"index":{"max_result_window":${ImageApiProperties.ElasticSearchIndexMaxResultWindow}}}""")
+            .build())
         createIndexResponse.map(_ => createMapping(indexName)).map(_ => indexName)
       }
     }
