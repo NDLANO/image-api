@@ -14,7 +14,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKey}
 import no.ndla.imageapi.model.api.{Error, ValidationError}
 import no.ndla.imageapi.model.domain.ImageStream
-import no.ndla.imageapi.model.{AccessDeniedException, ImageNotFoundException, S3UploadException, ValidationException, ValidationMessage}
+import no.ndla.imageapi.model._
 import no.ndla.network.{ApplicationUrl, AuthUser, CorrelationID}
 import org.apache.logging.log4j.ThreadContext
 import org.elasticsearch.index.IndexNotFoundException
@@ -23,7 +23,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.servlet.SizeConstraintExceededException
 import org.scalatra.{BadRequest, InternalServerError, RequestEntityTooLarge, ScalatraServlet, _}
-import java.lang.Math.{min, max}
+import java.lang.Math.{max, min}
 import scala.util.{Failure, Success, Try}
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
@@ -54,6 +54,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
       contentType = formats("json")
       GatewayTimeout(body = Error(Error.GATEWAY_TIMEOUT, s.getMessage))
     }
+    case rw: ResultWindowTooLargeException => UnprocessableEntity(body = Error(Error.WINDOW_TOO_LARGE, rw.getMessage))
     case _: SizeConstraintExceededException =>
       contentType = formats("json")
       RequestEntityTooLarge(body = Error.FileTooBigError)
