@@ -20,8 +20,8 @@ appProperties := {
 }
 
 lazy val commonSettings = Seq(
-  organization := appProperties.value.getProperty("NDLAOrganization"),
-  version := appProperties.value.getProperty("NDLAComponentVersion"),
+  organization := appProperties.value.getProperty("GDLOrganization"),
+  version := appProperties.value.getProperty("GDLComponentVersion"),
   scalaVersion := Scalaversion
 )
 
