@@ -1,8 +1,10 @@
 #!/bin/bash
 
+set -e
+
 VERSION="$1"
 source ./build.properties
-PROJECT="$NDLAOrganization/$NDLAComponentName"
+PROJECT="$GDLOrganization/$GDLComponentName"
 
 if [ -z $VERSION ]
 then

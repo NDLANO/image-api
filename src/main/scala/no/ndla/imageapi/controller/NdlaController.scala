@@ -15,7 +15,7 @@ import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKe
 import no.ndla.imageapi.model.api.{Error, ValidationError}
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.model._
-import no.ndla.network.{ApplicationUrl, AuthUser, CorrelationID}
+import io.digitallibrary.network.{ApplicationUrl, AuthUser, CorrelationID}
 import org.apache.logging.log4j.ThreadContext
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.native.Serialization.read

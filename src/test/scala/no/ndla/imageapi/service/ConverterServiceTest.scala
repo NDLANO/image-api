@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest
 
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
-import no.ndla.network.ApplicationUrl
+import io.digitallibrary.network.ApplicationUrl
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito._
 
@@ -74,8 +74,8 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     setApplicationUrl()
 
     val api = converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, None)
-    api.get.metaUrl should equal ("http://api-gateway.ndla-local/image-api/v2/images/1")
-    api.get.imageUrl should equal ("http://api-gateway.ndla-local/image-api/raw/123.png")
+    api.get.metaUrl should equal ("http://proxy.gdl-local/image-api/v2/images/1")
+    api.get.imageUrl should equal ("http://proxy.gdl-local/image-api/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links even if language is not supported") {
@@ -90,7 +90,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     setApplicationUrl()
 
     val api = converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, Some("RandomLangauge"))
-    api.get.metaUrl should equal ("http://api-gateway.ndla-local/image-api/v2/images/1")
-    api.get.imageUrl should equal ("http://api-gateway.ndla-local/image-api/raw/123.png")
+    api.get.metaUrl should equal ("http://proxy.gdl-local/image-api/v2/images/1")
+    api.get.imageUrl should equal ("http://proxy.gdl-local/image-api/raw/123.png")
   }
 }
