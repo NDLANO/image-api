@@ -13,7 +13,7 @@ import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.Language._
 import no.ndla.imageapi.model.{api, domain}
-import no.ndla.network.ApplicationUrl
+import io.digitallibrary.network.ApplicationUrl
 import com.netaporter.uri.Uri.parse
 
 trait ConverterService {

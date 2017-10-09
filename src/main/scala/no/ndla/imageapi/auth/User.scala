@@ -8,7 +8,7 @@
 package no.ndla.imageapi.auth
 
 import no.ndla.imageapi.model.AccessDeniedException
-import no.ndla.network.AuthUser
+import io.digitallibrary.network.AuthUser
 
 
 

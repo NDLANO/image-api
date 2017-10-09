@@ -9,9 +9,9 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.network.Domains
-import no.ndla.network.secrets.PropertyKeys
-import no.ndla.network.secrets.Secrets.readSecrets
+import io.digitallibrary.network.Domains
+import io.digitallibrary.network.secrets.PropertyKeys
+import io.digitallibrary.network.secrets.Secrets.readSecrets
 
 import scala.util.{Failure, Success}
 import scala.util.Properties._

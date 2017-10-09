@@ -8,7 +8,7 @@
 
 package no.ndla.imageapi
 
-import no.ndla.network.secrets.PropertyKeys
+import io.digitallibrary.network.secrets.PropertyKeys
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
 

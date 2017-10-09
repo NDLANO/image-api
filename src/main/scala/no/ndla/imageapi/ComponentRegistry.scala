@@ -16,7 +16,7 @@ import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
-import no.ndla.network.NdlaClient
+import io.digitallibrary.network.GdlClient
 import org.postgresql.ds.PGPoolingDataSource
 
 object ComponentRegistry
@@ -30,7 +30,7 @@ object ComponentRegistry
   with AmazonClient
   with ImageStorageService
   with IndexBuilderService
-  with NdlaClient
+  with GdlClient
   with MigrationApiClient
   with ImportService
   with ConverterService
@@ -68,7 +68,7 @@ object ComponentRegistry
   lazy val validationService = new ValidationService
   lazy val imageStorage = new AmazonImageStorageService
   lazy val importService = new ImportService
-  lazy val ndlaClient = new NdlaClient
+  lazy val gdlClient = new GdlClient
   lazy val migrationApiClient = new MigrationApiClient
   lazy val imageController = new ImageController
   lazy val imageControllerV2 = new ImageControllerV2

@@ -19,7 +19,7 @@ import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository._
 import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
-import no.ndla.network.NdlaClient
+import io.digitallibrary.network.GdlClient
 import org.scalatest.mockito.MockitoSugar
 
 trait TestEnvironment
@@ -37,7 +37,7 @@ trait TestEnvironment
     with IndexBuilderService
     with ImportService
     with MigrationApiClient
-    with NdlaClient
+    with GdlClient
     with InternController
     with ImageController
     with RawController
@@ -60,7 +60,7 @@ trait TestEnvironment
   val imageStorage = mock[AmazonImageStorageService]
 
   val importService = mock[ImportService]
-  val ndlaClient = mock[NdlaClient]
+  val gdlClient = mock[GdlClient]
   val migrationApiClient = mock[MigrationApiClient]
   val imageController = mock[ImageController]
   val rawController = mock[RawController]

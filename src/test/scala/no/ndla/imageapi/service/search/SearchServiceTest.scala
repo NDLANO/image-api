@@ -14,7 +14,7 @@ import no.ndla.imageapi.integration.JestClientFactory
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import org.elasticsearch.common.settings.Settings
-import no.ndla.network.ApplicationUrl
+import io.digitallibrary.network.ApplicationUrl
 import no.ndla.tag.IntegrationTest
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito._
