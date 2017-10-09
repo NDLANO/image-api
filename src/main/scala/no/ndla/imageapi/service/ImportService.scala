@@ -26,7 +26,7 @@ trait ImportService {
   val importService: ImportService
 
   class ImportService extends LazyLogging {
-    val DownloadUrlPrefix = "http://ndla.no/sites/default/files/images/"
+    val DownloadUrlPrefix = "https://ndla.no/sites/default/files/images/"
 
     def importImage(imageId: String): Try[domain.ImageMetaInformation] = {
       val imported = migrationApiClient.getMetaDataForImage(imageId).map(upload)
