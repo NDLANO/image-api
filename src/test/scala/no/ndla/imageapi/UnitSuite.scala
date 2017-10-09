@@ -14,7 +14,7 @@ import org.scalatest.mockito.MockitoSugar
 
 abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfterAll with PrivateMethodTester {
 
-  setEnv("NDLA_ENVIRONMENT", "local")
+  setEnv("GDL_ENVIRONMENT", "local")
   setEnv(PropertyKeys.MetaUserNameKey, "username")
   setEnv(PropertyKeys.MetaPasswordKey, "secret")
   setEnv(PropertyKeys.MetaResourceKey, "resource")

@@ -41,7 +41,7 @@ object ImageApiProperties extends LazyLogging {
 
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
-  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
+  val Environment = propOrElse("GDL_ENVIRONMENT", "local")
   val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
   val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
   val MetaResource = prop(PropertyKeys.MetaResourceKey)
