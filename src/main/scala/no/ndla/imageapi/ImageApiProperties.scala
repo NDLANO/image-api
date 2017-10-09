@@ -49,14 +49,14 @@ object ImageApiProperties extends LazyLogging {
   val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
   val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
 
-  val StorageName = s"$Environment.images.ndla"
+  val StorageName = s"$Environment.images.gdl"
 
   val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "images")
   val SearchDocument = "image"
   val DefaultPageSize: Int = 10
   val MaxPageSize: Int = 100
   val IndexBulkSize = 1000
-  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-image-api.ndla-local")
+  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-image-api.gdl-local")
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
   val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
   val ElasticSearchIndexMaxResultWindow = 10000
