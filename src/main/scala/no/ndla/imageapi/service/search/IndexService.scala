@@ -11,13 +11,12 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.mappings.FieldType.{IntegerType, StringType}
 import com.sksamuel.elastic4s.mappings.{MappingContentBuilder, NestedFieldDefinition}
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Bulk, Index}
 import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases, RemoveAliasMapping}
 import io.searchbox.indices.mapping.PutMapping
-import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists}
+import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists, Stats}
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClient
 import no.ndla.imageapi.model.Language._
@@ -26,6 +25,7 @@ import no.ndla.imageapi.model.{NdlaSearchException, domain}
 import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization.write
 
+import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.util.{Failure, Success, Try}
 
 trait IndexService {
@@ -75,6 +75,11 @@ trait IndexService {
     def createMapping(indexName: String): Try[String] = {
       val mappingResponse = jestClient.execute(new PutMapping.Builder(indexName, ImageApiProperties.SearchDocument, buildMapping()).build())
       mappingResponse.map(_ => indexName)
+    }
+
+    def findAllIndexes(): Try[Seq[String]] = {
+      jestClient.execute(new Stats.Builder().build())
+        .map(r => r.getJsonObject.get("indices").getAsJsonObject.entrySet().asScala.map(_.getKey).toSeq)
     }
 
     def updateAliasTarget(oldIndexName: Option[String], newIndexName: String): Try[Any] = {

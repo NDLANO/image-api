@@ -12,6 +12,7 @@ import no.ndla.imageapi.model.{S3UploadException, api, domain}
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s.jackson.Serialization._
+import org.mockito.Matchers
 import org.mockito.Matchers.{eq => eqTo}
 import org.mockito.Mockito._
 import org.scalatra.test.scalatest.ScalatraSuite
@@ -27,6 +28,10 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
 
   val DefaultApiImageMetaInformation = api.ImageMetaInformation("1", s"${ImageApiProperties.ImageApiUrlBase}1", List(), List(), s"${ImageApiProperties.RawImageUrlBase}/test.jpg", 0, "", api.Copyright(api.License("", "", None), "", List()), List(), List())
   val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(Some(1), List(), List(), "test.jpg", 0, "", domain.Copyright(domain.License("", "", None), "", List()), List(), List(), "ndla124", updated)
+
+  override def beforeEach = {
+    reset(imageRepository, importService, indexService, indexBuilderService)
+  }
 
   test("That GET /extern/abc returns 404") {
     when(imageRepository.withExternalId(eqTo("abc"))).thenReturn(None)
@@ -73,6 +78,48 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
       status should equal (504)
       body indexOf "Upload of image:[name] to S3 failed" should be > 0
     }
+  }
+
+  test("That DELETE /index removes all indexes") {
+    when(indexService.findAllIndexes()).thenReturn(Success(List("index1", "index2", "index3")))
+    doReturn(Success("")).when(indexService).deleteIndex(Some("index1"))
+    doReturn(Success("")).when(indexService).deleteIndex(Some("index2"))
+    doReturn(Success("")).when(indexService).deleteIndex(Some("index3"))
+    delete("/index") {
+      status should equal (200)
+      body should equal ("Deleted 3 indexes")
+    }
+    verify(indexService).findAllIndexes()
+    verify(indexService).deleteIndex(Some("index1"))
+    verify(indexService).deleteIndex(Some("index2"))
+    verify(indexService).deleteIndex(Some("index3"))
+    verifyNoMoreInteractions(indexService)
+  }
+
+  test("That DELETE /index fails if at least one index isn't found, and no indexes are deleted") {
+    doReturn(Failure(new RuntimeException("Failed to find indexes"))).when(indexService).findAllIndexes()
+    doReturn(Success("")).when(indexService).deleteIndex(Some("index1"))
+    doReturn(Success("")).when(indexService).deleteIndex(Some("index2"))
+    doReturn(Success("")).when(indexService).deleteIndex(Some("index3"))
+    delete("/index") {
+      status should equal (500)
+      body should equal ("Failed to find indexes")
+    }
+    verify(indexService, never()).deleteIndex(Matchers.anyObject())
+  }
+
+  test("That DELETE /index fails if at least one index couldn't be deleted, but the other indexes are deleted regardless") {
+    when(indexService.findAllIndexes()).thenReturn(Success(List("index1", "index2", "index3")))
+    doReturn(Success("")).when(indexService).deleteIndex(Some("index1"))
+    doReturn(Failure(new RuntimeException("No index with name 'index2' exists"))).when(indexService).deleteIndex(Some("index2"))
+    doReturn(Success("")).when(indexService).deleteIndex(Some("index3"))
+    delete("/index") {
+      status should equal (500)
+      body should equal ("Failed to delete 1 index: No index with name 'index2' exists. 2 indexes were deleted successfully.")
+    }
+    verify(indexService).deleteIndex(Some("index1"))
+    verify(indexService).deleteIndex(Some("index2"))
+    verify(indexService).deleteIndex(Some("index3"))
   }
 
 }
