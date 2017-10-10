@@ -11,7 +11,7 @@ package no.ndla.imageapi.controller
 import no.ndla.imageapi.model.S3UploadException
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.IndexBuilderService
+import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService}
 import no.ndla.imageapi.service.{ConverterService, ImportService}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{GatewayTimeout, InternalServerError, NotFound, Ok}
@@ -19,7 +19,7 @@ import org.scalatra.{GatewayTimeout, InternalServerError, NotFound, Ok}
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImageRepository with ImportService with ConverterService with IndexBuilderService =>
+  this: ImageRepository with ImportService with ConverterService with IndexBuilderService with IndexService =>
   val internController: InternController
 
   class InternController extends NdlaController {
@@ -37,6 +37,26 @@ trait InternController {
           logger.warn(f.getMessage, f)
           InternalServerError(f.getMessage)
         }
+      }
+    }
+
+    delete("/index") {
+      def pluralIndex(n: Int) = if (n == 1) "1 index" else s"$n indexes"
+      val deleteResults = indexService.findAllIndexes() match {
+        case Failure(f) => halt(status = 500, body = f.getMessage)
+        case Success(indexes) => indexes.map(index => {
+          logger.info(s"Deleting index $index")
+          indexService.deleteIndex(Option(index))
+        })
+      }
+      val (errors, successes) = deleteResults.partition(_.isFailure)
+      if (errors.nonEmpty) {
+        val message = s"Failed to delete ${pluralIndex(errors.length)}: " +
+          s"${errors.map(_.failed.get.getMessage).mkString(", ")}. " +
+          s"${pluralIndex(successes.length)} were deleted successfully."
+        halt(status = 500, body = message)
+      } else {
+        Ok(body = s"Deleted ${pluralIndex(successes.length)}")
       }
     }
 
