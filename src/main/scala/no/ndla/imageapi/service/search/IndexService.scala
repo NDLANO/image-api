@@ -8,7 +8,7 @@
 package no.ndla.imageapi.service.search
 
 import java.text.SimpleDateFormat
-import java.util.Calendar
+import java.util.{Calendar, UUID}
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.mappings.{MappingContentBuilder, NestedFieldDefinition}
@@ -57,7 +57,7 @@ trait IndexService {
     }
 
     def createIndex(): Try[String] = {
-      createIndexWithName(ImageApiProperties.SearchIndex + "_" + getTimestamp)
+      createIndexWithName(ImageApiProperties.SearchIndex + "_" + getTimestamp + "_" + UUID.randomUUID().toString)
     }
 
     def createIndexWithName(indexName: String): Try[String] = {

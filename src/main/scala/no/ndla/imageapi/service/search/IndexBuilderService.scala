@@ -30,6 +30,16 @@ trait IndexBuilderService {
       } yield imported
     }
 
+    def createEmptyIndex: Try[Unit] = {
+      indexService.createIndex().flatMap(indexName => {
+        for {
+          aliasTarget <- indexService.aliasTarget
+          _ <- indexService.updateAliasTarget(aliasTarget, indexName)
+          _ <- indexService.deleteIndex(aliasTarget)
+        } yield ()
+      })
+    }
+
     def indexDocuments: Try[ReindexResult] = {
       synchronized {
         val start = System.currentTimeMillis()
