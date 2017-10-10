@@ -13,18 +13,14 @@ import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
 import no.ndla.imageapi.integration.JestClientFactory
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
-import org.elasticsearch.common.settings.Settings
 import no.ndla.network.ApplicationUrl
 import no.ndla.tag.IntegrationTest
 import org.joda.time.{DateTime, DateTimeZone}
-import org.mockito.Mockito._
 import org.mockito.Matchers._
-
-import scala.reflect.io.Path
-import scala.util.Random
+import org.mockito.Mockito._
 
 @IntegrationTest
-class SearchServiceTest extends UnitSuite with TestEnvironment {
+class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
   val esPort = 9200
 
