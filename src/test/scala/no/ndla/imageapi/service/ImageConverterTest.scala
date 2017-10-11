@@ -107,7 +107,7 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
   }
 
   test("minimalCropSizesToPreserveRatio calculates correct image sizes given ratio") {
-    service.minimalCropSizesToPreserveRatio(851, 597, 0.81) should equal (483, 597)
+    service.minimalCropSizesToPreserveRatio(640, 426, 0.81) should equal (345, 426)
     service.minimalCropSizesToPreserveRatio(851, 597, 1.5) should equal (850, 567)
     service.minimalCropSizesToPreserveRatio(851, 597, 1.2) should equal (716, 597)
   }
@@ -127,16 +127,16 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
   }
 
   test("dynamic cropping with ratios should return image with (about) correct aspect ratio") {
-    testRatio(0.81, 57, 50, 483, 597)
-    testRatio(0.81, 0, 0, 483, 597)
-    testRatio(0.81, 10, 10, 483, 597)
-    testRatio(0.81, 90, 90, 483, 597)
-    testRatio(1.5, 50, 50, 850, 567)
-    testRatio(1.2, 50, 50, 716, 597)
+    testRatio(0.81, 57, 50, 345, 426)
+    testRatio(0.81, 0, 0, 345, 426)
+    testRatio(0.81, 10, 10, 345, 426)
+    testRatio(0.81, 90, 90, 345, 426)
+    testRatio(1.5, 50, 50, 639, 426)
+    testRatio(1.2, 50, 50, 511, 426)
 
     def testRatio(ratio: Double, focalX: Int, focalY: Int, expectedWidth: Int, expectedHeight: Int): Unit = {
       implicit val doubleEquality = TolerantNumerics.tolerantDoubleEquality(0.01)
-      val croppedImage = service.dynamicCrop(TestData.PlaneImage, PercentPoint(focalX, focalY), Some(100), Some(100), Some(ratio))
+      val croppedImage = service.dynamicCrop(TestData.ChildrensImage, PercentPoint(focalX, focalY), Some(100), Some(100), Some(ratio))
       val image = ImageIO.read(croppedImage.get.stream)
       val calculatedRatio = image.getWidth.toDouble / image.getHeight.toDouble
       image.getWidth should equal (expectedWidth)
