@@ -71,4 +71,5 @@ object TestData {
   }
 
   val NdlaLogoImage = DiskImage("ndla_logo.jpg")
+  val PlaneImage = DiskImage("plane.jpg")
 }
