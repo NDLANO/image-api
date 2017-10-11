@@ -35,7 +35,6 @@ trait RawController {
       queryParam[Option[Int]]("cropEndY").description("The end image coordinate Y, in percent (0 to 100), specifying the crop end position. If used the other crop parameters must also be supplied"),
       queryParam[Option[Int]]("focalX").description("The end image coordinate X, in percent (0 to 100), specifying the focal point. If used the other focal point parameter, width and/or height, must also be supplied"),
       queryParam[Option[Int]]("focalY").description("The end image coordinate Y, in percent (0 to 100), specifying the focal point. If used the other focal point parameter, width and/or height, must also be supplied"),
-      queryParam[Option[Double]]("ratio").description("The wanted aspect ratio, defined as width/height. To be used together with the focal parameters. If used the width and height is ignored and derived from the aspect ratio instead.")
     )
 
     val getImageFile = new OperationBuilder(ValueDataType("file", Some("binary")))
@@ -99,17 +98,16 @@ trait RawController {
     }
 
     private def canDoDynamicCrop(implicit request: HttpServletRequest) =
-      doubleOrNone("focalX").isDefined && doubleOrNone("focalY").isDefined && (doubleOrNone("width").isDefined || doubleOrNone("height").isDefined || doubleOrNone("ratio").isDefined)
+      doubleOrNone("focalX").isDefined && doubleOrNone("focalY").isDefined && (doubleOrNone("width").isDefined || doubleOrNone("height").isDefined)
 
     def dynamicCrop(image: ImageStream): Try[ImageStream] = {
       val focalX = doubleInRange("focalX", PercentPoint.MinValue, PercentPoint.MaxValue)
       val focalY = doubleInRange("focalY", PercentPoint.MinValue, PercentPoint.MaxValue)
-      val ratio = doubleOrNone("ratio")
       val Seq(widthOpt, heightOpt) = extractDoubleOpts("width", "height")
 
       (focalX, focalY, widthOpt, heightOpt) match {
         case (Some(fx), Some(fy), w, h) =>
-          imageConverter.dynamicCrop(image, PercentPoint(fx.toInt, fy.toInt), w.map(_.toInt), h.map(_.toInt), ratio)
+          imageConverter.dynamicCrop(image, PercentPoint(fx.toInt, fy.toInt), w.map(_.toInt), h.map(_.toInt))
         case _ => Success(image)
       }
     }

@@ -5,9 +5,8 @@ import javax.imageio.ImageIO
 
 import no.ndla.imageapi.TestData.NdlaLogoImage
 import no.ndla.imageapi.model.domain.ImageStream
-import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
+import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 import org.mockito.Mockito._
-import org.scalactic.TolerantNumerics
 
 class ImageConverterTest extends UnitSuite with TestEnvironment {
   val service = new ImageConverter
@@ -84,65 +83,26 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
   }
 
   test("dynamic cropping should work as expected") {
-    val croppedImage = service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), Some(10), Some(30), None)
+    val croppedImage = service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), Some(10), Some(30))
     val image = ImageIO.read(croppedImage.get.stream)
     image.getWidth should equal(10)
     image.getHeight should equal(30)
   }
 
   test("dynamic cropping should scale according to original image size if only one dimension size is specified") {
-    val image = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), Some(100), None, None).get.stream)
+    val image = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), Some(100), None).get.stream)
     image.getWidth should equal(100)
     image.getHeight should equal(31)
 
-    val image2 = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), None, Some(50), None).get.stream)
+    val image2 = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), None, Some(50)).get.stream)
     image2.getWidth should equal(157)
     image2.getHeight should equal(50)
   }
 
   test("dynamic crop should not manipulate image if neither target width or target height is specified") {
-    val image = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), None, None, None).get.stream)
+    val image = ImageIO.read(service.dynamicCrop(NdlaLogoImage, PercentPoint(0, 0), None, None).get.stream)
     image.getWidth should equal(NdlaLogoImage.sourceImage.getWidth)
     image.getHeight should equal(NdlaLogoImage.sourceImage.getHeight)
-  }
-
-  test("minimalCropSizesToPreserveRatio calculates correct image sizes given ratio") {
-    service.minimalCropSizesToPreserveRatio(851, 597, 0.81) should equal (483, 597)
-    service.minimalCropSizesToPreserveRatio(851, 597, 1.5) should equal (850, 567)
-    service.minimalCropSizesToPreserveRatio(851, 597, 1.2) should equal (716, 597)
-  }
-
-  test("minimalCropSizesToPreserveRatio calculates image sizes with (about) correct aspect ratio for lots of ratios and image sizes") {
-    def testRatio(ratio: Double, width: Int, height: Int) = {
-      implicit val doubleEquality = TolerantNumerics.tolerantDoubleEquality(0.1)
-      val (newWidth, newHeight) = service.minimalCropSizesToPreserveRatio(width, height, ratio)
-      val calculatedRatio = newWidth.toDouble / newHeight.toDouble
-      calculatedRatio should equal (ratio)
-    }
-    for {
-      ratio <- Seq(0.1, 0.2, 0.81, 1, 1.1, 1.5, 2, 5, 10)
-      width <- Stream.range(10, 1000, 10)
-      height <- Stream.range(10, 1000, 10)
-    } yield testRatio(ratio, width, height)
-  }
-
-  test("dynamic cropping with ratios should return image with (about) correct aspect ratio") {
-    testRatio(0.81, 57, 50, 483, 597)
-    testRatio(0.81, 0, 0, 483, 597)
-    testRatio(0.81, 10, 10, 483, 597)
-    testRatio(0.81, 90, 90, 483, 597)
-    testRatio(1.5, 50, 50, 850, 567)
-    testRatio(1.2, 50, 50, 716, 597)
-
-    def testRatio(ratio: Double, focalX: Int, focalY: Int, expectedWidth: Int, expectedHeight: Int): Unit = {
-      implicit val doubleEquality = TolerantNumerics.tolerantDoubleEquality(0.01)
-      val croppedImage = service.dynamicCrop(TestData.PlaneImage, PercentPoint(focalX, focalY), Some(100), Some(100), Some(ratio))
-      val image = ImageIO.read(croppedImage.get.stream)
-      val calculatedRatio = image.getWidth.toDouble / image.getHeight.toDouble
-      image.getWidth should equal (expectedWidth)
-      image.getHeight should equal (expectedHeight)
-      calculatedRatio should equal (ratio)
-    }
   }
 
 }

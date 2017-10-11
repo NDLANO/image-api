@@ -82,20 +82,19 @@ trait ImageConverter {
       (max(start - endRem, 0), min(end + startRem, originalDimensionSize))
     }
 
-    def dynamicCrop(image: ImageStream, percentFocalPoint: PercentPoint, targetWidthOpt: Option[Int], targetHeightOpt: Option[Int], ratioOpt: Option[Double]): Try[ImageStream] = {
+    def dynamicCrop(image: ImageStream, percentFocalPoint: PercentPoint, targetWidthOpt: Option[Int], targetHeightOpt: Option[Int]): Try[ImageStream] = {
       val sourceImage = image.sourceImage
       val focalPoint = toPixelPoint(percentFocalPoint, sourceImage)
       val (imageWidth, imageHeight) = (sourceImage.getWidth, sourceImage.getHeight)
 
-      val (targetWidth: Int, targetHeight: Int) = (targetWidthOpt, targetHeightOpt, ratioOpt) match {
-        case (_, _, Some(ratio)) => minimalCropSizesToPreserveRatio(imageWidth, imageHeight, ratio)
-        case (None, None, _) => return Success(image)
-        case (Some(w), Some(h), _) => (min(w, imageWidth), min(h, imageHeight))
-        case (Some(w), None, _) =>
+      val (targetWidth: Int, targetHeight: Int) = (targetWidthOpt, targetHeightOpt) match {
+        case (None, None) => return Success(image)
+        case (Some(w), Some(h)) => (min(w, imageWidth), min(h, imageHeight))
+        case (Some(w), None) =>
           val actualTargetWidth = min(imageWidth, w)
           val widthReductionPercent: Double = actualTargetWidth.toDouble / imageWidth.toDouble
           (w, (imageHeight * widthReductionPercent).toInt)
-        case (None, Some(h), _) =>
+        case (None, Some(h)) =>
           val actualTargetHeight = min(imageHeight, h)
           val heightReductionPercent: Double = actualTargetHeight.toDouble / imageHeight.toDouble
           ((imageWidth * heightReductionPercent).toInt, actualTargetHeight)
@@ -105,12 +104,6 @@ trait ImageConverter {
       val (startX, endX) = getStartEndCoords(focalPoint.x, targetWidth, imageWidth)
 
       crop(image, sourceImage, PixelPoint(startX, startY), PixelPoint(endX, endY))
-    }
-
-    def minimalCropSizesToPreserveRatio(imageWidth: Int, imageHeight: Int, ratio: Double): (Int, Int) = {
-      val newHeight = Math.min(imageWidth / ratio, imageHeight).toInt
-      val newWidth = Math.min(newHeight * ratio, imageWidth).toInt
-      (newWidth, newHeight.toInt)
     }
 
     // Given two sets of coordinates; reorganize them so that the first coordinate is the top-left,
