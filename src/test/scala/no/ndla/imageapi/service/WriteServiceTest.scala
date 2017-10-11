@@ -15,7 +15,7 @@ import no.ndla.imageapi.model.ValidationException
 import no.ndla.imageapi.model.api._
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
 import no.ndla.imageapi.{TestEnvironment, UnitSuite}
-import no.ndla.network.ApplicationUrl
+import io.digitallibrary.network.ApplicationUrl
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Matchers._
 import org.mockito.Mockito._

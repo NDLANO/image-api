@@ -9,9 +9,9 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.network.Domains
-import no.ndla.network.secrets.PropertyKeys
-import no.ndla.network.secrets.Secrets.readSecrets
+import io.digitallibrary.network.Domains
+import io.digitallibrary.network.secrets.PropertyKeys
+import io.digitallibrary.network.secrets.Secrets.readSecrets
 
 import scala.util.{Failure, Success}
 import scala.util.Properties._
@@ -41,7 +41,7 @@ object ImageApiProperties extends LazyLogging {
 
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
-  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
+  val Environment = propOrElse("GDL_ENVIRONMENT", "local")
   val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
   val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
   val MetaResource = prop(PropertyKeys.MetaResourceKey)
@@ -49,14 +49,14 @@ object ImageApiProperties extends LazyLogging {
   val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
   val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
 
-  val StorageName = s"$Environment.images.ndla"
+  val StorageName = s"$Environment.images.gdl"
 
   val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "images")
   val SearchDocument = "image"
   val DefaultPageSize: Int = 10
   val MaxPageSize: Int = 100
   val IndexBulkSize = 1000
-  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-image-api.ndla-local")
+  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-image-api.gdl-local")
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
   val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
   val ElasticSearchIndexMaxResultWindow = 10000
