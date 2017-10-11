@@ -42,6 +42,9 @@ object ImageApiProperties extends LazyLogging {
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
   val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
+  val (redDBSource, cmDBSource) = ("red", "cm")
+  val ImageImportSource = if (Environment == "prod") cmDBSource else redDBSource
+
   val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
   val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
   val MetaResource = prop(PropertyKeys.MetaResourceKey)
@@ -67,6 +70,9 @@ object ImageApiProperties extends LazyLogging {
   val MigrationHost = prop("MIGRATION_HOST")
   val MigrationUser = prop("MIGRATION_USER")
   val MigrationPassword = prop("MIGRATION_PASSWORD")
+
+  val NdlaRedUsername = prop("NDLA_RED_USERNAME")
+  val NdlaRedPassword = prop("NDLA_RED_PASSWORD")
 
   val Domain = Domains.get(Environment)
   val ImageApiUrlBase = Domain + ImageControllerPath + "/"
