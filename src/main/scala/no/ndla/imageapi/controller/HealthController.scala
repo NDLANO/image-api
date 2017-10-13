@@ -43,11 +43,11 @@ trait HealthController {
     }
 
     get("/") {
-      val req = getApiResponse(
+      val apiSearchResponse = getApiResponse(
         s"http://0.0.0.0:${ImageApiProperties.ApplicationPort}${ImageApiProperties.ImageApiBasePath}/v2/images/")
-      val (imageUrl,totalCount) = getImageUrl(req.body)
+      val (imageUrl,totalCount) = getImageUrl(apiSearchResponse.body)
 
-      req.code match {
+      apiSearchResponse.code match {
         case _ if totalCount == 0 => NoContent()
         case 200 => getReturnCode(getApiResponse(imageUrl.get))
         case _ => InternalServerError()

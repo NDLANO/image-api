@@ -40,7 +40,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
                            |}""".stripMargin
   val imageResultBody = """{
                           |	"id": "1",
-                          |	"metaUrl": "http://localhost/image-api/v2/images/1",
+                          |	"metaUrl": "http://0.0.0.0/image-api/v2/images/1",
                           |	"title": {
                           |		"title": "Meterolog Kristian Trægde i 1986",
                           |		"language": "unknown"
@@ -49,7 +49,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
                           |		"alttext": "",
                           |		"language": "nb"
                           |	},
-                          |	"imageUrl": "http://localhost/image-api/raw/sx873733_1.jpg",
+                          |	"imageUrl": "http://0.0.0.0/image-api/raw/sx873733_1.jpg",
                           |	"size": 238472,
                           |	"contentType": "image/jpeg",
                           |	"copyright": {
