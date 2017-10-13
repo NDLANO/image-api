@@ -71,7 +71,7 @@ trait ImportService {
           captions :+ translation.caption.map(x => domain.ImageCaption(x, transLang)))
       })
 
-      val sourceUrlFull = DownloadUrlPrefix + imageMeta.mainImage.originalFile
+      val sourceUrlFull = parse(DownloadUrlPrefix + imageMeta.mainImage.originalFile).toString
       val key = imageMeta.mainImage.originalFile
       val image = domain.Image(key, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
 
