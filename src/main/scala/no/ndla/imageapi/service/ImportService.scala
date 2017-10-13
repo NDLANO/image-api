@@ -79,9 +79,9 @@ trait ImportService {
 
       if (!imageStorage.objectExists(key) || imageStorage.objectSize(key) != image.size) {
         val request = if (ImageImportSource == redDBSource) {
-          Http(redHost + imageMeta.mainImage.originalFile).auth(NdlaRedUsername, NdlaRedPassword)
+          Http(parse(redHost + imageMeta.mainImage.originalFile).toString).auth(NdlaRedUsername, NdlaRedPassword)
         } else {
-          Http(cmHost + imageMeta.mainImage.originalFile)
+          Http(parse(cmHost + imageMeta.mainImage.originalFile).toString)
         }
 
         val tryResUpload = imageStorage.uploadFromUrl(image, key, request)

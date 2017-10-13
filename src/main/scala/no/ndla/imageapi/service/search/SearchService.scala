@@ -29,11 +29,26 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 trait SearchService {
-  this: ElasticClient with IndexBuilderService with SearchConverterService =>
+  this: ElasticClient with IndexBuilderService with IndexService with SearchConverterService =>
   val searchService: SearchService
 
   class SearchService extends LazyLogging {
     private val noCopyright = QueryBuilders.boolQuery().mustNot(QueryBuilders.termQuery("license","copyrighted"))
+
+    def createEmptyIndexIfNoIndexesExist(): Unit = {
+      val noIndexesExist = indexService.findAllIndexes().map(_.isEmpty).getOrElse(true)
+      if (noIndexesExist) {
+        indexBuilderService.createEmptyIndex match {
+          case Success(_) =>
+            logger.info("Created empty index")
+            scheduleIndexDocuments()
+          case Failure(f) =>
+            logger.error(s"Failed to create empty index: $f")
+        }
+      } else {
+        logger.info("Existing index(es) kept intact")
+      }
+    }
 
     def getHits(response: JestSearchResult, language: Option[String]): Seq[ImageMetaSummary] = {
       var resultList = Seq[ImageMetaSummary]()
