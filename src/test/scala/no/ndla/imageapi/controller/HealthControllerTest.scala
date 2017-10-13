@@ -11,13 +11,11 @@ package no.ndla.imageapi.controller
 import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 import org.mockito.Mockito.when
 import org.scalatra.test.scalatest.ScalatraFunSuite
-import org.scalatra.{InternalServerError, Ok}
 
 import scalaj.http.HttpResponse
 
 class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraFunSuite {
 
-  lazy val controller = new HealthController
 
   val imageSearchBody = s"""{
                            |  "totalCount": 1,
@@ -40,39 +38,111 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
                            |    }
                            |  ]
                            |}""".stripMargin
-
-  test("that getReturnCode returns 200 when response is okay") {
-    val searchResponse = mock[HttpResponse[String]]
-    when(searchResponse.code).thenReturn(200)
-    when(searchResponse.body).thenReturn(imageSearchBody)
-    val imageResponse = controller.getReturnCode(searchResponse)
-
-    imageResponse should equal(Ok())
-  }
-
-  test("that getReturnCode returns InternalServerError when response is incorrect") {
-    val imageNotFoundBody = """{
-                          |	"code": "NOT FOUND",
-                          |	"description": "Image with id 3 and language None not found",
-                          |	"occuredAt": "2017-10-13 08:48:58.999"
+  val imageResultBody = """{
+                          |	"id": "1",
+                          |	"metaUrl": "http://localhost/image-api/v2/images/1",
+                          |	"title": {
+                          |		"title": "Meterolog Kristian Trægde i 1986",
+                          |		"language": "unknown"
+                          |	},
+                          |	"alttext": {
+                          |		"alttext": "",
+                          |		"language": "nb"
+                          |	},
+                          |	"imageUrl": "http://localhost/image-api/raw/sx873733_1.jpg",
+                          |	"size": 238472,
+                          |	"contentType": "image/jpeg",
+                          |	"copyright": {
+                          |		"license": {
+                          |			"license": "by-nc-sa",
+                          |			"description": "Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic",
+                          |			"url": "https://creativecommons.org/licenses/by-nc-sa/2.0/"
+                          |		},
+                          |		"origin": "http://www.scanpix.no",
+                          |		"authors": [
+                          |			{
+                          |				"type": "Fotograf",
+                          |				"name": "Rolf M Aagaard"
+                          |			},
+                          |			{
+                          |				"type": "Leverandør",
+                          |				"name": "Aftenposten"
+                          |			},
+                          |			{
+                          |				"type": "Leverandør",
+                          |				"name": "NTB scanpix"
+                          |			}
+                          |		]
+                          |	},
+                          |	"tags": {
+                          |		"tags": [
+                          |			"kristian trægde",
+                          |			"mediepåvirkning",
+                          |			"meterolog"
+                          |		],
+                          |		"language": "nb"
+                          |	},
+                          |	"caption": {
+                          |		"caption": "",
+                          |		"language": "nb"
+                          |	},
+                          |	"supportedLanguages": [
+                          |		"nn",
+                          |		"nb",
+                          |		"unknown",
+                          |		"en"
+                          |	]
                           |}""".stripMargin
+  val httpResponseMock: HttpResponse[String] = mock[HttpResponse[String]]
 
-    val searchResponse = mock[HttpResponse[String]]
-    when(searchResponse.code).thenReturn(404)
-    when(searchResponse.body).thenReturn(imageNotFoundBody)
-    val imageResponse = controller.getReturnCode(searchResponse)
-
-    imageResponse should equal(InternalServerError())
+  lazy val controller = new HealthController {
+    override def getApiResponse(url: String): HttpResponse[String] = httpResponseMock
   }
+  addServlet(controller, "/")
 
   test("that url is fetched properly") {
-    val searchResponse = mock[HttpResponse[String]]
-    when(searchResponse.code).thenReturn(200)
-    when(searchResponse.body).thenReturn(imageSearchBody)
     val expectedUrl = "http://0.0.0.0/image-api/v2/images/1"
-    val (url, totalCount) = controller.getImageUrl(searchResponse)
+    val (url, totalCount) = controller.getImageUrl(imageSearchBody)
 
-    url should equal(expectedUrl)
+    url should equal(Some(expectedUrl))
     totalCount should equal(1)
+  }
+
+  test("that /health returns 204 on success") {
+    when(httpResponseMock.code).thenReturn(200)
+    when(httpResponseMock.body).thenReturn(imageSearchBody).thenReturn(imageResultBody)
+
+    get("/") {
+      status should equal (204)
+    }
+  }
+
+  test("that /health returns 500 on failure") {
+    when(httpResponseMock.code).thenReturn(500)
+    when(httpResponseMock.body).thenReturn(imageSearchBody).thenReturn(imageResultBody)
+
+    get("/") {
+      status should equal(500)
+    }
+  }
+
+  test("that /health returns 204 on no images") {
+    val noImageBody = s"""{
+                         |	"totalCount": 0,
+                         |	"page": 1,
+                         |	"pageSize": 10,
+                         | "results": []
+                         |}""".stripMargin
+    val notFoundBody = s"""{
+                          |	"code": "NOT FOUND",
+                          |	"description": "Image with id 1131123 and language Some(nb) not found",
+                          |	"occuredAt": "2017-10-13 12:35:33.801"
+                          |}""".stripMargin
+    when(httpResponseMock.code).thenReturn(200).thenReturn(404)
+    when(httpResponseMock.body).thenReturn(noImageBody).thenReturn(notFoundBody)
+
+    get("/") {
+      status should equal(204)
+    }
   }
 }
