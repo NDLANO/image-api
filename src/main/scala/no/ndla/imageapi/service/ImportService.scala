@@ -79,9 +79,9 @@ trait ImportService {
 
       if (!imageStorage.objectExists(key) || imageStorage.objectSize(key) != image.size) {
         val request = if (ImageImportSource == redDBSource) {
-          Http(parse(redHost + imageMeta.mainImage.originalFile).toString).auth(NdlaRedUsername, NdlaRedPassword)
+          Http(parse(redHost + key).toString).auth(NdlaRedUsername, NdlaRedPassword)
         } else {
-          Http(parse(cmHost + imageMeta.mainImage.originalFile).toString)
+          Http(parse(cmHost + key).toString)
         }
 
         val tryResUpload = imageStorage.uploadFromUrl(image, key, request)
@@ -96,7 +96,7 @@ trait ImportService {
 
       val persistedImageMetaInformation = imageRepository.withExternalId(imageMeta.mainImage.nid) match {
         case Some(dbMeta) => {
-          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts.flatten, parse(dbMeta.imageUrl).toString,
+          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts.flatten, parse(key).toString,
             dbMeta.size, dbMeta.contentType, copyright, tags, captions.flatten, userId, now), dbMeta.id.get)
           logger.info(s"Updated ID = ${updated.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
           updated
