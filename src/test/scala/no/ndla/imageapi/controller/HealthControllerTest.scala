@@ -108,12 +108,12 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
     totalCount should equal(1)
   }
 
-  test("that /health returns 204 on success") {
+  test("that /health returns 200 on success") {
     when(httpResponseMock.code).thenReturn(200)
     when(httpResponseMock.body).thenReturn(imageSearchBody).thenReturn(imageResultBody)
 
     get("/") {
-      status should equal (204)
+      status should equal (200)
     }
   }
 
@@ -126,7 +126,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
     }
   }
 
-  test("that /health returns 204 on no images") {
+  test("that /health returns 200 on no images") {
     val noImageBody = s"""{
                          |	"totalCount": 0,
                          |	"page": 1,
@@ -142,7 +142,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
     when(httpResponseMock.body).thenReturn(noImageBody).thenReturn(notFoundBody)
 
     get("/") {
-      status should equal(204)
+      status should equal(200)
     }
   }
 }

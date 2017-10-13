@@ -37,7 +37,7 @@ trait HealthController {
 
     def getReturnCode(imageResponse: HttpResponse[String]): ActionResult = {
       imageResponse.code match {
-        case 200 => NoContent()
+        case 200 => Ok()
         case _ => InternalServerError()
       }
     }
@@ -48,7 +48,7 @@ trait HealthController {
       val (imageUrl,totalCount) = getImageUrl(apiSearchResponse.body)
 
       apiSearchResponse.code match {
-        case _ if totalCount == 0 => NoContent()
+        case _ if totalCount == 0 => Ok()
         case 200 => getReturnCode(getApiResponse(imageUrl.get))
         case _ => InternalServerError()
       }
