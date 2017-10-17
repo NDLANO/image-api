@@ -16,11 +16,9 @@ import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexBuilderService
 import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
 import no.ndla.mapping.License.getLicense
-import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, redDBSource, NdlaRedPassword, NdlaRedUsername}
 import com.netaporter.uri.Uri.parse
 
 import scala.util.{Failure, Success, Try}
-import scalaj.http.Http
 
 trait ImportService {
   this: ImageStorageService with ImageRepository with MigrationApiClient with IndexBuilderService with ConverterService with TagsService
@@ -28,8 +26,7 @@ trait ImportService {
   val importService: ImportService
 
   class ImportService extends LazyLogging {
-    val redHost = s"https://red.ndla.no/sites/default/files/images/"
-    val cmHost = s"https://ndla.no/sites/default/files/images/"
+    val DownloadUrlPrefix = "https://ndla.no/sites/default/files/images/"
 
     def importImage(imageId: String): Try[domain.ImageMetaInformation] = {
       val imported = migrationApiClient.getMetaDataForImage(imageId).map(upload)
@@ -78,13 +75,8 @@ trait ImportService {
       val image = domain.Image(key, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
 
       if (!imageStorage.objectExists(key) || imageStorage.objectSize(key) != image.size) {
-        val request = if (ImageImportSource == redDBSource) {
-          Http(parse(redHost + imageMeta.mainImage.originalFile).toString).auth(NdlaRedUsername, NdlaRedPassword)
-        } else {
-          Http(parse(cmHost + imageMeta.mainImage.originalFile).toString)
-        }
-
-        val tryResUpload = imageStorage.uploadFromUrl(image, key, request)
+        val sourceUrlFull = DownloadUrlPrefix + imageMeta.mainImage.originalFile
+        val tryResUpload = imageStorage.uploadFromUrl(image, key, sourceUrlFull)
         tryResUpload match {
           case Failure(f) => throw new S3UploadException(s"Upload of image :[$key] to S3 failed.: ${f.getMessage}")
           case Success(_) =>

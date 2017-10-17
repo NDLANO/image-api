@@ -9,11 +9,11 @@ package no.ndla.imageapi.service.search
 
 import javax.servlet.http.HttpServletRequest
 
+import io.digitallibrary.network.ApplicationUrl
 import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
 import no.ndla.imageapi.integration.JestClientFactory
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
-import no.ndla.network.ApplicationUrl
 import no.ndla.tag.IntegrationTest
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Matchers._

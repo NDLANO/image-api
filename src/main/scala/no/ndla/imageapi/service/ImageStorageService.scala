@@ -9,6 +9,7 @@
 package no.ndla.imageapi.service
 
 import java.io.InputStream
+import java.net.URL
 import javax.imageio.ImageIO
 
 import com.amazonaws.services.s3.model._
@@ -19,7 +20,6 @@ import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.model.domain.{Image, ImageStream}
 
 import scala.util.{Failure, Success, Try}
-import scalaj.http.{Http, HttpRequest}
 
 trait ImageStorageService {
   this: AmazonClient =>
@@ -39,8 +39,9 @@ trait ImageStorageService {
       }
     }
 
-    def uploadFromUrl(image: Image, storageKey: String, request: HttpRequest): Try[_] =
-      request.execute(stream => uploadFromStream(stream, storageKey, image.contentType, image.size)).body
+    def uploadFromUrl(image: Image, storageKey: String, urlOfImage: String): Try[_] = {
+      uploadFromStream(new URL(urlOfImage).openStream(), storageKey, image.contentType, image.size)
+    }
 
     def uploadFromStream(stream: InputStream, storageKey: String, contentType: String, size: Long): Try[String] = {
       val metadata = new ObjectMetadata()
