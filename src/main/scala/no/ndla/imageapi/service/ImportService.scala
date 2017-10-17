@@ -8,16 +8,17 @@
 
 package no.ndla.imageapi.service
 
+import com.netaporter.uri.Uri.parse
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, NdlaRedPassword, NdlaRedUsername, redDBSource}
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
+import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.model.{Language, S3UploadException, domain}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexBuilderService
-import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
 import no.ndla.mapping.License.getLicense
-import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, redDBSource, NdlaRedPassword, NdlaRedUsername}
-import com.netaporter.uri.Uri.parse
+import no.ndla.mapping.ISO639.get6391CodeFor6392Code
 
 import scala.util.{Failure, Success, Try}
 import scalaj.http.Http
@@ -31,90 +32,96 @@ trait ImportService {
     val redHost = s"https://red.ndla.no/sites/default/files/images/"
     val cmHost = s"https://ndla.no/sites/default/files/images/"
 
-    def importImage(imageId: String): Try[domain.ImageMetaInformation] = {
-      val imported = migrationApiClient.getMetaDataForImage(imageId).map(upload)
-      imported.foreach(indexBuilderService.indexDocument)
-      imported
+    val ImportUserId = "content-import-client"
+
+    def importImage(externalImageId: String): Try[domain.ImageMetaInformation] = {
+      val start = System.currentTimeMillis()
+      val importedImage = for {
+        importMeta <- migrationApiClient.getMetaDataForImage(externalImageId)
+        rawImageMeta <- uploadRawImage(importMeta.mainImage)
+        importedImage <- persistMetadata(toDomainImage(importMeta, rawImageMeta), importMeta.mainImage.nid)
+        _ <- indexBuilderService.indexDocument(importedImage)
+      } yield importedImage
+
+      importedImage match {
+        case Success(i) => logger.info(s"Successfully imported image with external ID $externalImageId (${i.id.get}) in ${System.currentTimeMillis() - start} ms")
+        case Failure(f) =>
+          logger.error(s"Failed to import image with externalId $externalImageId: ${f.getMessage}")
+          f.printStackTrace()
+      }
+
+      importedImage
     }
 
-    def upload(imageMeta: MainImageImport): domain.ImageMetaInformation = {
-      val start = System.currentTimeMillis
+    private def uploadRawImage(rawImgMeta: ImageMeta): Try[domain.Image] = {
+      val image = domain.Image(parse(rawImgMeta.originalFile).toString, rawImgMeta.originalSize.toInt, rawImgMeta.originalMime)
 
+      if (imageStorage.objectExists(image.fileName) && imageStorage.objectSize(image.fileName) == image.size) {
+        Success(image)
+      } else {
+        val request = if (ImageImportSource == redDBSource) {
+          Http(parse(redHost + image.fileName).toString).auth(NdlaRedUsername, NdlaRedPassword)
+        } else {
+          Http(parse(cmHost + image.fileName).toString)
+        }
+
+        val tryResUpload = imageStorage.uploadFromUrl(image, image.fileName, request)
+        tryResUpload match {
+          case Failure(f) => throw new S3UploadException(s"Upload of image :[$image.fileName] to S3 failed.: ${f.getMessage}")
+          case Success(_) => Success(image)
+        }
+      }
+    }
+
+    private def toDomainImage(imageMeta: MainImageImport, rawImage: domain.Image): domain.ImageMetaInformation = {
+      val (titles, altTexts, captions) = toDomainTranslationFields(imageMeta)
       val tags = tagsService.forImage(imageMeta.mainImage.nid) match {
+        case Success(t) => t
         case Failure(e) =>
           logger.warn(s"Could not import tags for node ${imageMeta.mainImage.nid}", e)
-          List()
-        case Success(tags) => tags
+          List.empty
       }
 
-      val authors = imageMeta.authors.map(ia => domain.Author(ia.typeAuthor, ia.name))
-
-      val license = imageMeta.license.flatMap(l => getLicense(l)) match {
-        case Some(l) => domain.License(l.license, l.description, l.url)
-        case None => domain.License(imageMeta.license.get, imageMeta.license.get, None)
-      }
-
-      val copyright = domain.Copyright(license, imageMeta.origin.getOrElse(""), authors)
-
-      val imageLang = languageCodeSupported(imageMeta.mainImage.language) match {
-        case true => imageMeta.mainImage.language
-        case false => Language.UnknownLanguage
-      }
-
-      val mainTitle = domain.ImageTitle(imageMeta.mainImage.title, imageLang)
-      val mainAlttext = imageMeta.mainImage.alttext.map(x => domain.ImageAltText(x, imageLang))
-      val mainCaption = imageMeta.mainImage.caption.map(x => domain.ImageCaption(x, imageLang))
-
-      val (titles, alttexts, captions) = imageMeta.translations.foldLeft((Seq(mainTitle), Seq(mainAlttext), Seq(mainCaption)))((result, translation) => {
-        val (titles, alttexts, captions) = result
-        val transLang = if (languageCodeSupported(translation.language)) translation.language else Language.UnknownLanguage
-
-        (titles :+ domain.ImageTitle(translation.title, transLang),
-          alttexts :+ translation.alttext.map(x => domain.ImageAltText(x, transLang)),
-          captions :+ translation.caption.map(x => domain.ImageCaption(x, transLang)))
-      })
-
-      val key = imageMeta.mainImage.originalFile
-      val image = domain.Image(key, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
-
-      if (!imageStorage.objectExists(key) || imageStorage.objectSize(key) != image.size) {
-        val request = if (ImageImportSource == redDBSource) {
-          Http(parse(redHost + key).toString).auth(NdlaRedUsername, NdlaRedPassword)
-        } else {
-          Http(parse(cmHost + key).toString)
-        }
-
-        val tryResUpload = imageStorage.uploadFromUrl(image, key, request)
-        tryResUpload match {
-          case Failure(f) => throw new S3UploadException(s"Upload of image :[$key] to S3 failed.: ${f.getMessage}")
-          case Success(_) =>
-        }
-      }
-
-      val now = clock.now()
-      val userId = "content-import-client"
-
-      val persistedImageMetaInformation = imageRepository.withExternalId(imageMeta.mainImage.nid) match {
-        case Some(dbMeta) => {
-          val updated = imageRepository.update(domain.ImageMetaInformation(dbMeta.id, titles, alttexts.flatten, parse(key).toString,
-            dbMeta.size, dbMeta.contentType, copyright, tags, captions.flatten, userId, now), dbMeta.id.get)
-          logger.info(s"Updated ID = ${updated.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
-          updated
-        }
-        case None => {
-          val imageMetaInformation = domain.ImageMetaInformation(None, titles, alttexts.flatten, parse(image.fileName).toString,
-            image.size, image.contentType, copyright, tags, captions.flatten, userId, now)
-          val inserted = imageRepository.insertWithExternalId(imageMetaInformation, imageMeta.mainImage.nid)
-          logger.info(s"Inserted ID = ${inserted.id}, External_ID = ${imageMeta.mainImage.nid} (${imageMeta.mainImage.title}) -- ${System.currentTimeMillis - start} ms")
-          inserted
-        }
-      }
-
-      persistedImageMetaInformation
+      domain.ImageMetaInformation(
+        None,
+        titles,
+        altTexts,
+        rawImage.fileName,
+        rawImage.size,
+        rawImage.contentType,
+        toDomainCopyright(imageMeta),
+        tags,
+        captions,
+        ImportUserId,
+        clock.now()
+      )
     }
 
-    private def languageCodeSupported(languageCode: String) =
-      get6391CodeFor6392CodeMappings.exists(_._1 == language)
-  }
+    private def persistMetadata(image: domain.ImageMetaInformation, externalImageId: String): Try[ImageMetaInformation] = {
+      imageRepository.withExternalId(externalImageId) match {
+        case Some(dbMeta) => Try(imageRepository.update(image.copy(id=dbMeta.id), dbMeta.id.get))
+        case None => Try(imageRepository.insertWithExternalId(image, externalImageId))
+      }
+    }
 
+    private def toDomainCopyright(imageMeta: MainImageImport): domain.Copyright = {
+      val domainLicense = imageMeta.license.flatMap(getLicense)
+        .map(license => domain.License(license.license, license.description, license.url))
+        .getOrElse(domain.License(imageMeta.license.get, imageMeta.license.get, None))
+
+      domain.Copyright(domainLicense,
+        imageMeta.origin.getOrElse(""),
+        imageMeta.authors.map(a => domain.Author(a.typeAuthor, a.name)))
+    }
+
+    private def toDomainTranslationFields(imageMeta: MainImageImport): (Seq[domain.ImageTitle], Seq[domain.ImageAltText], Seq[domain.ImageCaption]) = {
+      imageMeta.translations.map(tr => {
+        val language = get6391CodeFor6392Code(tr.language).getOrElse(Language.UnknownLanguage)
+        (domain.ImageTitle(tr.title, language),
+          domain.ImageAltText(tr.alttext.getOrElse(""), language),
+          domain.ImageCaption(tr.caption.getOrElse(""), language))
+        }).unzip3
+    }
+
+  }
 }
