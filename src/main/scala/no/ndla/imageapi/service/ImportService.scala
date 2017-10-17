@@ -29,8 +29,8 @@ trait ImportService {
   val importService: ImportService
 
   class ImportService extends LazyLogging {
-    val redHost = s"https://red.ndla.no/sites/default/files/images/"
-    val cmHost = s"https://ndla.no/sites/default/files/images/"
+    val redHost = s"https://red.ndla.no/sites/default/files/images"
+    val cmHost = s"https://ndla.no/sites/default/files/images"
 
     val ImportUserId = "content-import-client"
 
@@ -45,15 +45,13 @@ trait ImportService {
 
       importedImage match {
         case Success(i) => logger.info(s"Successfully imported image with external ID $externalImageId (${i.id.get}) in ${System.currentTimeMillis() - start} ms")
-        case Failure(f) =>
-          logger.error(s"Failed to import image with externalId $externalImageId: ${f.getMessage}")
-          f.printStackTrace()
+        case Failure(f) => logger.error(s"Failed to import image with externalId $externalImageId: ${f.getMessage}")
       }
 
       importedImage
     }
 
-    private def uploadRawImage(rawImgMeta: ImageMeta): Try[domain.Image] = {
+    private[service] def uploadRawImage(rawImgMeta: ImageMeta): Try[domain.Image] = {
       val image = domain.Image(parse(rawImgMeta.originalFile).toString, rawImgMeta.originalSize.toInt, rawImgMeta.originalMime)
 
       if (imageStorage.objectExists(image.fileName) && imageStorage.objectSize(image.fileName) == image.size) {
@@ -67,7 +65,7 @@ trait ImportService {
 
         val tryResUpload = imageStorage.uploadFromUrl(image, image.fileName, request)
         tryResUpload match {
-          case Failure(f) => throw new S3UploadException(s"Upload of image :[$image.fileName] to S3 failed.: ${f.getMessage}")
+          case Failure(f) => Failure(new S3UploadException(s"Upload of image '${image.fileName}' to S3 failed.: ${f.getMessage}"))
           case Success(_) => Success(image)
         }
       }
