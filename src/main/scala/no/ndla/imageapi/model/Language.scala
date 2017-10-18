@@ -11,21 +11,21 @@ import com.sksamuel.elastic4s.analyzers._
 import no.ndla.imageapi.model.domain.LanguageField
 
 object Language {
-  val DefaultLanguage = "nb"
+  val DefaultLanguage = "eng"
   val UnknownLanguage = "unknown"
   val AllLanguages = "all"
   val NoLanguage = ""
 
   val languageAnalyzers = Seq(
-    LanguageAnalyzer(DefaultLanguage, NorwegianLanguageAnalyzer),
-    LanguageAnalyzer("nn", NorwegianLanguageAnalyzer),
-    LanguageAnalyzer("en", EnglishLanguageAnalyzer),
-    LanguageAnalyzer("fr", FrenchLanguageAnalyzer),
-    LanguageAnalyzer("de", GermanLanguageAnalyzer),
-    LanguageAnalyzer("es", SpanishLanguageAnalyzer),
-    LanguageAnalyzer("se", StandardAnalyzer), // SAMI
-    LanguageAnalyzer("zh", ChineseLanguageAnalyzer),
-    LanguageAnalyzer(UnknownLanguage, NorwegianLanguageAnalyzer)
+    LanguageAnalyzer(DefaultLanguage, EnglishLanguageAnalyzer),
+    LanguageAnalyzer("nob", NorwegianLanguageAnalyzer),
+    LanguageAnalyzer("eng", EnglishLanguageAnalyzer),
+    LanguageAnalyzer("fra", FrenchLanguageAnalyzer),
+    LanguageAnalyzer("deu", GermanLanguageAnalyzer),
+    LanguageAnalyzer("spa", SpanishLanguageAnalyzer),
+    LanguageAnalyzer("sme", StandardAnalyzer), // SAMI
+    LanguageAnalyzer("zho", ChineseLanguageAnalyzer),
+    LanguageAnalyzer(UnknownLanguage, EnglishLanguageAnalyzer)
   )
 
   val supportedLanguages = languageAnalyzers.map(_.lang)

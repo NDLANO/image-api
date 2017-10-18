@@ -94,15 +94,19 @@ trait ValidationService {
     }
 
     private def validateLanguage(fieldPath: String, languageCode: String): Option[ValidationMessage] = {
-      if (languageCodeSupported6391(languageCode)) {
+      if (languageCodeIsValid(languageCode)) {
         None
       } else {
         Some(ValidationMessage(fieldPath, s"Language '$languageCode' is not a supported value."))
       }
     }
 
-    private def languageCodeSupported6391(languageCode: String): Boolean =
-      get6391CodeFor6392CodeMappings.exists(_._2 == languageCode)
+    private def languageCodeIsValid(languageCode: String): Boolean = {
+      val allLowerCase = languageCode.filter(_.isUpper).isEmpty
+      val lengthIsOk = languageCode.length == 3
+      allLowerCase && lengthIsOk
+    }
+
 
   }
 }
