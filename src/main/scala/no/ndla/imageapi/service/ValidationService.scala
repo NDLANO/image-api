@@ -102,7 +102,7 @@ trait ValidationService {
     }
 
     private def languageCodeIsValid(languageCode: String): Boolean = {
-      val allLowerCase = languageCode.partition(_.isLower)._2.isEmpty
+      val allLowerCase = languageCode.forall(_.isLower)
       val lengthIsOk = languageCode.length == 3
       allLowerCase && lengthIsOk
     }
