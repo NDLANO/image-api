@@ -170,7 +170,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
 
   test("languageCodeIsValid requires 3 lowercase letters") {
     val results = for {
-      language <- Seq("", "a", "no", "enG", "ENG", "nOB", "nobb")
+      language <- Seq("", "a", "no", "enG", "ENG", "nOB", "nobb", "---")
       imageMeta = sampleImageMeta.copy(alttexts=Seq(ImageAltText("alt text", language)))
     } yield (language, validationService.validate(imageMeta).isSuccess)
     results.foreach{case (lang, success) => withClue(s"Language '$lang' should not be accepted.") { success should be (false)} }
