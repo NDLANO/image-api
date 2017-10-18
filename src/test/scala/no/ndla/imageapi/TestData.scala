@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage
 import java.io.InputStream
 import javax.imageio.ImageIO
 
+import no.ndla.imageapi.integration.{ImageAuthor, ImageMeta, MainImageImport}
 import no.ndla.imageapi.model.domain._
 import org.joda.time.{DateTime, DateTimeZone}
 
@@ -72,4 +73,13 @@ object TestData {
 
   val NdlaLogoImage = DiskImage("ndla_logo.jpg")
   val ChildrensImage = DiskImage("children-drawing-582306_640.jpg") // From https://pixabay.com/en/children-drawing-home-tree-meadow-582306/
+
+  val migrationImageMeta = ImageMeta("1234", "1234", "nob", "Elg i busk", Some("Busk i elg"), "2017-10-01 21:45:37.0", "Elg.jpg", "image/jpg", "1024", Some("I busk elg"))
+  val migrationImageElg = MainImageImport(
+    migrationImageMeta,
+    List(ImageAuthor("Fotograf", "Test Testesen")),
+    Some("by-nc-sa"),
+    Some("http://www.scanpix.no"),
+    List.empty
+  )
 }

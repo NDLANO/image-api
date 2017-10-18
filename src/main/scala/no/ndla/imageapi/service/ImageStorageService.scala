@@ -39,7 +39,7 @@ trait ImageStorageService {
       }
     }
 
-    def uploadFromUrl(image: Image, storageKey: String, request: HttpRequest): Try[_] =
+    def uploadFromUrl(image: Image, storageKey: String, request: HttpRequest): Try[String] =
       request.execute(stream => uploadFromStream(stream, storageKey, image.contentType, image.size)).body
 
     def uploadFromStream(stream: InputStream, storageKey: String, contentType: String, size: Long): Try[String] = {
