@@ -71,11 +71,11 @@ trait ImportService {
           captions :+ translation.caption.map(x => domain.ImageCaption(x, transLang)))
       })
 
-      val sourceUrlFull = DownloadUrlPrefix + imageMeta.mainImage.originalFile
       val key = imageMeta.mainImage.originalFile
       val image = domain.Image(key, imageMeta.mainImage.originalSize.toInt, imageMeta.mainImage.originalMime)
 
       if (!imageStorage.objectExists(key) || imageStorage.objectSize(key) != image.size) {
+        val sourceUrlFull = DownloadUrlPrefix + imageMeta.mainImage.originalFile
         val tryResUpload = imageStorage.uploadFromUrl(image, key, sourceUrlFull)
         tryResUpload match {
           case Failure(f) => throw new S3UploadException(s"Upload of image :[$key] to S3 failed.: ${f.getMessage}")
