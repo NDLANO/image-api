@@ -136,7 +136,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
     val notFoundBody = s"""{
                           |	"code": "NOT FOUND",
                           |	"description": "Image with id 1131123 and language Some(nb) not found",
-                          |	"occuredAt": "2017-10-13 12:35:33.801"
+                          |	"occurredAt": "2017-10-13 12:35:33.801"
                           |}""".stripMargin
     when(httpResponseMock.code).thenReturn(200).thenReturn(404)
     when(httpResponseMock.body).thenReturn(noImageBody).thenReturn(notFoundBody)
