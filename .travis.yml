@@ -1,23 +1,16 @@
 language: scala
 scala:
-  - 2.12.2
+- 2.12.2
 jdk:
-  - oraclejdk8
-# Use container-based infrastructure
+- oraclejdk8
 sudo: false
-# These directories are cached to S3 at the end of the build
 cache:
   directories:
-    - $HOME/.ivy2/cache
-    - $HOME/.sbt/boot/
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt/boot/
 before_cache:
-  # Tricks to avoid unnecessary cache updates
-  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
-  - find $HOME/.sbt -name "*.lock" -delete
-
+- find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+- find $HOME/.sbt -name "*.lock" -delete
 notifications:
   slack:
-    on_success: change
-    on_failure: always
-    rooms:
-      secure: sVduoWiBrb9AuXacKTTbQRD4y+LYlN7qTl9IZ235gLOryRhGaQaRZ04TvUJ0SV16fktGgNhQlUalJgrTCmdaR8Xh73o2/mmP3GFWyMXZamZ/4gNng6wuJgow2GKj6Ff3bSiyf8afPe2SuZ+rWLiptPTDqny6scpKban6OrBUOilGiqASgcvDN+CWicfj7HsXv5PqOgySW1lWoGzf+Ly8Gsuz8aOWz109m9EhUVTM4zvnbHudeiYxULQFSq2sfDZOEfttOZ5LE10aedSD583K11SL9f8Scw2UWi1cbhDuCI4MW+FvlLE7XFUNwuhPNUjJ0l/WGJcbRqMmN3FE/NTECqEvjz2DV1+kmGEDzEUg2i53IBq7l3CJF5zH71H3J9aUqMubrKJZa3L12+f7tm0OsBXMJIi25/D912+pUwtz4FxCRBNiamWbB+IC1VagdF0wLCACDm0AaB1d2Jm4J3IG7gQX82C8SqNAcKxZ1N/YfGteaHN1yWcXXjJSOpMqkXsL0NAU1VZz4lSM9Qks+/h7FogaZjNegLHknGfbnyHJPg5R6zk8i/h1omRrFjKVfm/ObUIGxjDiXWMq7CEcSZjUBTrf2MiZDxUbS9wA+BzOptLONf3tMoCZKqgMqLymSWkJK9Pmz1DRO38McbhcW8au+9jyTgiZyum7Jmes/RiZCdM=
+    secure: D1i//6BCorKU83/wqw4wN3+D+u67oqiBH566aw2xqHLrM7C6wzvF7tepqXDP2B7Yi14lf/A5biplEAdOSXZTLR6TaRTARF3bbBiJqmhOGJcCUSUTGLqDDhkbus6rXmH+CXIZvX1yzaRm+Ni3mTW1CdZO0RyMGzi3gHQipmjibVorW+fRrFpx/HWBcLY/mkF/Fajs5V9GkXJBNIlwNKoYwpsTU1wib5gO9ilPx20P8y0AJZ2agONutjZE4V1/gCrZb3w60nvEyI2JoXXVGiK3bSLXGVXaXFD2xRsFcCxkNyP9NumriP1ZNvqBFOR8V4XhycdErvee+YNb+hG5vW9auEAUykPnjpVLxOPADLWuHLpv2zi0FnPDSgzVkYxQvWZ3HoZi0gm9MXE0nTrYzKT8/20FmYTT2/7q6GFBtSMETEesa70cU7GRRVIMR8cXoYTYYJCintdkT52bQbZVvyPrOjthXSJJpUwwwbmAKAe7SxGwW5clmrBcglsSh0i56aT+GueF3GwhpKdXVuO3xfLUGQEI+uDJ6H/Oko6WUAXU19Q7zoPgIXGtA6rvMCvbaxwZOwMN+MexQ5nEdCjVUvmhW3hk2YFmCBKJRTh4jqftKuvW0VG4axOH7S8ymFsoejYSudjuDProzkRW87rSDymd1qnUTVFUIu7MSHtgp4+h0lA=
