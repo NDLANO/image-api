@@ -51,7 +51,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     val applicationUrl = mock[HttpServletRequest]
     when(applicationUrl.getHeader(any[String])).thenReturn("http")
     when(applicationUrl.getServerName).thenReturn("localhost")
-    when(applicationUrl.getServletPath).thenReturn("/image-api/v1/images/")
+    when(applicationUrl.getServletPath).thenReturn("/image-api/v2/images/")
     ApplicationUrl.set(applicationUrl)
 
     reset(imageRepository, indexService, imageStorage)

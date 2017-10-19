@@ -31,7 +31,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     when(request.getServerPort).thenReturn(80)
     when(request.getScheme).thenReturn("http")
     when(request.getServerName).thenReturn("image-api")
-    when(request.getServletPath).thenReturn("/v1/images")
+    when(request.getServletPath).thenReturn("/v2/images")
 
     ApplicationUrl.set(request)
   }
@@ -48,12 +48,6 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   override def afterEach: Unit = {
     ApplicationUrl.clear()
-  }
-
-  test("That asApiImageMetaInformationWithApplicationUrl returns links with applicationUrl") {
-    val api = converterService.asApiImageMetaInformationWithApplicationUrl(DefaultImageMetaInformation)
-    api.metaUrl should equal ("http://image-api/v1/images/1")
-    api.imageUrl should equal ("http://image-api/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrl returns links with domain urls") {
