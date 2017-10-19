@@ -1,5 +1,5 @@
 # IMAGE API 
-[![Build Status](https://travis-ci.org/NDLANO/image-api.svg?branch=master)](https://travis-ci.org/NDLANO/image-api)
+[![Build Status](https://travis-ci.org/GlobalDigitalLibraryio/image-api.svg?branch=master)](https://travis-ci.org/GlobalDigitalLibraryio/image-api)
 
 ## Usage
 Creates, updates and returns metadata about an image. It also supports resizing and cropping images on the fly.

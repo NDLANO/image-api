@@ -115,4 +115,7 @@ imageNames in docker := Seq(
 
 parallelExecution in Test := false
 
-resolvers ++= scala.util.Properties.envOrNone("NDLA_RELEASES").map(repo => "Release Sonatype Nexus Repository Manager" at repo).toSeq
+resolvers ++= Seq(
+  scala.util.Properties.envOrNone("GDL_RELEASES").map(repo => "GDL Release Sonatype Nexus Repository Manager" at repo),
+  scala.util.Properties.envOrNone("NDLA_RELEASES").map(repo => "NDLA Release Sonatype Nexus Repository Manager" at repo)
+).flatten
