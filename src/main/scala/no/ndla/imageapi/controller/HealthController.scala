@@ -30,7 +30,7 @@ trait HealthController {
     def getImageUrl(body: String): (Option[String], Long) = {
       val json = JsonParser.parse(body).extract[SearchResult]
       json.results.headOption match {
-        case Some(result: ImageMetaSummary) => (Some(result.metaUrl), json.totalCount)
+        case Some(result: ImageMetaSummary) => (Some(result.previewUrl), json.totalCount)
         case _ => (None,json.totalCount)
       }
     }

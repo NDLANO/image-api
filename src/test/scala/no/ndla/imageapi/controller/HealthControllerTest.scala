@@ -101,7 +101,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   addServlet(controller, "/")
 
   test("that url is fetched properly") {
-    val expectedUrl = "http://0.0.0.0/image-api/v2/images/1"
+    val expectedUrl = "http://0.0.0.0/image-api/raw/sx873733_1.jpg"
     val (url, totalCount) = controller.getImageUrl(imageSearchBody)
 
     url should equal(Some(expectedUrl))
