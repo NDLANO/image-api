@@ -30,6 +30,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   val newFileName = "AbCdeF.mp3"
   val fileMock1: FileItem = mock[FileItem]
 
+  /*
   val newImageMeta = NewImageMetaInformation(
     Seq(ImageTitle("title", "en")),
     Seq(ImageAltText("alt text", "en")),
@@ -37,10 +38,20 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     None,
     None
   )
+  */
+
+  val newImageMeta = NewImageMetaInformationV2(
+    "title",
+    "alt text",
+    Copyright(License("by", "", None), "", Seq.empty),
+    Seq.empty,
+    "",
+    "en"
+  )
 
   def updated() = (new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC)).toDate
 
-  val domainImageMeta = converterService.asDomainImageMetaInformation(newImageMeta, Image(newFileName, 1024, "image/jpeg"))
+  val domainImageMeta = converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg"))
 
   override def beforeEach = {
     when(fileMock1.getContentType).thenReturn(Some("image/jpeg"))
@@ -155,7 +166,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   test("converter to domain should set updatedBy from authUser and updated date"){
     when(authUser.id()).thenReturn("ndla54321")
     when(clock.now()).thenReturn(updated())
-    val domain = converterService.asDomainImageMetaInformation(newImageMeta, Image(newFileName, 1024, "image/jpeg"))
+    val domain = converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg"))
     domain.updatedBy should equal ("ndla54321")
     domain.updated should equal(updated())
   }

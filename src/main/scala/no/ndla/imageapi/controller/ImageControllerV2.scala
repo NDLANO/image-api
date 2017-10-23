@@ -157,7 +157,7 @@ trait ImageControllerV2 {
 
       val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
 
-      writeService.storeNewImage(converterService.asNewImageMetaInformation(newImage), file)
+      writeService.storeNewImage(newImage, file)
         .map(img => converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(img, Some(newImage.language))) match {
         case Success(imageMeta) => imageMeta
         case Failure(e) => errorHandler(e)

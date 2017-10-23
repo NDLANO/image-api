@@ -115,6 +115,22 @@ trait ConverterService {
       baseUrl.getOrElse("") + parse(url).toString
     }
 
+    def asDomainImageMetaInformationV2(imageMeta: api.NewImageMetaInformationV2, image: domain.Image): domain.ImageMetaInformation = {
+      domain.ImageMetaInformation(
+        None,
+        Seq(domain.ImageTitle(imageMeta.title, imageMeta.language)),
+        Seq(domain.ImageAltText(imageMeta.alttext, imageMeta.language)),
+        parse(image.fileName).toString,
+        image.size,
+        image.contentType,
+        toDomainCopyright(imageMeta.copyright),
+        if (imageMeta.tags.nonEmpty) Seq(toDomainTag(api.ImageTag(imageMeta.tags, imageMeta.language))) else Seq.empty,
+        Seq(domain.ImageCaption(imageMeta.caption, imageMeta.language)),
+        authUser.id(),
+        clock.now()
+      )
+    }
+
     def asDomainImageMetaInformation(imageMeta: api.NewImageMetaInformation, image: domain.Image): domain.ImageMetaInformation = {
       domain.ImageMetaInformation(
         None,
