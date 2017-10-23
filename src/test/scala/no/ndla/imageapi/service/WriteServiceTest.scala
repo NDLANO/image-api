@@ -30,16 +30,6 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   val newFileName = "AbCdeF.mp3"
   val fileMock1: FileItem = mock[FileItem]
 
-  /*
-  val newImageMeta = NewImageMetaInformation(
-    Seq(ImageTitle("title", "en")),
-    Seq(ImageAltText("alt text", "en")),
-    Copyright(License("by", "", None), "", Seq.empty),
-    None,
-    None
-  )
-  */
-
   val newImageMeta = NewImageMetaInformationV2(
     "title",
     "alt text",

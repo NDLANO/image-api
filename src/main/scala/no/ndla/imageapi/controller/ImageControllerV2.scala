@@ -11,7 +11,7 @@ package no.ndla.imageapi.controller
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.auth.Role
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
-import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, ImageMetaInformationSingleLanguage, NewImageMetaInformation, NewImageMetaInformationV2, SearchParams, SearchResult, ValidationError}
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, ImageMetaInformationSingleLanguage, NewImageMetaInformationV2, SearchParams, SearchResult, ValidationError}
 import no.ndla.imageapi.model.Language.{AllLanguages, DefaultLanguage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.SearchService
@@ -36,7 +36,7 @@ trait ImageControllerV2 {
     // Additional models used in error responses
     registerModel[ValidationError]()
     registerModel[Error]()
-    registerModel[NewImageMetaInformation]()
+    registerModel[NewImageMetaInformationV2]()
 
     val response403 = ResponseMessage(403, "Access Denied", Some("Error"))
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
@@ -94,7 +94,7 @@ trait ImageControllerV2 {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        formParam[String]("metadata").description("The metadata for the image file to submit. See NewImageMetaInformation."),
+        formParam[String]("metadata").description("The metadata for the image file to submit. See NewImageMetaInformationV2."),
         Parameter(name = "file", `type` = ValueDataType("file"), description = Some("The image file(s) to upload"), paramType = ParamType.Form)
       )
         authorizations "oauth2"

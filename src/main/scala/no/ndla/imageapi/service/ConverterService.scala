@@ -57,16 +57,6 @@ trait ConverterService {
         domainImageMetaInformation.captions.map(asApiCaption))
     }
 
-    def asNewImageMetaInformation(newImageMeta: api.NewImageMetaInformationV2): api.NewImageMetaInformation = {
-      api.NewImageMetaInformation(
-        Seq(api.ImageTitle(newImageMeta.title, newImageMeta.language)),
-        Seq(api.ImageAltText(newImageMeta.alttext, newImageMeta.language)),
-        newImageMeta.copyright,
-        if (newImageMeta.tags.nonEmpty) Some(Seq(api.ImageTag(newImageMeta.tags, newImageMeta.language))) else None,
-        Some(Seq(api.ImageCaption(newImageMeta.caption, newImageMeta.language)))
-      )
-    }
-
     def asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: Option[String]): Option[api.ImageMetaInformationSingleLanguage] = {
       val rawPath = ApplicationUrl.get.replace("/v2/images/", "/raw")
       asImageMetaInformationV2(domainImageMetaInformation, language, ApplicationUrl.get, Some(rawPath))
@@ -126,22 +116,6 @@ trait ConverterService {
         toDomainCopyright(imageMeta.copyright),
         if (imageMeta.tags.nonEmpty) Seq(toDomainTag(api.ImageTag(imageMeta.tags, imageMeta.language))) else Seq.empty,
         Seq(domain.ImageCaption(imageMeta.caption, imageMeta.language)),
-        authUser.id(),
-        clock.now()
-      )
-    }
-
-    def asDomainImageMetaInformation(imageMeta: api.NewImageMetaInformation, image: domain.Image): domain.ImageMetaInformation = {
-      domain.ImageMetaInformation(
-        None,
-        imageMeta.titles.map(asDomainTitle),
-        imageMeta.alttexts.map(asDomainAltText),
-        parse(image.fileName).toString,
-        image.size,
-        image.contentType,
-        toDomainCopyright(imageMeta.copyright),
-        imageMeta.tags.getOrElse(Seq.empty).map(toDomainTag),
-        imageMeta.captions.getOrElse(Seq.empty).map(toDomainCaption),
         authUser.id(),
         clock.now()
       )
