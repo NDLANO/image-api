@@ -53,13 +53,19 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   test("That asApiImageMetaInformationWithApplicationUrl returns links with applicationUrl") {
     val api = converterService.asApiImageMetaInformationWithApplicationUrl(DefaultImageMetaInformation)
     api.metaUrl should equal ("http://image-api/v1/images/1")
-    api.imageUrl should equal ("http://image-api/raw/123.png")
+    api.imageUrl should equal ("http://local.digitallibrary.io/image-api/raw/123.png")
+  }
+
+  test("That asApiImageMetaInformationWithApplicationUrl returns links with applicationUrl, also when url lacks leading slash") {
+    val api = converterService.asApiImageMetaInformationWithApplicationUrl(DefaultImageMetaInformation.copy(imageUrl = "123.png"))
+    api.metaUrl should equal ("http://image-api/v1/images/1")
+    api.imageUrl should equal ("http://local.digitallibrary.io/image-api/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrl returns links with domain urls") {
     val api = converterService.asApiImageMetaInformationWithDomainUrl(DefaultImageMetaInformation)
     api.metaUrl should equal (s"${ImageApiProperties.ImageApiUrlBase}1")
-    api.imageUrl should equal (s"${ImageApiProperties.RawImageUrlBase}/123.png")
+    api.imageUrl should equal ("http://local.digitallibrary.io/image-api/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links with applicationUrl") {
@@ -67,15 +73,15 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
     val api = converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(DefaultImageMetaInformation, None)
     api.get.metaUrl should equal ("http://image-api/v2/images/1")
-    api.get.imageUrl should equal ("http://image-api/raw/123.png")
+    api.get.imageUrl should equal ("http://local.digitallibrary.io/image-api/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns links with domain urls") {
     setApplicationUrl()
 
     val api = converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, None)
-    api.get.metaUrl should equal ("http://proxy.gdl-local/image-api/v2/images/1")
-    api.get.imageUrl should equal ("http://proxy.gdl-local/image-api/raw/123.png")
+    api.get.metaUrl should equal ("http://local.digitallibrary.io/image-api/v2/images/1")
+    api.get.imageUrl should equal ("http://local.digitallibrary.io/image-api/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links even if language is not supported") {
@@ -83,14 +89,14 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     val api = converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(DefaultImageMetaInformation, Some("RandomLangauge"))
 
     api.get.metaUrl should equal ("http://image-api/v2/images/1")
-    api.get.imageUrl should equal ("http://image-api/raw/123.png")
+    api.get.imageUrl should equal ("http://local.digitallibrary.io/image-api/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns links even if language is not supported") {
     setApplicationUrl()
 
     val api = converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, Some("RandomLangauge"))
-    api.get.metaUrl should equal ("http://proxy.gdl-local/image-api/v2/images/1")
-    api.get.imageUrl should equal ("http://proxy.gdl-local/image-api/raw/123.png")
+    api.get.metaUrl should equal ("http://local.digitallibrary.io/image-api/v2/images/1")
+    api.get.imageUrl should equal ("http://local.digitallibrary.io/image-api/raw/123.png")
   }
 }

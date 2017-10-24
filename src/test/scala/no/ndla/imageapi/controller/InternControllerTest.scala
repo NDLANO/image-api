@@ -26,8 +26,8 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   addServlet(controller, "/*")
   val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
-  val DefaultApiImageMetaInformation = api.ImageMetaInformation("1", s"${ImageApiProperties.ImageApiUrlBase}1", List(), List(), s"${ImageApiProperties.RawImageUrlBase}/test.jpg", 0, "", api.Copyright(api.License("", "", None), "", List()), List(), List())
-  val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(Some(1), List(), List(), "test.jpg", 0, "", domain.Copyright(domain.License("", "", None), "", List()), List(), List(), "ndla124", updated)
+  val DefaultApiImageMetaInformation = api.ImageMetaInformation("1", s"${ImageApiProperties.ImageApiUrlBase}1", List(), List(), "http://local.digitallibrary.io/image-api/raw/test.jpg", 0, "", api.Copyright(api.License("", "", None), "", List()), List(), List())
+  val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(Some(1), List(), List(), "/test.jpg", 0, "", domain.Copyright(domain.License("", "", None), "", List()), List(), List(), "ndla124", updated)
 
   override def beforeEach = {
     reset(imageRepository, importService, indexService, indexBuilderService)
