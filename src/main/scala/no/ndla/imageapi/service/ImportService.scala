@@ -54,7 +54,7 @@ trait ImportService {
     private[service] def uploadRawImage(rawImgMeta: ImageMeta): Try[domain.Image] = {
       val image = domain.Image(parse(rawImgMeta.originalFile).toString, rawImgMeta.originalSize.toInt, rawImgMeta.originalMime)
 
-      if (imageStorage.objectExists(image.fileName) && imageStorage.objectSize(image.fileName) == image.size) {
+      if (imageStorage.objectExists(rawImgMeta.originalFile) && imageStorage.objectSize(rawImgMeta.originalFile) == rawImgMeta.originalSize.toInt) {
         Success(image)
       } else {
         val request = if (ImageImportSource == redDBSource) {
@@ -63,7 +63,7 @@ trait ImportService {
           Http(parse(cmHost + image.fileName).toString)
         }
 
-        val tryResUpload = imageStorage.uploadFromUrl(image, image.fileName, request)
+        val tryResUpload = imageStorage.uploadFromUrl(image, rawImgMeta.originalFile, request)
         tryResUpload match {
           case Failure(f) => Failure(new S3UploadException(s"Upload of image '${image.fileName}' to S3 failed.: ${f.getMessage}"))
           case Success(_) => Success(image)
