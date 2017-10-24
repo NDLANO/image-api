@@ -8,7 +8,7 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.model.S3UploadException
+import no.ndla.imageapi.model.{Language, S3UploadException}
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService}
@@ -63,7 +63,7 @@ trait InternController {
     get("/extern/:image_id") {
       val externalId = params("image_id")
       imageRepository.withExternalId(externalId) match {
-        case Some(image) => Ok(converterService.asApiImageMetaInformationWithDomainUrl(image))
+        case Some(image) => Ok(converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(image, Some(Language.DefaultLanguage))) //TODO: take in language variable here? Not just default language anyways
         case None => NotFound(Error(Error.NOT_FOUND, s"Image with external id $externalId not found"))
       }
     }
@@ -74,7 +74,7 @@ trait InternController {
 
       importService.importImage(imageId) match {
         case Success(imageMeta) => {
-          Ok(converterService.asApiImageMetaInformationWithDomainUrl(imageMeta))
+          Ok(converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(imageMeta, Some(Language.DefaultLanguage))) //TODO: take in language variable here? Not just default language anyways
         }
         case Failure(s: S3UploadException) => {
           val errMsg = s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${s.getMessage}\n"
