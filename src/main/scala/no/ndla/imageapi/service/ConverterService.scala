@@ -40,21 +40,21 @@ trait ConverterService {
     }
 
     def asApiImageMetaInformationWithApplicationUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      val rawPath = ApplicationUrl.get.replace("/v1/images/", "/raw")
-      asApiImageMetaInformation(domainImageMetaInformation, Some(ApplicationUrl.get), Some(rawPath))
+      asApiImageMetaInformation(domainImageMetaInformation, Some(ApplicationUrl.get))
     }
 
     def asApiImageMetaInformationWithDomainUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      asApiImageMetaInformation(domainImageMetaInformation, Some(ImageApiProperties.ImageApiUrlBase), Some(ImageApiProperties.RawImageUrlBase))
+      asApiImageMetaInformation(domainImageMetaInformation, Some(ImageApiProperties.ImageApiUrlBase))
     }
 
-    private def asApiImageMetaInformation(domainImageMetaInformation: domain.ImageMetaInformation, apiBaseUrl: Option[String] = None, rawImageBaseUrl: Option[String] = None): api.ImageMetaInformation = {
+    private def asApiImageMetaInformation(domainImageMetaInformation: domain.ImageMetaInformation, apiBaseUrl: Option[String] = None): api.ImageMetaInformation = {
+
       api.ImageMetaInformation(
         domainImageMetaInformation.id.get.toString,
         apiBaseUrl.getOrElse("") + domainImageMetaInformation.id.get,
         domainImageMetaInformation.titles.map(asApiImageTitle),
         domainImageMetaInformation.alttexts.map(asApiImageAltText),
-        ImageApiProperties.CloudFrontUrl + domainImageMetaInformation.imageUrl,
+        asApiUrl(domainImageMetaInformation.imageUrl),
         domainImageMetaInformation.size,
         domainImageMetaInformation.contentType,
         asApiCopyright(domainImageMetaInformation.copyright),
@@ -73,15 +73,14 @@ trait ConverterService {
     }
 
     def asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: Option[String]): Option[api.ImageMetaInformationSingleLanguage] = {
-      val rawPath = ApplicationUrl.get.replace("/v2/images/", "/raw")
-      asImageMetaInformationV2(domainImageMetaInformation, language, ApplicationUrl.get, Some(rawPath))
+      asImageMetaInformationV2(domainImageMetaInformation, language, ApplicationUrl.get)
     }
 
     def asApiImageMetaInformationWithDomainUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: Option[String]): Option[api.ImageMetaInformationSingleLanguage] = {
-      asImageMetaInformationV2(domainImageMetaInformation, language, ImageApiProperties.ImageApiUrlBase.replace("v1", "v2"), Some(ImageApiProperties.RawImageUrlBase))
+      asImageMetaInformationV2(domainImageMetaInformation, language, ImageApiProperties.ImageApiUrlBase.replace("v1", "v2"))
     }
 
-    private def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation, language: Option[String], baseUrl: String, rawBaseUrl: Option[String]): Option[api.ImageMetaInformationSingleLanguage] = {
+    private def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation, language: Option[String], baseUrl: String): Option[api.ImageMetaInformationSingleLanguage] = {
       val title = findByLanguageOrBestEffort(imageMeta.titles, language).map(asApiImageTitle).getOrElse(api.ImageTitle("", DefaultLanguage))
       val alttext = findByLanguageOrBestEffort(imageMeta.alttexts, language).map(asApiImageAltText).getOrElse(api.ImageAltText("", DefaultLanguage))
       val tags = findByLanguageOrBestEffort(imageMeta.tags, language).map(asApiImageTag).getOrElse(api.ImageTag(Seq(), DefaultLanguage))
@@ -92,7 +91,7 @@ trait ConverterService {
         baseUrl + imageMeta.id.get,
         title,
         alttext,
-        ImageApiProperties.CloudFrontUrl + imageMeta.imageUrl,
+        asApiUrl(imageMeta.imageUrl),
         imageMeta.size,
         imageMeta.contentType,
         asApiCopyright(imageMeta.copyright),
@@ -116,8 +115,8 @@ trait ConverterService {
       api.License(domainLicense.license, domainLicense.description, domainLicense.url)
     }
 
-    def asApiUrl(url: String, baseUrl: Option[String] = None): String = {
-      baseUrl.getOrElse("") + parse(url).toString
+    def asApiUrl(url: String): String = {
+      ImageApiProperties.CloudFrontUrl + url
     }
 
     def asDomainImageMetaInformation(imageMeta: api.NewImageMetaInformation, image: domain.Image): domain.ImageMetaInformation = {
