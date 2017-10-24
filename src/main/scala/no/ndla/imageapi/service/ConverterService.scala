@@ -116,7 +116,7 @@ trait ConverterService {
     }
 
     def asApiUrl(url: String): String = {
-      ImageApiProperties.CloudFrontUrl + url
+      ImageApiProperties.CloudFrontUrl + (if (url.startsWith("/")) url else "/" + url)
     }
 
     def asDomainImageMetaInformation(imageMeta: api.NewImageMetaInformation, image: domain.Image): domain.ImageMetaInformation = {
