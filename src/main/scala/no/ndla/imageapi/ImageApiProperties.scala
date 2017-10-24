@@ -69,7 +69,7 @@ object ImageApiProperties extends LazyLogging {
   val MigrationUser = prop("MIGRATION_USER")
   val MigrationPassword = prop("MIGRATION_PASSWORD")
 
-  val Domain = Domains.get(Environment)
+  lazy val Domain = Domains.get(Environment)
   val ImageApiUrlBase = Domain + ImageControllerPath + "/"
 
   lazy val secrets = readSecrets(SecretsFile) match {
@@ -93,10 +93,19 @@ object ImageApiProperties extends LazyLogging {
   }
 
   def getCloudFrontUrl(env: String): String = {
+    // TODO Replace explicit CloudFront URLs with sub-domains created in Route 53:
+    // Prod:        https://images.api.digitallibrary.io
+    // Other envs:  https://images.<env>.api.digitallibrary.io
     if (env.equals("prod")) {
-      "https://images.api.digitallibrary.io"
+      "TODO"
+    } else if (env.equals("staging")) {
+      "TODO"
+    } else if (env.equals("test")) {
+      "https://dc7deelsx2j7i.cloudfront.net"
+    } else if (env.equals("local")) {
+      Domain + RawControllerPath
     } else {
-      s"https://images.$env.api.digitallibrary.io"
+      throw new IllegalArgumentException(s"$env is not a valid env")
     }
   }
 }
