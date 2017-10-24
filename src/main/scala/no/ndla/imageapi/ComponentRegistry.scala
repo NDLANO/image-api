@@ -39,6 +39,7 @@ object ComponentRegistry
   with ImageControllerV2
   with RawController
   with InternController
+  with HealthController
   with ImageConverter
   with User
   with Role
@@ -71,6 +72,7 @@ object ComponentRegistry
   lazy val imageControllerV2 = new ImageControllerV2
   lazy val rawController = new RawController
   lazy val internController = new InternController
+  lazy val healthController = new HealthController
   lazy val resourcesApp = new ResourcesApp
   lazy val converterService = new ConverterService
   lazy val tagsService = new TagsService
