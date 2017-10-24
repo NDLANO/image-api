@@ -8,7 +8,7 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.model.{Language, S3UploadException}
+import no.ndla.imageapi.model.S3UploadException
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService}
