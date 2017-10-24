@@ -11,7 +11,7 @@ package no.ndla.imageapi
 
 import com.amazonaws.services.s3.AmazonS3
 import no.ndla.imageapi.auth.{Role, User}
-import no.ndla.imageapi.controller.{InternController, RawController}
+import no.ndla.imageapi.controller.{HealthController, InternController, RawController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository._
 import no.ndla.imageapi.service._
@@ -36,6 +36,7 @@ trait TestEnvironment
     with MigrationApiClient
     with NdlaClient
     with InternController
+    with HealthController
     with RawController
     with TagsService
     with ImageConverter
@@ -65,6 +66,7 @@ trait TestEnvironment
   val jestClient = mock[NdlaJestClient]
   val searchConverterService = mock[SearchConverterService]
   val imageConverter = mock[ImageConverter]
+  val healthController = mock[HealthController]
 
   val clock = mock[SystemClock]
   val authUser = mock[AuthUser]
