@@ -14,6 +14,7 @@ import no.ndla.imageapi.model.search.{LanguageValue, SearchableImage, Searchable
 import io.digitallibrary.network.ApplicationUrl
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import com.netaporter.uri.Uri.parse
+import no.ndla.imageapi.ImageApiProperties
 
 trait SearchConverterService {
   val searchConverterService: SearchConverterService
@@ -46,7 +47,7 @@ trait SearchConverterService {
         id = searchableImage.id.toString,
         title = title,
         altText = altText,
-        previewUrl = apiToRawRegex.replaceFirstIn(ApplicationUrl.get, "/raw") + searchableImage.previewUrl,
+        previewUrl = ImageApiProperties.CloudFrontUrl + searchableImage.previewUrl,
         metaUrl = ApplicationUrl.get + searchableImage.id,
         license = searchableImage.license)
     }

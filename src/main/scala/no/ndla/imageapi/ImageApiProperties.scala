@@ -50,6 +50,7 @@ object ImageApiProperties extends LazyLogging {
   val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
 
   val StorageName = s"$Environment.images.gdl"
+  val CloudFrontUrl = getCloudFrontUrl(Environment)
 
   val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "images")
   val SearchDocument = "image"
@@ -89,6 +90,14 @@ object ImageApiProperties extends LazyLogging {
           case Some(env) => env
           case None => default
         }
+    }
+  }
+
+  def getCloudFrontUrl(env: String): String = {
+    if (env.equals("prod")) {
+      "https://images.api.digitallibrary.io"
+    } else {
+      s"https://images.$env.api.digitallibrary.io"
     }
   }
 }
