@@ -27,7 +27,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   addServlet(controller, "/*")
   val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
-  val DefaultApiImageMetaInformation = api.ImageMetaInformationSingleLanguage(
+  val DefaultApiImageMetaInformation = api.ImageMetaInformationV2(
     "1",
     s"${ImageApiProperties.ImageApiUrlBase}1",
     ImageTitle("", "nb"),

@@ -10,7 +10,7 @@ package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.auth.Role
-import no.ndla.imageapi.model.api.{Error, ImageMetaInformationSingleLanguage, NewImageMetaInformationV2, SearchParams, SearchResult, ValidationError}
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, NewImageMetaInformationV2, SearchParams, SearchResult, ValidationError}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.SearchService
@@ -72,7 +72,7 @@ trait ImageControllerV2 {
         responseMessages(response400, response500))
 
     val getByImageId =
-      (apiOperation[ImageMetaInformationSingleLanguage]("findByImageId")
+      (apiOperation[ImageMetaInformationV2]("findByImageId")
         summary "Show image info"
         notes "Shows info of the image with submitted id."
         parameters(
@@ -85,7 +85,7 @@ trait ImageControllerV2 {
         responseMessages(response404, response500))
 
     val newImage =
-      (apiOperation[ImageMetaInformationSingleLanguage]("newImage")
+      (apiOperation[ImageMetaInformationV2]("newImage")
         summary "Upload a new image file with meta data"
         notes "Upload a new image file with meta data"
         consumes "multipart/form-data"
