@@ -10,7 +10,6 @@ package no.ndla.imageapi.service
 
 import com.netaporter.uri.Uri.parse
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, NdlaRedPassword, NdlaRedUsername, redDBSource}
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain.ImageMetaInformation
@@ -57,12 +56,7 @@ trait ImportService {
       if (imageStorage.objectExists(image.fileName) && imageStorage.objectSize(image.fileName) == image.size) {
         Success(image)
       } else {
-        val request = if (ImageImportSource == redDBSource) {
-          Http(parse(redHost + image.fileName).toString).auth(NdlaRedUsername, NdlaRedPassword)
-        } else {
-          Http(parse(cmHost + image.fileName).toString)
-        }
-
+        val request = Http(parse(cmHost + image.fileName).toString)
         val tryResUpload = imageStorage.uploadFromUrl(image, image.fileName, request)
         tryResUpload match {
           case Failure(f) => Failure(new S3UploadException(s"Upload of image '${image.fileName}' to S3 failed.: ${f.getMessage}"))
