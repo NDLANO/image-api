@@ -101,7 +101,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   addServlet(controller, "/")
 
   test("that url is fetched properly") {
-    val expectedUrl = "http://0.0.0.0/image-api/v2/images/1"
+    val expectedUrl = "http://0.0.0.0/image-api/raw/sx873733_1.jpg"
     val (url, totalCount) = controller.getImageUrl(imageSearchBody)
 
     url should equal(Some(expectedUrl))
@@ -136,7 +136,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
     val notFoundBody = s"""{
                           |	"code": "NOT FOUND",
                           |	"description": "Image with id 1131123 and language Some(nb) not found",
-                          |	"occuredAt": "2017-10-13 12:35:33.801"
+                          |	"occurredAt": "2017-10-13 12:35:33.801"
                           |}""".stripMargin
     when(httpResponseMock.code).thenReturn(200).thenReturn(404)
     when(httpResponseMock.body).thenReturn(noImageBody).thenReturn(notFoundBody)

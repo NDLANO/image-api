@@ -22,7 +22,7 @@ object ImageApiProperties extends LazyLogging {
 
   val RoleWithWriteAccess = "images:write"
 
-  val ApplicationPort = 80
+  val ApplicationPort = propOrElse("APPLICATION_PORT", "80").toInt
   val ContactEmail = "christergundersen@ndla.no"
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
