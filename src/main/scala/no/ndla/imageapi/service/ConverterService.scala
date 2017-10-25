@@ -90,25 +90,25 @@ trait ConverterService {
     def asDomainImageMetaInformationV2(imageMeta: api.NewImageMetaInformationV2, image: domain.Image): domain.ImageMetaInformation = {
       domain.ImageMetaInformation(
         None,
-        Seq(domain.ImageTitle(imageMeta.title, imageMeta.language)),
-        Seq(domain.ImageAltText(imageMeta.alttext, imageMeta.language)),
+        Seq(asDomainTitle(imageMeta.title, imageMeta.language)),
+        Seq(asDomainAltText(imageMeta.alttext, imageMeta.language)),
         parse(image.fileName).toString,
         image.size,
         image.contentType,
         toDomainCopyright(imageMeta.copyright),
-        if (imageMeta.tags.nonEmpty) Seq(toDomainTag(api.ImageTag(imageMeta.tags, imageMeta.language))) else Seq.empty,
+        if (imageMeta.tags.nonEmpty) Seq(toDomainTag(imageMeta.tags, imageMeta.language)) else Seq.empty,
         Seq(domain.ImageCaption(imageMeta.caption, imageMeta.language)),
         authUser.id(),
         clock.now()
       )
     }
 
-    def asDomainTitle(title: api.ImageTitle): domain.ImageTitle = {
-      domain.ImageTitle(title.title, title.language)
+    def asDomainTitle(title: String, language: String): domain.ImageTitle = {
+      domain.ImageTitle(title, language)
     }
 
-    def asDomainAltText(alt: api.ImageAltText): domain.ImageAltText = {
-      domain.ImageAltText(alt.alttext, alt.language)
+    def asDomainAltText(alt: String, language: String): domain.ImageAltText = {
+      domain.ImageAltText(alt, language)
     }
 
     def toDomainCopyright(copyright: api.Copyright): domain.Copyright = {
@@ -123,12 +123,12 @@ trait ConverterService {
       domain.Author(author.`type`, author.name)
     }
 
-    def toDomainTag(tag: api.ImageTag): domain.ImageTag = {
-      domain.ImageTag(tag.tags, tag.language)
+    def toDomainTag(tags: Seq[String], language: String): domain.ImageTag = {
+      domain.ImageTag(tags, language)
     }
 
-    def toDomainCaption(caption: api.ImageCaption): domain.ImageCaption = {
-      domain.ImageCaption(caption.caption, caption.language)
+    def toDomainCaption(caption: String, language: String): domain.ImageCaption = {
+      domain.ImageCaption(caption, language)
     }
 
     def getSupportedLanguages(domainImageMetaInformation: domain.ImageMetaInformation): Seq[String] = {
