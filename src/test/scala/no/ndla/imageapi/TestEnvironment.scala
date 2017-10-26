@@ -11,7 +11,7 @@ package no.ndla.imageapi
 
 import com.amazonaws.services.s3.AmazonS3
 import no.ndla.imageapi.auth.{Role, User}
-import no.ndla.imageapi.controller.{HealthController, InternController, RawController}
+import no.ndla.imageapi.controller.{HealthController, ImageControllerV2, InternController, RawController}
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository._
 import no.ndla.imageapi.service._
@@ -36,6 +36,7 @@ trait TestEnvironment
     with MigrationApiClient
     with NdlaClient
     with InternController
+    with ImageControllerV2
     with HealthController
     with RawController
     with TagsService
@@ -60,6 +61,7 @@ trait TestEnvironment
   val migrationApiClient = mock[MigrationApiClient]
   val rawController = mock[RawController]
   val internController = mock[InternController]
+  val imageControllerV2= mock[ImageControllerV2]
   val converterService = mock[ConverterService]
   val validationService = mock[ValidationService]
   val tagsService = mock[TagsService]
