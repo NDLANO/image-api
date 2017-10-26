@@ -10,19 +10,17 @@ package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.auth.Role
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, NewImageMetaInformationV2, SearchParams, SearchResult, ValidationError}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
-import no.ndla.imageapi.model.api.{Error, ImageMetaInformation, ImageMetaInformationSingleLanguage, NewImageMetaInformation, NewImageMetaInformationV2, SearchParams, SearchResult, ValidationError}
-import no.ndla.imageapi.model.Language.{AllLanguages, DefaultLanguage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.SearchService
 import no.ndla.imageapi.service.{ConverterService, WriteService}
-import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 trait ImageControllerV2 {
   this: ImageRepository with SearchService with ConverterService with WriteService with Role =>
@@ -36,7 +34,7 @@ trait ImageControllerV2 {
     // Additional models used in error responses
     registerModel[ValidationError]()
     registerModel[Error]()
-    registerModel[NewImageMetaInformation]()
+    registerModel[NewImageMetaInformationV2]()
 
     val response403 = ResponseMessage(403, "Access Denied", Some("Error"))
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
@@ -74,7 +72,7 @@ trait ImageControllerV2 {
         responseMessages(response400, response500))
 
     val getByImageId =
-      (apiOperation[ImageMetaInformationSingleLanguage]("findByImageId")
+      (apiOperation[ImageMetaInformationV2]("findByImageId")
         summary "Show image info"
         notes "Shows info of the image with submitted id."
         parameters(
@@ -87,14 +85,14 @@ trait ImageControllerV2 {
         responseMessages(response404, response500))
 
     val newImage =
-      (apiOperation[ImageMetaInformation]("newImage")
+      (apiOperation[ImageMetaInformationV2]("newImage")
         summary "Upload a new image file with meta data"
         notes "Upload a new image file with meta data"
         consumes "multipart/form-data"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        formParam[String]("metadata").description("The metadata for the image file to submit. See NewImageMetaInformation."),
+        formParam[String]("metadata").description("The metadata for the image file to submit. See NewImageMetaInformationV2."),
         Parameter(name = "file", `type` = ValueDataType("file"), description = Some("The image file(s) to upload"), paramType = ParamType.Form)
       )
         authorizations "oauth2"
@@ -157,7 +155,7 @@ trait ImageControllerV2 {
 
       val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
 
-      writeService.storeNewImage(converterService.asNewImageMetaInformation(newImage), file)
+      writeService.storeNewImage(newImage, file)
         .map(img => converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(img, Some(newImage.language))) match {
         case Success(imageMeta) => imageMeta
         case Failure(e) => errorHandler(e)

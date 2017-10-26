@@ -31,7 +31,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     when(request.getServerPort).thenReturn(80)
     when(request.getScheme).thenReturn("http")
     when(request.getServerName).thenReturn("image-api")
-    when(request.getServletPath).thenReturn("/v1/images")
+    when(request.getServletPath).thenReturn("/v2/images")
 
     ApplicationUrl.set(request)
   }
@@ -50,16 +50,10 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     ApplicationUrl.clear()
   }
 
-  test("That asApiImageMetaInformationWithApplicationUrl returns links with applicationUrl") {
-    val api = converterService.asApiImageMetaInformationWithApplicationUrl(DefaultImageMetaInformation)
-    api.metaUrl should equal ("http://image-api/v1/images/1")
-    api.imageUrl should equal ("http://image-api/raw/123.png")
-  }
-
   test("That asApiImageMetaInformationWithDomainUrl returns links with domain urls") {
-    val api = converterService.asApiImageMetaInformationWithDomainUrl(DefaultImageMetaInformation)
-    api.metaUrl should equal (s"${ImageApiProperties.ImageApiUrlBase}1")
-    api.imageUrl should equal (s"${ImageApiProperties.RawImageUrlBase}/123.png")
+    val api = converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(DefaultImageMetaInformation, Some("nb"))
+    api.get.metaUrl should equal (s"${ImageApiProperties.ImageApiUrlBase}1")
+    api.get.imageUrl should equal (s"${ImageApiProperties.RawImageUrlBase}/123.png")
   }
 
   test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links with applicationUrl") {

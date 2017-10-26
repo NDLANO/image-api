@@ -36,7 +36,6 @@ object ComponentRegistry
   with ConverterService
   with ValidationService
   with TagsService
-  with ImageController
   with ImageControllerV2
   with RawController
   with InternController
@@ -70,7 +69,6 @@ object ComponentRegistry
   lazy val importService = new ImportService
   lazy val ndlaClient = new NdlaClient
   lazy val migrationApiClient = new MigrationApiClient
-  lazy val imageController = new ImageController
   lazy val imageControllerV2 = new ImageControllerV2
   lazy val rawController = new RawController
   lazy val internController = new InternController

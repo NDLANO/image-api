@@ -8,6 +8,7 @@
 
 package no.ndla.imageapi.controller
 
+import no.ndla.imageapi.model.api.{ImageAltText, ImageCaption, ImageTag, ImageTitle}
 import no.ndla.imageapi.model.{S3UploadException, api, domain}
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -26,7 +27,19 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   addServlet(controller, "/*")
   val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
-  val DefaultApiImageMetaInformation = api.ImageMetaInformation("1", s"${ImageApiProperties.ImageApiUrlBase}1", List(), List(), s"${ImageApiProperties.RawImageUrlBase}/test.jpg", 0, "", api.Copyright(api.License("", "", None), "", List()), List(), List())
+  val DefaultApiImageMetaInformation = api.ImageMetaInformationV2(
+    "1",
+    s"${ImageApiProperties.ImageApiUrlBase}1",
+    ImageTitle("", "nb"),
+    ImageAltText("", "nb"),
+    s"${ImageApiProperties.RawImageUrlBase}/test.jpg",
+    0,
+    "",
+    api.Copyright(api.License("", "", None), "", List()),
+    ImageTag(Seq.empty, "nb"),
+    ImageCaption("","nb"),
+    Seq())
+
   val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(Some(1), List(), List(), "test.jpg", 0, "", domain.Copyright(domain.License("", "", None), "", List()), List(), List(), "ndla124", updated)
 
   override def beforeEach = {

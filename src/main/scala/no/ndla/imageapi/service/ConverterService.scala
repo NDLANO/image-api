@@ -39,55 +39,22 @@ trait ConverterService {
       api.ImageAltText(domainImageAltText.alttext, domainImageAltText.language)
     }
 
-    def asApiImageMetaInformationWithApplicationUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      val rawPath = ApplicationUrl.get.replace("/v1/images/", "/raw")
-      asApiImageMetaInformation(domainImageMetaInformation, Some(ApplicationUrl.get), Some(rawPath))
-    }
-
-    def asApiImageMetaInformationWithDomainUrl(domainImageMetaInformation: domain.ImageMetaInformation): api.ImageMetaInformation = {
-      asApiImageMetaInformation(domainImageMetaInformation, Some(ImageApiProperties.ImageApiUrlBase), Some(ImageApiProperties.RawImageUrlBase))
-    }
-
-    private def asApiImageMetaInformation(domainImageMetaInformation: domain.ImageMetaInformation, apiBaseUrl: Option[String] = None, rawImageBaseUrl: Option[String] = None): api.ImageMetaInformation = {
-      api.ImageMetaInformation(
-        domainImageMetaInformation.id.get.toString,
-        apiBaseUrl.getOrElse("") + domainImageMetaInformation.id.get,
-        domainImageMetaInformation.titles.map(asApiImageTitle),
-        domainImageMetaInformation.alttexts.map(asApiImageAltText),
-        asApiUrl(domainImageMetaInformation.imageUrl, rawImageBaseUrl),
-        domainImageMetaInformation.size,
-        domainImageMetaInformation.contentType,
-        asApiCopyright(domainImageMetaInformation.copyright),
-        domainImageMetaInformation.tags.map(asApiImageTag),
-        domainImageMetaInformation.captions.map(asApiCaption))
-    }
-
-    def asNewImageMetaInformation(newImageMeta: api.NewImageMetaInformationV2): api.NewImageMetaInformation = {
-      api.NewImageMetaInformation(
-        Seq(api.ImageTitle(newImageMeta.title, newImageMeta.language)),
-        Seq(api.ImageAltText(newImageMeta.alttext, newImageMeta.language)),
-        newImageMeta.copyright,
-        if (newImageMeta.tags.nonEmpty) Some(Seq(api.ImageTag(newImageMeta.tags, newImageMeta.language))) else None,
-        Some(Seq(api.ImageCaption(newImageMeta.caption, newImageMeta.language)))
-      )
-    }
-
-    def asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: Option[String]): Option[api.ImageMetaInformationSingleLanguage] = {
+    def asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: Option[String]): Option[api.ImageMetaInformationV2] = {
       val rawPath = ApplicationUrl.get.replace("/v2/images/", "/raw")
       asImageMetaInformationV2(domainImageMetaInformation, language, ApplicationUrl.get, Some(rawPath))
     }
 
-    def asApiImageMetaInformationWithDomainUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: Option[String]): Option[api.ImageMetaInformationSingleLanguage] = {
-      asImageMetaInformationV2(domainImageMetaInformation, language, ImageApiProperties.ImageApiUrlBase.replace("v1", "v2"), Some(ImageApiProperties.RawImageUrlBase))
+    def asApiImageMetaInformationWithDomainUrlAndSingleLanguage(domainImageMetaInformation: domain.ImageMetaInformation, language: Option[String]): Option[api.ImageMetaInformationV2] = {
+      asImageMetaInformationV2(domainImageMetaInformation, language, ImageApiProperties.ImageApiUrlBase, Some(ImageApiProperties.RawImageUrlBase))
     }
 
-    private def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation, language: Option[String], baseUrl: String, rawBaseUrl: Option[String]): Option[api.ImageMetaInformationSingleLanguage] = {
+    private def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation, language: Option[String], baseUrl: String, rawBaseUrl: Option[String]): Option[api.ImageMetaInformationV2] = {
       val title = findByLanguageOrBestEffort(imageMeta.titles, language).map(asApiImageTitle).getOrElse(api.ImageTitle("", DefaultLanguage))
       val alttext = findByLanguageOrBestEffort(imageMeta.alttexts, language).map(asApiImageAltText).getOrElse(api.ImageAltText("", DefaultLanguage))
       val tags = findByLanguageOrBestEffort(imageMeta.tags, language).map(asApiImageTag).getOrElse(api.ImageTag(Seq(), DefaultLanguage))
       val caption = findByLanguageOrBestEffort(imageMeta.captions, language).map(asApiCaption).getOrElse(api.ImageCaption("", DefaultLanguage))
 
-      Some(api.ImageMetaInformationSingleLanguage(
+      Some(api.ImageMetaInformationV2(
         imageMeta.id.get.toString,
         baseUrl + imageMeta.id.get,
         title,
@@ -120,28 +87,28 @@ trait ConverterService {
       baseUrl.getOrElse("") + parse(url).toString
     }
 
-    def asDomainImageMetaInformation(imageMeta: api.NewImageMetaInformation, image: domain.Image): domain.ImageMetaInformation = {
+    def asDomainImageMetaInformationV2(imageMeta: api.NewImageMetaInformationV2, image: domain.Image): domain.ImageMetaInformation = {
       domain.ImageMetaInformation(
         None,
-        imageMeta.titles.map(asDomainTitle),
-        imageMeta.alttexts.map(asDomainAltText),
+        Seq(asDomainTitle(imageMeta.title, imageMeta.language)),
+        Seq(asDomainAltText(imageMeta.alttext, imageMeta.language)),
         parse(image.fileName).toString,
         image.size,
         image.contentType,
         toDomainCopyright(imageMeta.copyright),
-        imageMeta.tags.getOrElse(Seq.empty).map(toDomainTag),
-        imageMeta.captions.getOrElse(Seq.empty).map(toDomainCaption),
+        if (imageMeta.tags.nonEmpty) Seq(toDomainTag(imageMeta.tags, imageMeta.language)) else Seq.empty,
+        Seq(domain.ImageCaption(imageMeta.caption, imageMeta.language)),
         authUser.id(),
         clock.now()
       )
     }
 
-    def asDomainTitle(title: api.ImageTitle): domain.ImageTitle = {
-      domain.ImageTitle(title.title, title.language)
+    def asDomainTitle(title: String, language: String): domain.ImageTitle = {
+      domain.ImageTitle(title, language)
     }
 
-    def asDomainAltText(alt: api.ImageAltText): domain.ImageAltText = {
-      domain.ImageAltText(alt.alttext, alt.language)
+    def asDomainAltText(alt: String, language: String): domain.ImageAltText = {
+      domain.ImageAltText(alt, language)
     }
 
     def toDomainCopyright(copyright: api.Copyright): domain.Copyright = {
@@ -156,12 +123,12 @@ trait ConverterService {
       domain.Author(author.`type`, author.name)
     }
 
-    def toDomainTag(tag: api.ImageTag): domain.ImageTag = {
-      domain.ImageTag(tag.tags, tag.language)
+    def toDomainTag(tags: Seq[String], language: String): domain.ImageTag = {
+      domain.ImageTag(tags, language)
     }
 
-    def toDomainCaption(caption: api.ImageCaption): domain.ImageCaption = {
-      domain.ImageCaption(caption.caption, caption.language)
+    def toDomainCaption(caption: String, language: String): domain.ImageCaption = {
+      domain.ImageCaption(caption, language)
     }
 
     def getSupportedLanguages(domainImageMetaInformation: domain.ImageMetaInformation): Seq[String] = {

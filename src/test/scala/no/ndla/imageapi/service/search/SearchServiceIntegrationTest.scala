@@ -55,7 +55,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
     val servletRequest = mock[HttpServletRequest]
     when(servletRequest.getHeader(any[String])).thenReturn("http")
     when(servletRequest.getServerName).thenReturn("localhost")
-    when(servletRequest.getServletPath).thenReturn("/image-api/v1/images/")
+    when(servletRequest.getServletPath).thenReturn("/image-api/v2/images/")
     ApplicationUrl.set(servletRequest)
 
     blockUntil(() => searchService.countDocuments() == 4)

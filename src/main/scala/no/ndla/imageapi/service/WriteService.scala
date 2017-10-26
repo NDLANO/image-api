@@ -5,7 +5,7 @@ import java.lang.Math.max
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.model.ValidationException
-import no.ndla.imageapi.model.api.{NewImageMetaInformation}
+import no.ndla.imageapi.model.api.NewImageMetaInformationV2
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexService
@@ -18,16 +18,16 @@ trait WriteService {
   val writeService: WriteService
 
   class WriteService extends LazyLogging {
-    def storeNewImage(newImage: NewImageMetaInformation, file: FileItem): Try[ImageMetaInformation] = {
+    def storeNewImage(newImage: NewImageMetaInformationV2, file: FileItem): Try[ImageMetaInformation] = {
       validationService.validateImageFile(file) match {
         case Some(validationMessage) => return Failure(new ValidationException(errors=Seq(validationMessage)))
         case _ =>
       }
 
       val domainImage = uploadImage(file).map(uploadedImage =>
-          converterService.asDomainImageMetaInformation(newImage, uploadedImage)) match {
-        case Failure(e) => return Failure(e)
-        case Success(image) => image
+          converterService.asDomainImageMetaInformationV2(newImage, uploadedImage)) match {
+            case Failure(e) => return Failure(e)
+            case Success(image) => image
       }
 
       validationService.validate(domainImage) match {
