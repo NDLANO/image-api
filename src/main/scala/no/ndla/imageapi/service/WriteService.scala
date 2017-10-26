@@ -22,14 +22,14 @@ trait WriteService {
   class WriteService extends LazyLogging {
     def storeNewImage(newImage: NewImageMetaInformationV2, file: FileItem): Try[ImageMetaInformation] = {
       validationService.validateImageFile(file) match {
-        case Some(validationMessage) => return Failure(new ValidationException(errors=Seq(validationMessage)))
+        case Some(validationMessage) => return Failure(new ValidationException(errors = Seq(validationMessage)))
         case _ =>
       }
 
       val domainImage = uploadImage(file).map(uploadedImage =>
-          converterService.asDomainImageMetaInformationV2(newImage, uploadedImage)) match {
-            case Failure(e) => return Failure(e)
-            case Success(image) => image
+        converterService.asDomainImageMetaInformationV2(newImage, uploadedImage)) match {
+        case Failure(e) => return Failure(e)
+        case Success(image) => image
       }
 
       validationService.validate(domainImage) match {
@@ -116,4 +116,5 @@ trait WriteService {
     }
 
   }
+
 }

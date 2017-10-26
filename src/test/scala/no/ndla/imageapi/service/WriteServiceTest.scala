@@ -167,6 +167,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     val existing = Seq(domain.ImageTitle("Tittel 1", "nb"), domain.ImageTitle("Tittel 2", "nn"), domain.ImageTitle("Tittel 3", "unknown"))
     writeService.mergeLanguageFields(existing, Seq()) should equal(existing)
   }
+
   test("That mergeLanguageFields updated the english title only when specified") {
     val tittel1 = domain.ImageTitle("Tittel 1", "nb")
     val tittel2 = domain.ImageTitle("Tittel 2", "nn")
