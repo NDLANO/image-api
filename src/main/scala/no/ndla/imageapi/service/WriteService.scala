@@ -81,14 +81,13 @@ trait WriteService {
         case Some(existing) => Success(mergeImages(existing, image))
       }
 
-      val updatedImage = updateImage.flatMap(validationService.validate)
+      updateImage.flatMap(validationService.validate)
         .map(imageMeta => imageRepository.update(imageMeta, imageId))
         .flatMap(indexService.indexDocument)
         .map(updatedImage => converterService.asApiImageMetaInformationWithDomainUrlV2(updatedImage, Some(image.language)).get)
-      updatedImage
     }
 
-    private def mergeLanguageFields[A <: LanguageField[String]](existing: Seq[A], updated: Seq[A]): Seq[A] = {
+    private[service] def mergeLanguageFields[A <: LanguageField[String]](existing: Seq[A], updated: Seq[A]): Seq[A] = {
       val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
       (toKeep ++ updated).filterNot(_.value.isEmpty)
     }

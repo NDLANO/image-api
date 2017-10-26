@@ -177,7 +177,10 @@ trait ImageControllerV2 {
     patch("/:image_id", operation(updateImage)) {
       authRole.assertHasRole(RoleWithWriteAccess)
       val imageId = long("image_id")
-      writeService.updateImage(imageId, extract[UpdateImageMetaInformation](request.body))
+      writeService.updateImage(imageId, extract[UpdateImageMetaInformation](request.body)) match {
+        case Success(imageMeta) => imageMeta
+        case Failure(e) => errorHandler(e)
+      }
     }
 
   }

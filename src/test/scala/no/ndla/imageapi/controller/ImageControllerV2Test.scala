@@ -10,8 +10,8 @@ package no.ndla.imageapi.controller
 
 import java.util.Date
 
-import no.ndla.imageapi.model.{Language, api, domain}
-import no.ndla.imageapi.model.api.{NewImageMetaInformationV2, SearchResult}
+import no.ndla.imageapi.model.{ImageNotFoundException, Language, api, domain}
+import no.ndla.imageapi.model.api.{NewImageMetaInformationV2, SearchResult, UpdateImageMetaInformation}
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
@@ -24,7 +24,7 @@ import org.scalatra.servlet.FileItem
 import org.scalatra.test.Uploadable
 import org.scalatra.test.scalatest.ScalatraSuite
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnvironment {
 
@@ -76,9 +76,18 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       |}
     """.stripMargin
 
+  val sampleUpdateImageMeta =
+    """
+      |{
+      | "title":"TestTittel",
+      | "alttext":"TestAltText",
+      | "language":"nb"
+      |}
+    """.stripMargin
+
   test("That POST / returns 400 if parameters are missing") {
     post("/", Map("metadata" -> sampleNewImageMetaV2), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
-      status should equal (400)
+      status should equal(400)
     }
   }
 
@@ -94,32 +103,34 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     when(writeService.storeNewImage(any[NewImageMetaInformationV2], any[FileItem])).thenReturn(Success(sampleImageMeta))
 
     post("/", Map("metadata" -> sampleNewImageMetaV2), Map("file" -> sampleUploadFile), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
-      status should equal (200)
+      status should equal(200)
     }
   }
 
   test("That POST / returns 403 if no auth-header") {
     post("/", Map("metadata" -> sampleNewImageMetaV2)) {
-      status should equal (403)
+      status should equal(403)
     }
   }
 
   test("That POST / returns 403 if auth header does not have expected role") {
     post("/", Map("metadata" -> sampleNewImageMetaV2), headers = Map("Authorization" -> authHeaderWithWrongRole)) {
-      status should equal (403)
+      status should equal(403)
     }
   }
 
   test("That POST / returns 403 if auth header does not have any roles") {
     post("/", Map("metadata" -> sampleNewImageMetaV2), headers = Map("Authorization" -> authHeaderWithoutAnyRoles)) {
-      status should equal (403)
+      status should equal(403)
     }
   }
 
   test("That POST / returns 413 if file is too big") {
-    val content: Array[Byte] = Array.fill(MaxImageFileSizeBytes + 1) { 0 }
+    val content: Array[Byte] = Array.fill(MaxImageFileSizeBytes + 1) {
+      0
+    }
     post("/", Map("metadata" -> sampleNewImageMetaV2), Map("file" -> sampleUploadFile.copy(content)), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
-      status should equal (413)
+      status should equal(413)
     }
   }
 
@@ -127,15 +138,15 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     when(writeService.storeNewImage(any[NewImageMetaInformationV2], any[FileItem])).thenReturn(Failure(mock[RuntimeException]))
 
     post("/", Map("metadata" -> sampleNewImageMetaV2), Map("file" -> sampleUploadFile), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
-      status should equal (500)
+      status should equal(500)
     }
   }
 
   test("That GET / returns body and 200") {
     val expectedBody = """{"totalCount":0,"page":1,"pageSize":10,"results":[]}"""
-    when(searchService.all(Option(any[Int]), Option(any[String]), Option(any[String]), Option(any[Int]), Option(any[Int]))).thenReturn(SearchResult(0,1,10,List()))
+    when(searchService.all(Option(any[Int]), Option(any[String]), Option(any[String]), Option(any[Int]), Option(any[Int]))).thenReturn(SearchResult(0, 1, 10, List()))
     get("/") {
-      status should equal (200)
+      status should equal(200)
       body should equal(expectedBody)
     }
   }
@@ -143,9 +154,9 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   test("That GET / returns body and 200 when image exists") {
     val imageSummary = api.ImageMetaSummary("4", api.ImageTitle("Tittel", "nb"), api.ImageAltText("AltText", "nb"), "http://image-api.ndla-local/image-api/raw/4", "http://image-api.ndla-local/image-api/v2/images/4", "by-sa")
     val expectedBody = """{"totalCount":1,"page":1,"pageSize":10,"results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa"}]}"""
-    when(searchService.all(Option(any[Int]), Option(any[String]), Option(any[String]), Option(any[Int]), Option(any[Int]))).thenReturn(SearchResult(1,1,10,List(imageSummary)))
+    when(searchService.all(Option(any[Int]), Option(any[String]), Option(any[String]), Option(any[Int]), Option(any[Int]))).thenReturn(SearchResult(1, 1, 10, List(imageSummary)))
     get("/") {
-      status should equal (200)
+      status should equal(200)
       body should equal(expectedBody)
     }
   }
@@ -153,7 +164,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   test("That GET /<id> returns 404 when image does not exist") {
     when(imageRepository.withId(123)).thenReturn(None)
     get("/123") {
-      status should equal (404)
+      status should equal(404)
     }
   }
 
@@ -165,9 +176,29 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     when(imageRepository.withId(1)).thenReturn(Option(TestData.elg))
 
     get("/1") {
-      status should equal (200)
+      status should equal(200)
       val result = JsonParser.parse(body).extract[api.ImageMetaInformationV2]
       result.copy(imageUrl = testUrl, metaUrl = testUrl) should equal(expectedObject)
+    }
+  }
+
+  test("That PATCH /<id> returns 200 when everything went well") {
+    when(writeService.updateImage(any[Long], any[UpdateImageMetaInformation])).thenReturn(Try(TestData.apiElg))
+    patch("/1", sampleUpdateImageMeta, headers = Map("Authorization" -> authHeaderWithWriteRole)) {
+      status should equal(200)
+    }
+  }
+
+  test("That PATCH /<id> returns 404 when image doesn't exist") {
+    when(writeService.updateImage(any[Long], any[UpdateImageMetaInformation])).thenThrow(new ImageNotFoundException(s"Image with id 1 found"))
+    patch("/1", sampleUpdateImageMeta, headers = Map("Authorization" -> authHeaderWithWriteRole)) {
+      status should equal(404)
+    }
+  }
+
+  test("That PATCH /<id> returns 403 when not permitted") {
+    patch("/1", Map("metadata" -> sampleUpdateImageMeta), headers = Map("Authorization" -> authHeaderWithoutAnyRoles)) {
+      status should equal(403)
     }
   }
 
