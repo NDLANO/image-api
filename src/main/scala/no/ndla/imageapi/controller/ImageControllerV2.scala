@@ -97,6 +97,18 @@ trait ImageControllerV2 {
       )
         authorizations "oauth2"
         responseMessages(response400, response403, response413, response500))
+    val updateImage =
+      (apiOperation[ImageMetaInformationV2]("newImage")
+        summary "Update existing image with meta data"
+        notes "Updates an existing image with meta data."
+        consumes "form-data"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
+        formParam[String]("metadata").description("The metadata for the image file to submit. See UpdateImageMetaInformation."),
+      )
+        authorizations "oauth2"
+        responseMessages(response400, response403, response500))
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
@@ -162,7 +174,7 @@ trait ImageControllerV2 {
       }
     }
 
-    put("/:image_id") { //TODO: Add operation/doc
+    patch("/:image_id", operation(updateImage)) {
       authRole.assertHasRole(RoleWithWriteAccess)
       val imageId = long("image_id")
       writeService.updateImage(imageId, extract[UpdateImageMetaInformation](request.body))
