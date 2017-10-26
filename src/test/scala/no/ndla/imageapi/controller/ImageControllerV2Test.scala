@@ -15,6 +15,8 @@ import no.ndla.imageapi.model.api.{NewImageMetaInformationV2, SearchResult}
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
+import org.json4s.DefaultFormats
+import org.json4s.native.JsonParser
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
@@ -154,4 +156,19 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       status should equal (404)
     }
   }
+
+  test("That GET /<id> returns body and 200 when image exists") {
+    implicit val formats = DefaultFormats
+    val testUrl = "http://test.test/1"
+    val expectedBody = s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"by-nc-sa","description":"Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic","url":"https://creativecommons.org/licenses/by-nc-sa/2.0/"},"origin":"http://www.scanpix.no","authors":[{"type":"Fotograf","name":"Test Testesen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
+    val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
+    when(imageRepository.withId(1)).thenReturn(Option(TestData.elg))
+
+    get("/1") {
+      status should equal (200)
+      val result = JsonParser.parse(body).extract[api.ImageMetaInformationV2]
+      result.copy(imageUrl = testUrl, metaUrl = testUrl) should equal(expectedObject)
+    }
+  }
+
 }
