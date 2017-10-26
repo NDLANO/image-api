@@ -63,11 +63,16 @@ trait WriteService {
         titles = mergeLanguageFields(existing.titles, toMerge.title.toSeq.map(t => converterService.asDomainTitle(t, toMerge.language))),
         alttexts = mergeLanguageFields(existing.alttexts, toMerge.alttext.toSeq.map(a => converterService.asDomainAltText(a, toMerge.language))),
         copyright = toMerge.copyright.map(c => converterService.toDomainCopyright(c)).getOrElse(existing.copyright),
-        tags = mergeLanguageFields(existing.tags, toMerge.tags.toSeq.map(t => converterService.toDomainTag(t, toMerge.language))),
+        tags = mergeTags(existing.tags, toMerge.tags.toSeq.map(t => converterService.toDomainTag(t, toMerge.language))),
         captions = mergeLanguageFields(existing.captions, toMerge.caption.toSeq.map(c => converterService.toDomainCaption(c, toMerge.language))),
         updated = now,
         updatedBy = userId
       )
+    }
+
+    private def mergeTags(existing: Seq[domain.ImageTag], updated: Seq[domain.ImageTag]): Seq[domain.ImageTag] = {
+      val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
+      (toKeep ++ updated).filterNot(_.tags.isEmpty)
     }
 
     def updateImage(imageId: Long, image: UpdateImageMetaInformation): Try[ImageMetaInformationV2] = {
