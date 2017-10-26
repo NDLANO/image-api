@@ -10,7 +10,7 @@ package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.auth.Role
-import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, NewImageMetaInformationV2, SearchParams, SearchResult, ValidationError}
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, NewImageMetaInformationV2, SearchParams, SearchResult, UpdateImageMetaInformation, ValidationError}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.SearchService
@@ -140,7 +140,7 @@ trait ImageControllerV2 {
     get("/:image_id", operation(getByImageId)) {
       val imageId = long("image_id")
       val language = paramOrNone("language")
-      imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(image, language)) match {
+      imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlV2(image, language)) match {
         case Some(image) => image
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId and language $language not found"))
       }
@@ -156,10 +156,16 @@ trait ImageControllerV2 {
       val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
 
       writeService.storeNewImage(newImage, file)
-        .map(img => converterService.asApiImageMetaInformationWithApplicationUrlAndSingleLanguage(img, Some(newImage.language))) match {
+        .map(img => converterService.asApiImageMetaInformationWithApplicationUrlV2(img, Some(newImage.language))) match {
         case Success(imageMeta) => imageMeta
         case Failure(e) => errorHandler(e)
       }
+    }
+
+    put("/:image_id") { //TODO: Add operation/doc
+      authRole.assertHasRole(RoleWithWriteAccess)
+      val imageId = long("image_id")
+      writeService.updateImage(imageId, extract[UpdateImageMetaInformation](request.body))
     }
 
   }
