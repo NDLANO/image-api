@@ -55,7 +55,7 @@ trait WriteService {
       }
     }
 
-    private def mergeImages(existing: ImageMetaInformation, toMerge: UpdateImageMetaInformation): domain.ImageMetaInformation = {
+    private[service] def mergeImages(existing: ImageMetaInformation, toMerge: UpdateImageMetaInformation): domain.ImageMetaInformation = {
       val now = clock.now()
       val userId = authUser.id()
 
