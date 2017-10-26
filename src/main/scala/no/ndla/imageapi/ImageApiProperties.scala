@@ -43,7 +43,8 @@ object ImageApiProperties extends LazyLogging {
   val MetaMaxConnections = 20
   val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
   val (redDBSource, cmDBSource) = ("red", "cm")
-  val ImageImportSource = if (Environment == "prod") cmDBSource else redDBSource
+  val CMSourceEnvironments = "prod" :: "brukertest" :: Nil
+  val ImageImportSource = if (CMSourceEnvironments.contains(Environment)) cmDBSource else redDBSource
 
   val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
   val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
