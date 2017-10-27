@@ -96,16 +96,12 @@ object ImageApiProperties extends LazyLogging {
     // TODO Replace explicit CloudFront URLs with sub-domains created in Route 53:
     // Prod:        https://images.api.digitallibrary.io
     // Other envs:  https://images.<env>.api.digitallibrary.io
-    if (env.equals("prod")) {
-      "TODO"
-    } else if (env.equals("staging")) {
-      "TODO"
-    } else if (env.equals("test")) {
-      "https://dc7deelsx2j7i.cloudfront.net"
-    } else if (env.equals("local")) {
-      Domain + RawControllerPath
-    } else {
-      throw new IllegalArgumentException(s"$env is not a valid env")
+    env match {
+      case "prod" => "TODO"
+      case "staging" => "TODO"
+      case "test" => "https://dc7deelsx2j7i.cloudfront.net"
+      case "local" => Domain + RawControllerPath
+      case _ => throw new IllegalArgumentException(s"$env is not a valid env")
     }
   }
 }
