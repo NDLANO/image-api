@@ -105,7 +105,7 @@ trait ImageControllerV2 {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        formParam[String]("metadata").description("The metadata for the image file to submit. See UpdateImageMetaInformation."),
+        bodyParam[UpdateImageMetaInformation]("metadata").description("The metadata for the image file to submit. See UpdateImageMetaInformation."),
       )
         authorizations "oauth2"
         responseMessages(response400, response403, response500))
