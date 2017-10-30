@@ -9,12 +9,14 @@
 package no.ndla.imageapi.service
 
 import java.io.InputStream
+import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
 import no.ndla.imageapi.model.ValidationException
 import no.ndla.imageapi.model.api._
+import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
-import no.ndla.imageapi.{TestEnvironment, UnitSuite}
+import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Matchers._
@@ -161,4 +163,131 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     domain.updated should equal(updated())
   }
 
+  test("That mergeLanguageFields returns original list when updated is empty") {
+    val existing = Seq(domain.ImageTitle("Tittel 1", "nb"), domain.ImageTitle("Tittel 2", "nn"), domain.ImageTitle("Tittel 3", "unknown"))
+    writeService.mergeLanguageFields(existing, Seq()) should equal(existing)
+  }
+
+  test("That mergeLanguageFields updated the english title only when specified") {
+    val tittel1 = domain.ImageTitle("Tittel 1", "nb")
+    val tittel2 = domain.ImageTitle("Tittel 2", "nn")
+    val tittel3 = domain.ImageTitle("Tittel 3", "en")
+    val oppdatertTittel3 = domain.ImageTitle("Title 3 in english", "en")
+
+    val existing = Seq(tittel1, tittel2, tittel3)
+    val updated = Seq(oppdatertTittel3)
+
+    writeService.mergeLanguageFields(existing, updated) should equal(Seq(tittel1, tittel2, oppdatertTittel3))
+  }
+
+  test("That mergeLanguageFields removes a title that is empty") {
+    val tittel1 = domain.ImageTitle("Tittel 1", "nb")
+    val tittel2 = domain.ImageTitle("Tittel 2", "nn")
+    val tittel3 = domain.ImageTitle("Tittel 3", "en")
+    val tittelToRemove = domain.ImageTitle("", "nn")
+
+    val existing = Seq(tittel1, tittel2, tittel3)
+    val updated = Seq(tittelToRemove)
+
+    writeService.mergeLanguageFields(existing, updated) should equal(Seq(tittel1, tittel3))
+  }
+
+  test("That mergeLanguageFields updates the title with unknown language specified") {
+    val tittel1 = domain.ImageTitle("Tittel 1", "nb")
+    val tittel2 = domain.ImageTitle("Tittel 2", "unknown")
+    val tittel3 = domain.ImageTitle("Tittel 3", "en")
+    val oppdatertTittel2 = domain.ImageTitle("Tittel 2 er oppdatert", "unknown")
+
+    val existing = Seq(tittel1, tittel2, tittel3)
+    val updated = Seq(oppdatertTittel2)
+
+    writeService.mergeLanguageFields(existing, updated) should equal(Seq(tittel1, tittel3, oppdatertTittel2))
+  }
+
+  test("That mergeLanguageFields also updates the correct content") {
+    val desc1 = domain.ImageAltText("Beskrivelse 1", "nb")
+    val desc2 = domain.ImageAltText("Beskrivelse 2", "unknown")
+    val desc3 = domain.ImageAltText("Beskrivelse 3", "en")
+    val oppdatertDesc2 = domain.ImageAltText("Beskrivelse 2 er oppdatert", "unknown")
+
+    val existing = Seq(desc1, desc2, desc3)
+    val updated = Seq(oppdatertDesc2)
+
+    writeService.mergeLanguageFields(existing, updated) should equal(Seq(desc1, desc3, oppdatertDesc2))
+  }
+
+  test("mergeImages should append a new language if language not already exists") {
+    val date = new Date()
+    val user = "ndla124"
+    val existing = TestData.elg.copy(updated = date, updatedBy=user )
+    val toUpdate = UpdateImageMetaInformation(
+      "en",
+      Some("Title"),
+      Some("AltText"),
+      None,
+      None,
+      None
+    )
+
+    val expectedResult = existing.copy(
+      titles = List(existing.titles.head, domain.ImageTitle("Title", "en")),
+      alttexts = List(existing.alttexts.head, domain.ImageAltText("AltText", "en"))
+    )
+
+    when(authUser.id()).thenReturn(user)
+    when(clock.now()).thenReturn(date)
+
+    writeService.mergeImages(existing, toUpdate) should equal(expectedResult)
+  }
+
+  test("mergeImages overwrite a languages if specified language already exist in cover") {
+    val date = new Date()
+    val user = "ndla124"
+    val existing = TestData.elg.copy(updated = date, updatedBy=user )
+    val toUpdate = UpdateImageMetaInformation(
+      "nb",
+      Some("Title"),
+      Some("AltText"),
+      None,
+      None,
+      None
+    )
+
+    val expectedResult = existing.copy(
+      titles = List(domain.ImageTitle("Title", "nb")),
+      alttexts = List(domain.ImageAltText("AltText", "nb"))
+    )
+
+    when(authUser.id()).thenReturn(user)
+    when(clock.now()).thenReturn(date)
+
+    writeService.mergeImages(existing, toUpdate) should equal(expectedResult)
+  }
+
+  test("mergeImages updates optional values if specified") {
+    val date = new Date()
+    val user = "ndla124"
+    val existing = TestData.elg.copy(updated = date, updatedBy=user )
+    val toUpdate = UpdateImageMetaInformation(
+      "nb",
+      Some("Title"),
+      Some("AltText"),
+      Some(Copyright(License("testLic", "License for testing", None), "test", List(Author("Opphavsmann", "Testerud")))),
+      Some(List("a", "b", "c")),
+      Some("Caption")
+    )
+
+    val expectedResult = existing.copy(
+      titles = List(domain.ImageTitle("Title", "nb")),
+      alttexts = List(domain.ImageAltText("AltText", "nb")),
+      copyright = domain.Copyright(domain.License("testLic", "License for testing", None), "test", List(domain.Author("Opphavsmann", "Testerud"))),
+      tags = List(domain.ImageTag(List("a", "b", "c"), "nb")),
+      captions = List(domain.ImageCaption("Caption", "nb"))
+    )
+
+    when(authUser.id()).thenReturn(user)
+    when(clock.now()).thenReturn(date)
+
+    writeService.mergeImages(existing, toUpdate) should equal(expectedResult)
+  }
 }

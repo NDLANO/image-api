@@ -64,7 +64,7 @@ trait InternController {
       val externalId = params("image_id")
       val language = paramOrNone("language")
       imageRepository.withExternalId(externalId) match {
-        case Some(image) => Ok(converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(image, language))
+        case Some(image) => Ok(converterService.asApiImageMetaInformationWithDomainUrlV2(image, language))
         case None => NotFound(Error(Error.NOT_FOUND, s"Image with external id $externalId not found"))
       }
     }
@@ -75,7 +75,7 @@ trait InternController {
 
       importService.importImage(imageId) match {
         case Success(imageMeta) => {
-          Ok(converterService.asApiImageMetaInformationWithDomainUrlAndSingleLanguage(imageMeta, None))
+          Ok(converterService.asApiImageMetaInformationWithDomainUrlV2(imageMeta, None))
         }
         case Failure(s: S3UploadException) => {
           val errMsg = s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${s.getMessage}\n"

@@ -13,6 +13,7 @@ import java.io.InputStream
 import javax.imageio.ImageIO
 
 import no.ndla.imageapi.integration.{ImageAuthor, ImageMeta, MainImageImport}
+import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.domain._
 import org.joda.time.{DateTime, DateTimeZone}
 
@@ -30,6 +31,11 @@ object TestData {
     "Elg.jpg", 2865539, "image/jpeg",
     Copyright(ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen"))),
     List(ImageTag(List("rovdyr", "elg"), "nb")), List(ImageCaption("Elg i busk", "nb")), "ndla124", updated())
+
+  val apiElg = api.ImageMetaInformationV2("1", "Elg.jpg", api.ImageTitle("Elg i busk", "nb"), api.ImageAltText("Elg i busk", "nb"),
+    "Elg.jpg", 2865539, "image/jpeg", api.Copyright(api.License("by-nc-sa", "Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic",
+    Some("https://creativecommons.org/licenses/by-nc-sa/2.0/")), "http://www.scanpix.no", List(api.Author("Fotograf", "Test Testesen"))),
+    api.ImageTag(List("rovdyr", "elg"), "nb"), api.ImageCaption("Elg i busk", "nb"), List("nb"))
 
   val bjorn = ImageMetaInformation(Some(2), List(ImageTitle("Bjørn i busk", "nb")),List(ImageAltText("Elg i busk", "nb")),
     "Bjørn.jpg", 141134, "image/jpeg",
