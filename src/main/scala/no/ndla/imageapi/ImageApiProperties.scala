@@ -97,7 +97,7 @@ object ImageApiProperties extends LazyLogging {
     // Prod:        https://images.api.digitallibrary.io
     // Other envs:  https://images.<env>.api.digitallibrary.io
     env match {
-      case "prod" => "TODO"
+      case "prod" => "https://d35wua6xxeuogb.cloudfront.net"
       case "staging" => "https://d3v2l44ntovq7z.cloudfront.net"
       case "test" => "https://dc7deelsx2j7i.cloudfront.net"
       case "local" => Domain + RawControllerPath
