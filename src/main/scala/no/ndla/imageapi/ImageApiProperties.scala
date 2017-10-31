@@ -98,7 +98,7 @@ object ImageApiProperties extends LazyLogging {
     // Other envs:  https://images.<env>.api.digitallibrary.io
     env match {
       case "prod" => "TODO"
-      case "staging" => "TODO"
+      case "staging" => "https://d3v2l44ntovq7z.cloudfront.net"
       case "test" => "https://dc7deelsx2j7i.cloudfront.net"
       case "local" => Domain + RawControllerPath
       case _ => throw new IllegalArgumentException(s"$env is not a valid env")
