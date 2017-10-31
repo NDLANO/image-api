@@ -15,6 +15,7 @@ import org.json4s.native.JsonParser
 import org.scalatra._
 
 import scalaj.http.{Http, HttpResponse}
+import com.netaporter.uri.dsl._
 
 trait HealthController {
   val healthController: HealthController
@@ -28,9 +29,12 @@ trait HealthController {
     }
 
     def getImageUrl(body: String): (Option[String], Long) = {
+      def localInstanceImageUrl(cloudfrontUrl: String) = {
+        s"http://0.0.0.0${ImageApiProperties.ImageApiBasePath}/raw/${cloudfrontUrl.pathParts.last.part}"
+      }
       val json = JsonParser.parse(body).extract[SearchResult]
       json.results.headOption match {
-        case Some(result: ImageMetaSummary) => (Some(result.previewUrl), json.totalCount)
+        case Some(result: ImageMetaSummary) => (Some(localInstanceImageUrl(result.previewUrl)), json.totalCount)
         case _ => (None,json.totalCount)
       }
     }
