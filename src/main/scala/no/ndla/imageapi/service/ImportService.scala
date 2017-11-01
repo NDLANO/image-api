@@ -79,9 +79,10 @@ trait ImportService {
           logger.warn(s"Could not import tags for node ${imageMeta.mainImage.nid}", e)
           List.empty
       }
-      val titles = translationTitles :+ domain.ImageTitle(imageMeta.mainImage.title, imageMeta.mainImage.language)
-      val altTexts = translationAltTexts ++ imageMeta.mainImage.alttext.map(alt => Seq(domain.ImageAltText(alt, imageMeta.mainImage.language))).getOrElse(Seq.empty)
-      val captions = translationCaptions ++ imageMeta.mainImage.caption.map(cap => Seq(domain.ImageCaption(cap, imageMeta.mainImage.language))).getOrElse(Seq.empty)
+      val mainLanguage = Option(imageMeta.mainImage.language).filter(_.nonEmpty).getOrElse(Language.UnknownLanguage)
+      val titles = translationTitles :+ domain.ImageTitle(imageMeta.mainImage.title, mainLanguage)
+      val altTexts = translationAltTexts ++ imageMeta.mainImage.alttext.map(alt => Seq(domain.ImageAltText(alt, mainLanguage))).getOrElse(Seq.empty)
+      val captions = translationCaptions ++ imageMeta.mainImage.caption.map(cap => Seq(domain.ImageCaption(cap, mainLanguage))).getOrElse(Seq.empty)
 
       domain.ImageMetaInformation(
         None,
