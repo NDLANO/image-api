@@ -72,13 +72,17 @@ trait ImportService {
     }
 
     private def toDomainImage(imageMeta: MainImageImport, rawImage: domain.Image): domain.ImageMetaInformation = {
-      val (titles, altTexts, captions) = toDomainTranslationFields(imageMeta)
+      val (translationTitles, translationAltTexts, translationCaptions) = toDomainTranslationFields(imageMeta)
       val tags = tagsService.forImage(imageMeta.mainImage.nid) match {
         case Success(t) => t
         case Failure(e) =>
           logger.warn(s"Could not import tags for node ${imageMeta.mainImage.nid}", e)
           List.empty
       }
+      val mainLanguage = Option(imageMeta.mainImage.language).filter(_.nonEmpty).getOrElse(Language.UnknownLanguage)
+      val titles = translationTitles :+ domain.ImageTitle(imageMeta.mainImage.title, mainLanguage)
+      val altTexts = translationAltTexts ++ imageMeta.mainImage.alttext.map(alt => Seq(domain.ImageAltText(alt, mainLanguage))).getOrElse(Seq.empty)
+      val captions = translationCaptions ++ imageMeta.mainImage.caption.map(cap => Seq(domain.ImageCaption(cap, mainLanguage))).getOrElse(Seq.empty)
 
       domain.ImageMetaInformation(
         None,
@@ -114,7 +118,7 @@ trait ImportService {
 
     private def toDomainTranslationFields(imageMeta: MainImageImport): (Seq[domain.ImageTitle], Seq[domain.ImageAltText], Seq[domain.ImageCaption]) = {
       imageMeta.translations.map(tr => {
-        val language = get6391CodeFor6392Code(tr.language).getOrElse(Language.UnknownLanguage)
+        val language = tr.language
         (domain.ImageTitle(tr.title, language),
           domain.ImageAltText(tr.alttext.getOrElse(""), language),
           domain.ImageCaption(tr.caption.getOrElse(""), language))
