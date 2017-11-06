@@ -28,7 +28,26 @@ trait ConverterService {
     }
 
     def asApiCopyright(domainCopyright: domain.Copyright): api.Copyright = {
-      api.Copyright(asApiLicense(domainCopyright.license), domainCopyright.origin, domainCopyright.authors.map(asApiAuthor), domainCopyright.validFrom, domainCopyright.validTo)
+      val (creators,processors,rightsholders) = mapAuthors(domainCopyright.authors)
+      api.Copyright(
+        asApiLicense(domainCopyright.license),
+        domainCopyright.origin,
+        creators,
+        processors,
+        rightsholders,
+        domainCopyright.validFrom,
+        domainCopyright.validTo)
+    }
+
+    private def mapAuthors(domainAuthors: Seq[domain.Author]): (Seq[api.Author], Seq[api.Author], Seq[api.Author]) = {
+      val apiAuthors = domainAuthors.map(asApiAuthor)
+      val creators = apiAuthors.filter(a => ImageApiProperties.creatorTypes.contains(a.`type`.toLowerCase))
+      val processors = apiAuthors.filter(a => ImageApiProperties.processorTypes.contains(a.`type`.toLowerCase))
+      val rightsholders = apiAuthors.filter(a => ImageApiProperties.rightsholderTypes.contains(a.`type`.toLowerCase))
+      val unusedAuthors = apiAuthors.filterNot(a => creators.contains(a) || processors.contains(a) || rightsholders.contains(a))
+      if (unusedAuthors.nonEmpty)
+        logger.warn(s"Some author(s) were not shown because type was not found: $unusedAuthors")
+      (creators, processors, rightsholders)
     }
 
     def asApiImage(domainImage: domain.Image, baseUrl: Option[String] = None): api.Image = {
@@ -112,7 +131,8 @@ trait ConverterService {
     }
 
     def toDomainCopyright(copyright: api.Copyright): domain.Copyright = {
-      domain.Copyright(toDomainLicense(copyright.license), copyright.origin, copyright.authors.map(toDomainAuthor), copyright.validFrom, copyright.validTo)
+      val authors = copyright.creators ++ copyright.processors ++ copyright.rightsholders
+      domain.Copyright(toDomainLicense(copyright.license), copyright.origin, authors.map(toDomainAuthor), copyright.validFrom, copyright.validTo)
     }
 
     def toDomainLicense(license: api.License): domain.License = {
