@@ -113,7 +113,7 @@ trait ImportService {
 
       domain.Copyright(domainLicense,
         imageMeta.origin.getOrElse(""),
-        imageMeta.authors.map(a => domain.Author(a.typeAuthor, a.name)))
+        imageMeta.authors.map(a => domain.Author(a.typeAuthor, a.name)), None, None)
     }
 
     private def toDomainTranslationFields(imageMeta: MainImageImport): (Seq[domain.ImageTitle], Seq[domain.ImageAltText], Seq[domain.ImageCaption]) = {

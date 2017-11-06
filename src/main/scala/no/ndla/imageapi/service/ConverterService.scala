@@ -28,7 +28,7 @@ trait ConverterService {
     }
 
     def asApiCopyright(domainCopyright: domain.Copyright): api.Copyright = {
-      api.Copyright(asApiLicense(domainCopyright.license), domainCopyright.origin, domainCopyright.authors.map(asApiAuthor))
+      api.Copyright(asApiLicense(domainCopyright.license), domainCopyright.origin, domainCopyright.authors.map(asApiAuthor), domainCopyright.validFrom, domainCopyright.validTo)
     }
 
     def asApiImage(domainImage: domain.Image, baseUrl: Option[String] = None): api.Image = {
@@ -112,7 +112,7 @@ trait ConverterService {
     }
 
     def toDomainCopyright(copyright: api.Copyright): domain.Copyright = {
-      domain.Copyright(toDomainLicense(copyright.license), copyright.origin, copyright.authors.map(toDomainAuthor))
+      domain.Copyright(toDomainLicense(copyright.license), copyright.origin, copyright.authors.map(toDomainAuthor), copyright.validFrom, copyright.validTo)
     }
 
     def toDomainLicense(license: api.License): domain.License = {
