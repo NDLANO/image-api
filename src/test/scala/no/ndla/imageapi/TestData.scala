@@ -29,7 +29,7 @@ object TestData {
 
   val elg = ImageMetaInformation(Some(1), List(ImageTitle("Elg i busk", "nb")),List(ImageAltText("Elg i busk", "nb")),
     "Elg.jpg", 2865539, "image/jpeg",
-    Copyright(ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen")), List(), List(), None, None),
+    Copyright(ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen")), List(Author("Redaksjonelt", "Kåre Knegg")), List(Author("Leverandør", "Leverans Leveransensen")), None, None),
     List(ImageTag(List("rovdyr", "elg"), "nb")), List(ImageCaption("Elg i busk", "nb")), "ndla124", updated())
 
   val apiElg = api.ImageMetaInformationV2("1", "Elg.jpg", api.ImageTitle("Elg i busk", "nb"), api.ImageAltText("Elg i busk", "nb"),
