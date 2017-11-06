@@ -10,6 +10,7 @@ package no.ndla.imageapi.service
 
 import com.netaporter.uri.Uri.parse
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, NdlaRedPassword, NdlaRedUsername, redDBSource}
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
@@ -111,9 +112,17 @@ trait ImportService {
         .map(license => domain.License(license.license, license.description, license.url))
         .getOrElse(domain.License(imageMeta.license.get, imageMeta.license.get, None))
 
+      val creators = imageMeta.authors.filter(a => ImageApiProperties.creatorTypes.contains(a.typeAuthor.toLowerCase))
+      val processors = imageMeta.authors.filter(a => ImageApiProperties.processorTypes.contains(a.typeAuthor.toLowerCase)).filterNot(a => a.typeAuthor.toLowerCase == "redaksjonelt")
+      val rightsholders = imageMeta.authors.filter(a => ImageApiProperties.rightsholderTypes.contains(a.typeAuthor.toLowerCase))
+
       domain.Copyright(domainLicense,
         imageMeta.origin.getOrElse(""),
-        imageMeta.authors.map(a => domain.Author(a.typeAuthor, a.name)), None, None)
+        creators.map(a => domain.Author(a.typeAuthor, a.name)),
+        processors.map(a => domain.Author(a.typeAuthor, a.name)),
+        rightsholders.map(a => domain.Author(a.typeAuthor, a.name)),
+        None,
+        None)
     }
 
     private def toDomainTranslationFields(imageMeta: MainImageImport): (Seq[domain.ImageTitle], Seq[domain.ImageAltText], Seq[domain.ImageCaption]) = {

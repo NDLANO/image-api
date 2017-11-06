@@ -93,7 +93,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   test("That POST / returns 200 if everything went well") {
     val titles: Seq[ImageTitle] = Seq()
     val alttexts: Seq[ImageAltText] = Seq()
-    val copyright = Copyright(License("by", "description", None), "", Seq.empty, None, None)
+    val copyright = Copyright(License("by", "description", None), "", Seq.empty, Seq.empty, Seq.empty, None, None)
     val tags: Seq[ImageTag] = Seq()
     val captions: Seq[ImageCaption] = Seq()
 

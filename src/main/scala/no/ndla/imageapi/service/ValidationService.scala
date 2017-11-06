@@ -62,7 +62,9 @@ trait ValidationService {
 
     def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
       validateLicense(copyright.license).toList ++
-      copyright.authors.flatMap(validateAuthor) ++
+      copyright.creators.flatMap(validateAuthor) ++
+      copyright.processors.flatMap(validateAuthor) ++
+      copyright.rightsholders.flatMap(validateAuthor) ++
       containsNoHtml("copyright.origin", copyright.origin)
     }
 
