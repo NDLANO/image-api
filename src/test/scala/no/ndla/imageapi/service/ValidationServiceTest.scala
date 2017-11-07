@@ -86,7 +86,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns a validation error if author contains html") {
-    val imageMeta = sampleImageMeta.copy(copyright=Copyright(License("by", "", None), "", Seq(Author("author", "<h1>Drumpf</h1>")), Seq.empty, Seq.empty, None, None))
+    val imageMeta = sampleImageMeta.copy(copyright=Copyright(License("by", "", None), "", Seq(Author("originator", "<h1>Drumpf</h1>")), Seq.empty, Seq.empty, None, None))
     val result = validationService.validate(imageMeta)
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be (1)
@@ -95,8 +95,17 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("validate returns success if copyright is valid") {
-    val imageMeta = sampleImageMeta.copy(copyright=Copyright(License("by", "", None), "ntb", Seq(Author("author", "Drumpf")), Seq.empty, Seq.empty, None, None))
+    val imageMeta = sampleImageMeta.copy(copyright=Copyright(License("by", "", None), "ntb", Seq(Author("originator", "Drumpf")), Seq.empty, Seq.empty, None, None))
     validationService.validate(imageMeta).isSuccess should be (true)
+  }
+
+  test("validate returns error if authortype is invalid") {
+    val imageMeta = sampleImageMeta.copy(copyright=Copyright(License("by", "", None), "ntb", Seq(Author("invalidType", "Drumpf")), Seq.empty, Seq.empty, None, None))
+    val result = validationService.validate(imageMeta)
+    val exception = result.failed.get.asInstanceOf[ValidationException]
+    exception.errors.length should be (1)
+
+    exception.errors.head.message.contains("Author is of illegal type. Must be one of originator, photographer, artist, editorial, writer, scriptwriter, reader, translator, director, illustrator, cowriter, composer, processor, facilitator, editorial, linguistic, idea, compiler, correction, rightsholder, publisher, distributor, supplier") should be (true)
   }
 
   test("validate returns a validation error if tags contain html") {
