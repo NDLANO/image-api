@@ -10,8 +10,7 @@ package no.ndla.imageapi.service
 
 import com.netaporter.uri.Uri.parse
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, NdlaRedPassword, NdlaRedUsername, redDBSource}
+import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, NdlaRedPassword, NdlaRedUsername, redDBSource, oldCreatorTypes, oldProcessorTypes, oldRightsholderTypes, creatorTypes, processorTypes, rightsholderTypes}
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain.ImageMetaInformation
@@ -107,21 +106,34 @@ trait ImportService {
       }
     }
 
+    private def toNewAuthorType(author: ImageAuthor): domain.Author = {
+      val creatorMap = (oldCreatorTypes zip creatorTypes).toMap.withDefaultValue(None)
+      val processorMap = (oldProcessorTypes zip processorTypes).toMap.withDefaultValue(None)
+      val rightsholderMap = (oldRightsholderTypes zip rightsholderTypes).toMap.withDefaultValue(None)
+
+      (creatorMap(author.typeAuthor.toLowerCase), processorMap(author.typeAuthor.toLowerCase), rightsholderMap(author.typeAuthor.toLowerCase)) match {
+        case (t: String, None, None) => domain.Author(t.capitalize, author.name)
+        case (None, t: String, None) => domain.Author(t.capitalize, author.name)
+        case (None, None, t: String) => domain.Author(t.capitalize, author.name)
+        case (_, _, _) => domain.Author(author.typeAuthor, author.name)
+      }
+    }
+
     private def toDomainCopyright(imageMeta: MainImageImport): domain.Copyright = {
       val domainLicense = imageMeta.license.flatMap(getLicense)
         .map(license => domain.License(license.license, license.description, license.url))
         .getOrElse(domain.License(imageMeta.license.get, imageMeta.license.get, None))
 
-      val creators = imageMeta.authors.filter(a => ImageApiProperties.creatorTypes.contains(a.typeAuthor.toLowerCase))
-      // Filters out processor authors with type `redaksjonelt` during import process since `redaksjonelt` exists both in processors and creators.
-      val processors = imageMeta.authors.filter(a => ImageApiProperties.processorTypes.contains(a.typeAuthor.toLowerCase)).filterNot(a => a.typeAuthor.toLowerCase == "redaksjonelt")
-      val rightsholders = imageMeta.authors.filter(a => ImageApiProperties.rightsholderTypes.contains(a.typeAuthor.toLowerCase))
+      val creators = imageMeta.authors.filter(a => oldCreatorTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
+      // Filters out processor authors with old type `redaksjonelt` during import process since `redaksjonelt` exists both in processors and creators.
+      val processors = imageMeta.authors.filter(a => oldProcessorTypes.contains(a.typeAuthor.toLowerCase)).filterNot(a => a.typeAuthor.toLowerCase == "redaksjonelt").map(toNewAuthorType)
+      val rightsholders = imageMeta.authors.filter(a => oldRightsholderTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
 
       domain.Copyright(domainLicense,
         imageMeta.origin.getOrElse(""),
-        creators.map(a => domain.Author(a.typeAuthor, a.name)),
-        processors.map(a => domain.Author(a.typeAuthor, a.name)),
-        rightsholders.map(a => domain.Author(a.typeAuthor, a.name)),
+        creators,
+        processors,
+        rightsholders,
         None,
         None)
     }

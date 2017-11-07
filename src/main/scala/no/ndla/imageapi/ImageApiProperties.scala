@@ -34,9 +34,14 @@ object ImageApiProperties extends LazyLogging {
 
   val DefaultLanguage = "nb"
 
-  val creatorTypes = List("opphavsmann", "fotograf", "kunstner", "redaksjonelt", "forfatter", "manusforfatter", "innleser", "oversetter", "regissør", "illustratør", "medforfatter", "komponist")
-  val processorTypes = List("bearbeider", "tilrettelegger", "redaksjonelt", "språklig", "ide", "sammenstiller", "korrektur")
-  val rightsholderTypes = List("rettighetshaver", "forlag", "distributør", "leverandør")
+  val oldCreatorTypes = List("opphavsmann", "fotograf", "kunstner", "redaksjonelt", "forfatter", "manusforfatter", "innleser", "oversetter", "regissør", "illustratør", "medforfatter", "komponist")
+  val creatorTypes = List("originator", "photographer", "artist", "editorial", "writer", "scriptwriter", "reader", "translator", "director", "illustrator", "cowriter", "composer")
+
+  val oldProcessorTypes = List("bearbeider", "tilrettelegger", "redaksjonelt", "språklig", "ide", "sammenstiller", "korrektur")
+  val processorTypes = List("processor", "facilitator", "editorial", "linguistic", "idea", "compiler", "correction")
+
+  val oldRightsholderTypes = List("rettighetshaver", "forlag", "distributør", "leverandør")
+  val rightsholderTypes = List("rightsholder", "publisher", "distributor", "supplier")
 
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
