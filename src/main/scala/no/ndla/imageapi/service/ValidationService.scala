@@ -1,5 +1,6 @@
 package no.ndla.imageapi.service
 
+import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
@@ -77,7 +78,16 @@ trait ValidationService {
 
     def validateAuthor(author: Author): Seq[ValidationMessage] = {
       containsNoHtml("author.type", author.`type`).toList ++
-        containsNoHtml("author.name", author.name).toList
+        containsNoHtml("author.name", author.name).toList ++
+        validateAuthorType("author.type", author.`type`).toList
+    }
+
+    def validateAuthorType(fieldPath: String, `type`: String): Option[ValidationMessage] = {
+      if(ImageApiProperties.allowedAuthors.contains(`type`.toLowerCase)) {
+        None
+      } else {
+        Some(ValidationMessage(fieldPath, s"Author is of illegal type. Must be one of ${ImageApiProperties.allowedAuthors.mkString(", ")}"))
+      }
     }
 
     def validateTags(tags: Seq[ImageTag]): Seq[ValidationMessage] = {
