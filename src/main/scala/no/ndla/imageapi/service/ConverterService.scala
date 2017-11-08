@@ -64,6 +64,7 @@ trait ConverterService {
 
     def asNewImageMetaInformation(newImageMeta: api.NewImageMetaInformationV2): api.NewImageMetaInformation = {
       api.NewImageMetaInformation(
+        None,
         Seq(api.ImageTitle(newImageMeta.title, newImageMeta.language)),
         Seq(api.ImageAltText(newImageMeta.alttext, newImageMeta.language)),
         newImageMeta.copyright,

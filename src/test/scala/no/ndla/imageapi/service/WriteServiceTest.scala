@@ -31,6 +31,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   val fileMock1: FileItem = mock[FileItem]
 
   val newImageMeta = NewImageMetaInformation(
+    None,
     Seq(ImageTitle("title", "en")),
     Seq(ImageAltText("alt text", "en")),
     Copyright(License("by", "", None), "", Seq.empty),
@@ -55,7 +56,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     ApplicationUrl.set(applicationUrl)
 
     reset(imageRepository, indexService, imageStorage)
-    when(imageRepository.insert(any[ImageMetaInformation])(any[DBSession])).thenReturn(domainImageMeta.copy(id=Some(1)))
+    when(imageRepository.insert(any[ImageMetaInformation], any[Option[String]])(any[DBSession])).thenReturn(domainImageMeta.copy(id=Some(1)))
   }
 
   test("randomFileName should return a random filename with a given length and extension") {
@@ -99,7 +100,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long])).thenReturn(Success(newFileName))
 
     writeService.storeNewImage(newImageMeta, fileMock1).isFailure should be (true)
-    verify(imageRepository, times(0)).insert(any[ImageMetaInformation])(any[DBSession])
+    verify(imageRepository, times(0)).insert(any[ImageMetaInformation], any[Option[String]])(any[DBSession])
     verify(indexService, times(0)).indexDocument(any[ImageMetaInformation])
     verify(imageStorage, times(1)).deleteObject(any[String])
   }
@@ -108,7 +109,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(validationService.validateImageFile(any[FileItem])).thenReturn(None)
     when(validationService.validate(any[ImageMetaInformation])).thenReturn(Success(domainImageMeta))
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long])).thenReturn(Success(newFileName))
-    when(imageRepository.insert(any[ImageMetaInformation])(any[DBSession])).thenThrow(new RuntimeException)
+    when(imageRepository.insert(any[ImageMetaInformation], any[Option[String]])(any[DBSession])).thenThrow(new RuntimeException)
 
     writeService.storeNewImage(newImageMeta, fileMock1).isFailure should be (true)
     verify(indexService, times(0)).indexDocument(any[ImageMetaInformation])
@@ -122,7 +123,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(indexService.indexDocument(any[ImageMetaInformation])).thenReturn(Failure(new RuntimeException))
 
     writeService.storeNewImage(newImageMeta, fileMock1).isFailure should be (true)
-    verify(imageRepository, times(1)).insert(any[ImageMetaInformation])(any[DBSession])
+    verify(imageRepository, times(1)).insert(any[ImageMetaInformation], any[Option[String]])(any[DBSession])
     verify(imageStorage, times(1)).deleteObject(any[String])
   }
 
@@ -137,7 +138,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     result.isSuccess should be (true)
     result should equal(Success(afterInsert))
 
-    verify(imageRepository, times(1)).insert(any[ImageMetaInformation])(any[DBSession])
+    verify(imageRepository, times(1)).insert(any[ImageMetaInformation], any[Option[String]])(any[DBSession])
     verify(indexService, times(1)).indexDocument(any[ImageMetaInformation])
   }
 

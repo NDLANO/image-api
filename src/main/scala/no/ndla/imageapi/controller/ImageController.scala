@@ -18,6 +18,7 @@ import no.ndla.imageapi.service.search.SearchService
 import no.ndla.imageapi.service.{ConverterService, WriteService}
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
+import org.postgresql.util.PSQLException
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
@@ -57,7 +58,7 @@ trait ImageController {
         queryParam[Option[String]]("license").description("Return only images with provided license."),
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
-        )
+      )
         authorizations "oauth2"
         responseMessages response500)
 
@@ -81,7 +82,7 @@ trait ImageController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
         pathParam[String]("image_id").description("Image_id of the image that needs to be fetched.")
-        )
+      )
         authorizations "oauth2"
         responseMessages(response404, response500))
 
@@ -96,8 +97,8 @@ trait ImageController {
         formParam[String]("metadata").description("The metadata for the image file to submit. See NewImageMetaInformation."),
         Parameter(name = "file", `type` = ValueDataType("file"), description = Some("The image file(s) to upload"), paramType = ParamType.Form)
       )
-      authorizations "oauth2"
-      responseMessages(response400, response403, response413, response500))
+        authorizations "oauth2"
+        responseMessages(response400, response403, response413, response500))
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
@@ -152,15 +153,20 @@ trait ImageController {
 
       val newImage = params.get("metadata")
         .map(extract[NewImageMetaInformation])
-        .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
+        .getOrElse(throw new ValidationException(errors = Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
 
-      val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
+      val file = fileParams.getOrElse("file", throw new ValidationException(errors = Seq(ValidationMessage("file", "The request must contain an image file"))))
 
       writeService.storeNewImage(newImage, file).map(converterService.asApiImageMetaInformationWithApplicationUrl) match {
         case Success(imageMeta) => imageMeta
-        case Failure(e) => errorHandler(e)
+        case Failure(e) => e match {
+          case _: PSQLException if e.getMessage.contains("duplicate key value violates unique constraint") =>
+              halt(status = 409, body = s"Image with external id '${newImage.externalId.getOrElse("")}' already exists.")
+          case _ => errorHandler(e)
+        }
       }
     }
 
   }
+
 }

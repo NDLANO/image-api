@@ -37,7 +37,7 @@ trait WriteService {
         case _ =>
       }
 
-      val imageMeta = Try(imageRepository.insert(domainImage)) match {
+      val imageMeta = Try(imageRepository.insert(domainImage, newImage.externalId)) match {
         case Success(meta) => meta
         case Failure(e) =>
           imageStorage.deleteObject(domainImage.imageUrl)

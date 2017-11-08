@@ -16,6 +16,7 @@ import no.ndla.imageapi.{ImageSwagger, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
 import org.mockito.Matchers._
 import org.mockito.Mockito._
+import org.postgresql.util.PSQLException
 import org.scalatra.servlet.FileItem
 import org.scalatra.test.Uploadable
 import org.scalatra.test.scalatest.ScalatraSuite
@@ -47,6 +48,7 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
   val sampleNewImageMeta =
     """
       |{
+      |    "externalId": "123abc",
       |    "titles": [{
       |        "title": "Utedo med hjerte på døra",
       |        "language": "nb"
@@ -117,9 +119,26 @@ class ImageControllerTest extends UnitSuite with ScalatraSuite with TestEnvironm
     }
   }
 
+  test("That POST / returns 409 if an image with given external_id already exists") {
+    val duplicateKeyException = mock[PSQLException]
+    when(duplicateKeyException.getMessage).thenReturn("ERROR: duplicate key value violates unique constraint \"cst_uni_external_id\"")
+    when(writeService.storeNewImage(any[NewImageMetaInformation], any[FileItem])).thenReturn(Failure(duplicateKeyException))
+    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
+      status should equal (409)
+    }
+  }
+
+  test("That POST / returns 500 if db insertion fails with a PSQLException that doesn't have to do with unique constraint violations") {
+    val duplicateKeyException = mock[PSQLException]
+    when(duplicateKeyException.getMessage).thenReturn("ERROR: something completely different went wrong")
+    when(writeService.storeNewImage(any[NewImageMetaInformation], any[FileItem])).thenReturn(Failure(duplicateKeyException))
+    post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
+      status should equal (500)
+    }
+  }
+
   test("That POST / returns 500 if an unexpected error occurs") {
     when(writeService.storeNewImage(any[NewImageMetaInformation], any[FileItem])).thenReturn(Failure(mock[RuntimeException]))
-
     post("/", Map("metadata" -> sampleNewImageMeta), Map("file" -> sampleUploadFile), headers = Map("Authorization" -> authHeaderWithWriteRole)) {
       status should equal (500)
     }

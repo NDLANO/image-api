@@ -38,12 +38,16 @@ trait ImageRepository {
       }
     }
 
-    def insert(imageMeta: ImageMetaInformation)(implicit session: DBSession = AutoSession) = {
+    def insert(imageMeta: ImageMetaInformation, externalId: Option[String] = None)(implicit session: DBSession = AutoSession) = {
       val dataObject = new PGobject()
       dataObject.setType("jsonb")
       dataObject.setValue(write(imageMeta))
 
-      val imageId = sql"insert into imagemetadata(metadata) values (${dataObject})".updateAndReturnGeneratedKey.apply
+      val imageId = externalId match {
+        case Some(ext) => sql"insert into imagemetadata(external_id, metadata) values (${ext}, ${dataObject})".updateAndReturnGeneratedKey.apply
+        case None => sql"insert into imagemetadata(metadata) values (${dataObject})".updateAndReturnGeneratedKey.apply
+      }
+
       imageMeta.copy(id = Some(imageId))
     }
 
