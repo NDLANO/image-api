@@ -36,12 +36,13 @@ class V6__AuthorFormatUpdatedTest extends UnitSuite with TestEnvironment {
     val after = migration.updateAuthorFormat(oldId, oldFormatString)
 
     after.titles should equal(before.titles)
+    after.id.get should equal(oldId)
     after.copyright.creators should contain(V5_Author("Writer", "lu2shoot"))
     after.copyright.rightsholders should contain(V5_Author("Distributor", "MrDogg"))
 
   }
 
-  test("That already updated format is not broken") {
+  test("That already updated format is not broken AND not updated by not having an id") {
     val oldFormatString = "{\"size\": 12801066, \"tags\": [], \"titles\": [{\"title\": \"Yoman\", \"language\": \"en\"}, {\"title\": \"hey\", \"language\": \"nb\"}], \"updated\": \"2017-11-07T13:05:43Z\", \"alttexts\": [{\"alttext\": \"test2\", \"language\": \"en\"}], \"captions\": [{\"caption\": \"captionheredude\", \"language\": \"en\"}], \"imageUrl\": \"/RzWfa7s2.png\", \"copyright\": {\"origin\": \"http://www.scanpix.no\", \"license\": {\"url\": \"https://creativecommons.org/licenses/by-nc-sa/2.0/\", \"license\": \"by-nc-sa\", \"description\": \"Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic\"}, \"creators\": [{\"name\": \"Maximilian Stock Ltd\", \"type\": \"Photographer\"}], \"processors\": [], \"rightsholders\": [{\"name\": \"StockFood\", \"type\": \"Supplier\"}, {\"name\": \"NTB scanpix\", \"type\": \"Supplier\"}]}, \"updatedBy\": \"swagger-client\", \"contentType\": \"image/png\"}"
     val oldId = 1
     val before = read[V6_ImageMetaInformation](oldFormatString)
@@ -61,6 +62,7 @@ class V6__AuthorFormatUpdatedTest extends UnitSuite with TestEnvironment {
     val after = migration.updateAuthorFormat(oldId, oldFormatString)
 
     after.titles should equal(before.titles)
+    after.id should equal(None)
     after.copyright.creators should contain(V5_Author("Photographer", "Maximilian Stock Ltd"))
     after.copyright.rightsholders should contain(V5_Author("Supplier", "StockFood"))
     after.copyright.rightsholders should contain(V5_Author("Supplier", "NTB scanpix"))
