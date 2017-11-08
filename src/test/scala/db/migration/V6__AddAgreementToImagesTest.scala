@@ -11,9 +11,9 @@ import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 import org.json4s.native.Serialization.{read, write}
 
 
-class V6__AuthorFormatUpdatedTest extends UnitSuite with TestEnvironment {
+class V6__AddAgreementToImagesTest extends UnitSuite with TestEnvironment {
 
-  val migration = new V6__AuthorFormatUpdated
+  val migration = new V6__AddAgreementToImages
   implicit val formats = org.json4s.DefaultFormats
 
   test("That author is converted to new format correctly") {

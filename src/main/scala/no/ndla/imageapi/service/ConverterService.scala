@@ -34,6 +34,7 @@ trait ConverterService {
         domainCopyright.creators.map(asApiAuthor),
         domainCopyright.processors.map(asApiAuthor),
         domainCopyright.rightsholders.map(asApiAuthor),
+        domainCopyright.agreement,
         domainCopyright.validFrom,
         domainCopyright.validTo)
     }
@@ -125,6 +126,7 @@ trait ConverterService {
         copyright.creators.map(toDomainAuthor),
         copyright.processors.map(toDomainAuthor),
         copyright.rightsholders.map(toDomainAuthor),
+        copyright.agreement,
         copyright.validFrom,
         copyright.validTo)
     }

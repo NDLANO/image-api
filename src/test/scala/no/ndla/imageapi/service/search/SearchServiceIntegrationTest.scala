@@ -35,8 +35,8 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   val largeImage = Image("large-full-url", 10000, "jpg")
   val smallImage = Image("small-full-url", 100, "jpg")
 
-  val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None), "Gotham City", List(Author("Forfatter", "DC Comics")), List(), List(), None, None)
-  val publicDomain = Copyright(License("publicdomain", "Public Domain", None), "Metropolis", List(Author("Forfatter", "Bruce Wayne")), List(), List(), None, None)
+  val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None), "Gotham City", List(Author("Forfatter", "DC Comics")), List(), List(), None, None, None)
+  val publicDomain = Copyright(License("publicdomain", "Public Domain", None), "Metropolis", List(Author("Forfatter", "Bruce Wayne")), List(), List(), None, None, None)
   val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
   val image1 = ImageMetaInformation(Some(1), List(ImageTitle("Batmen er på vift med en bil", "nb")), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", "nb")), largeImage.fileName, largeImage.size, largeImage.contentType, byNcSa, List(ImageTag(List("fugl"), "nb")), List(), "ndla124", updated)

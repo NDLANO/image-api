@@ -17,7 +17,7 @@ import org.json4s.native.Serialization.{read, write}
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
-class V6__AuthorFormatUpdated extends JdbcMigration with LazyLogging  {
+class V6__AddAgreementToImages extends JdbcMigration with LazyLogging  {
   // Authors are now split into three categories `creators`, `processors` and `rightsholders`
   implicit val formats = org.json4s.DefaultFormats
 
@@ -73,7 +73,7 @@ class V6__AuthorFormatUpdated extends JdbcMigration with LazyLogging  {
         meta.imageUrl,
         meta.size,
         meta.contentType,
-        V6_Copyright(meta.copyright.license, meta.copyright.origin, creators, processors, rightsholders, None, None),
+        V6_Copyright(meta.copyright.license, meta.copyright.origin, creators, processors, rightsholders, None, None, None),
         meta.tags,
         meta.captions,
         meta.updatedBy,
@@ -92,7 +92,7 @@ class V6__AuthorFormatUpdated extends JdbcMigration with LazyLogging  {
 
 }
 
-case class V6_Copyright(license: V5_License, origin: String, creators: Seq[V5_Author], processors: Seq[V5_Author], rightsholders: Seq[V5_Author], validFrom: Option[Date], validTo: Option[Date])
+case class V6_Copyright(license: V5_License, origin: String, creators: Seq[V5_Author], processors: Seq[V5_Author], rightsholders: Seq[V5_Author], agreement: Option[Long], validFrom: Option[Date], validTo: Option[Date])
 case class V6_ImageMetaInformation(id: Option[Long],
                                    titles: Seq[V5_ImageTitle],
                                    alttexts: Seq[V5_ImageAltText],

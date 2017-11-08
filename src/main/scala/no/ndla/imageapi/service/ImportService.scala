@@ -134,8 +134,9 @@ trait ImportService {
         creators,
         processors,
         rightsholders,
-        None,
-        None)
+        agreement = None,
+        validFrom = None,
+        validTo = None)
     }
 
     private def toDomainTranslationFields(imageMeta: MainImageImport): (Seq[domain.ImageTitle], Seq[domain.ImageAltText], Seq[domain.ImageCaption]) = {
