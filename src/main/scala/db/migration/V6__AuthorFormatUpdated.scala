@@ -59,7 +59,7 @@ class V6__AuthorFormatUpdated extends JdbcMigration with LazyLogging  {
       metaV6.copyright.validFrom.nonEmpty ||
       metaV6.copyright.validTo.nonEmpty
     ) {
-      metaV6
+      metaV6.copy(id = None)
     } else {
       val creators = meta.copyright.authors.filter(a => oldCreatorTypes.contains(a.`type`.toLowerCase)).map(toNewAuthorType)
       // Filters out processor authors with old type `redaksjonelt` during import process since `redaksjonelt` exists both in processors and creators.
@@ -67,7 +67,7 @@ class V6__AuthorFormatUpdated extends JdbcMigration with LazyLogging  {
       val rightsholders = meta.copyright.authors.filter(a => oldRightsholderTypes.contains(a.`type`.toLowerCase)).map(toNewAuthorType)
 
       V6_ImageMetaInformation(
-        meta.id,
+        Some(id),
         meta.titles,
         meta.alttexts,
         meta.imageUrl,
@@ -86,7 +86,6 @@ class V6__AuthorFormatUpdated extends JdbcMigration with LazyLogging  {
     val dataObject = new PGobject()
     dataObject.setType("jsonb")
     dataObject.setValue(write(imagemetadata))
-
 
     sql"update imagemetadata set metadata = $dataObject where id = ${imagemetadata.id}".update().apply
   }
