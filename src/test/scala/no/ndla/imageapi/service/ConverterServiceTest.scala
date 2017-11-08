@@ -24,7 +24,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   val updated: Date = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
   val full = Image("/123.png", 200, "image/png")
-  val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(ImageTitle("test", "nb")), List(), full.fileName, full.size, full.contentType, Copyright(License("", "", None), "", List()), List(), List(), "ndla124", updated)
+  val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(ImageTitle("test", "nb")), List(), full.fileName, full.size, full.contentType, Copyright(License("", "", None), "", List(), List(), List(), None, None), List(), List(), "ndla124", updated)
 
   override def beforeEach: Unit = {
     val request = mock[HttpServletRequest]
