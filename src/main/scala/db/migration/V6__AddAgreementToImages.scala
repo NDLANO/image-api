@@ -56,6 +56,7 @@ class V6__AddAgreementToImages extends JdbcMigration with LazyLogging  {
     if(metaV6.copyright.creators.nonEmpty ||
       metaV6.copyright.processors.nonEmpty ||
       metaV6.copyright.rightsholders.nonEmpty ||
+      metaV6.copyright.agreement.nonEmpty ||
       metaV6.copyright.validFrom.nonEmpty ||
       metaV6.copyright.validTo.nonEmpty
     ) {
