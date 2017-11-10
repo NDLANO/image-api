@@ -18,7 +18,7 @@ import org.postgresql.util.PGobject
 import scalikejdbc._
 
 class V6__AddAgreementToImages extends JdbcMigration with LazyLogging  {
-  // Authors are now split into three categories `creators`, `processors` and `rightsholders`
+  // Authors are now split into three categories `creators`, `processors` and `rightsholders` as well as added agreementId and valid period
   implicit val formats = org.json4s.DefaultFormats
 
   override def migrate(connection: Connection): Unit = {
@@ -87,7 +87,7 @@ class V6__AddAgreementToImages extends JdbcMigration with LazyLogging  {
     dataObject.setType("jsonb")
     dataObject.setValue(write(imagemetadata))
 
-    sql"update imagemetadata set metadata = $dataObject where id = ${imagemetadata.id}".update().apply
+    sql"update imagemetadata set metadata = ${dataObject} where id = ${imagemetadata.id}".update().apply
   }
 
 }
