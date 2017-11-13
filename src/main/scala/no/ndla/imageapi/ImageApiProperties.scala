@@ -78,6 +78,7 @@ object ImageApiProperties extends LazyLogging {
   val ElasticSearchIndexMaxResultWindow = 10000
 
   val MappingHost = "mapping-api.ndla-local"
+  val DraftApiHost = propOrElse("DRAFT_API_HOST", "draft-api.ndla-local")
   val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
 
   val MigrationHost = prop("MIGRATION_HOST")
