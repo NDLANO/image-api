@@ -10,7 +10,8 @@ package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.auth.Role
-import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, NewImageMetaInformationV2, SearchParams, SearchResult, UpdateImageMetaInformation, ValidationError}
+import no.ndla.imageapi.integration.DraftApiClient
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, License, NewImageMetaInformationV2, SearchParams, SearchResult, UpdateImageMetaInformation, ValidationError}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.SearchService
@@ -23,7 +24,7 @@ import org.scalatra.swagger._
 import scala.util.{Failure, Success}
 
 trait ImageControllerV2 {
-  this: ImageRepository with SearchService with ConverterService with WriteService with Role =>
+  this: ImageRepository with SearchService with ConverterService with WriteService with DraftApiClient with Role =>
   val imageControllerV2: ImageControllerV2
 
   class ImageControllerV2(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
@@ -126,6 +127,11 @@ trait ImageControllerV2 {
       }
     }
 
+    private def withAgreementLicense(image: ImageMetaInformationV2): ImageMetaInformationV2 = {
+      val agreementLicense = image.copyright.agreement.flatMap(aid => draftApiClient.getAgreementLicense(aid)).getOrElse(image.copyright.license)
+      image.copy(copyright = image.copyright.copy(license = agreementLicense))
+    }
+
     get("/", operation(getImages)) {
       val minimumSize = intOrNone("minimum-size")
       val query = paramOrNone("query")
@@ -153,7 +159,7 @@ trait ImageControllerV2 {
       val imageId = long("image_id")
       val language = paramOrNone("language")
       imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlV2(image, language)) match {
-        case Some(image) => image
+        case Some(image) => withAgreementLicense(image)
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId and language $language not found"))
       }
     }

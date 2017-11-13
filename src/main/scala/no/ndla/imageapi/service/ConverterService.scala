@@ -15,9 +15,10 @@ import no.ndla.imageapi.model.Language._
 import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
 import com.netaporter.uri.Uri.parse
+import no.ndla.imageapi.integration.DraftApiClient
 
 trait ConverterService {
-  this: User with Clock =>
+  this: User with Clock with DraftApiClient =>
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {

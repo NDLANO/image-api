@@ -26,10 +26,13 @@ trait DraftApiClient {
     private val draftApiGetAgreementEndpoint = s"http://${ImageApiProperties.DraftApiHost}/draft-api/v1/agreements/:agreement_id"
     private val draftApiHealthEndpoint = s"http://${ImageApiProperties.DraftApiHost}/health"
 
+
     def getAgreementLicense(agreementId: Long): Option[api.License] = {
-      val second = 1000
-      val request: HttpRequest = Http(s"$draftApiGetAgreementEndpoint".replace(":agreement_id", agreementId.toString)).timeout(20 * second, 20 * second).postForm
+      implicit val formats = org.json4s.DefaultFormats
+      val request: HttpRequest = Http(s"$draftApiGetAgreementEndpoint".replace(":agreement_id", agreementId.toString))
+      //val reqBody = request.asString.body
       val agreement = ndlaClient.fetch[Agreement](request).toOption
+
       agreement match {
         case Some(a) => Some(a.copyright.license)
         case _ => None
@@ -42,17 +45,15 @@ trait DraftApiClient {
         case _ => false
       }
     }
-
-    case class Agreement(id: Long,
-                         title: String,
-                         content: String,
-                         copyright: api.Copyright,
-                         created: Date,
-                         updated: Date,
-                         updatedBy: String
-                        )
-
   }
-
 }
+
+case class Agreement(id: Long,
+                     title: String,
+                     content: String,
+                     copyright: api.Copyright,
+                     created: Date,
+                     updated: Date,
+                     updatedBy: String
+                    )
 
