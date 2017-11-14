@@ -85,8 +85,8 @@ trait ConverterService {
 
       image.copy(copyright = image.copyright.copy(
         license = agreementCopyright.license,
-        creators = agreementCopyright.creators,
-        rightsholders =   agreementCopyright.rightsholders
+        creators = if (agreementCopyright.creators.nonEmpty) agreementCopyright.creators else image.copyright.creators,
+        rightsholders = if (agreementCopyright.rightsholders.nonEmpty) agreementCopyright.rightsholders else image.copyright.rightsholders
       ))
     }
 
@@ -95,8 +95,8 @@ trait ConverterService {
 
       image.copy(copyright = image.copyright.copy(
         license = agreementCopyright.license,
-        creators = agreementCopyright.creators,
-        rightsholders =   agreementCopyright.rightsholders
+        creators = if (agreementCopyright.creators.nonEmpty) agreementCopyright.creators else image.copyright.creators,
+        rightsholders = if (agreementCopyright.rightsholders.nonEmpty) agreementCopyright.rightsholders else image.copyright.rightsholders
       ))
     }
 
