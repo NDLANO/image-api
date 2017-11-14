@@ -201,6 +201,26 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     }
   }
 
+  test("That GET /<id> returns body with original copyright if agreement doesnt exist") {
+    when(draftApiClient.getAgreementCopyright(1)).thenReturn(None)
+    implicit val formats = DefaultFormats
+    val testUrl = "http://test.test/1"
+    val expectedBody = s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"by-nc-sa","description":"Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic","url":"https://creativecommons.org/licenses/by-nc-sa/2.0/"}, "agreement":1, "origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
+    val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
+    val agreementElg = ImageMetaInformation(Some(1), List(ImageTitle("Elg i busk", "nb")), List(ImageAltText("Elg i busk", "nb")),
+      "Elg.jpg", 2865539, "image/jpeg",
+      Copyright(TestData.ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen")), List(Author("Redaksjonelt", "Kåre Knegg")), List(Author("Leverandør", "Leverans Leveransensen")), Some(1), None, None),
+      List(ImageTag(List("rovdyr", "elg"), "nb")), List(ImageCaption("Elg i busk", "nb")), "ndla124", TestData.updated())
+
+    when(imageRepository.withId(1)).thenReturn(Option(agreementElg))
+
+    get("/1") {
+      status should equal(200)
+      val result = JsonParser.parse(body).extract[api.ImageMetaInformationV2]
+      result.copy(imageUrl = testUrl, metaUrl = testUrl) should equal(expectedObject)
+    }
+  }
+
   test("That PATCH /<id> returns 200 when everything went well") {
     when(writeService.updateImage(any[Long], any[UpdateImageMetaInformation])).thenReturn(Try(TestData.apiElg))
     patch("/1", sampleUpdateImageMeta, headers = Map("Authorization" -> authHeaderWithWriteRole)) {
