@@ -27,14 +27,11 @@ trait DraftApiClient {
     private val draftApiHealthEndpoint = s"http://${ImageApiProperties.DraftApiHost}/health"
 
 
-    def getAgreementLicense(agreementId: Long): Option[api.License] = {
+    def getAgreementCopyright(agreementId: Long): Option[api.Copyright] = {
       implicit val formats = org.json4s.DefaultFormats
       val request: HttpRequest = Http(s"$draftApiGetAgreementEndpoint".replace(":agreement_id", agreementId.toString))
-      //val reqBody = request.asString.body
-      val agreement = ndlaClient.fetch[Agreement](request).toOption
-
-      agreement match {
-        case Some(a) => Some(a.copyright.license)
+      ndlaClient.fetch[Agreement](request).toOption match {
+        case Some(a) => Some(a.copyright)
         case _ => None
       }
     }

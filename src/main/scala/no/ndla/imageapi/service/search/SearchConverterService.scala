@@ -14,21 +14,25 @@ import no.ndla.imageapi.model.search.{LanguageValue, SearchableImage, Searchable
 import no.ndla.network.ApplicationUrl
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import com.netaporter.uri.Uri.parse
+import no.ndla.imageapi.service.ConverterService
 
 trait SearchConverterService {
+  this: ConverterService =>
   val searchConverterService: SearchConverterService
 
   class SearchConverterService extends LazyLogging {
     def asSearchableImage(image: ImageMetaInformation): SearchableImage = {
+      val imageWithAgreement = converterService.withAgreementCopyright(image)
+
       SearchableImage(
-        id = image.id.get,
-        titles = SearchableLanguageValues(image.titles.map(title => LanguageValue(title.language, title.title))),
-        alttexts = SearchableLanguageValues(image.alttexts.map(alttext => LanguageValue(alttext.language, alttext.alttext))),
-        captions = SearchableLanguageValues(image.captions.map(caption => LanguageValue(caption.language, caption.caption))),
-        tags = SearchableLanguageList(image.tags.map(tag => LanguageValue(tag.language, tag.tags))),
-        license = image.copyright.license.license,
-        imageSize = image.size,
-        previewUrl = parse(image.imageUrl).toString)
+        id = imageWithAgreement.id.get,
+        titles = SearchableLanguageValues(imageWithAgreement.titles.map(title => LanguageValue(title.language, title.title))),
+        alttexts = SearchableLanguageValues(imageWithAgreement.alttexts.map(alttext => LanguageValue(alttext.language, alttext.alttext))),
+        captions = SearchableLanguageValues(imageWithAgreement.captions.map(caption => LanguageValue(caption.language, caption.caption))),
+        tags = SearchableLanguageList(imageWithAgreement.tags.map(tag => LanguageValue(tag.language, tag.tags))),
+        license = imageWithAgreement.copyright.license.license,
+        imageSize = imageWithAgreement.size,
+        previewUrl = parse(imageWithAgreement.imageUrl).toString)
     }
 
     def asImageMetaSummary(searchableImage: SearchableImage, language: Option[String]): ImageMetaSummary = {

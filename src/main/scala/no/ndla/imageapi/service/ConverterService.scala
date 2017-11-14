@@ -16,6 +16,7 @@ import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
 import com.netaporter.uri.Uri.parse
 import no.ndla.imageapi.integration.DraftApiClient
+import no.ndla.imageapi.model.api.ImageMetaInformationV2
 
 trait ConverterService {
   this: User with Clock with DraftApiClient =>
@@ -75,6 +76,28 @@ trait ConverterService {
         tags,
         caption,
         getSupportedLanguages(imageMeta)))
+    }
+
+    def withAgreementCopyright(image: domain.ImageMetaInformation): domain.ImageMetaInformation = {
+      val agreementCopyright = image.copyright.agreement.flatMap(aid =>
+        draftApiClient.getAgreementCopyright(aid).map(toDomainCopyright)
+      ).getOrElse(image.copyright)
+
+      image.copy(copyright = image.copyright.copy(
+        license = agreementCopyright.license,
+        creators = agreementCopyright.creators,
+        rightsholders =   agreementCopyright.rightsholders
+      ))
+    }
+
+    def withAgreementCopyright(image: ImageMetaInformationV2): ImageMetaInformationV2 = {
+      val agreementCopyright = image.copyright.agreement.flatMap(aid => draftApiClient.getAgreementCopyright(aid)).getOrElse(image.copyright)
+
+      image.copy(copyright = image.copyright.copy(
+        license = agreementCopyright.license,
+        creators = agreementCopyright.creators,
+        rightsholders =   agreementCopyright.rightsholders
+      ))
     }
 
     def asApiImageTag(domainImageTag: domain.ImageTag): api.ImageTag = {
