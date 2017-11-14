@@ -101,7 +101,7 @@ trait ImportService {
 
     private def persistMetadata(image: domain.ImageMetaInformation, externalImageId: String): Try[ImageMetaInformation] = {
       imageRepository.withExternalId(externalImageId) match {
-        case Some(dbMeta) => Try(imageRepository.update(image.copy(id=dbMeta.id), dbMeta.id.get))
+        case Some(dbMeta) => Try(imageRepository.update(image.copy(id = dbMeta.id), dbMeta.id.get))
         case None => Try(imageRepository.insertWithExternalId(image, externalImageId))
       }
     }
@@ -145,8 +145,9 @@ trait ImportService {
         (domain.ImageTitle(tr.title, language),
           domain.ImageAltText(tr.alttext.getOrElse(""), language),
           domain.ImageCaption(tr.caption.getOrElse(""), language))
-        }).unzip3
+      }).unzip3
     }
 
   }
+
 }
