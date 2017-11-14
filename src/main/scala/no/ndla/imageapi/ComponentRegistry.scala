@@ -8,8 +8,9 @@
 
 package no.ndla.imageapi
 
+import com.amazonaws.ClientConfiguration
 import com.amazonaws.regions.Regions
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.controller._
 import no.ndla.imageapi.integration._
@@ -58,7 +59,13 @@ object ComponentRegistry
   dataSource.setMaxConnections(ImageApiProperties.MetaMaxConnections)
   dataSource.setCurrentSchema(ImageApiProperties.MetaSchema)
 
-  val amazonClient = AmazonS3ClientBuilder.standard().withRegion(Regions.EU_CENTRAL_1).build()
+  val amazonClient: AmazonS3 = AmazonS3ClientBuilder.standard()
+    .withClientConfiguration(
+      new ClientConfiguration()
+      .withTcpKeepAlive(false)
+    )
+    .withRegion(Regions.EU_CENTRAL_1)
+    .build()
 
   lazy val indexService = new IndexService
   lazy val searchService = new SearchService
