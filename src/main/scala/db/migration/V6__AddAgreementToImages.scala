@@ -56,7 +56,7 @@ class V6__AddAgreementToImages extends JdbcMigration with LazyLogging  {
     if(metaV6.copyright.creators.nonEmpty ||
       metaV6.copyright.processors.nonEmpty ||
       metaV6.copyright.rightsholders.nonEmpty ||
-      metaV6.copyright.agreement.nonEmpty ||
+      metaV6.copyright.agreementId.nonEmpty ||
       metaV6.copyright.validFrom.nonEmpty ||
       metaV6.copyright.validTo.nonEmpty
     ) {
@@ -93,7 +93,7 @@ class V6__AddAgreementToImages extends JdbcMigration with LazyLogging  {
 
 }
 
-case class V6_Copyright(license: V5_License, origin: String, creators: Seq[V5_Author], processors: Seq[V5_Author], rightsholders: Seq[V5_Author], agreement: Option[Long], validFrom: Option[Date], validTo: Option[Date])
+case class V6_Copyright(license: V5_License, origin: String, creators: Seq[V5_Author], processors: Seq[V5_Author], rightsholders: Seq[V5_Author], agreementId: Option[Long], validFrom: Option[Date], validTo: Option[Date])
 case class V6_ImageMetaInformation(id: Option[Long],
                                    titles: Seq[V5_ImageTitle],
                                    alttexts: Seq[V5_ImageAltText],

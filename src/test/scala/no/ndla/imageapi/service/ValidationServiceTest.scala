@@ -177,4 +177,21 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
     validationService.validate(imageMeta).isSuccess should be (true)
   }
 
+  test("validate returns success if agreement exists") {
+    when(draftApiClient.agreementExists(1)).thenReturn(true)
+    val imageMeta = sampleImageMeta.copy(copyright = sampleImageMeta.copyright.copy(agreementId = Some(1)))
+    val result = validationService.validate(imageMeta)
+    result.isSuccess should be (true)
+  }
+
+  test("validate returns failure if agreement doesnt exist") {
+    when(draftApiClient.agreementExists(1)).thenReturn(false)
+    val imageMeta = sampleImageMeta.copy(copyright = sampleImageMeta.copyright.copy(agreementId = Some(1)))
+    val result = validationService.validate(imageMeta)
+    val exception = result.failed.get.asInstanceOf[ValidationException]
+    exception.errors.length should be (1)
+    exception.errors.head.message.contains("Agreement with id 1 does not exist") should be (true)
+    result.isSuccess should be (false)
+  }
+
 }

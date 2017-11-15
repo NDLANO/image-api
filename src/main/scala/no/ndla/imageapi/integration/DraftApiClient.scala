@@ -36,6 +36,8 @@ trait DraftApiClient {
       }
     }
 
+    def agreementExists(agreementId: Long): Boolean = getAgreementCopyright(agreementId).nonEmpty
+
     def isHealthy: Boolean = {
       Try(Http(draftApiHealthEndpoint).execute()) match {
         case Success(resp) => resp.isSuccess

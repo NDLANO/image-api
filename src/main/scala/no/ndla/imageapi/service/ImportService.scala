@@ -134,7 +134,7 @@ trait ImportService {
         creators,
         processors,
         rightsholders,
-        agreement = None,
+        agreementId = None,
         validFrom = None,
         validTo = None)
     }

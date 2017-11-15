@@ -1,6 +1,7 @@
 package no.ndla.imageapi.service
 
 import no.ndla.imageapi.ImageApiProperties
+import no.ndla.imageapi.integration.DraftApiClient
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
@@ -12,6 +13,7 @@ import org.scalatra.servlet.FileItem
 import scala.util.{Failure, Success, Try}
 
 trait ValidationService {
+  this: DraftApiClient =>
   val validationService: ValidationService
 
   class ValidationService {
@@ -66,7 +68,19 @@ trait ValidationService {
       copyright.creators.flatMap(validateAuthor) ++
       copyright.processors.flatMap(validateAuthor) ++
       copyright.rightsholders.flatMap(validateAuthor) ++
-      containsNoHtml("copyright.origin", copyright.origin)
+      containsNoHtml("copyright.origin", copyright.origin) ++
+      validateAgreement(copyright)
+    }
+
+    def validateAgreement(copyright: Copyright): Seq[ValidationMessage] = {
+      copyright.agreementId match {
+        case Some(id) =>
+          draftApiClient.agreementExists(id) match {
+            case false => Seq (ValidationMessage ("copyright.agreement", s"Agreement with id $id does not exist") )
+            case _ => Seq()
+          }
+        case _ => Seq()
+      }
     }
 
     def validateLicense(license: License): Seq[ValidationMessage] = {

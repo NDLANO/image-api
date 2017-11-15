@@ -21,7 +21,7 @@ case class ImageAltText(alttext: String, language: String) extends LanguageField
 case class ImageCaption(caption: String, language: String) extends LanguageField[String] { override def value: String = caption }
 case class ImageTag(tags: Seq[String], language: String) extends LanguageField[Seq[String]] { override def value: Seq[String] = tags }
 case class Image(fileName: String, size: Long, contentType: String)
-case class Copyright(license: License, origin: String, creators: Seq[Author], processors: Seq[Author], rightsholders: Seq[Author], agreement: Option[Long], validFrom: Option[Date], validTo: Option[Date])
+case class Copyright(license: License, origin: String, creators: Seq[Author], processors: Seq[Author], rightsholders: Seq[Author], agreementId: Option[Long], validFrom: Option[Date], validTo: Option[Date])
 case class License(license: String, description: String, url: Option[String])
 case class Author(`type`: String, name: String)
 case class ImageMetaInformation(

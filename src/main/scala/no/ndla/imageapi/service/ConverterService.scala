@@ -36,7 +36,7 @@ trait ConverterService {
         domainCopyright.creators.map(asApiAuthor),
         domainCopyright.processors.map(asApiAuthor),
         domainCopyright.rightsholders.map(asApiAuthor),
-        domainCopyright.agreement,
+        domainCopyright.agreementId,
         domainCopyright.validFrom,
         domainCopyright.validTo)
     }
@@ -79,7 +79,7 @@ trait ConverterService {
     }
 
     def withAgreementCopyright(image: domain.ImageMetaInformation): domain.ImageMetaInformation = {
-      val agreementCopyright = image.copyright.agreement.flatMap(aid =>
+      val agreementCopyright = image.copyright.agreementId.flatMap(aid =>
         draftApiClient.getAgreementCopyright(aid).map(toDomainCopyright)
       ).getOrElse(image.copyright)
 
@@ -91,7 +91,7 @@ trait ConverterService {
     }
 
     def withAgreementCopyright(image: ImageMetaInformationV2): ImageMetaInformationV2 = {
-      val agreementCopyright = image.copyright.agreement.flatMap(aid => draftApiClient.getAgreementCopyright(aid)).getOrElse(image.copyright)
+      val agreementCopyright = image.copyright.agreementId.flatMap(aid => draftApiClient.getAgreementCopyright(aid)).getOrElse(image.copyright)
 
       image.copy(copyright = image.copyright.copy(
         license = agreementCopyright.license,
@@ -150,7 +150,7 @@ trait ConverterService {
         copyright.creators.map(toDomainAuthor),
         copyright.processors.map(toDomainAuthor),
         copyright.rightsholders.map(toDomainAuthor),
-        copyright.agreement,
+        copyright.agreementId,
         copyright.validFrom,
         copyright.validTo)
     }
