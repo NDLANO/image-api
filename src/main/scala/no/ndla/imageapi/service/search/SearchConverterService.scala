@@ -26,6 +26,7 @@ trait SearchConverterService {
         alttexts = SearchableLanguageValues(image.alttexts.map(alttext => LanguageValue(alttext.language, alttext.alttext))),
         captions = SearchableLanguageValues(image.captions.map(caption => LanguageValue(caption.language, caption.caption))),
         tags = SearchableLanguageList(image.tags.map(tag => LanguageValue(tag.language, tag.tags))),
+        authors = image.copyright.authors.map(author => author.name),
         license = image.copyright.license.license,
         imageSize = image.size,
         previewUrl = parse(image.imageUrl).toString)
