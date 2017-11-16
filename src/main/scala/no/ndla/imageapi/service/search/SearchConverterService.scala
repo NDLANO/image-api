@@ -46,6 +46,7 @@ trait SearchConverterService {
       ImageMetaSummary(
         id = searchableImage.id.toString,
         title = title,
+        authors = searchableImage.authors,
         altText = altText,
         previewUrl = apiToRawRegex.replaceFirstIn(ApplicationUrl.get, "/raw") + searchableImage.previewUrl,
         metaUrl = ApplicationUrl.get + searchableImage.id,
