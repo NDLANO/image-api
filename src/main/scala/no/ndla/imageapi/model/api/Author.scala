@@ -7,6 +7,7 @@ import scala.annotation.meta.field
 
 @ApiModel(description = "Information about an author")
 case class Author(@(ApiModelProperty@field)(description = "The description of the author. Eg. Photographer or Supplier",
-                                            allowableValues = ImageApiProperties.allowedAuthorsStr) `type`: String,
+                                            allowableValues = "originator,photographer,artist,editorial,writer,scriptwriter,reader,translator,director,illustrator,cowriter,composer,processor,facilitator,editorial,linguistic,idea,compiler,correction,rightsholder,publisher,distributor,supplier")
+                  `type`: String,
 
                   @(ApiModelProperty@field)(description = "The name of the of the author") name: String)

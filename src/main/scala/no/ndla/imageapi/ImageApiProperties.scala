@@ -43,8 +43,6 @@ object ImageApiProperties extends LazyLogging {
   val oldRightsholderTypes = List("rettighetshaver", "forlag", "distributør", "leverandør")
   val rightsholderTypes = List("rightsholder", "publisher", "distributor", "supplier")
   val allowedAuthors = ImageApiProperties.creatorTypes ++ ImageApiProperties.processorTypes ++ ImageApiProperties.rightsholderTypes
-  final val allowedAuthorsStr = "originator,photographer,artist,editorial,writer,scriptwriter,reader,translator,director,illustrator,cowriter,composer,processor,facilitator,editorial,linguistic,idea,compiler,correction,rightsholder,publisher,distributor,supplier"
-
 
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
