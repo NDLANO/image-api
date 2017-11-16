@@ -32,8 +32,6 @@ trait ImportService {
     val redHost = s"https://red.ndla.no/sites/default/files/images"
     val cmHost = s"https://ndla.no/sites/default/files/images"
 
-    val ImportUserId = "content-import-client"
-
     def importImage(externalImageId: String): Try[domain.ImageMetaInformation] = {
       val start = System.currentTimeMillis()
       val importedImage = for {
@@ -94,7 +92,7 @@ trait ImportService {
         toDomainCopyright(imageMeta),
         tags,
         captions,
-        ImportUserId,
+        authUser.userOrClientid(),
         clock.now()
       )
     }

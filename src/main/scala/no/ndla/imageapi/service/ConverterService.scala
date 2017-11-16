@@ -98,7 +98,7 @@ trait ConverterService {
         toDomainCopyright(imageMeta.copyright),
         if (imageMeta.tags.nonEmpty) Seq(toDomainTag(imageMeta.tags, imageMeta.language)) else Seq.empty,
         Seq(domain.ImageCaption(imageMeta.caption, imageMeta.language)),
-        authUser.id(),
+        authUser.userOrClientid(),
         clock.now()
       )
     }

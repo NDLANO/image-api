@@ -57,7 +57,7 @@ trait WriteService {
 
     private[service] def mergeImages(existing: ImageMetaInformation, toMerge: UpdateImageMetaInformation): domain.ImageMetaInformation = {
       val now = clock.now()
-      val userId = authUser.id()
+      val userId = authUser.userOrClientid()
 
       existing.copy(
         titles = mergeLanguageFields(existing.titles, toMerge.title.toSeq.map(t => converterService.asDomainTitle(t, toMerge.language))),
