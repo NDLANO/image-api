@@ -85,18 +85,24 @@ trait ConverterService {
 
       image.copy(copyright = image.copyright.copy(
         license = agreementCopyright.license,
-        creators = if (agreementCopyright.creators.nonEmpty) agreementCopyright.creators else image.copyright.creators,
-        rightsholders = if (agreementCopyright.rightsholders.nonEmpty) agreementCopyright.rightsholders else image.copyright.rightsholders
+        creators = agreementCopyright.creators,
+        rightsholders = agreementCopyright.rightsholders,
+        validFrom = agreementCopyright.validFrom,
+        validTo = agreementCopyright.validTo
       ))
     }
 
     def withAgreementCopyright(image: ImageMetaInformationV2): ImageMetaInformationV2 = {
-      val agreementCopyright = image.copyright.agreementId.flatMap(aid => draftApiClient.getAgreementCopyright(aid)).getOrElse(image.copyright)
+      val agreementCopyright = image.copyright.agreementId.flatMap(aid =>
+        draftApiClient.getAgreementCopyright(aid)
+      ).getOrElse(image.copyright)
 
       image.copy(copyright = image.copyright.copy(
         license = agreementCopyright.license,
-        creators = if (agreementCopyright.creators.nonEmpty) agreementCopyright.creators else image.copyright.creators,
-        rightsholders = if (agreementCopyright.rightsholders.nonEmpty) agreementCopyright.rightsholders else image.copyright.rightsholders
+        creators = agreementCopyright.creators,
+        rightsholders = agreementCopyright.rightsholders,
+        validFrom = agreementCopyright.validFrom,
+        validTo = agreementCopyright.validTo
       ))
     }
 
