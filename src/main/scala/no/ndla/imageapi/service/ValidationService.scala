@@ -65,9 +65,9 @@ trait ValidationService {
 
     def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
       validateLicense(copyright.license).toList ++
-      copyright.creators.flatMap(validateAuthor) ++
-      copyright.processors.flatMap(validateAuthor) ++
-      copyright.rightsholders.flatMap(validateAuthor) ++
+      copyright.creators.flatMap(a => validateAuthor("copyright.creators", a)) ++
+      copyright.processors.flatMap(a => validateAuthor("copyright.processors", a)) ++
+      copyright.rightsholders.flatMap(a => validateAuthor("copyright.rightsholders", a)) ++
       containsNoHtml("copyright.origin", copyright.origin) ++
       validateAgreement(copyright)
     }
@@ -90,10 +90,10 @@ trait ValidationService {
       }
     }
 
-    def validateAuthor(author: Author): Seq[ValidationMessage] = {
-      containsNoHtml("author.type", author.`type`).toList ++
-        containsNoHtml("author.name", author.name).toList ++
-        validateAuthorType("author.type", author.`type`).toList
+    def validateAuthor(fieldPath: String, author: Author): Seq[ValidationMessage] = {
+      containsNoHtml(s"$fieldPath.type", author.`type`).toList ++
+        containsNoHtml(s"$fieldPath.name", author.name).toList ++
+        validateAuthorType(s"$fieldPath.type", author.`type`).toList
     }
 
     def validateAuthorType(fieldPath: String, `type`: String): Option[ValidationMessage] = {
