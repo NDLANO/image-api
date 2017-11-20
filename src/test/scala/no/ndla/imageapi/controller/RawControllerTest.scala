@@ -150,4 +150,24 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
     }
   }
 
+  test("That GET /id/1 with focal points and ratio returns a cropped image") {
+    get(s"/id/$id?focalX=50&focalY=50&ratio=0.81") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getWidth should equal(48)
+      image.getHeight should equal(60)
+    }
+  }
+
+  test("That GET /id/1 with focal points, ratio and width returns a cropped and resized image") {
+    get(s"/id/$id?focalX=50&focalY=50&ratio=0.81&width=20") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getWidth should equal(20)
+      image.getHeight should equal(25)
+    }
+  }
+
 }
