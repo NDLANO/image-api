@@ -4,12 +4,10 @@ import java.awt.image.BufferedImage
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.lang.Math.{abs, max, min}
 import javax.imageio.ImageIO
-
-import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.model.domain.ImageStream
+import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import org.imgscalr.Scalr
 import org.imgscalr.Scalr.Mode
-
 import scala.util.{Success, Try}
 
 
@@ -36,7 +34,17 @@ trait ImageConverter {
   class ImageConverter {
     private[service] def toImageStream(bufferedImage: BufferedImage, originalImage: ImageStream): ImageStream = {
       val outputStream = new ByteArrayOutputStream()
-      ImageIO.write(bufferedImage, originalImage.format, outputStream)
+      val imageOutputStream = ImageIO.createImageOutputStream(outputStream)
+      val writerIter = ImageIO.getImageWritersByMIMEType(originalImage.contentType)
+
+      if (writerIter.hasNext) {
+        val writer = writerIter.next
+        writer.setOutput(imageOutputStream)
+        writer.write(bufferedImage)
+      } else {
+        ImageIO.write(bufferedImage, originalImage.format, imageOutputStream)
+      }
+
       new ImageStream {
         override def stream = new ByteArrayInputStream(outputStream.toByteArray)
         override def contentType: String = originalImage.contentType
