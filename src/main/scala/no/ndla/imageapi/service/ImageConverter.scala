@@ -51,15 +51,14 @@ trait ImageConverter {
         .map(resized => toImageStream(resized, originalImage))
     }
 
-    def resize(originalImage: ImageStream, mode: Mode, targetSize: Int): Try[ImageStream] = {
-      val MaxTargetSize = 2000
+    private def resize(originalImage: ImageStream, mode: Mode, targetSize: Int): Try[ImageStream] = {
       val sourceImage = originalImage.sourceImage
-      Try(Scalr.resize(sourceImage, mode, min(targetSize, MaxTargetSize))).map(resized => toImageStream(resized, originalImage))
+      Try(Scalr.resize(sourceImage, mode, targetSize)).map(resized => toImageStream(resized, originalImage))
     }
 
-    def resizeWidth(originalImage: ImageStream, size: Int): Try[ImageStream] = resize(originalImage, Mode.FIT_TO_WIDTH, size)
+    def resizeWidth(originalImage: ImageStream, size: Int): Try[ImageStream] = resize(originalImage, Mode.FIT_TO_WIDTH, Math.min(size, originalImage.sourceImage.getWidth))
 
-    def resizeHeight(originalImage: ImageStream, size: Int): Try[ImageStream] = resize(originalImage, Mode.FIT_TO_HEIGHT, size)
+    def resizeHeight(originalImage: ImageStream, size: Int): Try[ImageStream] = resize(originalImage, Mode.FIT_TO_HEIGHT, Math.min(size, originalImage.sourceImage.getHeight))
 
     private def crop(image: ImageStream, sourceImage: BufferedImage, topLeft: PixelPoint, bottomRight: PixelPoint): Try[ImageStream] = {
       val (width, height) = getWidthHeight(topLeft, bottomRight, sourceImage)
