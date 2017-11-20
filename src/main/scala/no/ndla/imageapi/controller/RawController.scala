@@ -75,11 +75,10 @@ trait RawController {
     }
 
     private def getRawImage(imageName: String): ImageStream = {
-      val dynamicCropOrResize = if (canDoDynamicCrop) dynamicCrop _ else resize _
-
       imageStorage.get(imageName)
         .flatMap(crop)
-        .flatMap(dynamicCropOrResize) match {
+        .flatMap(dynamicCrop)
+        .flatMap(resize) match {
         case Success(img) => img
         case Failure(e) => throw e
       }
@@ -97,9 +96,6 @@ trait RawController {
         case _ => Success(image)
       }
     }
-
-    private def canDoDynamicCrop(implicit request: HttpServletRequest) =
-      doubleOrNone("focalX").isDefined && doubleOrNone("focalY").isDefined && (doubleOrNone("width").isDefined || doubleOrNone("height").isDefined || doubleOrNone("ratio").isDefined)
 
     def dynamicCrop(image: ImageStream): Try[ImageStream] = {
       val focalX = doubleInRange("focalX", PercentPoint.MinValue, PercentPoint.MaxValue)
