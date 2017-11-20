@@ -76,6 +76,8 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
 
   def isDouble(value: String): Boolean = Try(value.toDouble).isSuccess
 
+  def isBoolean(value: String): Boolean = Try(value.toBoolean).isSuccess
+
   def long(paramName: String)(implicit request: HttpServletRequest): Long = {
     val paramValue = params(paramName)
     if (!isInteger(paramValue))
@@ -95,6 +97,14 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
         case _ => None
       }
     })
+  }
+
+  def booleanOrDefault(paramName: String, default: String)(implicit request: HttpServletRequest): Boolean = {
+    val paramValue = paramOrDefault(paramName, default)
+    if (!isBoolean(paramValue))
+      throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only true or false is allowed.")))
+
+    paramValue.toBoolean
   }
 
   def paramOrNone(paramName: String)(implicit request: HttpServletRequest): Option[String] = {

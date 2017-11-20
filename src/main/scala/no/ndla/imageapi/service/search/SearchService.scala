@@ -83,7 +83,7 @@ trait SearchService {
       }
     }
 
-    def matchingQuery(query: String, minimumSize: Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
+    def matchingQuery(query: String, minimumSize: Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
       val fullSearch = QueryBuilders.boolQuery()
         .must(QueryBuilders.boolQuery()
           .should(languageSpecificSearch("titles", language, query, 2))
@@ -91,15 +91,15 @@ trait SearchService {
           .should(languageSpecificSearch("captions", language, query, 2))
           .should(languageSpecificSearch("tags", language, query, 2)))
 
-      executeSearch(fullSearch, minimumSize, license, language, page, pageSize)
+      executeSearch(fullSearch, minimumSize, license, language, page, pageSize, includeCopyrighted)
     }
 
-    def all(minimumSize: Option[Int], license: Option[String], language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult =
-      executeSearch(QueryBuilders.boolQuery(), minimumSize, license, language, page, pageSize)
+    def all(minimumSize: Option[Int], license: Option[String], language: Option[String], page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult =
+      executeSearch(QueryBuilders.boolQuery(), minimumSize, license, language, page, pageSize, includeCopyrighted)
 
-    def executeSearch(queryBuilder: BoolQueryBuilder, minimumSize: Option[Int], license: Option[String], language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
+    def executeSearch(queryBuilder: BoolQueryBuilder, minimumSize: Option[Int], license: Option[String], language: Option[String], page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
       val licensedFiltered = license match {
-        case None => queryBuilder.filter(noCopyright)
+        case None =>  if (!includeCopyrighted) queryBuilder.filter(noCopyright) else queryBuilder
         case Some(lic) => queryBuilder.filter(QueryBuilders.termQuery("license", lic))
       }
 

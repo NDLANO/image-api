@@ -16,6 +16,7 @@ case class SearchParams(@(ApiModelProperty@field)(description = "Return only ima
                         @(ApiModelProperty@field)(description = "Return only images with provided license.") license: Option[String],
                         @(ApiModelProperty@field)(description = "The ISO 639-1 language code describing language used in query-params") language: Option[String],
                         @(ApiModelProperty@field)(description = "Return only images with full size larger than submitted value in bytes.") minimumSize: Option[Int],
+                        @(ApiModelProperty@field)(description = "The page number of the search hits to display.") includeCopyrighted: Option[Boolean],
                         @(ApiModelProperty@field)(description = "The page number of the search hits to display.") page: Option[Int],
                         @(ApiModelProperty@field)(description = "The number of search hits to display for each page.") pageSize: Option[Int]
 )
