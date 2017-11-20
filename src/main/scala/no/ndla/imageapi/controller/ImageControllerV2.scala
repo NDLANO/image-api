@@ -135,7 +135,7 @@ trait ImageControllerV2 {
       val license = params.get("license")
       val pageSize = intOrNone("page-size")
       val page = intOrNone("page")
-      val includeCopyrighted = booleanOrDefault("includeCopyrighted", "false")
+      val includeCopyrighted = booleanOrDefault("includeCopyrighted", false)
 
       search(minimumSize, query, language, license, pageSize, page, includeCopyrighted)
     }
