@@ -5,8 +5,9 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.lang.Math.{abs, max, min}
 import javax.imageio.ImageIO
 
-import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
+import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.model.domain.ImageStream
+import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import org.imgscalr.Scalr
 import org.imgscalr.Scalr.Mode
 
@@ -33,10 +34,21 @@ trait ImageConverter {
     private def normalise(coord: Int): Double = coord.toDouble / MaxValue.toDouble
   }
 
-  class ImageConverter {
+  class ImageConverter extends LazyLogging {
     private[service] def toImageStream(bufferedImage: BufferedImage, originalImage: ImageStream): ImageStream = {
       val outputStream = new ByteArrayOutputStream()
-      ImageIO.write(bufferedImage, originalImage.format, outputStream)
+      val imageOutputStream = ImageIO.createImageOutputStream(outputStream)
+      val writerIter = ImageIO.getImageWritersByMIMEType(originalImage.contentType)
+
+      if (writerIter.hasNext) {
+        val writer = writerIter.next
+        writer.setOutput(imageOutputStream)
+        writer.write(bufferedImage)
+      } else {
+        logger.warn(s"Writer for content-type ${originalImage.contentType} not found, using ${originalImage.format} as format")
+        ImageIO.write(bufferedImage, originalImage.format, imageOutputStream)
+      }
+
       new ImageStream {
         override def stream = new ByteArrayInputStream(outputStream.toByteArray)
         override def contentType: String = originalImage.contentType
