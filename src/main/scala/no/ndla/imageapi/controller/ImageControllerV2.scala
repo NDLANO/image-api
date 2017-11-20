@@ -150,7 +150,7 @@ trait ImageControllerV2 {
       val page = searchParams.page
       val includeCopyrighted = searchParams.includeCopyrighted.getOrElse(false)
 
-      search(minimumSize, query, language, license, pageSize, page, includeCopyrighted )
+      search(minimumSize, query, language, license, pageSize, page, includeCopyrighted)
     }
 
     get("/:image_id", operation(getByImageId)) {
