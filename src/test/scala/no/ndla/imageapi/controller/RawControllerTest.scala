@@ -22,7 +22,7 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   addServlet(controller, "/*")
 
   val id = 1
-  val idGif = 1;
+  val idGif = 1
 
   override def beforeEach = {
     when(imageRepository.withId(id)).thenReturn(Some(TestData.bjorn))
