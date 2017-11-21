@@ -150,6 +150,13 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
     searchResult.results.head.id should be("2")
   }
 
+  test("That search on author matches corresponding author on image") {
+    val searchResult = searchService.matchingQuery("Bruce Wayne", None, None, None, None, None)
+    searchResult.totalCount should be(1)
+    searchResult.results.size should be(1)
+    searchResult.results.head.id should be("2")
+  }
+
   test("That search matches tags") {
     val searchResult = searchService.matchingQuery("and", None, Some("nb"), None, None, None)
     searchResult.totalCount should be(1)
