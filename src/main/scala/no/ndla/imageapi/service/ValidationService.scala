@@ -65,9 +65,9 @@ trait ValidationService {
 
     def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
       validateLicense(copyright.license).toList ++
-      copyright.creators.flatMap(a => validateAuthor("copyright.creators", a)) ++
-      copyright.processors.flatMap(a => validateAuthor("copyright.processors", a)) ++
-      copyright.rightsholders.flatMap(a => validateAuthor("copyright.rightsholders", a)) ++
+      copyright.creators.flatMap(a => validateAuthor("copyright.creators", a, ImageApiProperties.creatorTypes)) ++
+      copyright.processors.flatMap(a => validateAuthor("copyright.processors", a, ImageApiProperties.processorTypes)) ++
+      copyright.rightsholders.flatMap(a => validateAuthor("copyright.rightsholders", a, ImageApiProperties.rightsholderTypes)) ++
       containsNoHtml("copyright.origin", copyright.origin) ++
       validateAgreement(copyright)
     }
@@ -90,17 +90,17 @@ trait ValidationService {
       }
     }
 
-    def validateAuthor(fieldPath: String, author: Author): Seq[ValidationMessage] = {
+    def validateAuthor(fieldPath: String, author: Author, allowedTypes: Seq[String]): Seq[ValidationMessage] = {
       containsNoHtml(s"$fieldPath.type", author.`type`).toList ++
         containsNoHtml(s"$fieldPath.name", author.name).toList ++
-        validateAuthorType(s"$fieldPath.type", author.`type`).toList
+        validateAuthorType(s"$fieldPath.type", author.`type`, allowedTypes).toList
     }
 
-    def validateAuthorType(fieldPath: String, `type`: String): Option[ValidationMessage] = {
-      if(ImageApiProperties.allowedAuthors.contains(`type`.toLowerCase)) {
+    def validateAuthorType(fieldPath: String, `type`: String, allowedTypes: Seq[String]): Option[ValidationMessage] = {
+      if(allowedTypes.contains(`type`.toLowerCase)) {
         None
       } else {
-        Some(ValidationMessage(fieldPath, s"Author is of illegal type. Must be one of ${ImageApiProperties.allowedAuthors.mkString(", ")}"))
+        Some(ValidationMessage(fieldPath, s"Author is of illegal type. Must be one of ${allowedTypes.mkString(", ")}"))
       }
     }
 
