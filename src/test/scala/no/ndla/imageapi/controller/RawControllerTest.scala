@@ -3,7 +3,7 @@ package no.ndla.imageapi.controller
 import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 
-import no.ndla.imageapi.TestData.NdlaLogoImage
+import no.ndla.imageapi.TestData.{NdlaLogoImage, NdlaLogoGIFImage}
 import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
@@ -15,12 +15,14 @@ import scala.util.{Failure, Success}
 class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironment {
   implicit val swagger = new ImageSwagger
   val imageName = "ndla_logo.jpg"
+  val imageGifName = "ndla_logo.gif"
 
   override val imageConverter = new ImageConverter
   lazy val controller = new RawController
   addServlet(controller, "/*")
 
   val id = 1
+  val idGif = 1
 
   override def beforeEach = {
     when(imageRepository.withId(id)).thenReturn(Some(TestData.bjorn))
@@ -150,4 +152,90 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
     }
   }
 
+  test("That GET /imageGif.gif with width resizing returns the original image") {
+    when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoGIFImage))
+    get(s"/$imageGifName?width=100") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getWidth should equal(189)
+      image.getHeight should equal(60)
+    }
+  }
+
+  test("That GET /imageGif.gif with height resizing returns the original image") {
+    when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoGIFImage))
+    get(s"/$imageGifName?height=40") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getWidth should equal(189)
+      image.getHeight should equal(60)
+    }
+  }
+
+  test("That GET /imageGif.gif with cropping returns the original image") {
+    when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoGIFImage))
+    get(s"/$imageGifName?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getWidth should equal(189)
+      image.getHeight should equal(60)
+    }
+  }
+
+  test("That GET /imageGif.jpg with cropping and resizing returns the original image") {
+    when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoGIFImage))
+    get(s"/$imageGifName?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50&width=50") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getWidth should equal(189)
+      image.getHeight should equal(60)
+    }
+  }
+  test("That GET /id/1 with width resizing returns the original image") {
+    when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoGIFImage))
+    get(s"/id/$idGif?width=100") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getWidth should equal(189)
+      image.getHeight should equal(60)
+    }
+  }
+
+  test("That GET /id/1 with height resizing returns the original image") {
+    when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoGIFImage))
+    get(s"/id/$idGif?height=40") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getWidth should equal(189)
+      image.getHeight should equal(60)
+    }
+  }
+
+  test("That GET /id/2 with cropping returns the original image") {
+    when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoGIFImage))
+    get(s"/id/$idGif?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getWidth should equal(189)
+      image.getHeight should equal(60)
+    }
+  }
+
+  test("That GET /id/1 with cropping and resizing returns the original image") {
+    when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoGIFImage))
+    get(s"/id/$idGif?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50&width=50") {
+      status should equal (200)
+
+      val image = ImageIO.read(new ByteArrayInputStream(bodyBytes))
+      image.getWidth should equal(189)
+      image.getHeight should equal(60)
+    }
+  }
 }

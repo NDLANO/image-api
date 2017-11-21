@@ -76,11 +76,9 @@ trait RawController {
 
     private def getRawImage(imageName: String): ImageStream = {
       val dynamicCropOrResize = if (canDoDynamicCrop) dynamicCrop _ else resize _
-
-      imageStorage.get(imageName)
-        .flatMap(crop)
-        .flatMap(dynamicCropOrResize) match {
-        case Success(img) => img
+      imageStorage.get(imageName) match {
+        case Success(img) if img.format.equals("gif") => img
+        case Success(img) => crop(img).flatMap(dynamicCropOrResize).get
         case Failure(e) => throw e
       }
     }
