@@ -72,7 +72,7 @@ trait ConverterService {
         asApiUrl(imageMeta.imageUrl, rawBaseUrl),
         imageMeta.size,
         imageMeta.contentType,
-        asApiCopyright(imageMeta.copyright),
+        withAgreementCopyright(asApiCopyright(imageMeta.copyright)),
         tags,
         caption,
         getSupportedLanguages(imageMeta)))
@@ -92,18 +92,15 @@ trait ConverterService {
       ))
     }
 
-    def withAgreementCopyright(image: ImageMetaInformationV2): ImageMetaInformationV2 = {
-      val agreementCopyright = image.copyright.agreementId.flatMap(aid =>
-        draftApiClient.getAgreementCopyright(aid)
-      ).getOrElse(image.copyright)
-
-      image.copy(copyright = image.copyright.copy(
+    def withAgreementCopyright(copyright: api.Copyright): api.Copyright = {
+      val agreementCopyright = copyright.agreementId.flatMap(aid => draftApiClient.getAgreementCopyright(aid)).getOrElse(copyright)
+      copyright.copy(
         license = agreementCopyright.license,
         creators = agreementCopyright.creators,
         rightsholders = agreementCopyright.rightsholders,
         validFrom = agreementCopyright.validFrom,
         validTo = agreementCopyright.validTo
-      ))
+      )
     }
 
     def asApiImageTag(domainImageTag: domain.ImageTag): api.ImageTag = {

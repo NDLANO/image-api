@@ -153,7 +153,7 @@ trait ImageControllerV2 {
       val imageId = long("image_id")
       val language = paramOrNone("language")
       imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlV2(image, language)) match {
-        case Some(image) => converterService.withAgreementCopyright(image)
+        case Some(image) => image
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId and language $language not found"))
       }
     }
@@ -169,7 +169,7 @@ trait ImageControllerV2 {
 
       writeService.storeNewImage(newImage, file)
         .map(img => converterService.asApiImageMetaInformationWithApplicationUrlV2(img, Some(newImage.language))) match {
-        case Success(imageMeta) => imageMeta.map(converterService.withAgreementCopyright)
+        case Success(imageMeta) => imageMeta
         case Failure(e) => errorHandler(e)
       }
     }
@@ -178,7 +178,7 @@ trait ImageControllerV2 {
       authRole.assertHasRole(RoleWithWriteAccess)
       val imageId = long("image_id")
       writeService.updateImage(imageId, extract[UpdateImageMetaInformation](request.body)) match {
-        case Success(imageMeta) => converterService.withAgreementCopyright(imageMeta)
+        case Success(imageMeta) => imageMeta
         case Failure(e) => errorHandler(e)
       }
     }
