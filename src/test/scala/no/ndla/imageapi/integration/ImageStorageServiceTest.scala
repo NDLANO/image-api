@@ -9,9 +9,11 @@
 package no.ndla.imageapi.integration
 
 import java.io.ByteArrayInputStream
+import javax.imageio.ImageIO
 
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, PutObjectRequest, S3Object}
+import no.ndla.imageapi.TestData.NdlaLogoImage
 import no.ndla.imageapi.{ImageApiProperties, TestData, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -52,13 +54,13 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
     val s3object = new S3Object()
     s3object.setObjectMetadata(new ObjectMetadata())
     s3object.getObjectMetadata.setContentType(ContentType)
-    s3object.setObjectContent(new ByteArrayInputStream(Content.getBytes()))
+    s3object.setObjectContent(NdlaLogoImage.stream)
     when(amazonClient.getObject(any[GetObjectRequest])).thenReturn(s3object)
 
     val image = imageStorage.get("existing")
     assert(image.isSuccess)
     assert(image.get.contentType == ContentType)
-    assert(scala.io.Source.fromInputStream(image.get.stream).mkString == Content)
+    assert(image.get.sourceImage != null)
   }
 
   test("That AmazonImageStorage.get returns None when the key does not exist") {
