@@ -93,13 +93,10 @@ object ImageApiProperties extends LazyLogging {
   }
 
   def getCloudFrontUrl(env: String): String = {
-    // TODO Replace explicit CloudFront URLs with sub-domains created in Route 53:
-    // Prod:        https://images.api.digitallibrary.io
-    // Other envs:  https://images.<env>.api.digitallibrary.io
     env match {
-      case "prod" => "https://d35wua6xxeuogb.cloudfront.net"
-      case "staging" => "https://d3v2l44ntovq7z.cloudfront.net"
-      case "test" => "https://dc7deelsx2j7i.cloudfront.net"
+      case "prod" => "https://images.digitallibrary.io"
+      case "staging" => "https://images.staging.digitallibrary.io"
+      case "test" => "https://images.test.digitallibrary.io"
       case "local" => Domain + RawControllerPath
       case _ => throw new IllegalArgumentException(s"$env is not a valid env")
     }
