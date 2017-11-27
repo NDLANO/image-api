@@ -74,6 +74,22 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
     image.getWidth should equal(30)
   }
 
+  test("resize not resizes image if height is to big") {
+    val resizedImage = service.resizeHeight(NdlaLogoImage, 400)
+    resizedImage.isSuccess should equal(true)
+
+    val image = ImageIO.read(resizedImage.get.stream)
+    image.getHeight should equal(60)
+  }
+
+  test("resize not resizes image if width is to big") {
+    val resizedImage = service.resizeWidth(NdlaLogoImage, 400)
+    resizedImage.isSuccess should equal(true)
+
+    val image = ImageIO.read(resizedImage.get.stream)
+    image.getWidth should equal(189)
+  }
+
   test("resize resizes an image according to image orientation if both height and width is specified") {
     val croppedImage = service.resize(NdlaLogoImage, 100, 60)
     croppedImage.isSuccess should equal(true)

@@ -89,7 +89,8 @@ trait SearchService {
           .should(languageSpecificSearch("titles", language, query, 2))
           .should(languageSpecificSearch("alttexts", language, query, 1))
           .should(languageSpecificSearch("captions", language, query, 2))
-          .should(languageSpecificSearch("tags", language, query, 2)))
+          .should(languageSpecificSearch("tags", language, query, 2))
+          .should(QueryBuilders.simpleQueryStringQuery(query).field("authors")).boost(1))
 
       executeSearch(fullSearch, minimumSize, license, language, page, pageSize, includeCopyrighted)
     }
