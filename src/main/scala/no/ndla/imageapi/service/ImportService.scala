@@ -14,11 +14,10 @@ import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, NdlaRedPassword, 
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain.ImageMetaInformation
-import no.ndla.imageapi.model.{Language, S3UploadException, domain}
+import no.ndla.imageapi.model.{ImportException, Language, S3UploadException, domain}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexBuilderService
 import no.ndla.mapping.License.getLicense
-import no.ndla.mapping.ISO639.get6391CodeFor6392Code
 
 import scala.util.{Failure, Success, Try}
 import scalaj.http.Http
@@ -106,6 +105,13 @@ trait ImportService {
       }
     }
 
+    private def mapOldToNewLicenseKey(license: String): String = {
+      val licenses = Map("nolaw" -> "cc0", "noc" -> "pd")
+      if (!getLicense(license).isDefined) {
+        throw new ImportException(s"License $license is not supported.")
+      }
+      licenses.getOrElse(license, license)
+    }
     private def toDomainCopyright(imageMeta: MainImageImport): domain.Copyright = {
       val domainLicense = imageMeta.license.flatMap(getLicense)
         .map(license => domain.License(license.license, license.description, license.url))

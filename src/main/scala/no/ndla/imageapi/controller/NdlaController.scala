@@ -50,6 +50,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     case a: AccessDeniedException => Forbidden(body = Error(Error.ACCESS_DENIED, a.getMessage))
     case e: IndexNotFoundException => InternalServerError(body = Error.IndexMissingError)
     case i: ImageNotFoundException => NotFound(body = Error(Error.NOT_FOUND, i.getMessage))
+    case b: ImportException => UnprocessableEntity(body = Error(Error.LICENSE, b.getMessage))
     case s: S3UploadException => {
       contentType = formats("json")
       GatewayTimeout(body = Error(Error.GATEWAY_TIMEOUT, s.getMessage))
