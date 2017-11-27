@@ -87,7 +87,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all returns all documents ordered by id ascending") {
-    val searchResult = searchService.all(None, None, None, None, None)
+    val searchResult = searchService.all(None, None, None, None, None, false)
     searchResult.totalCount should be(4)
     searchResult.results.size should be(4)
     searchResult.page should be(1)
@@ -96,7 +96,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all filtering on minimumsize only returns images larger than minimumsize") {
-    val searchResult = searchService.all(Some(500), None, None, None, None)
+    val searchResult = searchService.all(Some(500), None, None, None, None, false)
     searchResult.totalCount should be(2)
     searchResult.results.size should be(2)
     searchResult.results.head.id should be("1")
@@ -104,15 +104,15 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all filtering on license only returns images with given license") {
-    val searchResult = searchService.all(None, Some("publicdomain"), None, None, None)
+    val searchResult = searchService.all(None, Some("publicdomain"), None, None, None, false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
   test("That paging returns only hits on current page and not more than page-size") {
-    val searchResultPage1 = searchService.all(None, None, None, Some(1), Some(2))
-    val searchResultPage2 = searchService.all(None, None, None, Some(2), Some(2))
+    val searchResultPage1 = searchService.all(None, None, None, Some(1), Some(2), false)
+    val searchResultPage2 = searchService.all(None, None, None, Some(2), Some(2), false)
     searchResultPage1.totalCount should be(4)
     searchResultPage1.page should be(1)
     searchResultPage1.pageSize should be(2)
@@ -129,14 +129,14 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("That both minimum-size and license filters are applied.") {
-    val searchResult = searchService.all(Some(500), Some("publicdomain"), None, None, None)
+    val searchResult = searchService.all(Some(500), Some("publicdomain"), None, None, None, false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
   test("That search matches title and alttext ordered by relevance") {
-    val searchResult = searchService.matchingQuery("bil", None, None, None, None, None)
+    val searchResult = searchService.matchingQuery("bil", None, None, None, None, None, false)
     searchResult.totalCount should be(2)
     searchResult.results.size should be(2)
     searchResult.results.head.id should be("1")
@@ -144,28 +144,28 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("That search matches title") {
-    val searchResult = searchService.matchingQuery("Pingvinen", None, Some("nb"), None, None, None)
+    val searchResult = searchService.matchingQuery("Pingvinen", None, Some("nb"), None, None, None, false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
   test("That search on author matches corresponding author on image") {
-    val searchResult = searchService.matchingQuery("Bruce Wayne", None, None, None, None, None)
+    val searchResult = searchService.matchingQuery("Bruce Wayne", None, None, None, None, None, false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
   test("That search matches tags") {
-    val searchResult = searchService.matchingQuery("and", None, Some("nb"), None, None, None)
+    val searchResult = searchService.matchingQuery("and", None, Some("nb"), None, None, None, false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("3")
   }
 
   test("That search defaults to nb if no language is specified") {
-    val searchResult = searchService.matchingQuery("Bilde av en and", None, None, None, None, None)
+    val searchResult = searchService.matchingQuery("Bilde av en and", None, None, None, None, None, false)
     searchResult.totalCount should be (3)
     searchResult.results.size should be (3)
     searchResult.results.head.id should be ("1")
@@ -174,23 +174,23 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("That search matches title with unknown language analyzed in Norwegian") {
-    val searchResult = searchService.matchingQuery("blomst", None, None, None, None, None)
+    val searchResult = searchService.matchingQuery("blomst", None, None, None, None, None, false)
     searchResult.totalCount should be (1)
     searchResult.results.size should be (1)
     searchResult.results.head.id should be ("4")
   }
 
   test("Searching with logical AND only returns results with all terms") {
-    val search1 = searchService.matchingQuery("batmen AND bil", None, Some("nb"), None, Some(1), Some(10))
+    val search1 = searchService.matchingQuery("batmen AND bil", None, Some("nb"), None, Some(1), Some(10), false)
     search1.results.map(_.id) should equal (Seq("1", "3"))
 
-    val search2 = searchService.matchingQuery("batmen | pingvinen", None, Some("nb"), None, Some(1), Some(10))
+    val search2 = searchService.matchingQuery("batmen | pingvinen", None, Some("nb"), None, Some(1), Some(10), false)
     search2.results.map(_.id) should equal (Seq("1", "2"))
 
-    val search3 = searchService.matchingQuery("bilde + -flaggermusmann", None, Some("nb"), None, Some(1), Some(10))
+    val search3 = searchService.matchingQuery("bilde + -flaggermusmann", None, Some("nb"), None, Some(1), Some(10), false)
     search3.results.map(_.id) should equal (Seq("2", "3"))
 
-    val search4 = searchService.matchingQuery("batmen + bil", None, Some("nb"), None, Some(1), Some(10))
+    val search4 = searchService.matchingQuery("batmen + bil", None, Some("nb"), None, Some(1), Some(10), false)
     search4.results.map(_.id) should equal (Seq("1"))
   }
 

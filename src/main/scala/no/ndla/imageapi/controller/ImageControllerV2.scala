@@ -53,6 +53,7 @@ trait ImageControllerV2 {
         queryParam[Option[String]]("minimum-size").description("Return only images with full size larger than submitted value in bytes."),
         queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
         queryParam[Option[String]]("license").description("Return only images with provided license."),
+        queryParam[Option[String]]("includeCopyrighted").description("Return copyrighted images. May be omitted."),
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
       )
@@ -112,7 +113,7 @@ trait ImageControllerV2 {
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
-    private def search(minimumSize: Option[Int], query: Option[String], language: Option[String], license: Option[String], pageSize: Option[Int], page: Option[Int]) = {
+    private def search(minimumSize: Option[Int], query: Option[String], language: Option[String], license: Option[String], pageSize: Option[Int], page: Option[Int], includeCopyrighted: Boolean) = {
       query match {
         case Some(searchString) => searchService.matchingQuery(
           query = searchString.trim,
@@ -120,9 +121,10 @@ trait ImageControllerV2 {
           language = language,
           license = license,
           page,
-          pageSize)
+          pageSize,
+          includeCopyrighted)
 
-        case None => searchService.all(minimumSize = minimumSize, license = license, language = language, page, pageSize)
+        case None => searchService.all(minimumSize = minimumSize, license = license, language = language, page, pageSize, includeCopyrighted)
       }
     }
 
@@ -133,8 +135,9 @@ trait ImageControllerV2 {
       val license = params.get("license")
       val pageSize = intOrNone("page-size")
       val page = intOrNone("page")
+      val includeCopyrighted = booleanOrDefault("includeCopyrighted", false)
 
-      search(minimumSize, query, language, license, pageSize, page)
+      search(minimumSize, query, language, license, pageSize, page, includeCopyrighted)
     }
 
     post("/search/", operation(getImagesPost)) {
@@ -145,8 +148,9 @@ trait ImageControllerV2 {
       val license = searchParams.license
       val pageSize = searchParams.pageSize
       val page = searchParams.page
+      val includeCopyrighted = searchParams.includeCopyrighted.getOrElse(false)
 
-      search(minimumSize, query, language, license, pageSize, page)
+      search(minimumSize, query, language, license, pageSize, page, includeCopyrighted)
     }
 
     get("/:image_id", operation(getByImageId)) {
