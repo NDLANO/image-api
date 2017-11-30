@@ -93,7 +93,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   test("That POST / returns 200 if everything went well") {
     val titles: Seq[ImageTitle] = Seq()
     val alttexts: Seq[ImageAltText] = Seq()
-    val copyright = Copyright(License("by", "description", None), "", Seq.empty)
+    val copyright = Copyright(License("by", "description", None), "", Seq.empty, Seq.empty, Seq.empty, None, None, None)
     val tags: Seq[ImageTag] = Seq()
     val captions: Seq[ImageCaption] = Seq()
 
@@ -153,7 +153,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   test("That GET / returns body and 200 when image exists") {
 
     val imageSummary = api.ImageMetaSummary("4", api.ImageTitle("Tittel", "nb"), Seq("Jason Bourne", "Ben Affleck"), api.ImageAltText("AltText", "nb"), "http://image-api.ndla-local/image-api/raw/4", "http://image-api.ndla-local/image-api/v2/images/4", "by-sa")
-    val expectedBody = """{"totalCount":1,"page":1,"pageSize":10,"results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"authors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa"}]}"""
+    val expectedBody = """{"totalCount":1,"page":1,"pageSize":10,"results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa"}]}"""
     when(searchService.all(Option(any[Int]), Option(any[String]), Option(any[String]), Option(any[Int]), Option(any[Int]), any[Boolean])).thenReturn(SearchResult(1, 1, 10, List(imageSummary)))
     get("/") {
       status should equal(200)
@@ -171,9 +171,49 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   test("That GET /<id> returns body and 200 when image exists") {
     implicit val formats = DefaultFormats
     val testUrl = "http://test.test/1"
-    val expectedBody = s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"by-nc-sa","description":"Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic","url":"https://creativecommons.org/licenses/by-nc-sa/2.0/"},"origin":"http://www.scanpix.no","authors":[{"type":"Fotograf","name":"Test Testesen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
+    val expectedBody = s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"by-nc-sa","description":"Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic","url":"https://creativecommons.org/licenses/by-nc-sa/2.0/"},"origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
     val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
     when(imageRepository.withId(1)).thenReturn(Option(TestData.elg))
+
+    get("/1") {
+      status should equal(200)
+      val result = JsonParser.parse(body).extract[api.ImageMetaInformationV2]
+      result.copy(imageUrl = testUrl, metaUrl = testUrl) should equal(expectedObject)
+    }
+  }
+
+  test("That GET /<id> returns body with agreement license and authors") {
+    when(draftApiClient.getAgreementCopyright(1)).thenReturn(Some(api.Copyright(api.License("gnu", "gnuggert", Some("https://gnuli/")), "http://www.scanpix.no", List(api.Author("Forfatter", "Knutulf Knagsen")), List(), List(), None, None, None)))
+    implicit val formats = DefaultFormats
+    val testUrl = "http://test.test/1"
+    val expectedBody = s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"gnu","description":"gnuggert","url":"https://gnuli/"},"agreementId": 1,"origin":"http://www.scanpix.no","creators":[{"type":"Forfatter","name":"Knutulf Knagsen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
+    val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
+    val agreementElg = ImageMetaInformation(Some(1), List(ImageTitle("Elg i busk", "nb")), List(ImageAltText("Elg i busk", "nb")),
+      "Elg.jpg", 2865539, "image/jpeg",
+      Copyright(TestData.ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen")), List(Author("Redaksjonelt", "Kåre Knegg")), List(Author("Leverandør", "Leverans Leveransensen")), Some(1), None, None),
+      List(ImageTag(List("rovdyr", "elg"), "nb")), List(ImageCaption("Elg i busk", "nb")), "ndla124", TestData.updated())
+
+    when(imageRepository.withId(1)).thenReturn(Option(agreementElg))
+
+    get("/1") {
+      status should equal(200)
+      val result = JsonParser.parse(body).extract[api.ImageMetaInformationV2]
+      result.copy(imageUrl = testUrl, metaUrl = testUrl) should equal(expectedObject)
+    }
+  }
+
+  test("That GET /<id> returns body with original copyright if agreement doesnt exist") {
+    when(draftApiClient.getAgreementCopyright(1)).thenReturn(None)
+    implicit val formats = DefaultFormats
+    val testUrl = "http://test.test/1"
+    val expectedBody = s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"by-nc-sa","description":"Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic","url":"https://creativecommons.org/licenses/by-nc-sa/2.0/"}, "agreementId":1, "origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
+    val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
+    val agreementElg = ImageMetaInformation(Some(1), List(ImageTitle("Elg i busk", "nb")), List(ImageAltText("Elg i busk", "nb")),
+      "Elg.jpg", 2865539, "image/jpeg",
+      Copyright(TestData.ByNcSa, "http://www.scanpix.no", List(Author("Fotograf", "Test Testesen")), List(Author("Redaksjonelt", "Kåre Knegg")), List(Author("Leverandør", "Leverans Leveransensen")), Some(1), None, None),
+      List(ImageTag(List("rovdyr", "elg"), "nb")), List(ImageCaption("Elg i busk", "nb")), "ndla124", TestData.updated())
+
+    when(imageRepository.withId(1)).thenReturn(Option(agreementElg))
 
     get("/1") {
       status should equal(200)

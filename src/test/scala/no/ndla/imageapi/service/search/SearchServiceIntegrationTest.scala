@@ -12,12 +12,15 @@ import javax.servlet.http.HttpServletRequest
 import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
 import no.ndla.imageapi.integration.JestClientFactory
 import no.ndla.imageapi.model.domain._
+import no.ndla.imageapi.model.api
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
 import no.ndla.tag.IntegrationTest
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Matchers._
+import org.mockito.Mockito
 import org.mockito.Mockito._
+import org.mockito.invocation.InvocationOnMock
 
 @IntegrationTest
 class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
@@ -35,22 +38,29 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   val largeImage = Image("large-full-url", 10000, "jpg")
   val smallImage = Image("small-full-url", 100, "jpg")
 
-  val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None), "Gotham City", List(Author("Forfatter", "DC Comics")))
-  val publicDomain = Copyright(License("publicdomain", "Public Domain", None), "Metropolis", List(Author("Forfatter", "Bruce Wayne")))
+  val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None), "Gotham City", List(Author("Forfatter", "DC Comics")), List(), List(), None, None, None)
+  val publicDomain = Copyright(License("publicdomain", "Public Domain", None), "Metropolis", List(Author("Forfatter", "Bruce Wayne")), List(), List(), None, None, None)
   val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
+  val agreement1Copyright = api.Copyright(api.License("gnu", "gnustuff", Some("http://gnugnusen")), "Simsalabim", List(), List(), List(), None, None, None)
 
   val image1 = ImageMetaInformation(Some(1), List(ImageTitle("Batmen er på vift med en bil", "nb")), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", "nb")), largeImage.fileName, largeImage.size, largeImage.contentType, byNcSa, List(ImageTag(List("fugl"), "nb")), List(), "ndla124", updated)
   val image2 = ImageMetaInformation(Some(2), List(ImageTitle("Pingvinen er ute og går", "nb")), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", "nb")), largeImage.fileName, largeImage.size, largeImage.contentType, publicDomain, List(ImageTag(List("fugl"), "nb")), List(), "ndla124", updated)
   val image3 = ImageMetaInformation(Some(3), List(ImageTitle("Donald Duck kjører bil", "nb")), List(ImageAltText("Bilde av en en and som kjører en rød bil.", "nb")), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, List(ImageTag(List("and"), "nb")), List(), "ndla124", updated)
   val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", "unknown")), Seq(), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq(), "ndla124", updated)
+  val image5 = ImageMetaInformation(Some(5), List(ImageTitle("Dette er et urelatert bilde", "unknown")), Seq(), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa.copy(agreementId = Some(1)), Seq(), Seq(), "ndla124", updated)
 
   override def beforeAll() = {
     indexService.createIndexWithName(ImageApiProperties.SearchIndex)
+
+    when(draftApiClient.getAgreementCopyright(any[Long])).thenReturn(None)
+
+    when(draftApiClient.getAgreementCopyright(1)).thenReturn(Some(agreement1Copyright))
 
     indexService.indexDocument(image1)
     indexService.indexDocument(image2)
     indexService.indexDocument(image3)
     indexService.indexDocument(image4)
+    indexService.indexDocument(image5)
 
     val servletRequest = mock[HttpServletRequest]
     when(servletRequest.getHeader(any[String])).thenReturn("http")
@@ -58,7 +68,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
     when(servletRequest.getServletPath).thenReturn("/image-api/v2/images/")
     ApplicationUrl.set(servletRequest)
 
-    blockUntil(() => searchService.countDocuments() == 4)
+    blockUntil(() => searchService.countDocuments() == 5)
   }
 
   override def afterAll() = {
@@ -88,11 +98,11 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
   test("That all returns all documents ordered by id ascending") {
     val searchResult = searchService.all(None, None, None, None, None, false)
-    searchResult.totalCount should be(4)
-    searchResult.results.size should be(4)
+    searchResult.totalCount should be(5)
+    searchResult.results.size should be(5)
     searchResult.page should be(1)
     searchResult.results.head.id should be("1")
-    searchResult.results.last.id should be("4")
+    searchResult.results.last.id should be("5")
   }
 
   test("That all filtering on minimumsize only returns images larger than minimumsize") {
@@ -113,14 +123,14 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   test("That paging returns only hits on current page and not more than page-size") {
     val searchResultPage1 = searchService.all(None, None, None, Some(1), Some(2), false)
     val searchResultPage2 = searchService.all(None, None, None, Some(2), Some(2), false)
-    searchResultPage1.totalCount should be(4)
+    searchResultPage1.totalCount should be(5)
     searchResultPage1.page should be(1)
     searchResultPage1.pageSize should be(2)
     searchResultPage1.results.size should be(2)
     searchResultPage1.results.head.id should be("1")
     searchResultPage1.results.last.id should be("2")
 
-    searchResultPage2.totalCount should be(4)
+    searchResultPage2.totalCount should be(5)
     searchResultPage2.page should be(2)
     searchResultPage2.pageSize should be(2)
     searchResultPage2.results.size should be(2)
@@ -166,11 +176,12 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
   test("That search defaults to nb if no language is specified") {
     val searchResult = searchService.matchingQuery("Bilde av en and", None, None, None, None, None, false)
-    searchResult.totalCount should be (3)
-    searchResult.results.size should be (3)
+    searchResult.totalCount should be (4)
+    searchResult.results.size should be (4)
     searchResult.results.head.id should be ("1")
     searchResult.results(1).id should be ("2")
-    searchResult.results.last.id should be ("3")
+    searchResult.results(2).id should be ("3")
+    searchResult.results.last.id should be ("5")
   }
 
   test("That search matches title with unknown language analyzed in Norwegian") {
@@ -192,6 +203,14 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
     val search4 = searchService.matchingQuery("batmen + bil", None, Some("nb"), None, Some(1), Some(10), false)
     search4.results.map(_.id) should equal (Seq("1"))
+  }
+
+  test("Agreement information should be used in search") {
+    val searchResult = searchService.matchingQuery("urelatert", None, None, None, None, None, false)
+    searchResult.totalCount should be (1)
+    searchResult.results.size should be (1)
+    searchResult.results.head.id should be ("5")
+    searchResult.results.head.license should equal(agreement1Copyright.license.license)
   }
 
   def blockUntil(predicate: () => Boolean) = {

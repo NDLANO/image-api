@@ -10,7 +10,8 @@ package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.auth.Role
-import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, NewImageMetaInformationV2, SearchParams, SearchResult, UpdateImageMetaInformation, ValidationError}
+import no.ndla.imageapi.integration.DraftApiClient
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, License, NewImageMetaInformationV2, SearchParams, SearchResult, UpdateImageMetaInformation, ValidationError}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.SearchService
@@ -19,11 +20,10 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
-
 import scala.util.{Failure, Success}
 
 trait ImageControllerV2 {
-  this: ImageRepository with SearchService with ConverterService with WriteService with Role =>
+  this: ImageRepository with SearchService with ConverterService with WriteService with DraftApiClient with Role =>
   val imageControllerV2: ImageControllerV2
 
   class ImageControllerV2(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
@@ -167,9 +167,9 @@ trait ImageControllerV2 {
 
       val newImage = params.get("metadata")
         .map(extract[NewImageMetaInformationV2])
-        .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
+        .getOrElse(throw new ValidationException(errors = Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
 
-      val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
+      val file = fileParams.getOrElse("file", throw new ValidationException(errors = Seq(ValidationMessage("file", "The request must contain an image file"))))
 
       writeService.storeNewImage(newImage, file)
         .map(img => converterService.asApiImageMetaInformationWithApplicationUrlV2(img, Some(newImage.language))) match {
@@ -188,4 +188,5 @@ trait ImageControllerV2 {
     }
 
   }
+
 }

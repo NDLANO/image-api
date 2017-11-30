@@ -18,7 +18,7 @@ case class SearchableImage (id: Long,
                             alttexts: SearchableLanguageValues,
                             captions: SearchableLanguageValues,
                             tags: SearchableLanguageList,
-                            authors: Seq[String],
+                            contributors: Seq[String],
                             license: String,
                             imageSize: Long,
                             previewUrl: String)

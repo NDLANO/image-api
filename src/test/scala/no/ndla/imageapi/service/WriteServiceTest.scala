@@ -35,7 +35,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   val newImageMeta = NewImageMetaInformationV2(
     "title",
     "alt text",
-    Copyright(License("by", "", None), "", Seq.empty),
+    Copyright(License("by", "", None), "", Seq.empty, Seq.empty, Seq.empty, None, None, None),
     Seq.empty,
     "",
     "en"
@@ -272,7 +272,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       "nb",
       Some("Title"),
       Some("AltText"),
-      Some(Copyright(License("testLic", "License for testing", None), "test", List(Author("Opphavsmann", "Testerud")))),
+      Some(Copyright(License("testLic", "License for testing", None), "test", List(Author("Opphavsmann", "Testerud")), List(), List(), None, None, None)),
       Some(List("a", "b", "c")),
       Some("Caption")
     )
@@ -280,7 +280,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     val expectedResult = existing.copy(
       titles = List(domain.ImageTitle("Title", "nb")),
       alttexts = List(domain.ImageAltText("AltText", "nb")),
-      copyright = domain.Copyright(domain.License("testLic", "License for testing", None), "test", List(domain.Author("Opphavsmann", "Testerud"))),
+      copyright = domain.Copyright(domain.License("testLic", "License for testing", None), "test", List(domain.Author("Opphavsmann", "Testerud")), List(), List(), None, None, None),
       tags = List(domain.ImageTag(List("a", "b", "c"), "nb")),
       captions = List(domain.ImageCaption("Caption", "nb"))
     )
