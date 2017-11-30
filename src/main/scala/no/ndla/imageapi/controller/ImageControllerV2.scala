@@ -10,7 +10,8 @@ package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.auth.{Role, User}
-import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, NewImageMetaInformationV2, SearchParams, SearchResult, UpdateImageMetaInformation, ValidationError}
+import no.ndla.imageapi.integration.DraftApiClient
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, License, NewImageMetaInformationV2, SearchParams, SearchResult, UpdateImageMetaInformation, ValidationError}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.SearchService
@@ -19,11 +20,10 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
-
 import scala.util.{Failure, Success}
 
 trait ImageControllerV2 {
-  this: ImageRepository with SearchService with ConverterService with WriteService with Role with User =>
+  this: ImageRepository with SearchService with ConverterService with WriteService with DraftApiClient with Role with User =>
   val imageControllerV2: ImageControllerV2
 
   class ImageControllerV2(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
@@ -53,6 +53,7 @@ trait ImageControllerV2 {
         queryParam[Option[String]]("minimum-size").description("Return only images with full size larger than submitted value in bytes."),
         queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
         queryParam[Option[String]]("license").description("Return only images with provided license."),
+        queryParam[Option[String]]("includeCopyrighted").description("Return copyrighted images. May be omitted."),
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
       )
@@ -112,7 +113,7 @@ trait ImageControllerV2 {
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
-    private def search(minimumSize: Option[Int], query: Option[String], language: Option[String], license: Option[String], pageSize: Option[Int], page: Option[Int]) = {
+    private def search(minimumSize: Option[Int], query: Option[String], language: Option[String], license: Option[String], pageSize: Option[Int], page: Option[Int], includeCopyrighted: Boolean) = {
       query match {
         case Some(searchString) => searchService.matchingQuery(
           query = searchString.trim,
@@ -120,9 +121,10 @@ trait ImageControllerV2 {
           language = language,
           license = license,
           page,
-          pageSize)
+          pageSize,
+          includeCopyrighted)
 
-        case None => searchService.all(minimumSize = minimumSize, license = license, language = language, page, pageSize)
+        case None => searchService.all(minimumSize = minimumSize, license = license, language = language, page, pageSize, includeCopyrighted)
       }
     }
 
@@ -133,8 +135,9 @@ trait ImageControllerV2 {
       val license = params.get("license")
       val pageSize = intOrNone("page-size")
       val page = intOrNone("page")
+      val includeCopyrighted = booleanOrDefault("includeCopyrighted", false)
 
-      search(minimumSize, query, language, license, pageSize, page)
+      search(minimumSize, query, language, license, pageSize, page, includeCopyrighted)
     }
 
     post("/search/", operation(getImagesPost)) {
@@ -145,8 +148,9 @@ trait ImageControllerV2 {
       val license = searchParams.license
       val pageSize = searchParams.pageSize
       val page = searchParams.page
+      val includeCopyrighted = searchParams.includeCopyrighted.getOrElse(false)
 
-      search(minimumSize, query, language, license, pageSize, page)
+      search(minimumSize, query, language, license, pageSize, page, includeCopyrighted)
     }
 
     get("/:image_id", operation(getByImageId)) {
@@ -164,9 +168,9 @@ trait ImageControllerV2 {
 
       val newImage = params.get("metadata")
         .map(extract[NewImageMetaInformationV2])
-        .getOrElse(throw new ValidationException(errors=Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
+        .getOrElse(throw new ValidationException(errors = Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
 
-      val file = fileParams.getOrElse("file", throw new ValidationException(errors=Seq(ValidationMessage("file", "The request must contain an image file"))))
+      val file = fileParams.getOrElse("file", throw new ValidationException(errors = Seq(ValidationMessage("file", "The request must contain an image file"))))
 
       writeService.storeNewImage(newImage, file)
         .map(img => converterService.asApiImageMetaInformationWithApplicationUrlV2(img, Some(newImage.language))) match {
@@ -186,4 +190,5 @@ trait ImageControllerV2 {
     }
 
   }
+
 }
