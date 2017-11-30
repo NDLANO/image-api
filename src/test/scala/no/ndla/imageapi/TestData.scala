@@ -78,6 +78,8 @@ object TestData {
   }
 
   val NdlaLogoImage = DiskImage("ndla_logo.jpg")
+  val NdlaLogoGIFImage = DiskImage("ndla_logo.gif")
+
   val ChildrensImage = DiskImage("children-drawing-582306_640.jpg") // From https://pixabay.com/en/children-drawing-home-tree-meadow-582306/
 
   val migrationImageMeta = ImageMeta("1234", "1234", "nob", "Elg i busk", Some("Busk i elg"), "2017-10-01 21:45:37.0", "Elg.jpg", "image/jpg", "1024", Some("I busk elg"))

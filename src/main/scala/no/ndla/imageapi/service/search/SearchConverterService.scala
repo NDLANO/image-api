@@ -30,6 +30,7 @@ trait SearchConverterService {
         alttexts = SearchableLanguageValues(imageWithAgreement.alttexts.map(alttext => LanguageValue(alttext.language, alttext.alttext))),
         captions = SearchableLanguageValues(imageWithAgreement.captions.map(caption => LanguageValue(caption.language, caption.caption))),
         tags = SearchableLanguageList(imageWithAgreement.tags.map(tag => LanguageValue(tag.language, tag.tags))),
+        contributors = image.copyright.creators.map(c => c.name) ++ image.copyright.processors.map(p => p.name) ++ image.copyright.rightsholders.map(r => r.name),
         license = imageWithAgreement.copyright.license.license,
         imageSize = imageWithAgreement.size,
         previewUrl = parse(imageWithAgreement.imageUrl).toString)
@@ -49,6 +50,7 @@ trait SearchConverterService {
       ImageMetaSummary(
         id = searchableImage.id.toString,
         title = title,
+        contributors = searchableImage.contributors,
         altText = altText,
         previewUrl = apiToRawRegex.replaceFirstIn(ApplicationUrl.get, "/raw") + searchableImage.previewUrl,
         metaUrl = ApplicationUrl.get + searchableImage.id,
