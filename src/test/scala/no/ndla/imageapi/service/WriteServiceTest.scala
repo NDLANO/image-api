@@ -156,7 +156,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("converter to domain should set updatedBy from authUser and updated date"){
-    when(authUser.id()).thenReturn("ndla54321")
+    when(authUser.userOrClientid()).thenReturn("ndla54321")
     when(clock.now()).thenReturn(updated())
     val domain = converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg"))
     domain.updatedBy should equal ("ndla54321")
@@ -234,7 +234,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       alttexts = List(existing.alttexts.head, domain.ImageAltText("AltText", "en"))
     )
 
-    when(authUser.id()).thenReturn(user)
+    when(authUser.userOrClientid()).thenReturn(user)
     when(clock.now()).thenReturn(date)
 
     writeService.mergeImages(existing, toUpdate) should equal(expectedResult)
@@ -258,7 +258,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       alttexts = List(domain.ImageAltText("AltText", "nb"))
     )
 
-    when(authUser.id()).thenReturn(user)
+    when(authUser.userOrClientid()).thenReturn(user)
     when(clock.now()).thenReturn(date)
 
     writeService.mergeImages(existing, toUpdate) should equal(expectedResult)
@@ -285,7 +285,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       captions = List(domain.ImageCaption("Caption", "nb"))
     )
 
-    when(authUser.id()).thenReturn(user)
+    when(authUser.userOrClientid()).thenReturn(user)
     when(clock.now()).thenReturn(date)
 
     writeService.mergeImages(existing, toUpdate) should equal(expectedResult)

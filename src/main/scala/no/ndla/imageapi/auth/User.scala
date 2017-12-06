@@ -17,14 +17,16 @@ trait User {
   val authUser: AuthUser
 
   class AuthUser {
+    def assertHasId(): Unit = userOrClientid()
 
-    def id(): String = {
-      if (AuthUser.get.isEmpty || AuthUser.get.get.isEmpty) {
-        throw new AccessDeniedException(("User id required to perform this operation"))
-      } else {
-        return AuthUser.get.get
+    def userOrClientid(): String = {
+      if (AuthUser.get.isDefined) {
+        AuthUser.get.get
       }
-
+      else if (AuthUser.getClientId.isDefined) {
+        AuthUser.getClientId.get
+      }
+      else throw new AccessDeniedException("User id or Client id required to perform this operation")
     }
 
   }

@@ -9,7 +9,7 @@
 package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
-import no.ndla.imageapi.auth.Role
+import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.integration.DraftApiClient
 import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, License, NewImageMetaInformationV2, SearchParams, SearchResult, UpdateImageMetaInformation, ValidationError}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
@@ -23,7 +23,7 @@ import org.scalatra.swagger._
 import scala.util.{Failure, Success}
 
 trait ImageControllerV2 {
-  this: ImageRepository with SearchService with ConverterService with WriteService with DraftApiClient with Role =>
+  this: ImageRepository with SearchService with ConverterService with WriteService with DraftApiClient with Role with User =>
   val imageControllerV2: ImageControllerV2
 
   class ImageControllerV2(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
@@ -163,6 +163,7 @@ trait ImageControllerV2 {
     }
 
     post("/", operation(newImage)) {
+      authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
 
       val newImage = params.get("metadata")
@@ -179,6 +180,7 @@ trait ImageControllerV2 {
     }
 
     patch("/:image_id", operation(updateImage)) {
+      authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
       val imageId = long("image_id")
       writeService.updateImage(imageId, extract[UpdateImageMetaInformation](request.body)) match {

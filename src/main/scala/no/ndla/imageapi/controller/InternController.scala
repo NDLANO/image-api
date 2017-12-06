@@ -8,6 +8,7 @@
 
 package no.ndla.imageapi.controller
 
+import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.S3UploadException
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.repository.ImageRepository
@@ -19,7 +20,7 @@ import org.scalatra.{GatewayTimeout, InternalServerError, NotFound, Ok}
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImageRepository with ImportService with ConverterService with IndexBuilderService with IndexService =>
+  this: ImageRepository with ImportService with ConverterService with IndexBuilderService with IndexService with User =>
   val internController: InternController
 
   class InternController extends NdlaController {
@@ -70,6 +71,7 @@ trait InternController {
     }
 
     post("/import/:image_id") {
+      authUser.assertHasId()
       val start = System.currentTimeMillis
       val imageId = params("image_id")
 
