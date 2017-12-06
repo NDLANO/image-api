@@ -8,7 +8,7 @@ import scala.annotation.meta.field
 @ApiModel(description = "Summary of meta information for an image")
 case class ImageMetaSummary(@(ApiModelProperty@field)(description = "The unique id of the image") id: String,
                             @(ApiModelProperty@field)(description = "The title for this image") title: ImageTitle,
-                            @(ApiModelProperty@field)(description = "The copyright authors for this image") authors: Seq[String],
+                            @(ApiModelProperty@field)(description = "The copyright authors for this image") contributors: Seq[String],
                             @(ApiModelProperty@field)(description = "The alt text for this image") altText: ImageAltText,
                             @(ApiModelProperty@field)(description = "The full url to where a preview of the image can be downloaded") previewUrl: String,
                             @(ApiModelProperty@field)(description = "The full url to where the complete metainformation about the image can be found") metaUrl: String,

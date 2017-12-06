@@ -15,9 +15,11 @@ import no.ndla.imageapi.model.Language._
 import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
 import com.netaporter.uri.Uri.parse
+import no.ndla.imageapi.integration.DraftApiClient
+import no.ndla.imageapi.model.api.ImageMetaInformationV2
 
 trait ConverterService {
-  this: User with Clock =>
+  this: User with Clock with DraftApiClient =>
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
@@ -28,7 +30,15 @@ trait ConverterService {
     }
 
     def asApiCopyright(domainCopyright: domain.Copyright): api.Copyright = {
-      api.Copyright(asApiLicense(domainCopyright.license), domainCopyright.origin, domainCopyright.authors.map(asApiAuthor))
+      api.Copyright(
+        asApiLicense(domainCopyright.license),
+        domainCopyright.origin,
+        domainCopyright.creators.map(asApiAuthor),
+        domainCopyright.processors.map(asApiAuthor),
+        domainCopyright.rightsholders.map(asApiAuthor),
+        domainCopyright.agreementId,
+        domainCopyright.validFrom,
+        domainCopyright.validTo)
     }
 
     def asApiImage(domainImage: domain.Image, baseUrl: Option[String] = None): api.Image = {
@@ -62,10 +72,35 @@ trait ConverterService {
         asApiUrl(imageMeta.imageUrl, rawBaseUrl),
         imageMeta.size,
         imageMeta.contentType,
-        asApiCopyright(imageMeta.copyright),
+        withAgreementCopyright(asApiCopyright(imageMeta.copyright)),
         tags,
         caption,
         getSupportedLanguages(imageMeta)))
+    }
+
+    def withAgreementCopyright(image: domain.ImageMetaInformation): domain.ImageMetaInformation = {
+      val agreementCopyright = image.copyright.agreementId.flatMap(aid =>
+        draftApiClient.getAgreementCopyright(aid).map(toDomainCopyright)
+      ).getOrElse(image.copyright)
+
+      image.copy(copyright = image.copyright.copy(
+        license = agreementCopyright.license,
+        creators = agreementCopyright.creators,
+        rightsholders = agreementCopyright.rightsholders,
+        validFrom = agreementCopyright.validFrom,
+        validTo = agreementCopyright.validTo
+      ))
+    }
+
+    def withAgreementCopyright(copyright: api.Copyright): api.Copyright = {
+      val agreementCopyright = copyright.agreementId.flatMap(aid => draftApiClient.getAgreementCopyright(aid)).getOrElse(copyright)
+      copyright.copy(
+        license = agreementCopyright.license,
+        creators = agreementCopyright.creators,
+        rightsholders = agreementCopyright.rightsholders,
+        validFrom = agreementCopyright.validFrom,
+        validTo = agreementCopyright.validTo
+      )
     }
 
     def asApiImageTag(domainImageTag: domain.ImageTag): api.ImageTag = {
@@ -112,7 +147,15 @@ trait ConverterService {
     }
 
     def toDomainCopyright(copyright: api.Copyright): domain.Copyright = {
-      domain.Copyright(toDomainLicense(copyright.license), copyright.origin, copyright.authors.map(toDomainAuthor))
+      domain.Copyright(
+        toDomainLicense(copyright.license),
+        copyright.origin,
+        copyright.creators.map(toDomainAuthor),
+        copyright.processors.map(toDomainAuthor),
+        copyright.rightsholders.map(toDomainAuthor),
+        copyright.agreementId,
+        copyright.validFrom,
+        copyright.validTo)
     }
 
     def toDomainLicense(license: api.License): domain.License = {

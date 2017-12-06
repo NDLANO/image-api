@@ -78,22 +78,22 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
   }
 
 
-  test("That mapOldToNewLicenseKey throws on invalid license") {
+  test("That oldToNewLicenseKey throws on invalid license") {
     assertThrows[ImportException] {
-      importService.mapOldToNewLicenseKey("publicdomain")
+      importService.oldToNewLicenseKey("publicdomain")
     }
   }
 
-  test("That mapOldToNewLicenseKey converts correctly") {
+  test("That oldToNewLicenseKey converts correctly") {
     val cc0 = License.getLicense("cc0")
     val pd = License.getLicense("pd")
-    importService.mapOldToNewLicenseKey("nolaw") should be(cc0)
-    importService.mapOldToNewLicenseKey("noc") should be(pd)
+    importService.oldToNewLicenseKey("nolaw") should be(cc0)
+    importService.oldToNewLicenseKey("noc") should be(pd)
   }
 
-  test("That mapOldToNewLicenseKey does not convert an license that should not be converted") {
+  test("That oldToNewLicenseKey does not convert an license that should not be converted") {
     val bySa = License.getLicense("by-sa")
-    importService.mapOldToNewLicenseKey("by-sa") should be(bySa)
+    importService.oldToNewLicenseKey("by-sa") should be(bySa)
   }
 
 }

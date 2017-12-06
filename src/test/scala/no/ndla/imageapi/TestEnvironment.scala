@@ -34,6 +34,7 @@ trait TestEnvironment
     with IndexBuilderService
     with ImportService
     with MigrationApiClient
+    with DraftApiClient
     with NdlaClient
     with InternController
     with ImageControllerV2
@@ -59,6 +60,7 @@ trait TestEnvironment
   val importService = mock[ImportService]
   val ndlaClient = mock[NdlaClient]
   val migrationApiClient = mock[MigrationApiClient]
+  val draftApiClient = mock[DraftApiClient]
   val rawController = mock[RawController]
   val internController = mock[InternController]
   val imageControllerV2= mock[ImageControllerV2]

@@ -35,12 +35,12 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
     s"${ImageApiProperties.RawImageUrlBase}/test.jpg",
     0,
     "",
-    api.Copyright(api.License("", "", None), "", List()),
+    api.Copyright(api.License("", "", None), "", List(), List(), List(), None, None, None),
     ImageTag(Seq.empty, "nb"),
     ImageCaption("","nb"),
     Seq())
 
-  val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(Some(1), List(), List(), "test.jpg", 0, "", domain.Copyright(domain.License("", "", None), "", List()), List(), List(), "ndla124", updated)
+  val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(Some(1), List(), List(), "test.jpg", 0, "", domain.Copyright(domain.License("", "", None), "", List(), List(), List(), None, None, None), List(), List(), "ndla124", updated)
 
   override def beforeEach = {
     reset(imageRepository, importService, indexService, indexBuilderService)

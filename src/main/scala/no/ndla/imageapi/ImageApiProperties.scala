@@ -34,6 +34,16 @@ object ImageApiProperties extends LazyLogging {
 
   val DefaultLanguage = "nb"
 
+  val oldCreatorTypes = List("opphavsmann", "fotograf", "kunstner", "redaksjonelt", "forfatter", "manusforfatter", "innleser", "oversetter", "regissør", "illustratør", "medforfatter", "komponist")
+  val creatorTypes = List("originator", "photographer", "artist", "editorial", "writer", "scriptwriter", "reader", "translator", "director", "illustrator", "cowriter", "composer")
+
+  val oldProcessorTypes = List("bearbeider", "tilrettelegger", "redaksjonelt", "språklig", "ide", "sammenstiller", "korrektur")
+  val processorTypes = List("processor", "facilitator", "editorial", "linguistic", "idea", "compiler", "correction")
+
+  val oldRightsholderTypes = List("rettighetshaver", "forlag", "distributør", "leverandør")
+  val rightsholderTypes = List("rightsholder", "publisher", "distributor", "supplier")
+  val allowedAuthors = ImageApiProperties.creatorTypes ++ ImageApiProperties.processorTypes ++ ImageApiProperties.rightsholderTypes
+
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
 
@@ -66,6 +76,7 @@ object ImageApiProperties extends LazyLogging {
   val ElasticSearchIndexMaxResultWindow = 10000
 
   val MappingHost = "mapping-api.ndla-local"
+  val DraftApiHost = propOrElse("DRAFT_API_HOST", "draft-api.ndla-local")
   val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
 
   val MigrationHost = prop("MIGRATION_HOST")
