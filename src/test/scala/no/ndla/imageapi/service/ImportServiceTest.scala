@@ -9,7 +9,8 @@ package no.ndla.imageapi.service
 
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
-import no.ndla.imageapi.model.{S3UploadException, domain}
+import no.ndla.imageapi.model.{ImportException, S3UploadException, domain}
+import no.ndla.mapping._
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 
@@ -74,6 +75,25 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
 
     val Success(result) = importService.uploadRawImage(imageMeta)
     result should equal(domain.Image("/oh%20my%20god,%20Becky,%20look%20at%20her%20butt.jpg", imageMeta.originalSize.toInt, imageMeta.originalMime))
+  }
+
+
+  test("That oldToNewLicenseKey throws on invalid license") {
+    assertThrows[ImportException] {
+      importService.oldToNewLicenseKey("publicdomain")
+    }
+  }
+
+  test("That oldToNewLicenseKey converts correctly") {
+    val cc0 = License.getLicense("cc0")
+    val pd = License.getLicense("pd")
+    importService.oldToNewLicenseKey("nolaw") should be(cc0)
+    importService.oldToNewLicenseKey("noc") should be(pd)
+  }
+
+  test("That oldToNewLicenseKey does not convert an license that should not be converted") {
+    val bySa = License.getLicense("by-sa")
+    importService.oldToNewLicenseKey("by-sa") should be(bySa)
   }
 
 }

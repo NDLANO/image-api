@@ -29,6 +29,7 @@ object Error {
   val ACCESS_DENIED = "ACCESS DENIED"
   val GATEWAY_TIMEOUT =  "GATEWAY TIMEOUT"
   val WINDOW_TOO_LARGE = "RESULT WINDOW TOO LARGE"
+  val IMPORT_FAILED = "IMPORT FAILED"
 
   val GenericError = Error(GENERIC, s"Ooops. Something we didn't anticipate occurred. We have logged the error, and will look into it. But feel free to contact ${ImageApiProperties.ContactEmail} if the error persists.")
   val IndexMissingError = Error(INDEX_MISSING, s"Ooops. Our search index is not available at the moment, but we are trying to recreate it. Please try again in a few minutes. Feel free to contact ${ImageApiProperties.ContactEmail} if the error persists.")
