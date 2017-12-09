@@ -24,6 +24,11 @@ import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.sort.SortBuilders
 import org.json4s.native.Serialization.read
 import no.ndla.imageapi.model.api.Error
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder
+import org.json4s._
+import org.json4s.native.JsonMethods._
+import shapeless.T
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -50,17 +55,20 @@ trait SearchService {
       }
     }
 
-    def getHits(response: JestSearchResult, language: Option[String]): Seq[ImageMetaSummary] = {
-      var resultList = Seq[ImageMetaSummary]()
+    def getHits(response: JestSearchResult, language: String): Seq[ImageMetaSummary] = {
       response.getTotal match {
-        case count: Integer if count > 0 => {
-          val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
-          val iterator = resultArray.iterator()
-          while(iterator.hasNext) {
-            resultList = resultList :+ hitAsImageMetaSummary(iterator.next().asInstanceOf[JsonObject].get("_source").toString, language)
-          }
-          resultList
-        }
+        case count: Integer if count > 0 =>
+          val resultArray = (parse(response.getJsonString) \ "hits" \ "hits").asInstanceOf[JArray].arr
+
+          resultArray.map(result => {
+            val matchedLanguage = language match {
+              case Language.AllLanguages | "*" => searchConverterService.getLanguageFromHit(result).getOrElse(language)
+              case _ => language
+            }
+
+            val hitString = compact(render(result \ "_source"))
+            hitAsImageMetaSummary(hitString, Some(matchedLanguage))
+          })
         case _ => Seq()
       }
     }
@@ -84,6 +92,10 @@ trait SearchService {
     }
 
     def matchingQuery(query: String, minimumSize: Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
+
+      val highlightBuilder = new HighlightBuilder().preTags("").postTags("").field("*").numOfFragments(0)
+      val innerHitBuilder = new InnerHitBuilder().setHighlightBuilder(highlightBuilder)
+
       val fullSearch = QueryBuilders.boolQuery()
         .must(QueryBuilders.boolQuery()
           .should(languageSpecificSearch("titles", language, query, 2))

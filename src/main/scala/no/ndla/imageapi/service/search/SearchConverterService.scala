@@ -15,6 +15,8 @@ import no.ndla.network.ApplicationUrl
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import com.netaporter.uri.Uri.parse
 import no.ndla.imageapi.service.ConverterService
+import org.json4s._
+import org.json4s.native.JsonMethods._
 
 trait SearchConverterService {
   this: ConverterService =>
@@ -56,5 +58,30 @@ trait SearchConverterService {
         metaUrl = ApplicationUrl.get + searchableImage.id,
         license = searchableImage.license)
     }
+
+    def getLanguageFromHit(jsonObject: JValue): Option[String] = {
+      implicit val formats = DefaultFormats
+
+      // Fetches matched language from highlight in innerHit
+      // since elasticsearch doesn't return which nested field that matches
+      val innerHits = jsonObject \ "inner_hits"
+
+      val sortedInnerHits = innerHits.children.sortBy(innerHit => {
+        (innerHit \ "hits" \ "max_score").toOption.map(s => {
+          s.extract[Double]
+        }).getOrElse[Double](0)
+      }).reverse
+
+      sortedInnerHits.headOption.flatMap(innerHit => {
+        (innerHit \\ "highlight").extract[Map[String, Any]].keySet.headOption.map(fieldName =>
+          fieldName.split('.').last)
+      }) match {
+        case Some(lang) => Some(lang)
+        case _ =>
+          (jsonObject \ "_source" \ "title").extract[Map[String, Any]].keySet.headOption.map(fieldName =>
+            fieldName.split('.').last)
+      }
+    }
+
   }
 }
