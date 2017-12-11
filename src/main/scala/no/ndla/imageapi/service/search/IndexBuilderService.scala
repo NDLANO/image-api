@@ -81,7 +81,7 @@ trait IndexBuilderService {
     def getRanges:Try[List[(Long,Long)]] = {
       Try{
         val (minId, maxId) = imageRepository.minMaxId
-        Seq.range(minId, maxId).grouped(ImageApiProperties.IndexBulkSize).map(group => (group.head, group.last + 1)).toList
+        Seq.range(minId, maxId + 1).grouped(ImageApiProperties.IndexBulkSize).map(group => (group.head, group.last)).toList
       }
     }
   }
