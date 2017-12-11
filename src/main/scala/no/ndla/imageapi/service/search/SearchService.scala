@@ -59,7 +59,7 @@ trait SearchService {
 
           resultArray.map(result => {
             val matchedLanguage = language match {
-              case Some(Language.AllLanguages) | Some("*") => searchConverterService.getLanguageFromHit(result) //TODO: Maybe handle if this is none? (Is somewhat handled in hitAsImageMetaSummary)
+              case Some(Language.AllLanguages) | Some("*") | None => searchConverterService.getLanguageFromHit(result) //TODO: Maybe handle if this is none? (Is somewhat handled in hitAsImageMetaSummary)
               case _ => language
             }
 
@@ -76,23 +76,20 @@ trait SearchService {
     }
 
     private def languageSpecificSearch(searchField: String, language: Option[String], query: String, boost: Float): QueryBuilder = {
+      val highlightBuilder = new HighlightBuilder().preTags("").postTags("").field("*").numOfFragments(0)
+      val innerHitBuilder = new InnerHitBuilder().setHighlightBuilder(highlightBuilder)
+
       language match {
+        case None | Some(Language.AllLanguages) =>
+          val searchQuery = QueryBuilders.simpleQueryStringQuery(query).field(s"$searchField.*")
+          QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost).innerHit(innerHitBuilder, false)
         case Some(lang) =>
           val searchQuery = QueryBuilders.simpleQueryStringQuery(query).field(s"$searchField.$lang")
           QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost)
-        case None =>
-          Language.supportedLanguages.foldLeft(QueryBuilders.boolQuery())((result, lang) => {
-            val searchQuery = QueryBuilders.simpleQueryStringQuery(query).field(s"$searchField.$lang")
-            result.should(QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost))
-          })
       }
     }
 
     def matchingQuery(query: String, minimumSize: Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
-
-      val highlightBuilder = new HighlightBuilder().preTags("").postTags("").field("*").numOfFragments(0)
-      val innerHitBuilder = new InnerHitBuilder().setHighlightBuilder(highlightBuilder)
-
       val fullSearch = QueryBuilders.boolQuery()
         .must(QueryBuilders.boolQuery()
           .should(languageSpecificSearch("titles", language, query, 2))
@@ -119,8 +116,10 @@ trait SearchService {
       }
 
       val languageFiltered = language match {
-        case None => sizeFiltered
-        case Some(lang) => sizeFiltered.filter(QueryBuilders.nestedQuery("titles", QueryBuilders.existsQuery(s"titles.$lang"), ScoreMode.Avg))
+        case None | Some(Language.AllLanguages) =>
+          sizeFiltered
+        case Some(lang) =>
+          sizeFiltered.filter(QueryBuilders.nestedQuery("titles", QueryBuilders.existsQuery(s"titles.$lang"), ScoreMode.Avg))
       }
 
       val search = new SearchSourceBuilder().query(languageFiltered).sort(SortBuilders.fieldSort("id"))

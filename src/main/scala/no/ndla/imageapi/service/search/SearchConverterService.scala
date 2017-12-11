@@ -78,7 +78,7 @@ trait SearchConverterService {
       }) match {
         case Some(lang) => Some(lang)
         case _ =>
-          (jsonObject \ "_source" \ "title").extract[Map[String, Any]].keySet.headOption.map(fieldName =>
+          (jsonObject \ "_source" \ "titles").extract[Map[String, Any]].keySet.headOption.map(fieldName =>
             fieldName.split('.').last)
       }
     }
