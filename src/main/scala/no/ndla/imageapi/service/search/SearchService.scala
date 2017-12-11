@@ -7,13 +7,12 @@
 
 package no.ndla.imageapi.service.search
 
-import com.google.gson.JsonObject
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
 import io.searchbox.params.Parameters
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClient
-import no.ndla.imageapi.model.api.{ImageMetaSummary, SearchResult}
+import no.ndla.imageapi.model.api.{Error, ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
 import no.ndla.imageapi.model.{Language, NdlaSearchException, ResultWindowTooLargeException}
 import org.apache.lucene.search.join.ScoreMode
@@ -21,13 +20,11 @@ import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query._
 import org.elasticsearch.search.builder.SearchSourceBuilder
-import org.elasticsearch.search.sort.SortBuilders
-import org.json4s.native.Serialization.read
-import no.ndla.imageapi.model.api.Error
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder
+import org.elasticsearch.search.sort.SortBuilders
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import shapeless.T
+import org.json4s.native.Serialization.read
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -55,19 +52,19 @@ trait SearchService {
       }
     }
 
-    def getHits(response: JestSearchResult, language: String): Seq[ImageMetaSummary] = {
+    def getHits(response: JestSearchResult, language: Option[String]): Seq[ImageMetaSummary] = {
       response.getTotal match {
         case count: Integer if count > 0 =>
           val resultArray = (parse(response.getJsonString) \ "hits" \ "hits").asInstanceOf[JArray].arr
 
           resultArray.map(result => {
             val matchedLanguage = language match {
-              case Language.AllLanguages | "*" => searchConverterService.getLanguageFromHit(result).getOrElse(language)
+              case Some(Language.AllLanguages) | Some("*") => searchConverterService.getLanguageFromHit(result) //TODO: Maybe handle if this is none? (Is somewhat handled in hitAsImageMetaSummary)
               case _ => language
             }
 
             val hitString = compact(render(result \ "_source"))
-            hitAsImageMetaSummary(hitString, Some(matchedLanguage))
+            hitAsImageMetaSummary(hitString, matchedLanguage)
           })
         case _ => Seq()
       }
