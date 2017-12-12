@@ -121,9 +121,9 @@ trait ImportService {
       val rightsholderMap = (oldRightsholderTypes zip rightsholderTypes).toMap.withDefaultValue(None)
 
       (creatorMap(author.typeAuthor.toLowerCase), processorMap(author.typeAuthor.toLowerCase), rightsholderMap(author.typeAuthor.toLowerCase)) match {
-        case (t: String, None, None) => domain.Author(t.capitalize, author.name)
-        case (None, t: String, None) => domain.Author(t.capitalize, author.name)
-        case (None, None, t: String) => domain.Author(t.capitalize, author.name)
+        case (t: String, _, _) => domain.Author(t.capitalize, author.name)
+        case (_, t: String, _) => domain.Author(t.capitalize, author.name)
+        case (_, _, t: String) => domain.Author(t.capitalize, author.name)
         case (_, _, _) => domain.Author(author.typeAuthor, author.name)
       }
     }
