@@ -128,7 +128,7 @@ trait ImportService {
       }
     }
 
-    private def toDomainCopyright(imageMeta: MainImageImport): domain.Copyright = {
+    private[service] def toDomainCopyright(imageMeta: MainImageImport): domain.Copyright = {
       val domainLicense = imageMeta.license.flatMap(oldToNewLicenseKey)
         .map(license => domain.License(license.license, license.description, license.url))
         .getOrElse(domain.License(imageMeta.license.get, imageMeta.license.get, None))
