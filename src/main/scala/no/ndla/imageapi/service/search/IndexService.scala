@@ -142,6 +142,7 @@ trait IndexService {
         keywordField("license") index "not_analyzed",
         intField("imageSize") index "not_analyzed",
         textField("previewUrl") index "not_analyzed",
+        dateField("lastUpdated") index "not_analyzed",
         languageSupportedField("titles", keepRaw = true),
         languageSupportedField("alttexts", keepRaw = false),
         languageSupportedField("captions", keepRaw = false),

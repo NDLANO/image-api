@@ -35,7 +35,8 @@ trait SearchConverterService {
         contributors = image.copyright.creators.map(c => c.name) ++ image.copyright.processors.map(p => p.name) ++ image.copyright.rightsholders.map(r => r.name),
         license = imageWithAgreement.copyright.license.license,
         imageSize = imageWithAgreement.size,
-        previewUrl = parse(imageWithAgreement.imageUrl).toString)
+        previewUrl = parse(imageWithAgreement.imageUrl).toString,
+        lastUpdated = imageWithAgreement.updated)
     }
 
     def asImageMetaSummary(searchableImage: SearchableImage, language: Option[String]): ImageMetaSummary = {
