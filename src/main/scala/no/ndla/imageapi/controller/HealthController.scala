@@ -8,12 +8,11 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.network.ApplicationUrl
-import org.json4s._
-import org.scalatra._
 import com.netaporter.uri.dsl._
 import no.ndla.imageapi.ImageApiProperties
+import no.ndla.imageapi.repository.ImageRepository
+import no.ndla.network.ApplicationUrl
+import org.scalatra._
 
 import scalaj.http.{Http, HttpResponse}
 
@@ -22,8 +21,6 @@ trait HealthController {
   val healthController: HealthController
 
   class HealthController extends ScalatraServlet {
-
-    implicit val formats = DefaultFormats
 
     before() {
       ApplicationUrl.set(request)
