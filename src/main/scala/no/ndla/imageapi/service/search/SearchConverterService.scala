@@ -27,10 +27,10 @@ trait SearchConverterService {
     def asSearchableImage(image: ImageMetaInformation): SearchableImage = {
       val imageWithAgreement = converterService.withAgreementCopyright(image)
 
-      val defaultTitle = imageWithAgreement.titles.maxBy(title => {
+      val defaultTitle = imageWithAgreement.titles.sortBy(title => {
         val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
         languagePriority.indexOf(title.language)
-      })
+      }).lastOption
 
       SearchableImage(
         id = imageWithAgreement.id.get,
@@ -43,7 +43,7 @@ trait SearchConverterService {
         imageSize = imageWithAgreement.size,
         previewUrl = parse(imageWithAgreement.imageUrl).toString,
         lastUpdated = imageWithAgreement.updated,
-        defaultTitle = defaultTitle.title
+        defaultTitle = defaultTitle.map(t => t.title)
       )
     }
 
