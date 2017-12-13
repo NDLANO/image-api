@@ -16,7 +16,7 @@ import org.json4s.native.Serialization.{read, write}
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
-class V7__TranslateUntranslatedAuthors extends JdbcMigration with LazyLogging  {
+class V7__TranslateUntranslatedAuthors extends JdbcMigration with LazyLogging {
   // Some contributors were not translated V6
   implicit val formats = org.json4s.DefaultFormats
 
@@ -30,7 +30,8 @@ class V7__TranslateUntranslatedAuthors extends JdbcMigration with LazyLogging  {
   }
 
   def imagesToUpdate(implicit session: DBSession): List[(Long, String)] = {
-    sql"select id, metadata from imagemetadata".map(rs => {(rs.long("id"),rs.string("metadata"))
+    sql"select id, metadata from imagemetadata".map(rs => {
+      (rs.long("id"), rs.string("metadata"))
     }).list().apply()
   }
 
@@ -50,23 +51,13 @@ class V7__TranslateUntranslatedAuthors extends JdbcMigration with LazyLogging  {
   def updateAuthorFormat(id: Long, metaString: String): V6_ImageMetaInformation = {
     val meta = read[V6_ImageMetaInformation](metaString)
 
-      val creators = meta.copyright.creators.map(toNewAuthorType)
-      val processors = meta.copyright.processors.map(toNewAuthorType)
-      val rightsholders = meta.copyright.rightsholders.map(toNewAuthorType)
+    val creators = meta.copyright.creators.map(toNewAuthorType)
+    val processors = meta.copyright.processors.map(toNewAuthorType)
+    val rightsholders = meta.copyright.rightsholders.map(toNewAuthorType)
 
-      V6_ImageMetaInformation(
-        Some(id),
-        meta.titles,
-        meta.alttexts,
-        meta.imageUrl,
-        meta.size,
-        meta.contentType,
-        V6_Copyright(meta.copyright.license, meta.copyright.origin, creators, processors, rightsholders, None, None, None),
-        meta.tags,
-        meta.captions,
-        meta.updatedBy,
-        meta.updated
-      )
+    meta.copy(
+      Some(id),
+      copyright = meta.copyright.copy(creators = creators, processors = processors, rightsholders = rightsholders))
   }
 
   def update(imagemetadata: V6_ImageMetaInformation)(implicit session: DBSession) = {
