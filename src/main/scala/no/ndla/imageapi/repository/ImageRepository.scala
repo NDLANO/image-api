@@ -32,6 +32,11 @@ trait ImageRepository {
       }
     }
 
+   def getRandomImage()(implicit session: DBSession = ReadOnlyAutoSession): Option[ImageMetaInformation] = {
+      val im = ImageMetaInformation.syntax("im")
+      sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where metadata is not null order by random() limit 1".map(ImageMetaInformation(im)).single().apply()
+    }
+
     def withExternalId(externalId: String): Option[ImageMetaInformation] = {
       DB readOnly { implicit session =>
         imageMetaInformationWhere(sqls"im.external_id = $externalId")
