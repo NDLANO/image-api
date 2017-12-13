@@ -24,5 +24,6 @@ case class SearchableImage (id: Long,
                             license: String,
                             imageSize: Long,
                             previewUrl: String,
-                            lastUpdated: Date
+                            lastUpdated: Date,
+                            defaultTitle: String
                            )

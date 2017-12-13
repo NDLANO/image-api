@@ -20,10 +20,8 @@ import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query._
-import org.elasticsearch.script.Script
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder
-import org.elasticsearch.search.sort.ScriptSortBuilder.ScriptSortType
 import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -62,7 +60,8 @@ trait SearchService {
 
           resultArray.map(result => {
             val matchedLanguage = language match {
-              case Some(Language.AllLanguages) | Some("*") | None => searchConverterService.getLanguageFromHit(result) //TODO: Maybe handle if this is none? (Is somewhat handled in hitAsImageMetaSummary)
+              case Some(Language.AllLanguages) | Some("*") | None =>
+                searchConverterService.getLanguageFromHit(result).orElse(language)
               case _ => language
             }
 
@@ -79,38 +78,16 @@ trait SearchService {
         case _ => language
       }
 
-      // Elasticsearch 'Painless' script for sorting by title if searching for all languages
-      val supportedLanguages = Language.languageAnalyzers.map(la => la.lang).mkString("'", "', '", "'")
-      val titleSortScript =
-        s"""
-           |int idx = -1;
-           |String[] arr = new String[]{$supportedLanguages};
-           |for (int i = arr.length-1; i >= 0; i--) {
-           |  if(params['_source'].containsKey('titles')){
-           |    if(params['_source']['titles'].containsKey(arr[i])){
-           |      idx = i;
-           |    }
-           |  }
-           |}
-           |
-           |if (idx != -1) {
-           |  return params['_source']['titles'][arr[idx]];
-           |} else {
-           |  return '\u00ff'; // Sort by last codepoint in unicode if no title is found.
-           |}
-           |""".stripMargin
-      val script = new Script(titleSortScript)
-
       sort match {
         case (Sort.ByTitleAsc) =>
           language match {
-            case "*" => SortBuilders.scriptSort(script, ScriptSortType.STRING).order(SortOrder.ASC)
+            case "*" => SortBuilders.fieldSort("defaultTitle").order(SortOrder.ASC).missing("_last")
             case _ => SortBuilders.fieldSort(s"titles.$sortLanguage.raw").setNestedPath("titles").order(SortOrder.ASC).missing("_last")
           }
         case (Sort.ByTitleDesc) =>
           language match {
-            case "*" => SortBuilders.scriptSort(script, ScriptSortType.STRING).order(SortOrder.DESC)
-            case _ => SortBuilders.fieldSort(s"titles.$sortLanguage.raw").setNestedPath ("titles").order (SortOrder.DESC).missing ("_last")
+            case "*" => SortBuilders.fieldSort("defaultTitle").order(SortOrder.DESC).missing("_last")
+            case _ => SortBuilders.fieldSort(s"titles.$sortLanguage.raw").setNestedPath("titles").order(SortOrder.DESC).missing("_last")
           }
         case (Sort.ByRelevanceAsc) => SortBuilders.fieldSort("_score").order(SortOrder.ASC)
         case (Sort.ByRelevanceDesc) => SortBuilders.fieldSort("_score").order(SortOrder.DESC)

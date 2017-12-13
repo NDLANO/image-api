@@ -16,6 +16,7 @@ import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import com.netaporter.uri.Uri.parse
 import no.ndla.imageapi.service.ConverterService
 import org.json4s._
+import no.ndla.imageapi.model.Language
 import org.json4s.native.JsonMethods._
 
 trait SearchConverterService {
@@ -25,6 +26,11 @@ trait SearchConverterService {
   class SearchConverterService extends LazyLogging {
     def asSearchableImage(image: ImageMetaInformation): SearchableImage = {
       val imageWithAgreement = converterService.withAgreementCopyright(image)
+
+      val defaultTitle = imageWithAgreement.titles.maxBy(title => {
+        val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
+        languagePriority.indexOf(title.language)
+      })
 
       SearchableImage(
         id = imageWithAgreement.id.get,
@@ -36,7 +42,9 @@ trait SearchConverterService {
         license = imageWithAgreement.copyright.license.license,
         imageSize = imageWithAgreement.size,
         previewUrl = parse(imageWithAgreement.imageUrl).toString,
-        lastUpdated = imageWithAgreement.updated)
+        lastUpdated = imageWithAgreement.updated,
+        defaultTitle = defaultTitle.title
+      )
     }
 
     def asImageMetaSummary(searchableImage: SearchableImage, language: Option[String]): ImageMetaSummary = {
