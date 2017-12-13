@@ -121,14 +121,14 @@ trait ImportService {
       val rightsholderMap = (oldRightsholderTypes zip rightsholderTypes).toMap.withDefaultValue(None)
 
       (creatorMap(author.typeAuthor.toLowerCase), processorMap(author.typeAuthor.toLowerCase), rightsholderMap(author.typeAuthor.toLowerCase)) match {
-        case (t: String, None, None) => domain.Author(t.capitalize, author.name)
-        case (None, t: String, None) => domain.Author(t.capitalize, author.name)
-        case (None, None, t: String) => domain.Author(t.capitalize, author.name)
+        case (t: String, _, _) => domain.Author(t.capitalize, author.name)
+        case (_, t: String, _) => domain.Author(t.capitalize, author.name)
+        case (_, _, t: String) => domain.Author(t.capitalize, author.name)
         case (_, _, _) => domain.Author(author.typeAuthor, author.name)
       }
     }
 
-    private def toDomainCopyright(imageMeta: MainImageImport): domain.Copyright = {
+    private[service] def toDomainCopyright(imageMeta: MainImageImport): domain.Copyright = {
       val domainLicense = imageMeta.license.flatMap(oldToNewLicenseKey)
         .map(license => domain.License(license.license, license.description, license.url))
         .getOrElse(domain.License(imageMeta.license.get, imageMeta.license.get, None))
