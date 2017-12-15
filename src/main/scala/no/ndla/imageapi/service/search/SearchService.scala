@@ -110,7 +110,7 @@ trait SearchService {
       language match {
         case None | Some(Language.AllLanguages) =>
           val searchQuery = QueryBuilders.simpleQueryStringQuery(query).field(s"$searchField.*")
-          QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost).innerHit(innerHitBuilder, false)
+          QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost).innerHit(innerHitBuilder)
         case Some(lang) =>
           val searchQuery = QueryBuilders.simpleQueryStringQuery(query).field(s"$searchField.$lang")
           QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost)
