@@ -3,13 +3,13 @@ import java.util.Properties
 val Scalaversion = "2.12.2"
 val Scalatraversion = "2.5.1"
 val ScalaLoggingVersion = "3.5.0"
-val Log4JVersion = "2.7"
+val Log4JVersion = "2.9.1"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.11.46"
 val ScalaTestVersion = "3.0.1"
 val MockitoVersion = "1.10.19"
-val Elastic4sVersion = "5.2.8"
-val ElasticsearchVersion = "5.1.1"
+val Elastic4sVersion = "6.0.0"
+val ElasticsearchVersion = "6.0.1"
 
 val appProperties = settingKey[Properties]("The application properties")
 
@@ -58,7 +58,7 @@ lazy val image_api = (project in file(".")).
       "io.searchbox" % "jest" % "2.0.4",
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
-      "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion % "test",
+      "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
       "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
       "org.jsoup" % "jsoup" % "1.7.3",

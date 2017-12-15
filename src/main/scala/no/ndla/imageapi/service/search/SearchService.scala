@@ -7,13 +7,13 @@
 
 package no.ndla.imageapi.service.search
 
-import com.google.gson.JsonObject
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
 import io.searchbox.params.Parameters
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.ElasticClient
-import no.ndla.imageapi.model.api.{ImageMetaSummary, SearchResult}
+import no.ndla.imageapi.model.api.{Error, ImageMetaSummary, SearchResult}
+import no.ndla.imageapi.model.domain.Sort
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
 import no.ndla.imageapi.model.{Language, NdlaSearchException, ResultWindowTooLargeException}
 import org.apache.lucene.search.join.ScoreMode
@@ -21,9 +21,12 @@ import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query._
 import org.elasticsearch.search.builder.SearchSourceBuilder
-import org.elasticsearch.search.sort.SortBuilders
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder
+import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
+import org.json4s._
+import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization.read
-import no.ndla.imageapi.model.api.Error
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -51,17 +54,47 @@ trait SearchService {
     }
 
     def getHits(response: JestSearchResult, language: Option[String]): Seq[ImageMetaSummary] = {
-      var resultList = Seq[ImageMetaSummary]()
       response.getTotal match {
-        case count: Integer if count > 0 => {
-          val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
-          val iterator = resultArray.iterator()
-          while(iterator.hasNext) {
-            resultList = resultList :+ hitAsImageMetaSummary(iterator.next().asInstanceOf[JsonObject].get("_source").toString, language)
-          }
-          resultList
-        }
+        case count: Integer if count > 0 =>
+          val resultArray = (parse(response.getJsonString) \ "hits" \ "hits").asInstanceOf[JArray].arr
+
+          resultArray.map(result => {
+            val matchedLanguage = language match {
+              case Some(Language.AllLanguages) | Some("*") | None =>
+                searchConverterService.getLanguageFromHit(result).orElse(language)
+              case _ => language
+            }
+
+            val hitString = compact(render(result \ "_source"))
+            hitAsImageMetaSummary(hitString, matchedLanguage)
+          })
         case _ => Seq()
+      }
+    }
+
+    def getSortDefinition(sort: Sort.Value, language: String) = {
+      val sortLanguage = language match {
+        case Language.NoLanguage => Language.DefaultLanguage
+        case _ => language
+      }
+
+      sort match {
+        case (Sort.ByTitleAsc) =>
+          language match {
+            case "*" => SortBuilders.fieldSort("defaultTitle").order(SortOrder.ASC).missing("_last")
+            case _ => SortBuilders.fieldSort(s"titles.$sortLanguage.raw").setNestedPath("titles").order(SortOrder.ASC).missing("_last")
+          }
+        case (Sort.ByTitleDesc) =>
+          language match {
+            case "*" => SortBuilders.fieldSort("defaultTitle").order(SortOrder.DESC).missing("_last")
+            case _ => SortBuilders.fieldSort(s"titles.$sortLanguage.raw").setNestedPath("titles").order(SortOrder.DESC).missing("_last")
+          }
+        case (Sort.ByRelevanceAsc) => SortBuilders.fieldSort("_score").order(SortOrder.ASC)
+        case (Sort.ByRelevanceDesc) => SortBuilders.fieldSort("_score").order(SortOrder.DESC)
+        case (Sort.ByLastUpdatedAsc) => SortBuilders.fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByLastUpdatedDesc) => SortBuilders.fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByIdAsc) => SortBuilders.fieldSort("id").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByIdDesc) => SortBuilders.fieldSort("id").order(SortOrder.DESC).missing("_last")
       }
     }
 
@@ -71,19 +104,20 @@ trait SearchService {
     }
 
     private def languageSpecificSearch(searchField: String, language: Option[String], query: String, boost: Float): QueryBuilder = {
+      val highlightBuilder = new HighlightBuilder().preTags("").postTags("").field("*").numOfFragments(0)
+      val innerHitBuilder = new InnerHitBuilder().setHighlightBuilder(highlightBuilder)
+
       language match {
+        case None | Some(Language.AllLanguages) =>
+          val searchQuery = QueryBuilders.simpleQueryStringQuery(query).field(s"$searchField.*")
+          QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost).innerHit(innerHitBuilder)
         case Some(lang) =>
           val searchQuery = QueryBuilders.simpleQueryStringQuery(query).field(s"$searchField.$lang")
           QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost)
-        case None =>
-          Language.supportedLanguages.foldLeft(QueryBuilders.boolQuery())((result, lang) => {
-            val searchQuery = QueryBuilders.simpleQueryStringQuery(query).field(s"$searchField.$lang")
-            result.should(QueryBuilders.nestedQuery(searchField, searchQuery, ScoreMode.Avg).boost(boost))
-          })
       }
     }
 
-    def matchingQuery(query: String, minimumSize: Option[Int], language: Option[String], license: Option[String], page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
+    def matchingQuery(query: String, minimumSize: Option[Int], language: Option[String], license: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
       val fullSearch = QueryBuilders.boolQuery()
         .must(QueryBuilders.boolQuery()
           .should(languageSpecificSearch("titles", language, query, 2))
@@ -92,13 +126,13 @@ trait SearchService {
           .should(languageSpecificSearch("tags", language, query, 2))
           .should(QueryBuilders.simpleQueryStringQuery(query).field("contributors")).boost(1))
 
-      executeSearch(fullSearch, minimumSize, license, language, page, pageSize, includeCopyrighted)
+      executeSearch(fullSearch, minimumSize, license, language, sort: Sort.Value, page, pageSize, includeCopyrighted)
     }
 
-    def all(minimumSize: Option[Int], license: Option[String], language: Option[String], page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult =
-      executeSearch(QueryBuilders.boolQuery(), minimumSize, license, language, page, pageSize, includeCopyrighted)
+    def all(minimumSize: Option[Int], license: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult =
+      executeSearch(QueryBuilders.boolQuery(), minimumSize, license, language, sort, page, pageSize, includeCopyrighted)
 
-    def executeSearch(queryBuilder: BoolQueryBuilder, minimumSize: Option[Int], license: Option[String], language: Option[String], page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
+    def executeSearch(queryBuilder: BoolQueryBuilder, minimumSize: Option[Int], license: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
       val licensedFiltered = license match {
         case None =>  if (!includeCopyrighted) queryBuilder.filter(noCopyright) else queryBuilder
         case Some(lic) => queryBuilder.filter(QueryBuilders.termQuery("license", lic))
@@ -109,12 +143,14 @@ trait SearchService {
         case Some(size) => licensedFiltered.filter(QueryBuilders.rangeQuery("imageSize").gte(minimumSize.get))
       }
 
-      val languageFiltered = language match {
-        case None => sizeFiltered
-        case Some(lang) => sizeFiltered.filter(QueryBuilders.nestedQuery("titles", QueryBuilders.existsQuery(s"titles.$lang"), ScoreMode.Avg))
+      val (languageFiltered, searchLanguage) = language match {
+        case None | Some(Language.AllLanguages) =>
+          (sizeFiltered, "*")
+        case Some(lang) =>
+          (sizeFiltered.filter(QueryBuilders.nestedQuery("titles", QueryBuilders.existsQuery(s"titles.$lang"), ScoreMode.Avg)), lang)
       }
 
-      val search = new SearchSourceBuilder().query(languageFiltered).sort(SortBuilders.fieldSort("id"))
+      val search = new SearchSourceBuilder().query(languageFiltered).sort(getSortDefinition(sort, searchLanguage))
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val request = new Search.Builder(search.toString).addIndex(ImageApiProperties.SearchIndex).setParameter(Parameters.SIZE, numResults).setParameter("from", startAt).build()
