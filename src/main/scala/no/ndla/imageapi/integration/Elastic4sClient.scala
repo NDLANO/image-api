@@ -8,12 +8,11 @@
 
 package no.ndla.imageapi.integration
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.sksamuel.elastic4s.aws._
+import com.netaporter.uri.dsl._
 import com.sksamuel.elastic4s.ElasticsearchClientUri
+import com.sksamuel.elastic4s.aws._
 import com.sksamuel.elastic4s.http.HttpClient
 import no.ndla.imageapi.ImageApiProperties
-import com.netaporter.uri.dsl._
 
 trait Elastic4sClient {
   val e4sClient: HttpClient
@@ -32,14 +31,8 @@ object Ndla4sFactory {
     HttpClient(uri)
   }
 
-  private def getSigningClient(searchServer: String): HttpClient = {
-    val credentials = new DefaultAWSCredentialsProviderChain().getCredentials
-    val config = Aws4ElasticConfig(
-      s"elasticsearch://${searchServer.host.getOrElse("localhost")}:${searchServer.port.getOrElse(9200)}",
-      credentials.getAWSAccessKeyId,
-      credentials.getAWSSecretKey,
-      ImageApiProperties.SearchRegion)
-
-    Aws4ElasticClient(config)
+  def getSigningClient(searchServer: String): HttpClient = { //TODO: make private
+    val ep = "elasticsearch://search-test-image-api.ndla-local:443?ssl=true"
+    Aws4ElasticClient(ep)
   }
 }
