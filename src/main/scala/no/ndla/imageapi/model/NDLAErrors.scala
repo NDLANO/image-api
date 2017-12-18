@@ -8,6 +8,7 @@
 
 package no.ndla.imageapi.model
 
+import com.sksamuel.elastic4s.http.ElasticError
 import io.searchbox.client.JestResult
 import no.ndla.imageapi.ImageApiProperties
 
@@ -25,6 +26,15 @@ case class ValidationMessage(field: String, message: String)
 class NdlaSearchException(jestResponse: JestResult) extends RuntimeException(jestResponse.getErrorMessage) {
   def getResponse: JestResult = jestResponse
 }
+
+case class Ndla4sSearchException(error: ElasticError) extends RuntimeException(
+  s"""
+     |index: ${error.index.getOrElse("Error did not contain index")}
+     |reason: ${error.reason}
+     |shard: ${error.shard.getOrElse("Error did not contain shard")}
+     |type: ${error.`type`}
+   """.stripMargin
+)
 
 class S3UploadException(message: String) extends RuntimeException(message)
 

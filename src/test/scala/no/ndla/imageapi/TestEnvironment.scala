@@ -10,6 +10,7 @@ package no.ndla.imageapi
 
 
 import com.amazonaws.services.s3.AmazonS3
+import com.sksamuel.elastic4s.http.HttpClient
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.controller.{HealthController, ImageControllerV2, InternController, RawController}
 import no.ndla.imageapi.integration._
@@ -68,6 +69,7 @@ trait TestEnvironment
   val validationService = mock[ValidationService]
   val tagsService = mock[TagsService]
   val jestClient = mock[NdlaJestClient]
+  val e4sClient = mock[HttpClient]
   val searchConverterService = mock[SearchConverterService]
   val imageConverter = mock[ImageConverter]
   val healthController = mock[HealthController]

@@ -30,6 +30,7 @@ import org.json4s.native.Serialization.read
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+import scala.collection.JavaConverters._
 
 trait SearchService {
   this: ElasticClient with IndexBuilderService with IndexService with SearchConverterService =>
@@ -55,7 +56,7 @@ trait SearchService {
 
     def getHits(response: JestSearchResult, language: Option[String]): Seq[ImageMetaSummary] = {
       response.getTotal match {
-        case count: Integer if count > 0 =>
+        case count: java.lang.Long if count > 0 =>
           val resultArray = (parse(response.getJsonString) \ "hits" \ "hits").asInstanceOf[JArray].arr
 
           resultArray.map(result => {

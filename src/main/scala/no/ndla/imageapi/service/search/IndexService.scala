@@ -18,10 +18,10 @@ import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases,
 import io.searchbox.indices.mapping.PutMapping
 import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists, Stats}
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.integration.ElasticClient
+import no.ndla.imageapi.integration.{Elastic4sClient, ElasticClient}
 import no.ndla.imageapi.model.Language._
 import no.ndla.imageapi.model.search.SearchableLanguageFormats
-import no.ndla.imageapi.model.{NdlaSearchException, domain}
+import no.ndla.imageapi.model.{Ndla4sSearchException, domain}
 import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization.write
 
@@ -29,7 +29,7 @@ import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.util.{Failure, Success, Try}
 
 trait IndexService {
-  this: ElasticClient with SearchConverterService =>
+  this: ElasticClient with SearchConverterService with Elastic4sClient =>
   val indexService: IndexService
 
   class IndexService extends LazyLogging {
@@ -114,17 +114,15 @@ trait IndexService {
     }
 
     def aliasTarget: Try[Option[String]] = {
-      val getAliasRequest = new GetAliases.Builder().addIndex(s"${ImageApiProperties.SearchIndex}").build()
-      jestClient.execute(getAliasRequest) match {
-        case Success(result) => {
-          val aliasIterator = result.getJsonObject.entrySet().iterator()
-          aliasIterator.hasNext match {
-            case true => Success(Some(aliasIterator.next().getKey))
-            case false => Success(None)
-          }
-        }
-        case Failure(_: NdlaSearchException) => Success(None)
-        case Failure(t: Throwable) => Failure(t)
+      val ga = e4sClient.execute{
+        getAliases(ImageApiProperties.SearchIndex, Nil)
+      }.await
+
+      ga match {
+        case Right(results) =>
+          Success(results.result.mappings.headOption.map((t) => t._1.name))
+        case Left(e) =>
+          Failure(Ndla4sSearchException(e.error))
       }
     }
 
