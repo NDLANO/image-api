@@ -22,6 +22,7 @@ import org.scalatest.mockito.MockitoSugar
 
 trait TestEnvironment
   extends ElasticClient
+    with Elastic4sClient
     with IndexService
     with SearchService
     with SearchConverterService
