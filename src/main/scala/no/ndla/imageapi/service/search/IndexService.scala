@@ -37,9 +37,15 @@ trait IndexService {
 
     def indexDocument(imageMetaInformation: domain.ImageMetaInformation): Try[domain.ImageMetaInformation] = {
       val source = write(searchConverterService.asSearchableImage(imageMetaInformation))
-      val indexRequest = new Index.Builder(source).index(ImageApiProperties.SearchIndex).`type`(ImageApiProperties.SearchDocument).id(imageMetaInformation.id.get.toString).build
 
-      jestClient.execute(indexRequest).map(_ => imageMetaInformation)
+      val resp = e4sClient.execute{
+        indexInto(ImageApiProperties.SearchIndex / "image").doc(source).id(imageMetaInformation.id.get.toString)
+      }.await
+
+      resp match {
+        case Right(_) => Success(imageMetaInformation)
+        case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+      }
     }
 
     def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Try[Int] = {
