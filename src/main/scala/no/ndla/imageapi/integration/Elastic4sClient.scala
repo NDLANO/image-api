@@ -8,6 +8,8 @@
 
 package no.ndla.imageapi.integration
 
+import javax.naming.directory.InitialDirContext
+
 import com.netaporter.uri.dsl._
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.aws._
@@ -32,7 +34,12 @@ object Ndla4sFactory {
   }
 
   private def getSigningClient(searchServer: String): HttpClient = {
-    val ep = "elasticsearch://search-image-api.ndla-local:443?ssl=true"
+    // Since elastic4s does not resolve internal CNAME by itself, we do it here
+    val in = java.net.InetAddress.getByName(searchServer.host.getOrElse("localhost"))
+    val attr = new InitialDirContext().getAttributes("dns:/"+in.getHostName)
+    val esEndpoint = attr.get("CNAME").get(0).toString.dropRight(1)
+
+    val ep = s"elasticsearch://$esEndpoint:${searchServer.port.getOrElse(443)}?ssl=true"
     Aws4ElasticClient(ep)
   }
 }
