@@ -38,28 +38,29 @@ trait IndexService {
     def indexDocument(imageMetaInformation: domain.ImageMetaInformation): Try[domain.ImageMetaInformation] = {
       val source = write(searchConverterService.asSearchableImage(imageMetaInformation))
 
-      val resp = e4sClient.execute{
-        indexInto(ImageApiProperties.SearchIndex / "image").doc(source).id(imageMetaInformation.id.get.toString)
+      val response = e4sClient.execute{
+        indexInto(ImageApiProperties.SearchIndex / ImageApiProperties.SearchDocument).doc(source).id(imageMetaInformation.id.get.toString)
       }.await
 
-      resp match {
+      response match {
         case Right(_) => Success(imageMetaInformation)
         case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
       }
     }
 
     def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Try[Int] = {
-      val bulkBuilder = new Bulk.Builder()
-      imageMetaList.foreach(imageMeta => {
-        val source = write(searchConverterService.asSearchableImage(imageMeta))
-        bulkBuilder.addAction(new Index.Builder(source).index(indexName).`type`(ImageApiProperties.SearchDocument).id(imageMeta.id.get.toString).build)
-      })
+      val response = e4sClient.execute{
+        bulk(imageMetaList.map(imageMeta => {
+          val source = write(searchConverterService.asSearchableImage(imageMeta))
+          indexInto(ImageApiProperties.SearchIndex / ImageApiProperties.SearchDocument).doc(source).id(imageMeta.id.get.toString)
+        }))
+      }.await
 
-      val response = jestClient.execute(bulkBuilder.build())
-      response.map(_ => {
-        logger.info(s"Indexed ${imageMetaList.size} documents")
-        imageMetaList.size
-      })
+      response match {
+        case Right(_) => Success(imageMetaList.size)
+        case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+      }
+
     }
 
     def createIndex(): Try[String] = {
