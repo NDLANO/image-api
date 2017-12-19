@@ -43,15 +43,16 @@ object Ndla4sFactory {
 
     val elasticSearchUri = s"elasticsearch://$esEndpoint:${searchServer.port.getOrElse(443)}?ssl=true"
     val awsRegion = Option(Regions.getCurrentRegion).getOrElse(Region.getRegion(Regions.EU_CENTRAL_1)).toString
-    val defaultChainProvider = new DefaultAWSCredentialsProviderChain
+    setEnv("AWS_DEFAULT_REGION", awsRegion)
 
-    val config = Aws4ElasticConfig(
-      endpoint = elasticSearchUri,
-      key = defaultChainProvider.getCredentials.getAWSAccessKeyId,
-      secret = defaultChainProvider.getCredentials.getAWSSecretKey,
-      region = awsRegion
-    )
-
-    Aws4ElasticClient(config)
+    Aws4ElasticClient(elasticSearchUri)
   }
+
+  private def setEnv(key: String, value: String) = {
+    val field = System.getenv().getClass.getDeclaredField("m")
+    field.setAccessible(true)
+    val map = field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
+    map.put(key, value)
+  }
+
 }
