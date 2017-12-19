@@ -115,7 +115,7 @@ trait IndexService {
 
     def aliasTarget: Try[Option[String]] = {
       val ga = e4sClient.execute{
-        getAliases(ImageApiProperties.SearchIndex, Nil)
+        getAliases(Nil, List(ImageApiProperties.SearchIndex))
       }.await
 
       ga match {
