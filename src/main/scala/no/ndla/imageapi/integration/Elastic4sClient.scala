@@ -10,6 +10,8 @@ package no.ndla.imageapi.integration
 
 import javax.naming.directory.InitialDirContext
 
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import com.amazonaws.regions.{Region, Regions}
 import com.netaporter.uri.dsl._
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.aws._
@@ -39,7 +41,17 @@ object Ndla4sFactory {
     val attr = new InitialDirContext().getAttributes("dns:/"+in.getHostName)
     val esEndpoint = attr.get("CNAME").get(0).toString.dropRight(1)
 
-    val ep = s"elasticsearch://$esEndpoint:${searchServer.port.getOrElse(443)}?ssl=true"
-    Aws4ElasticClient(ep)
+    val elasticSearchUri = s"elasticsearch://$esEndpoint:${searchServer.port.getOrElse(443)}?ssl=true"
+    val awsRegion = Option(Regions.getCurrentRegion).getOrElse(Region.getRegion(Regions.EU_CENTRAL_1)).toString
+    val defaultChainProvider = new DefaultAWSCredentialsProviderChain
+
+    val config = Aws4ElasticConfig(
+      endpoint = elasticSearchUri,
+      key = defaultChainProvider.getCredentials.getAWSAccessKeyId,
+      secret = defaultChainProvider.getCredentials.getAWSSecretKey,
+      region = awsRegion
+    )
+
+    Aws4ElasticClient(config)
   }
 }
