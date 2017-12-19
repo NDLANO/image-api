@@ -122,7 +122,7 @@ trait IndexService {
         case Right(results) =>
           Success(results.result.mappings.headOption.map((t) => t._1.name))
         case Left(e) =>
-          Failure(Ndla4sSearchException(e.error))
+          Failure(Ndla4sSearchException(e))
       }
     }
 
