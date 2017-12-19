@@ -31,8 +31,8 @@ object Ndla4sFactory {
     HttpClient(uri)
   }
 
-  def getSigningClient(searchServer: String): HttpClient = { //TODO: make private
-    val ep = "elasticsearch://search-test-image-api.ndla-local:443?ssl=true"
+  private def getSigningClient(searchServer: String): HttpClient = {
+    val ep = "elasticsearch://search-image-api.ndla-local:443?ssl=true"
     Aws4ElasticClient(ep)
   }
 }
