@@ -11,7 +11,8 @@ import java.text.SimpleDateFormat
 import java.util.{Calendar, UUID}
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.mappings.{MappingBuilderFn, NestedFieldDefinition}
+import com.sksamuel.elastic4s
+import com.sksamuel.elastic4s.mappings.{MappingBuilderFn, MappingDefinition, NestedFieldDefinition}
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Bulk, Index}
 import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases, RemoveAliasMapping}
@@ -63,7 +64,7 @@ trait IndexService {
 
     }
 
-    def createIndex(): Try[String] = {
+    def createIndexWithGeneratedName(): Try[String] = {
       createIndexWithName(ImageApiProperties.SearchIndex + "_" + getTimestamp + "_" + UUID.randomUUID().toString)
     }
 
@@ -71,17 +72,18 @@ trait IndexService {
       if (indexExists(indexName).getOrElse(false)) {
         Success(indexName)
       } else {
-        val createIndexResponse = jestClient.execute(
-          new CreateIndex.Builder(indexName)
-            .settings(s"""{"index":{"max_result_window":${ImageApiProperties.ElasticSearchIndexMaxResultWindow}}}""")
-            .build())
-        createIndexResponse.map(_ => createMapping(indexName)).map(_ => indexName)
-      }
-    }
+        val response = e4sClient.execute{
+          createIndex(indexName)
+            .mappings(buildMapping)
+            .indexSetting("max_result_window", ImageApiProperties.ElasticSearchIndexMaxResultWindow)
+        }.await
 
-    def createMapping(indexName: String): Try[String] = {
-      val mappingResponse = jestClient.execute(new PutMapping.Builder(indexName, ImageApiProperties.SearchDocument, buildMapping()).build())
-      mappingResponse.map(_ => indexName)
+        response match {
+          case Right(_) => Success(indexName)
+          case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+        }
+
+      }
     }
 
     def findAllIndexes(): Try[Seq[String]] = {
@@ -141,8 +143,8 @@ trait IndexService {
       }
     }
 
-    def buildMapping(): String = {
-      MappingBuilderFn.buildWithName(mapping(ImageApiProperties.SearchDocument).fields(
+    def buildMapping: MappingDefinition = {
+      mapping(ImageApiProperties.SearchDocument).fields(
         intField("id"),
         keywordField("license"),
         intField("imageSize"),
@@ -153,7 +155,7 @@ trait IndexService {
         languageSupportedField("alttexts", keepRaw = false),
         languageSupportedField("captions", keepRaw = false),
         languageSupportedField("tags", keepRaw = false)
-      ), ImageApiProperties.SearchDocument).string()
+      )
     }
 
     private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
