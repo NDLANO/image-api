@@ -41,11 +41,11 @@ trait IndexService {
 
       val response = e4sClient.execute{
         indexInto(ImageApiProperties.SearchIndex / ImageApiProperties.SearchDocument).doc(source).id(imageMetaInformation.id.get.toString)
-      }.await
+      }
 
       response match {
-        case Right(_) => Success(imageMetaInformation)
-        case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+        case Success(_) => Success(imageMetaInformation)
+        case Failure(ex) => Failure(ex)
       }
     }
 
@@ -55,11 +55,11 @@ trait IndexService {
           val source = write(searchConverterService.asSearchableImage(imageMeta))
           indexInto(indexName / ImageApiProperties.SearchDocument).doc(source).id(imageMeta.id.get.toString)
         }))
-      }.await
+      }
 
       response match {
-        case Right(_) => Success(imageMetaList.size)
-        case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+        case Success(_) => Success(imageMetaList.size)
+        case Failure(ex) => Failure(ex)
       }
 
     }
@@ -76,11 +76,11 @@ trait IndexService {
           createIndex(indexName)
             .mappings(buildMapping)
             .indexSetting("max_result_window", ImageApiProperties.ElasticSearchIndexMaxResultWindow)
-        }.await
+        }
 
         response match {
-          case Right(_) => Success(indexName)
-          case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+          case Success(_) => Success(indexName)
+          case Failure(ex) => Failure(ex)
         }
 
       }
@@ -89,11 +89,11 @@ trait IndexService {
     def findAllIndexes: Try[Seq[String]] = {
       val response = e4sClient.execute{
         catIndices()
-      }.await
+      }
 
       response match {
-        case Right(results) => Success(results.result.map(index => index.index))
-        case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+        case Success(results) => Success(results.result.map(index => index.index))
+        case Failure(ex) => Failure(ex)
       }
     }
 
@@ -101,19 +101,14 @@ trait IndexService {
       if (!indexWithNameExists(newIndexName).getOrElse(false)) {
         Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
       } else {
-        val response = (oldIndexName match {
+        oldIndexName match {
           case None =>
             e4sClient.execute(addAlias(ImageApiProperties.SearchIndex).on(newIndexName))
           case Some(oldIndex) =>
-            e4sClient.execute{
+            e4sClient.execute {
               removeAlias(ImageApiProperties.SearchIndex).on(oldIndex)
               addAlias(ImageApiProperties.SearchIndex).on(newIndexName)
             }
-        }).await
-
-        response match {
-          case Right(resp) => Success(resp)
-          case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
         }
       }
     }
@@ -125,13 +120,8 @@ trait IndexService {
           if (!indexWithNameExists(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))
           } else {
-            val response = e4sClient.execute{
+            e4sClient.execute{
               deleteIndex(indexName)
-            }.await
-
-            response match {
-              case Right(resp) => Success(resp)
-              case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
             }
           }
         }
@@ -141,25 +131,23 @@ trait IndexService {
     def aliasTarget: Try[Option[String]] = {
       val response = e4sClient.execute{
         getAliases(Nil, List(ImageApiProperties.SearchIndex))
-      }.await
+      }
 
       response match {
-        case Right(results) =>
-          Success(results.result.mappings.headOption.map((t) => t._1.name))
-        case Left(e) =>
-          Failure(Ndla4sSearchException(e))
+        case Success(results) => Success(results.result.mappings.headOption.map((t) => t._1.name))
+        case Failure(ex) => Failure(ex)
       }
     }
 
     def indexWithNameExists(indexName: String): Try[Boolean] = {
       val response = e4sClient.execute{
         indexExists(indexName)
-      }.await
+      }
 
       response match {
-        case Right(resp) if resp.status != 404 => Success(true)
-        case Right(_) => Success(false)
-        case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+        case Success(resp) if resp.status != 404 => Success(true)
+        case Success(_) => Success(false)
+        case Failure(ex) => Failure(ex)
       }
     }
 

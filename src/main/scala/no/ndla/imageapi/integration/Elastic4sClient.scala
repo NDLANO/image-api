@@ -9,22 +9,43 @@
 package no.ndla.imageapi.integration
 
 import javax.naming.directory.InitialDirContext
+
 import com.amazonaws.regions.{Region, Regions}
 import com.netaporter.uri.dsl._
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.aws._
-import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.http.{HttpClient, HttpExecutable, RequestSuccess}
 import no.ndla.imageapi.ImageApiProperties
+import no.ndla.imageapi.model.Ndla4sSearchException
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success, Try}
 
 trait Elastic4sClient {
-  val e4sClient: HttpClient
+  val e4sClient: NdlaE4sClient
+}
+
+case class NdlaE4sClient(httpClient: HttpClient) {
+  def execute[T, U](request: T)(implicit exec: HttpExecutable[T, U]): Try[RequestSuccess[U]] = {
+    val result = Await.ready(httpClient.execute {
+      request
+    }, Duration.Inf).value.get
+    result match {
+      case Success(either) => either match {
+        case Right(result) => Success(result)
+        case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+      }
+      case Failure(ex) => Failure(ex)
+    }
+  }
 }
 
 object Ndla4sFactory {
-  def getClient(searchServer: String = ImageApiProperties.SearchServer): HttpClient = {
+  def getClient(searchServer: String = ImageApiProperties.SearchServer): NdlaE4sClient = {
     ImageApiProperties.RunWithSignedSearchRequests match {
-      case true => getSigningClient(searchServer)
-      case false => getNonSigningClient(searchServer)
+      case true => NdlaE4sClient(getSigningClient(searchServer))
+      case false => NdlaE4sClient(getNonSigningClient(searchServer))
     }
   }
 
@@ -36,7 +57,7 @@ object Ndla4sFactory {
   private def getSigningClient(searchServer: String): HttpClient = {
     // Since elastic4s does not resolve internal CNAME by itself, we do it here
     val in = java.net.InetAddress.getByName(searchServer.host.getOrElse("localhost"))
-    val attr = new InitialDirContext().getAttributes("dns:/"+in.getHostName)
+    val attr = new InitialDirContext().getAttributes("dns:/" + in.getHostName)
     val esEndpoint = attr.get("CNAME").get(0).toString.dropRight(1)
 
     val elasticSearchUri = s"elasticsearch://$esEndpoint:${searchServer.port.getOrElse(443)}?ssl=true"

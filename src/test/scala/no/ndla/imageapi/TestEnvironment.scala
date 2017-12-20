@@ -70,7 +70,7 @@ trait TestEnvironment
   val validationService = mock[ValidationService]
   val tagsService = mock[TagsService]
   val jestClient = mock[NdlaJestClient]
-  val e4sClient = mock[HttpClient]
+  val e4sClient = mock[NdlaE4sClient]
   val searchConverterService = mock[SearchConverterService]
   val imageConverter = mock[ImageConverter]
   val healthController = mock[HealthController]

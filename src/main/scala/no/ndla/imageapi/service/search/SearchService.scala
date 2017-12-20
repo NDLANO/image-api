@@ -172,11 +172,11 @@ trait SearchService {
     def countDocuments(): Long = {
       val response = e4sClient.execute{
         catCount(ImageApiProperties.SearchIndex)
-      }.await
+      }
 
       response match {
-        case Right(resp) => resp.result.count
-        case Left(_) => 0
+        case Success(resp) => resp.result.count
+        case Failure(_) => 0
       }
     }
 
