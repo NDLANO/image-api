@@ -101,17 +101,20 @@ trait IndexService {
       if (!indexWithNameExists(newIndexName).getOrElse(false)) {
         Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
       } else {
-        val addAliasDefinition = new AddAliasMapping.Builder(newIndexName, ImageApiProperties.SearchIndex).build()
-        val modifyAliasRequest = oldIndexName match {
-          case None => new ModifyAliases.Builder(addAliasDefinition).build()
-          case Some(oldIndex) => {
-            new ModifyAliases.Builder(
-              new RemoveAliasMapping.Builder(oldIndex, ImageApiProperties.SearchIndex).build()
-            ).addAlias(addAliasDefinition).build()
-          }
-        }
+        val response = (oldIndexName match {
+          case None =>
+            e4sClient.execute(addAlias(ImageApiProperties.SearchIndex).on(newIndexName))
+          case Some(oldIndex) =>
+            e4sClient.execute{
+              removeAlias(ImageApiProperties.SearchIndex).on(oldIndex)
+              addAlias(ImageApiProperties.SearchIndex).on(newIndexName)
+            }
+        }).await
 
-        jestClient.execute(modifyAliasRequest)
+        response match {
+          case Right(resp) => Success(resp)
+          case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+        }
       }
     }
 
@@ -127,7 +130,7 @@ trait IndexService {
             }.await
 
             response match {
-              case Right(_) => Success()
+              case Right(resp) => Success(resp)
               case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
             }
           }

@@ -11,12 +11,13 @@ import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
 import io.searchbox.params.Parameters
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.integration.ElasticClient
+import no.ndla.imageapi.integration.{Elastic4sClient, ElasticClient}
 import no.ndla.imageapi.model.api.{Error, ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.model.domain.Sort
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
 import no.ndla.imageapi.model.{Language, NdlaSearchException, ResultWindowTooLargeException}
 import org.apache.lucene.search.join.ScoreMode
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query._
@@ -33,7 +34,7 @@ import scala.util.{Failure, Success}
 import scala.collection.JavaConverters._
 
 trait SearchService {
-  this: ElasticClient with IndexBuilderService with IndexService with SearchConverterService =>
+  this: ElasticClient with Elastic4sClient with IndexBuilderService with IndexService with SearchConverterService =>
   val searchService: SearchService
 
   class SearchService extends LazyLogging {
@@ -168,11 +169,15 @@ trait SearchService {
       }
     }
 
-    def countDocuments(): Int = {
-      val ret = jestClient.execute(
-        new Count.Builder().addIndex(ImageApiProperties.SearchIndex).build()
-      ).map(result => result.getCount.toInt)
-      ret.getOrElse(0)
+    def countDocuments(): Long = {
+      val response = e4sClient.execute{
+        catCount(ImageApiProperties.SearchIndex)
+      }.await
+
+      response match {
+        case Right(resp) => resp.result.count
+        case Left(_) => 0
+      }
     }
 
     private def getStartAtAndNumResults(page: Option[Int], pageSize: Option[Int]): (Int, Int) = {
