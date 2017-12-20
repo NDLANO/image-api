@@ -14,7 +14,7 @@ import com.amazonaws.regions.{Region, Regions}
 import com.netaporter.uri.dsl._
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.aws._
-import com.sksamuel.elastic4s.http.{HttpClient, HttpExecutable, RequestSuccess}
+import com.sksamuel.elastic4s.http.{HttpClient, HttpExecutable, HttpRequestClient, RequestSuccess}
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.model.Ndla4sSearchException
 

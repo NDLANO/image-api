@@ -14,6 +14,7 @@ import no.ndla.imageapi.model.search.{LanguageValue, SearchableImage, Searchable
 import no.ndla.network.ApplicationUrl
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import com.netaporter.uri.Uri.parse
+import com.sksamuel.elastic4s.http.search.SearchHit
 import no.ndla.imageapi.service.ConverterService
 import org.json4s._
 import no.ndla.imageapi.model.Language
@@ -66,6 +67,26 @@ trait SearchConverterService {
         previewUrl = apiToRawRegex.replaceFirstIn(ApplicationUrl.get, "/raw") + searchableImage.previewUrl,
         metaUrl = ApplicationUrl.get + searchableImage.id,
         license = searchableImage.license)
+    }
+
+    def getLanguageFromHit(result: SearchHit): Option[String] = {
+      val sortedInnerHits = result.innerHits.toList.sortBy{
+        case (_,hit) => hit.max_score
+      }.reverse
+
+
+      sortedInnerHits.headOption.flatMap{
+        case (hitField, innerHit) =>
+          innerHit.hits.sortBy(hit => hit.score).reverse.headOption.flatMap(hit => {
+            hit.highlight.headOption.map(hl => hl._1.split('.').last)
+          })
+        } match {
+        case Some(lang) =>
+          Some(lang)
+        case _ =>
+          result.sourceAsMap.keySet.headOption.map(fieldName => fieldName.split('.').last) //TODO: Maybe sort this by default language priority
+      }
+
     }
 
     def getLanguageFromHit(jsonObject: JValue): Option[String] = {
