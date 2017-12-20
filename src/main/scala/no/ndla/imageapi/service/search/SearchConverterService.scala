@@ -70,14 +70,13 @@ trait SearchConverterService {
     }
 
     def getLanguageFromHit(result: SearchHit): Option[String] = {
-      val sortedInnerHits = result.innerHits.toList.sortBy{
+      val sortedInnerHits = result.innerHits.toList.filter(ih => ih._2.total > 0).sortBy{
         case (_,hit) => hit.max_score
-      }.reverse
-
-
+      }
       sortedInnerHits.headOption.flatMap{
         case (hitField, innerHit) =>
           innerHit.hits.sortBy(hit => hit.score).reverse.headOption.flatMap(hit => {
+            //TODO: Test sorting of both innerHits and sorting of innerHit.hits
             hit.highlight.headOption.map(hl => hl._1.split('.').last)
           })
         } match {
@@ -89,7 +88,7 @@ trait SearchConverterService {
 
     }
 
-    def getLanguageFromHit(jsonObject: JValue): Option[String] = {
+    def getLanguageFromHit(jsonObject: JValue): Option[String] = { //TODO: remove
       implicit val formats = DefaultFormats
 
       // Fetches matched language from highlight in innerHit

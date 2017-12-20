@@ -59,7 +59,7 @@ trait SearchService {
       }
     }
 
-    def getHits(response: JestSearchResult, language: Option[String]): Seq[ImageMetaSummary] = {
+    def getHits(response: JestSearchResult, language: Option[String]): Seq[ImageMetaSummary] = { //TODO: remove
       response.getTotal match {
         case count: java.lang.Long if count > 0 =>
           val resultArray = (parse(response.getJsonString) \ "hits" \ "hits").asInstanceOf[JArray].arr
@@ -186,7 +186,7 @@ trait SearchService {
       }
 
       e4sClient.execute{
-        search(ImageApiProperties.SearchIndex).size(numResults).from(startAt).query(languageFiltered)
+        search(ImageApiProperties.SearchIndex).size(numResults).from(startAt).query(languageFiltered) //TODO: Sorted results
       } match {
         case Success(response) =>
           SearchResult(response.result.totalHits, page.getOrElse(1), numResults, getHits(response.result, language))
