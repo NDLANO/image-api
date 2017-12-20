@@ -28,10 +28,11 @@ trait Elastic4sClient {
 
 case class NdlaE4sClient(httpClient: HttpClient) {
   def execute[T, U](request: T)(implicit exec: HttpExecutable[T, U]): Try[RequestSuccess[U]] = {
-    val result = Await.ready(httpClient.execute {
+    val response = Await.ready(httpClient.execute {
       request
     }, Duration.Inf).value.get
-    result match {
+
+    response match {
       case Success(either) => either match {
         case Right(result) => Success(result)
         case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
