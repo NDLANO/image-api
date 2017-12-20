@@ -40,7 +40,7 @@ trait SearchService {
     private val noCopyright = QueryBuilders.boolQuery().mustNot(QueryBuilders.termQuery("license","copyrighted"))
 
     def createEmptyIndexIfNoIndexesExist(): Unit = {
-      val noIndexesExist = indexService.findAllIndexes().map(_.isEmpty).getOrElse(true)
+      val noIndexesExist = indexService.findAllIndexes.map(_.isEmpty).getOrElse(true)
       if (noIndexesExist) {
         indexBuilderService.createEmptyIndex match {
           case Success(_) =>

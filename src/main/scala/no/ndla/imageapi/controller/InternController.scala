@@ -43,7 +43,7 @@ trait InternController {
 
     delete("/index") {
       def pluralIndex(n: Int) = if (n == 1) "1 index" else s"$n indexes"
-      val deleteResults = indexService.findAllIndexes() match {
+      val deleteResults = indexService.findAllIndexes match {
         case Failure(f) => halt(status = 500, body = f.getMessage)
         case Success(indexes) => indexes.map(index => {
           logger.info(s"Deleting index $index")

@@ -86,9 +86,15 @@ trait IndexService {
       }
     }
 
-    def findAllIndexes(): Try[Seq[String]] = {
-      jestClient.execute(new Stats.Builder().build())
-        .map(r => r.getJsonObject.get("indices").getAsJsonObject.entrySet().asScala.map(_.getKey).toSeq)
+    def findAllIndexes: Try[Seq[String]] = {
+      val response = e4sClient.execute{
+        catIndices()
+      }.await
+
+      response match {
+        case Right(results) => Success(results.result.map(index => index.index))
+        case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+      }
     }
 
     def updateAliasTarget(oldIndexName: Option[String], newIndexName: String): Try[Any] = {
