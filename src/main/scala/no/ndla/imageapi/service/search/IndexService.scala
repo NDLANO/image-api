@@ -53,7 +53,7 @@ trait IndexService {
       val response = e4sClient.execute{
         bulk(imageMetaList.map(imageMeta => {
           val source = write(searchConverterService.asSearchableImage(imageMeta))
-          indexInto(ImageApiProperties.SearchIndex / ImageApiProperties.SearchDocument).doc(source).id(imageMeta.id.get.toString)
+          indexInto(indexName / ImageApiProperties.SearchDocument).doc(source).id(imageMeta.id.get.toString)
         }))
       }.await
 
