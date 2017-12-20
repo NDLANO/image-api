@@ -69,7 +69,7 @@ trait IndexService {
     }
 
     def createIndexWithName(indexName: String): Try[String] = {
-      if (indexExists(indexName).getOrElse(false)) {
+      if (indexWithNameExists(indexName).getOrElse(false)) {
         Success(indexName)
       } else {
         val response = e4sClient.execute{
@@ -98,7 +98,7 @@ trait IndexService {
     }
 
     def updateAliasTarget(oldIndexName: Option[String], newIndexName: String): Try[Any] = {
-      if (!indexExists(newIndexName).getOrElse(false)) {
+      if (!indexWithNameExists(newIndexName).getOrElse(false)) {
         Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
       } else {
         val addAliasDefinition = new AddAliasMapping.Builder(newIndexName, ImageApiProperties.SearchIndex).build()
@@ -119,7 +119,7 @@ trait IndexService {
       optIndexName match {
         case None => Success(optIndexName)
         case Some(indexName) => {
-          if (!indexExists(indexName).getOrElse(false)) {
+          if (!indexWithNameExists(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))
           } else {
             jestClient.execute(new DeleteIndex.Builder(indexName).build())
@@ -141,11 +141,15 @@ trait IndexService {
       }
     }
 
-    def indexExists(indexName: String): Try[Boolean] = {
-      jestClient.execute(new IndicesExists.Builder(indexName).build()) match {
-        case Success(_) => Success(true)
-        case Failure(_: ElasticsearchException) => Success(false)
-        case Failure(t: Throwable) => Failure(t)
+    def indexWithNameExists(indexName: String): Try[Boolean] = {
+      val response = e4sClient.execute{
+        indexExists(indexName)
+      }.await
+
+      response match {
+        case Right(resp) if resp.status != 404 => Success(true)
+        case Right(_) => Success(false)
+        case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
       }
     }
 
