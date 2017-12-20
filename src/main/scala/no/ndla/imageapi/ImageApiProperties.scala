@@ -18,6 +18,8 @@ import scala.util.Properties._
 
 
 object ImageApiProperties extends LazyLogging {
+  val Auth0LoginEndpoint = "https://ndla.eu.auth0.com/authorize"
+
   val SecretsFile = "image-api.secrets"
 
   val RoleWithWriteAccess = "images:write"

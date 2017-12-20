@@ -28,5 +28,6 @@ object ImagesApiInfo {
 }
 
 class ImageSwagger extends Swagger("2.0", "0.8", ImagesApiInfo.apiInfo) {
-  addAuthorization(OAuth(List("images:all"), List(ApplicationGrant(TokenEndpoint("/auth/tokens", "access_token")))))
+  val roleWithWriteAccessInTest = ImageApiProperties.RoleWithWriteAccess.replace(":", "-test:")
+  addAuthorization(OAuth(List(roleWithWriteAccessInTest), List(ImplicitGrant(LoginEndpoint(ImageApiProperties.Auth0LoginEndpoint),"access_token"))))
 }
