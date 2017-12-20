@@ -115,25 +115,32 @@ trait IndexService {
       }
     }
 
-    def deleteIndex(optIndexName: Option[String]): Try[_] = {
+    def deleteIndexWithName(optIndexName: Option[String]): Try[_] = {
       optIndexName match {
         case None => Success(optIndexName)
         case Some(indexName) => {
           if (!indexWithNameExists(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))
           } else {
-            jestClient.execute(new DeleteIndex.Builder(indexName).build())
+            val response = e4sClient.execute{
+              deleteIndex(indexName)
+            }.await
+
+            response match {
+              case Right(_) => Success()
+              case Left(requestFailure) => Failure(Ndla4sSearchException(requestFailure))
+            }
           }
         }
       }
     }
 
     def aliasTarget: Try[Option[String]] = {
-      val ga = e4sClient.execute{
+      val response = e4sClient.execute{
         getAliases(Nil, List(ImageApiProperties.SearchIndex))
       }.await
 
-      ga match {
+      response match {
         case Right(results) =>
           Success(results.result.mappings.headOption.map((t) => t._1.name))
         case Left(e) =>
