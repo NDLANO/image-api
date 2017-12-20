@@ -94,7 +94,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   }
 
   test("That DELETE /index removes all indexes") {
-    when(indexService.findAllIndexes()).thenReturn(Success(List("index1", "index2", "index3")))
+    when(indexService.findAllIndexes).thenReturn(Success(List("index1", "index2", "index3")))
     doReturn(Success("")).when(indexService).deleteIndex(Some("index1"))
     doReturn(Success("")).when(indexService).deleteIndex(Some("index2"))
     doReturn(Success("")).when(indexService).deleteIndex(Some("index3"))
@@ -102,7 +102,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
       status should equal (200)
       body should equal ("Deleted 3 indexes")
     }
-    verify(indexService).findAllIndexes()
+    verify(indexService).findAllIndexes
     verify(indexService).deleteIndex(Some("index1"))
     verify(indexService).deleteIndex(Some("index2"))
     verify(indexService).deleteIndex(Some("index3"))
@@ -110,7 +110,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   }
 
   test("That DELETE /index fails if at least one index isn't found, and no indexes are deleted") {
-    doReturn(Failure(new RuntimeException("Failed to find indexes"))).when(indexService).findAllIndexes()
+    doReturn(Failure(new RuntimeException("Failed to find indexes"))).when(indexService).findAllIndexes
     doReturn(Success("")).when(indexService).deleteIndex(Some("index1"))
     doReturn(Success("")).when(indexService).deleteIndex(Some("index2"))
     doReturn(Success("")).when(indexService).deleteIndex(Some("index3"))
@@ -122,7 +122,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   }
 
   test("That DELETE /index fails if at least one index couldn't be deleted, but the other indexes are deleted regardless") {
-    when(indexService.findAllIndexes()).thenReturn(Success(List("index1", "index2", "index3")))
+    when(indexService.findAllIndexes).thenReturn(Success(List("index1", "index2", "index3")))
     doReturn(Success("")).when(indexService).deleteIndex(Some("index1"))
     doReturn(Failure(new RuntimeException("No index with name 'index2' exists"))).when(indexService).deleteIndex(Some("index2"))
     doReturn(Success("")).when(indexService).deleteIndex(Some("index3"))
