@@ -134,22 +134,25 @@ trait SearchService {
 
     def executeSearch(queryBuilder: BoolQueryDefinition, minimumSize: Option[Int], license: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
 
-      val licensedFiltered = license match {
-        case None =>  if (!includeCopyrighted) queryBuilder.filter(noCopyright) else queryBuilder
-        case Some(lic) => queryBuilder.filter(termQuery("license", lic))
+      val licenseFilter = license match {
+        case None => if (!includeCopyrighted) Some(noCopyright) else None
+        case Some(lic) => Some(termQuery("license", lic))
       }
 
-      val sizeFiltered = minimumSize match {
-        case None => licensedFiltered
-        case Some(size) => licensedFiltered.filter(rangeQuery("imageSize").gte(minimumSize.get))
+      val sizeFilter = minimumSize match {
+        case Some(size) => Some(rangeQuery("imageSize").gte(size))
+        case _ => None
       }
 
-      val (languageFiltered, searchLanguage) = language match {
+      val (languageFilter, searchLanguage) = language match {
         case None | Some(Language.AllLanguages) =>
-          (sizeFiltered, "*")
+          (None, "*")
         case Some(lang) =>
-          (sizeFiltered.filter(nestedQuery("titles", existsQuery(s"titles.$lang")).scoreMode(ScoreMode.Avg)), lang)
+          (Some(nestedQuery("titles", existsQuery(s"titles.$lang")).scoreMode(ScoreMode.Avg)), lang)
       }
+
+      val filters = List(licenseFilter, sizeFilter, languageFilter)
+      val filteredSearch = queryBuilder.filter(filters.flatten)
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val requestedResultWindow = page.getOrElse(1)*numResults
@@ -159,7 +162,7 @@ trait SearchService {
       }
 
       e4sClient.execute{
-        search(ImageApiProperties.SearchIndex).size(numResults).from(startAt).query(languageFiltered).sortBy(getSortDefinition(sort, searchLanguage))
+        search(ImageApiProperties.SearchIndex).size(numResults).from(startAt).query(filteredSearch).sortBy(getSortDefinition(sort, searchLanguage))
       } match {
         case Success(response) =>
           SearchResult(response.result.totalHits, page.getOrElse(1), numResults, getHits(response.result, language))
