@@ -7,35 +7,29 @@
 
 package no.ndla.imageapi.service.search
 
+import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.search.SearchResponse
+import com.sksamuel.elastic4s.searches.ScoreMode
+import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, QueryDefinition}
+import com.sksamuel.elastic4s.searches.sort.SortOrder
 import com.typesafe.scalalogging.LazyLogging
-import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
-import io.searchbox.params.Parameters
+import io.searchbox.core.{SearchResult => JestSearchResult}
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.{Elastic4sClient, ElasticClient}
 import no.ndla.imageapi.model.api.{Error, ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.model.domain.Sort
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
 import no.ndla.imageapi.model.{Language, NdlaSearchException, ResultWindowTooLargeException}
-import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.search.SearchResponse
-import com.sksamuel.elastic4s.http.search.queries.compound.BoolQueryBuilderFn
-import com.sksamuel.elastic4s.searches.ScoreMode
-import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, NestedQueryDefinition, QueryDefinition}
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
-import org.elasticsearch.index.query._
-import org.elasticsearch.search.builder.SearchSourceBuilder
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder
-import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
+//import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
 import org.json4s._
-import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization.read
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import scala.collection.JavaConverters._
 
 trait SearchService {
   this: ElasticClient with Elastic4sClient with IndexBuilderService with IndexService with SearchConverterService =>
@@ -97,27 +91,27 @@ trait SearchService {
 
     def getSortDefinition(sort: Sort.Value, language: String) = {
       val sortLanguage = language match {
-        case Language.NoLanguage => Language.DefaultLanguage
+        case Language.NoLanguage | Language.AllLanguages => "*"
         case _ => language
       }
 
       sort match {
         case (Sort.ByTitleAsc) =>
           language match {
-            case "*" => SortBuilders.fieldSort("defaultTitle").order(SortOrder.ASC).missing("_last")
-            case _ => SortBuilders.fieldSort(s"titles.$sortLanguage.raw").setNestedPath("titles").order(SortOrder.ASC).missing("_last")
+            case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.ASC).missing("_last")
+            case _ => fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").order(SortOrder.ASC).missing("_last")
           }
         case (Sort.ByTitleDesc) =>
           language match {
-            case "*" => SortBuilders.fieldSort("defaultTitle").order(SortOrder.DESC).missing("_last")
-            case _ => SortBuilders.fieldSort(s"titles.$sortLanguage.raw").setNestedPath("titles").order(SortOrder.DESC).missing("_last")
+            case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.DESC).missing("_last")
+            case _ => fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").order(SortOrder.DESC).missing("_last")
           }
-        case (Sort.ByRelevanceAsc) => SortBuilders.fieldSort("_score").order(SortOrder.ASC)
-        case (Sort.ByRelevanceDesc) => SortBuilders.fieldSort("_score").order(SortOrder.DESC)
-        case (Sort.ByLastUpdatedAsc) => SortBuilders.fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByLastUpdatedDesc) => SortBuilders.fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByIdAsc) => SortBuilders.fieldSort("id").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByIdDesc) => SortBuilders.fieldSort("id").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByRelevanceAsc) => fieldSort("_score").order(SortOrder.ASC)
+        case (Sort.ByRelevanceDesc) => fieldSort("_score").order(SortOrder.DESC)
+        case (Sort.ByLastUpdatedAsc) => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByLastUpdatedDesc) => fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByIdAsc) => fieldSort("id").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByIdDesc) => fieldSort("id").order(SortOrder.DESC).missing("_last")
       }
     }
 
@@ -186,7 +180,7 @@ trait SearchService {
       }
 
       e4sClient.execute{
-        search(ImageApiProperties.SearchIndex).size(numResults).from(startAt).query(languageFiltered) //TODO: Sorted results
+        search(ImageApiProperties.SearchIndex).size(numResults).from(startAt).query(languageFiltered).sortBy(getSortDefinition(sort, searchLanguage))
       } match {
         case Success(response) =>
           SearchResult(response.result.totalHits, page.getOrElse(1), numResults, getHits(response.result, language))
