@@ -68,24 +68,36 @@ trait SearchConverterService {
     }
 
     def getLanguageFromHit(result: SearchHit): Option[String] = {
-      val sortedInnerHits = result.innerHits.toList.filter(ih => ih._2.total > 0).sortBy{
-        case (_,hit) => hit.max_score
-      }
-      sortedInnerHits.headOption.flatMap{
-        case (hitField, innerHit) =>
-          val sortedInnerInnerHits = innerHit.hits.sortBy(hit => hit.score).reverse
-            sortedInnerInnerHits.headOption.flatMap(hit => {
-            //TODO: Test sorting of both innerHits and sorting of innerHit.hits
+      val sortedInnerHits = result.innerHits.toList.filter(ih => ih._2.total > 0).sortBy {
+        case (_, hit) => hit.max_score
+      }.reverse
+
+      val matchLanguage = sortedInnerHits.headOption.flatMap {
+        case (_, innerHit) =>
+          innerHit.hits.sortBy(hit => hit.score).reverse.headOption.flatMap(hit => {
             hit.highlight.headOption.map(hl => hl._1.split('.').last)
           })
-        } match {
+      }
+
+      matchLanguage match {
         case Some(lang) =>
           Some(lang)
         case _ =>
-          result.sourceAsMap.keySet.headOption.map(fieldName => fieldName.split('.').last) //TODO: Maybe sort this by default language priority
+          val titles = result.sourceAsMap.get("titles")
+          val titleMap = titles.map(tm => {
+            tm.asInstanceOf[Map[String, _]]
+          })
+
+          titleMap.map(tm => {
+            tm.keySet.toList.maxBy(lang => {
+              val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
+              languagePriority.indexOf(lang)
+            })
+          })
       }
 
     }
 
   }
+
 }

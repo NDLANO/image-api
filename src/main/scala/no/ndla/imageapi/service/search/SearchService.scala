@@ -122,7 +122,7 @@ trait SearchService {
               languageSpecificSearch("alttexts", language, query, 1),
               languageSpecificSearch("captions", language, query, 2),
               languageSpecificSearch("tags", language, query, 2),
-              simpleStringQuery(query).field("contributors")
+              simpleStringQuery(query).field("contributors", 1)
             )
         )
 
@@ -168,12 +168,6 @@ trait SearchService {
       }
 
     }
-
-    def dbf(qd: QueryDefinition, sort: Sort.Value, lang: String) = { //TODO: Remove
-      val query = e4sClient.httpClient.show(search(ImageApiProperties.SearchIndex).query(qd).sortBy(getSortDefinition(sort, lang)))
-      query
-    }
-
 
     def countDocuments(): Long = {
       val response = e4sClient.execute{

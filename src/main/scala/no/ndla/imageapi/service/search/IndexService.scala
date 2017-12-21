@@ -14,7 +14,6 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s
 import com.sksamuel.elastic4s.mappings.{MappingBuilderFn, MappingDefinition, NestedFieldDefinition}
 import com.typesafe.scalalogging.LazyLogging
-import io.searchbox.core.{Bulk, Index}
 import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases, RemoveAliasMapping}
 import io.searchbox.indices.mapping.PutMapping
 import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists, Stats}
