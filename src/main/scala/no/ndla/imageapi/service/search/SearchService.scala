@@ -14,7 +14,7 @@ import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, QueryDefini
 import com.sksamuel.elastic4s.searches.sort.SortOrder
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.integration.{Elastic4sClient, ElasticClient}
+import no.ndla.imageapi.integration.Elastic4sClient
 import no.ndla.imageapi.model.api.{Error, ImageMetaSummary, SearchResult}
 import no.ndla.imageapi.model.domain.Sort
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
@@ -30,7 +30,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 trait SearchService {
-  this: ElasticClient with Elastic4sClient with IndexBuilderService with IndexService with SearchConverterService =>
+  this: Elastic4sClient with IndexBuilderService with IndexService with SearchConverterService =>
   val searchService: SearchService
 
   class SearchService extends LazyLogging {
@@ -201,15 +201,15 @@ trait SearchService {
     private def errorHandler[T](failure: Failure[T]) = {
       failure match {
         case Failure(e: NdlaSearchException) => {
-          e.getResponse.getResponseCode match {
+          e.rf.status match {
             case notFound: Int if notFound == 404 => {
               logger.error(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex.")
               scheduleIndexDocuments()
               throw new IndexNotFoundException(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex")
             }
             case _ => {
-              logger.error(e.getResponse.getErrorMessage)
-              throw new ElasticsearchException(s"Unable to execute search in ${ImageApiProperties.SearchIndex}", e.getResponse.getErrorMessage)
+              logger.error(e.getMessage)
+              throw new ElasticsearchException(s"Unable to execute search in ${ImageApiProperties.SearchIndex}", e.getMessage)
             }
           }
 

@@ -21,8 +21,7 @@ import no.ndla.network.NdlaClient
 import org.scalatest.mockito.MockitoSugar
 
 trait TestEnvironment
-  extends ElasticClient
-    with Elastic4sClient
+    extends Elastic4sClient
     with IndexService
     with SearchService
     with SearchConverterService
@@ -69,7 +68,6 @@ trait TestEnvironment
   val converterService = mock[ConverterService]
   val validationService = mock[ValidationService]
   val tagsService = mock[TagsService]
-  val jestClient = mock[NdlaJestClient]
   val e4sClient = mock[NdlaE4sClient]
   val searchConverterService = mock[SearchConverterService]
   val imageConverter = mock[ImageConverter]

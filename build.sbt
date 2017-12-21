@@ -55,7 +55,6 @@ lazy val image_api = (project in file(".")).
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
       "org.flywaydb" % "flyway-core" % "4.0",
-      "io.searchbox" % "jest" % "5.3.3",
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % "6.0.1",
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,

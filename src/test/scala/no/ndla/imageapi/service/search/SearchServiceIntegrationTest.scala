@@ -10,7 +10,7 @@ package no.ndla.imageapi.service.search
 import javax.servlet.http.HttpServletRequest
 
 import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
-import no.ndla.imageapi.integration.{JestClientFactory, Ndla4sFactory}
+import no.ndla.imageapi.integration.Elastic4sClientFactory
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.model.api
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
@@ -27,8 +27,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
   val esPort = 9200
 
-  override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esPort")
-  override val e4sClient = Ndla4sFactory.getClient(searchServer = s"http://localhost:$esPort")
+  override val e4sClient = Elastic4sClientFactory.getClient(searchServer = s"http://localhost:$esPort")
   override val searchConverterService = new SearchConverterService
   override val converterService = new ConverterService
   override val indexService = new IndexService

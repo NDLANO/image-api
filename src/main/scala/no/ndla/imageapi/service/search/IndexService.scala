@@ -11,25 +11,19 @@ import java.text.SimpleDateFormat
 import java.util.{Calendar, UUID}
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s
-import com.sksamuel.elastic4s.mappings.{MappingBuilderFn, MappingDefinition, NestedFieldDefinition}
+import com.sksamuel.elastic4s.mappings.{MappingDefinition, NestedFieldDefinition}
 import com.typesafe.scalalogging.LazyLogging
-import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases, RemoveAliasMapping}
-import io.searchbox.indices.mapping.PutMapping
-import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists, Stats}
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.integration.{Elastic4sClient, ElasticClient}
+import no.ndla.imageapi.integration.Elastic4sClient
 import no.ndla.imageapi.model.Language._
+import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.model.search.SearchableLanguageFormats
-import no.ndla.imageapi.model.{Ndla4sSearchException, domain}
-import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization.write
 
-import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.util.{Failure, Success, Try}
 
 trait IndexService {
-  this: ElasticClient with SearchConverterService with Elastic4sClient =>
+  this: SearchConverterService with Elastic4sClient =>
   val indexService: IndexService
 
   class IndexService extends LazyLogging {

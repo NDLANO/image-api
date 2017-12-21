@@ -20,8 +20,7 @@ import no.ndla.network.NdlaClient
 import org.postgresql.ds.PGPoolingDataSource
 
 object ComponentRegistry
-  extends ElasticClient
-  with Elastic4sClient
+  extends Elastic4sClient
   with IndexService
   with SearchService
   with SearchConverterService
@@ -79,8 +78,7 @@ object ComponentRegistry
   lazy val resourcesApp = new ResourcesApp
   lazy val converterService = new ConverterService
   lazy val tagsService = new TagsService
-  lazy val jestClient = JestClientFactory.getClient()
-  lazy val e4sClient = Ndla4sFactory.getClient()
+  lazy val e4sClient = Elastic4sClientFactory.getClient()
   lazy val searchConverterService = new SearchConverterService
 
   lazy val imageConverter = new ImageConverter
