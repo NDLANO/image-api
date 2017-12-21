@@ -13,7 +13,6 @@ import com.sksamuel.elastic4s.searches.ScoreMode
 import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, QueryDefinition}
 import com.sksamuel.elastic4s.searches.sort.SortOrder
 import com.typesafe.scalalogging.LazyLogging
-import io.searchbox.core.{SearchResult => JestSearchResult}
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.{Elastic4sClient, ElasticClient}
 import no.ndla.imageapi.model.api.{Error, ImageMetaSummary, SearchResult}
@@ -22,7 +21,6 @@ import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats
 import no.ndla.imageapi.model.{Language, NdlaSearchException, ResultWindowTooLargeException}
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
-//import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization.read
@@ -36,7 +34,7 @@ trait SearchService {
   val searchService: SearchService
 
   class SearchService extends LazyLogging {
-    private val noCopyright = boolQuery().not(must(termQuery("license", "copyrighted"))) //TODO: Maybe just .not(termQuery...) instead of .not(must(termQuery...))?
+    private val noCopyright = boolQuery().not(termQuery("license", "copyrighted"))
 
     def createEmptyIndexIfNoIndexesExist(): Unit = {
       val noIndexesExist = indexService.findAllIndexes.map(_.isEmpty).getOrElse(true)
@@ -50,25 +48,6 @@ trait SearchService {
         }
       } else {
         logger.info("Existing index(es) kept intact")
-      }
-    }
-
-    def getHits(response: JestSearchResult, language: Option[String]): Seq[ImageMetaSummary] = { //TODO: remove
-      response.getTotal match {
-        case count: java.lang.Long if count > 0 =>
-          val resultArray = (parse(response.getJsonString) \ "hits" \ "hits").asInstanceOf[JArray].arr
-
-          resultArray.map(result => {
-            val matchedLanguage = language match {
-              case Some(Language.AllLanguages) | Some("*") | None =>
-                searchConverterService.getLanguageFromHit(result).orElse(language)
-              case _ => language
-            }
-
-            val hitString = compact(render(result \ "_source"))
-            hitAsImageMetaSummary(hitString, matchedLanguage)
-          })
-        case _ => Seq()
       }
     }
 
@@ -126,10 +105,10 @@ trait SearchService {
           val hi = highlight("*").preTag("").postTag("").numberOfFragments(0)
           val ih = innerHits(searchField).highlighting(hi)
 
-          val searchQuery = simpleStringQuery(query).field(s"$searchField.*")
+          val searchQuery = simpleStringQuery(query).field(s"$searchField.*", 1)
           nestedQuery(searchField, searchQuery).scoreMode(ScoreMode.Avg).boost(boost).inner(ih)
         case Some(lang) =>
-          val searchQuery = simpleStringQuery(query).field(s"$searchField.$lang")
+          val searchQuery = simpleStringQuery(query).field(s"$searchField.$lang", 1)
           nestedQuery(searchField, searchQuery).scoreMode(ScoreMode.Avg).boost(boost)
       }
     }
@@ -189,6 +168,12 @@ trait SearchService {
       }
 
     }
+
+    def dbf(qd: QueryDefinition, sort: Sort.Value, lang: String) = { //TODO: Remove
+      val query = e4sClient.httpClient.show(search(ImageApiProperties.SearchIndex).query(qd).sortBy(getSortDefinition(sort, lang)))
+      query
+    }
+
 
     def countDocuments(): Long = {
       val response = e4sClient.execute{

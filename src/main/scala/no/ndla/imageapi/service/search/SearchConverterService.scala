@@ -7,18 +7,16 @@
 
 package no.ndla.imageapi.service.search
 
+import com.netaporter.uri.Uri.parse
+import com.sksamuel.elastic4s.http.search.SearchHit
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
+import no.ndla.imageapi.model.Language
 import no.ndla.imageapi.model.api.{ImageAltText, ImageMetaSummary, ImageTitle}
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.model.search.{LanguageValue, SearchableImage, SearchableLanguageList, SearchableLanguageValues}
-import no.ndla.network.ApplicationUrl
-import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
-import com.netaporter.uri.Uri.parse
-import com.sksamuel.elastic4s.http.search.SearchHit
 import no.ndla.imageapi.service.ConverterService
-import org.json4s._
-import no.ndla.imageapi.model.Language
-import org.json4s.native.JsonMethods._
+import no.ndla.network.ApplicationUrl
 
 trait SearchConverterService {
   this: ConverterService =>
@@ -75,7 +73,8 @@ trait SearchConverterService {
       }
       sortedInnerHits.headOption.flatMap{
         case (hitField, innerHit) =>
-          innerHit.hits.sortBy(hit => hit.score).reverse.headOption.flatMap(hit => {
+          val sortedInnerInnerHits = innerHit.hits.sortBy(hit => hit.score).reverse
+            sortedInnerInnerHits.headOption.flatMap(hit => {
             //TODO: Test sorting of both innerHits and sorting of innerHit.hits
             hit.highlight.headOption.map(hl => hl._1.split('.').last)
           })
@@ -86,30 +85,6 @@ trait SearchConverterService {
           result.sourceAsMap.keySet.headOption.map(fieldName => fieldName.split('.').last) //TODO: Maybe sort this by default language priority
       }
 
-    }
-
-    def getLanguageFromHit(jsonObject: JValue): Option[String] = { //TODO: remove
-      implicit val formats = DefaultFormats
-
-      // Fetches matched language from highlight in innerHit
-      // since elasticsearch doesn't return which nested field that matches
-      val innerHits = jsonObject \ "inner_hits"
-
-      val sortedInnerHits = innerHits.children.sortBy(innerHit => {
-        (innerHit \ "hits" \ "max_score").toOption.map(s => {
-          s.extract[Double]
-        }).getOrElse[Double](0)
-      }).reverse
-
-      sortedInnerHits.headOption.flatMap(innerHit => {
-        (innerHit \\ "highlight").extract[Map[String, Any]].keySet.headOption.map(fieldName =>
-          fieldName.split('.').last)
-      }) match {
-        case Some(lang) => Some(lang)
-        case _ =>
-          (jsonObject \ "_source" \ "titles").extract[Map[String, Any]].keySet.headOption.map(fieldName =>
-            fieldName.split('.').last)
-      }
     }
 
   }
