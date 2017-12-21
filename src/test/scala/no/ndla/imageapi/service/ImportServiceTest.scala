@@ -7,12 +7,13 @@
 
 package no.ndla.imageapi.service
 
-import no.ndla.imageapi.model.domain.ImageMetaInformation
+import no.ndla.imageapi.model.domain.{Author, ImageMetaInformation}
 import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.model.{ImportException, S3UploadException, domain}
 import no.ndla.mapping._
 import org.mockito.Matchers._
 import org.mockito.Mockito._
+import no.ndla.imageapi.integration
 
 import scala.util.{Failure, Success}
 import scalaj.http.HttpRequest
@@ -94,6 +95,30 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
   test("That oldToNewLicenseKey does not convert an license that should not be converted") {
     val bySa = License.getLicense("by-sa")
     importService.oldToNewLicenseKey("by-sa") should be(bySa)
+  }
+
+  test("That authors are translated correctly") {
+    val authors = List(
+      integration.ImageAuthor("Opphavsmann", "A"),
+      integration.ImageAuthor("Redaksjonelt", "B"),
+      integration.ImageAuthor("redaKsJoNelT", "C"),
+      integration.ImageAuthor("distributør", "D"),
+      integration.ImageAuthor("leVerandør", "E"),
+      integration.ImageAuthor("Språklig", "F")
+
+    )
+    val meta = integration.MainImageImport(integration.ImageMeta("5", "12", "nb", "a", None, "", "", "", "", None), authors, Some("by-sa"), None, List())
+
+    val copyright = importService.toDomainCopyright(meta)
+    copyright.creators should contain(Author("Originator", "A"))
+    copyright.creators should contain(Author("Editorial", "B"))
+    copyright.creators should contain(Author("Editorial", "C"))
+
+    copyright.rightsholders should contain(Author("Distributor", "D"))
+    copyright.rightsholders should contain(Author("Supplier", "E"))
+
+    copyright.processors should contain(Author("Linguistic", "F"))
+
   }
 
 }
