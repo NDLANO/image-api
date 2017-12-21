@@ -88,11 +88,13 @@ trait SearchConverterService {
             tm.asInstanceOf[Map[String, _]]
           })
 
-          titleMap.map(tm => {
-            tm.keySet.toList.maxBy(lang => {
+          val languages = titleMap.map(title => title.keySet.toList)
+
+          languages.flatMap(languageList => {
+            languageList.sortBy(lang => {
               val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
               languagePriority.indexOf(lang)
-            })
+            }).lastOption
           })
       }
 
