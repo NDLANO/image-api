@@ -10,6 +10,7 @@ package no.ndla.imageapi
 
 
 import com.amazonaws.services.s3.AmazonS3
+import com.sksamuel.elastic4s.http.HttpClient
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.controller.{HealthController, ImageControllerV2, InternController, RawController}
 import no.ndla.imageapi.integration._
@@ -20,7 +21,7 @@ import no.ndla.network.NdlaClient
 import org.scalatest.mockito.MockitoSugar
 
 trait TestEnvironment
-  extends ElasticClient
+    extends Elastic4sClient
     with IndexService
     with SearchService
     with SearchConverterService
@@ -67,7 +68,7 @@ trait TestEnvironment
   val converterService = mock[ConverterService]
   val validationService = mock[ValidationService]
   val tagsService = mock[TagsService]
-  val jestClient = mock[NdlaJestClient]
+  val e4sClient = mock[NdlaE4sClient]
   val searchConverterService = mock[SearchConverterService]
   val imageConverter = mock[ImageConverter]
   val healthController = mock[HealthController]

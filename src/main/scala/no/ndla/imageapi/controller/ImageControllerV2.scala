@@ -12,6 +12,7 @@ import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWrite
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.integration.DraftApiClient
 import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2, License, NewImageMetaInformationV2, SearchParams, SearchResult, UpdateImageMetaInformation, ValidationError}
+import no.ndla.imageapi.model.domain.Sort
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.SearchService
@@ -20,6 +21,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
+
 import scala.util.{Failure, Success}
 
 trait ImageControllerV2 {
@@ -54,6 +56,11 @@ trait ImageControllerV2 {
         queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
         queryParam[Option[String]]("license").description("Return only images with provided license."),
         queryParam[Option[String]]("includeCopyrighted").description("Return copyrighted images. May be omitted."),
+        queryParam[Option[String]]("sort").description(
+        """The sorting used on results.
+             Default is by -relevance (desc) when querying.
+             When browsing, the default is title (asc).
+             The following are supported: relevance, -relevance, title, -title, lastUpdated, -lastUpdated, id, -id""".stripMargin),
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
       )
@@ -67,6 +74,11 @@ trait ImageControllerV2 {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id"),
         headerParam[Option[String]]("app-key").description("Your app-key"),
+        queryParam[Option[String]]("sort").description(
+          """The sorting used on results.
+             Default is by -relevance (desc) when querying.
+             When browsing, the default is title (asc).
+             The following are supported: relevance, -relevance, title, -title, lastUpdated, -lastUpdated, id, -id""".stripMargin),
         bodyParam[SearchParams]
       )
         authorizations "oauth2"
@@ -113,18 +125,19 @@ trait ImageControllerV2 {
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
-    private def search(minimumSize: Option[Int], query: Option[String], language: Option[String], license: Option[String], pageSize: Option[Int], page: Option[Int], includeCopyrighted: Boolean) = {
+    private def search(minimumSize: Option[Int], query: Option[String], language: Option[String], license: Option[String], sort: Option[Sort.Value], pageSize: Option[Int], page: Option[Int], includeCopyrighted: Boolean) = {
       query match {
         case Some(searchString) => searchService.matchingQuery(
           query = searchString.trim,
           minimumSize = minimumSize,
           language = language,
           license = license,
+          sort.getOrElse(Sort.ByRelevanceDesc),
           page,
           pageSize,
           includeCopyrighted)
 
-        case None => searchService.all(minimumSize = minimumSize, license = license, language = language, page, pageSize, includeCopyrighted)
+        case None => searchService.all(minimumSize = minimumSize, license = license, language = language, sort = sort.getOrElse(Sort.ByTitleAsc), page, pageSize, includeCopyrighted)
       }
     }
 
@@ -135,9 +148,10 @@ trait ImageControllerV2 {
       val license = params.get("license")
       val pageSize = intOrNone("page-size")
       val page = intOrNone("page")
+      val sort = Sort.valueOf(paramOrDefault("sort", ""))
       val includeCopyrighted = booleanOrDefault("includeCopyrighted", false)
 
-      search(minimumSize, query, language, license, pageSize, page, includeCopyrighted)
+      search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
     }
 
     post("/search/", operation(getImagesPost)) {
@@ -148,9 +162,10 @@ trait ImageControllerV2 {
       val license = searchParams.license
       val pageSize = searchParams.pageSize
       val page = searchParams.page
+      val sort = Sort.valueOf(paramOrDefault("sort", ""))
       val includeCopyrighted = searchParams.includeCopyrighted.getOrElse(false)
 
-      search(minimumSize, query, language, license, pageSize, page, includeCopyrighted)
+      search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
     }
 
     get("/:image_id", operation(getByImageId)) {

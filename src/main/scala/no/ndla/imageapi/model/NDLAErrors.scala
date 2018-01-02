@@ -8,9 +8,7 @@
 
 package no.ndla.imageapi.model
 
-import io.searchbox.client.JestResult
-import no.ndla.imageapi.ImageApiProperties
-
+import com.sksamuel.elastic4s.http.RequestFailure
 
 class ImageNotFoundException(message: String) extends RuntimeException(message)
 
@@ -22,9 +20,15 @@ class ValidationException(message: String = "Validation error", val errors: Seq[
 
 case class ValidationMessage(field: String, message: String)
 
-class NdlaSearchException(jestResponse: JestResult) extends RuntimeException(jestResponse.getErrorMessage) {
-  def getResponse: JestResult = jestResponse
-}
+case class NdlaSearchException(rf: RequestFailure) extends RuntimeException(
+  s"""
+     |index: ${rf.error.index.getOrElse("Error did not contain index")}
+     |reason: ${rf.error.reason}
+     |body: ${rf.body}
+     |shard: ${rf.error.shard.getOrElse("Error did not contain shard")}
+     |type: ${rf.error.`type`}
+   """.stripMargin
+)
 
 class S3UploadException(message: String) extends RuntimeException(message)
 

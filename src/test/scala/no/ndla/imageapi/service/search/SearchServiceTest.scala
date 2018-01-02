@@ -17,13 +17,13 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   override val searchService = new SearchService
 
   test("That createEmptyIndexIfNoIndexesExist never creates empty index if an index already exists") {
-    when(indexService.findAllIndexes()).thenReturn(Success(Seq("index1")))
+    when(indexService.findAllIndexes).thenReturn(Success(Seq("index1")))
     searchService.createEmptyIndexIfNoIndexesExist()
     verify(indexBuilderService, never()).createEmptyIndex
   }
 
   test("That createEmptyIndexIfNoIndexesExist creates empty index if no indexes already exists") {
-    when(indexService.findAllIndexes()).thenReturn(Success(List.empty))
+    when(indexService.findAllIndexes).thenReturn(Success(List.empty))
     when(indexBuilderService.createEmptyIndex).thenReturn(Success(Some("images-123j")))
     searchService.createEmptyIndexIfNoIndexesExist()
     verify(indexBuilderService).createEmptyIndex
