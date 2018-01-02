@@ -43,18 +43,22 @@ trait IndexService {
     }
 
     def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Try[Int] = {
-      val response = e4sClient.execute{
-        bulk(imageMetaList.map(imageMeta => {
-          val source = write(searchConverterService.asSearchableImage(imageMeta))
-          indexInto(indexName / ImageApiProperties.SearchDocument).doc(source).id(imageMeta.id.get.toString)
-        }))
+      if(imageMetaList.isEmpty){
+        Success(0)
       }
+      else {
+        val response = e4sClient.execute{
+          bulk(imageMetaList.map(imageMeta => {
+            val source = write(searchConverterService.asSearchableImage(imageMeta))
+            indexInto(indexName / ImageApiProperties.SearchDocument).doc(source).id(imageMeta.id.get.toString)
+          }))
+        }
 
-      response match {
-        case Success(_) => Success(imageMetaList.size)
-        case Failure(ex) => Failure(ex)
+        response match {
+          case Success(_) => Success(imageMetaList.size)
+          case Failure(ex) => Failure(ex)
+        }
       }
-
     }
 
     def createIndexWithGeneratedName(): Try[String] = {
