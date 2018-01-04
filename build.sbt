@@ -8,7 +8,7 @@ val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.11.46"
 val ScalaTestVersion = "3.0.1"
 val MockitoVersion = "1.10.19"
-val Elastic4sVersion = "6.0.1"
+val Elastic4sVersion = "6.1.2"
 val ElasticsearchVersion = "6.0.1"
 
 val appProperties = settingKey[Properties]("The application properties")
