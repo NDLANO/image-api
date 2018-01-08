@@ -9,6 +9,7 @@
 package no.ndla.imageapi.controller
 
 import com.netaporter.uri.dsl._
+import com.netaporter.uri.Uri.parse
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.network.ApplicationUrl
@@ -47,7 +48,7 @@ trait HealthController {
       val port = applicationUrl.port.getOrElse("80")
 
       imageRepository.getRandomImage().map(image => {
-        val previewUrl = s"http://$host:$port${ImageApiProperties.RawControllerPath}${image.imageUrl}"
+        val previewUrl = s"http://$host:$port${ImageApiProperties.RawControllerPath}${parse(image.imageUrl).toString}"
         getReturnCode(getApiResponse(previewUrl))
       }).getOrElse(Ok())
     }
