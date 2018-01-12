@@ -165,7 +165,7 @@ trait SearchService {
         search(ImageApiProperties.SearchIndex).size(numResults).from(startAt).query(filteredSearch).sortBy(getSortDefinition(sort, searchLanguage))
       } match {
         case Success(response) =>
-          SearchResult(response.result.totalHits, page.getOrElse(1), numResults, getHits(response.result, language))
+          SearchResult(response.result.totalHits, page.getOrElse(1), numResults, if (searchLanguage == "*") Language.AllLanguages else searchLanguage, getHits(response.result, language))
         case Failure(ex) =>
           errorHandler(Failure(ex))
       }
