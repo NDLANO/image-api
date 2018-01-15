@@ -26,6 +26,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   val full = Image("/123.png", 200, "image/png")
   val DefaultImageMetaInformation = ImageMetaInformation(Some(1), List(ImageTitle("test", "nb")), List(), full.fileName, full.size, full.contentType, Copyright(License("", "", None), "", List(), List(), List(), None, None, None), List(), List(), "ndla124", updated)
+  val MultiLangImage = ImageMetaInformation(Some(2), List(ImageTitle("nynorsk", "nn"), ImageTitle("english", "en"), ImageTitle("norsk", "unknown")), List(), full.fileName, full.size, full.contentType, Copyright(License("", "", None), "", List(), List(), List(), None, None, None), List(), List(), "ndla124", updated)
 
   override def beforeEach: Unit = {
     val request = mock[HttpServletRequest]
@@ -117,5 +118,20 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     apiImage.get.copyright.license.license should equal("gnu")
     apiImage.get.copyright.validFrom.get should equal(from)
     apiImage.get.copyright.validTo.get should equal(to)
+  }
+
+  test("that asImageMetaInformationV2 properly") {
+    val result1 = converterService.asImageMetaInformationV2(MultiLangImage, Some("nb"), "", None)
+    result1.get.id should be("2")
+    result1.get.title.language should be("unknown")
+
+    val result2 = converterService.asImageMetaInformationV2(MultiLangImage, Some("en"), "", None)
+    result2.get.id should be("2")
+    result2.get.title.language should be("en")
+
+    val result3 = converterService.asImageMetaInformationV2(MultiLangImage, Some("nn"), "", None)
+    result3.get.id should be("2")
+    result3.get.title.language should be("nn")
+
   }
 }
