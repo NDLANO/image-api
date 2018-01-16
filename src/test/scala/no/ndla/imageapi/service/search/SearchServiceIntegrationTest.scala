@@ -47,7 +47,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   val image2 = ImageMetaInformation(Some(2), List(ImageTitle("Pingvinen er ute og går", "nb")), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", "nb")), largeImage.fileName, largeImage.size, largeImage.contentType, publicDomain, List(ImageTag(List("fugl"), "nb")), List(), "ndla124", updated)
   val image3 = ImageMetaInformation(Some(3), List(ImageTitle("Donald Duck kjører bil", "nb")), List(ImageAltText("Bilde av en en and som kjører en rød bil.", "nb")), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, List(ImageTag(List("and"), "nb")), List(), "ndla124", updated)
   val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", "unknown")), Seq(), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq(), "ndla124", updated)
-  val image5 = ImageMetaInformation(Some(5), List(ImageTitle("Dette er et urelatert bilde", "unknown"), ImageTitle("This is a unrelated photo", "en")), Seq(ImageAltText("Urelatert alttext", "unknown"), ImageAltText("Unrelated alttext", "en")), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa.copy(agreementId = Some(1)), Seq(), Seq(), "ndla124", updated)
+  val image5 = ImageMetaInformation(Some(5), List(ImageTitle("Dette er et urelatert bilde", "unknown"), ImageTitle("This is a unrelated photo", "en"), ImageTitle("Nynoreg", "nn")), Seq(ImageAltText("urelatert alttext", "unknown"), ImageAltText("Nynoreg", "nn")), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa.copy(agreementId = Some(1)), Seq(), Seq(), "ndla124", updated)
 
   override def beforeAll() = {
     indexService.createIndexWithName(ImageApiProperties.SearchIndex)
@@ -226,7 +226,23 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
     searchResult2.results.size should be (1)
     searchResult2.results.head.id should be ("5")
     searchResult2.results.head.title.language should equal("en")
-    searchResult2.results.head.altText.language should equal("en")
+    searchResult2.results.head.altText.language should equal("unknown")
+  }
+
+  test("That field should be returned in another language if match does not contain searchLanguage") {
+    val searchResult = searchService.matchingQuery("unrelated", None, Some("en"), None, Sort.ByIdAsc, None, None, false)
+    searchResult.totalCount should be (1)
+    searchResult.results.size should be (1)
+    searchResult.results.head.id should be ("5")
+    searchResult.results.head.title.language should equal("en")
+    searchResult.results.head.altText.language should equal("unknown")
+
+    val searchResult2 = searchService.matchingQuery("nynoreg", None, Some("nn"), None, Sort.ByIdAsc, None, None, false)
+    searchResult2.totalCount should be (1)
+    searchResult2.results.size should be (1)
+    searchResult2.results.head.id should be ("5")
+    searchResult2.results.head.title.language should equal("nn")
+    searchResult2.results.head.altText.language should equal("nn")
   }
 
   def blockUntil(predicate: () => Boolean) = {

@@ -58,7 +58,7 @@ trait ConverterService {
       asImageMetaInformationV2(domainImageMetaInformation, language, ImageApiProperties.ImageApiUrlBase, Some(ImageApiProperties.RawImageUrlBase))
     }
 
-    private def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation, language: Option[String], baseUrl: String, rawBaseUrl: Option[String]): Option[api.ImageMetaInformationV2] = {
+    private[service] def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation, language: Option[String], baseUrl: String, rawBaseUrl: Option[String]): Option[api.ImageMetaInformationV2] = {
       val title = findByLanguageOrBestEffort(imageMeta.titles, language).map(asApiImageTitle).getOrElse(api.ImageTitle("", DefaultLanguage))
       val alttext = findByLanguageOrBestEffort(imageMeta.alttexts, language).map(asApiImageAltText).getOrElse(api.ImageAltText("", DefaultLanguage))
       val tags = findByLanguageOrBestEffort(imageMeta.tags, language).map(asApiImageTag).getOrElse(api.ImageTag(Seq(), DefaultLanguage))

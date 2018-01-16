@@ -9,6 +9,7 @@ package no.ndla.imageapi.model
 
 import com.sksamuel.elastic4s.analyzers._
 import no.ndla.imageapi.model.domain.LanguageField
+import no.ndla.mapping.ISO639
 
 object Language {
   val DefaultLanguage = "nb"
@@ -30,19 +31,11 @@ object Language {
 
   val supportedLanguages = languageAnalyzers.map(_.lang)
 
-  def findByLanguageOrBestEffort[P <: LanguageField[_]](sequence: Seq[P], lang: Option[String]): Option[P] = {
-    def findFirstLanguageMatching(sequence: Seq[P], lang: Seq[String]): Option[P] = {
-      lang match {
-        case Nil => sequence.headOption
-        case head :: tail =>
-          sequence.find(_.language == head) match {
-            case Some(x) => Some(x)
-            case None => findFirstLanguageMatching(sequence, tail)
-          }
-      }
-    }
-
-    findFirstLanguageMatching(sequence, lang.toList :+ DefaultLanguage)
+  def findByLanguageOrBestEffort[P <: LanguageField[_]](sequence: Seq[P], language: Option[String]): Option[P] = {
+    language.flatMap(lang => sequence.find(_.language == lang)).orElse(
+      sequence.sortBy(lf => {
+        ISO639.languagePriority.reverse.indexOf(lf.language)
+      }).lastOption)
   }
 
   def languageOrUnknown(language: Option[String]): String = {
