@@ -245,6 +245,14 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
     searchResult2.results.head.altText.language should equal("nn")
   }
 
+  test("That supportedLanguages returns in order") {
+    val result = searchService.matchingQuery("nynoreg", None, Some("nn"), None, Sort.ByIdAsc, None, None, false)
+    result.totalCount should be (1)
+    result.results.size should be (1)
+
+    result.results.head.supportedLanguages should be(Seq("unknown", "nn", "en"))
+  }
+
   def blockUntil(predicate: () => Boolean) = {
     var backoff = 0
     var done = false
