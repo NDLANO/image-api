@@ -48,13 +48,11 @@ trait SearchConverterService {
 
     def asImageMetaSummary(searchableImage: SearchableImage, language: Option[String]): ImageMetaSummary = {
       val apiToRawRegex = "/v\\d+/images/".r
-      val title = searchableImage.titles.languageValues.find(title => title.lang == language.getOrElse(DefaultLanguage))
-        .orElse(searchableImage.titles.languageValues.headOption)
-        .map(res => ImageTitle(res.value, res.lang))
+      val title = Language.findByLanguageOrBestEffort(searchableImage.titles.languageValues, language)
+        .map(res => ImageTitle(res.value, res.language))
         .getOrElse(ImageTitle("", DefaultLanguage))
-      val altText = searchableImage.alttexts.languageValues.find(title => title.lang == language.getOrElse(DefaultLanguage))
-        .orElse(searchableImage.alttexts.languageValues.headOption)
-        .map(res => ImageAltText(res.value, res.lang))
+      val altText = Language.findByLanguageOrBestEffort(searchableImage.alttexts.languageValues, language)
+        .map(res => ImageAltText(res.value, res.language))
         .getOrElse(ImageAltText("", DefaultLanguage))
 
       ImageMetaSummary(
