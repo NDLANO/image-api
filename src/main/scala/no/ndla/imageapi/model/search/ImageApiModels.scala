@@ -9,7 +9,9 @@ package no.ndla.imageapi.model.search
 
 import java.util.Date
 
-case class LanguageValue[T](lang: String, value: T)
+import no.ndla.imageapi.model.domain.LanguageField
+
+case class LanguageValue[T](language: String, value: T) extends LanguageField[T]
 
 case class SearchableLanguageValues(languageValues: Seq[LanguageValue[String]])
 

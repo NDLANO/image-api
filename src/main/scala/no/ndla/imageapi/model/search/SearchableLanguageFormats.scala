@@ -18,7 +18,7 @@ class SearchableLanguageValueSerializer extends CustomSerializer[SearchableLangu
   })
 }, {
   case x: SearchableLanguageValues =>
-    JObject(x.languageValues.map(languageValue => JField(languageValue.lang, JString(languageValue.value))).toList)
+    JObject(x.languageValues.map(languageValue => JField(languageValue.language, JString(languageValue.value))).toList)
 }))
 
 
@@ -33,7 +33,7 @@ class SearchableLanguageListSerializer extends CustomSerializer[SearchableLangua
   }
 }, {
   case x: SearchableLanguageList =>
-    JObject(x.languageValues.map(languageValue => JField(languageValue.lang, JArray(languageValue.value.map(lv => JString(lv)).toList))).toList)
+    JObject(x.languageValues.map(languageValue => JField(languageValue.language, JArray(languageValue.value.map(lv => JString(lv)).toList))).toList)
 }))
 
 object SearchableLanguageFormats {
