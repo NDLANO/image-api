@@ -94,8 +94,8 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
   test("That GET / returns body and 200 when image exists") {
 
-    val imageSummary = api.ImageMetaSummary("4", api.ImageTitle("Tittel", "nb"), Seq("Jason Bourne", "Ben Affleck"), api.ImageAltText("AltText", "nb"), "http://image-api.ndla-local/image-api/raw/4", "http://image-api.ndla-local/image-api/v2/images/4", "by-sa")
-    val expectedBody = """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa"}]}"""
+    val imageSummary = api.ImageMetaSummary("4", api.ImageTitle("Tittel", "nb"), Seq("Jason Bourne", "Ben Affleck"), api.ImageAltText("AltText", "nb"), "http://image-api.ndla-local/image-api/raw/4", "http://image-api.ndla-local/image-api/v2/images/4", "by-sa", Seq("nb"))
+    val expectedBody = """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"]}]}"""
     when(searchService.all(Option(any[Int]), Option(any[String]), Option(any[String]), any[Sort.Value], Option(any[Int]), Option(any[Int]), any[Boolean])).thenReturn(SearchResult(1, 1, 10, "nb", List(imageSummary)))
     get("/") {
       status should equal(200)

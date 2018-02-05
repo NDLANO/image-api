@@ -17,6 +17,7 @@ import no.ndla.network.ApplicationUrl
 import com.netaporter.uri.Uri.parse
 import no.ndla.imageapi.integration.DraftApiClient
 import no.ndla.imageapi.model.api.ImageMetaInformationV2
+import no.ndla.mapping.ISO639
 
 trait ConverterService {
   this: User with Clock with DraftApiClient =>
@@ -175,12 +176,12 @@ trait ConverterService {
     }
 
     def getSupportedLanguages(domainImageMetaInformation: domain.ImageMetaInformation): Seq[String] = {
-      domainImageMetaInformation.titles.map(_.language)
-        .++:(domainImageMetaInformation.alttexts.map(_.language))
-        .++:(domainImageMetaInformation.tags.map(_.language))
-        .++:(domainImageMetaInformation.captions.map(_.language))
-        .distinct
-        .filterNot(lang => lang.isEmpty)
+      findSupportedLanguages(
+        domainImageMetaInformation.titles,
+        domainImageMetaInformation.alttexts,
+        domainImageMetaInformation.tags,
+        domainImageMetaInformation.captions
+      )
     }
 
   }

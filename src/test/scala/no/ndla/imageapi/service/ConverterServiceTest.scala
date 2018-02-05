@@ -134,4 +134,10 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     result3.get.title.language should be("nn")
 
   }
+
+  test("that asImageMetaInformationV2 returns sorted supportedLanguages") {
+    val result = converterService.asImageMetaInformationV2(MultiLangImage, Some("nb"), "", None)
+    result.get.supportedLanguages should be(Seq("unknown", "nn", "en"))
+  }
+
 }

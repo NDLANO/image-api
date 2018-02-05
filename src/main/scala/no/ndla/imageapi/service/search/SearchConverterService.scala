@@ -55,6 +55,13 @@ trait SearchConverterService {
         .map(res => ImageAltText(res.value, res.language))
         .getOrElse(ImageAltText("", DefaultLanguage))
 
+      val supportedLanguages = Language.findSupportedLanguages(
+        searchableImage.titles.languageValues,
+        searchableImage.alttexts.languageValues,
+        searchableImage.captions.languageValues,
+        searchableImage.tags.languageValues
+      )
+
       ImageMetaSummary(
         id = searchableImage.id.toString,
         title = title,
@@ -62,7 +69,9 @@ trait SearchConverterService {
         altText = altText,
         previewUrl = apiToRawRegex.replaceFirstIn(ApplicationUrl.get, "/raw") + searchableImage.previewUrl,
         metaUrl = ApplicationUrl.get + searchableImage.id,
-        license = searchableImage.license)
+        license = searchableImage.license,
+        supportedLanguages = supportedLanguages
+      )
     }
 
     def getLanguageFromHit(result: SearchHit): Option[String] = {

@@ -44,6 +44,13 @@ object Language {
       case None => UnknownLanguage
     }
   }
+
+  def findSupportedLanguages[_](fields: Seq[LanguageField[_]]*): Seq[String] = {
+    val supportedLanguages = fields.flatMap(languageFields => languageFields.map(lf => lf.language)).distinct
+    supportedLanguages.sortBy{lang =>
+      ISO639.languagePriority.indexOf(lang)
+    }
+  }
 }
 
 case class LanguageAnalyzer(lang: String, analyzer: Analyzer)
