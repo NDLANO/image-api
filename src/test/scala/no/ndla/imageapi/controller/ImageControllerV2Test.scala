@@ -28,11 +28,7 @@ import scala.util.{Failure, Success, Try}
 
 class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnvironment {
 
-  val legacyAuthHeaderWithWriteRole = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhcHBfbWV0YWRhdGEiOnsicm9sZXMiOlsiaW1hZ2VzOndyaXRlIl0sIm5kbGFfaWQiOiJhYmMxMjMifSwibmFtZSI6IkRvbmFsZCBEdWNrIiwiaXNzIjoiaHR0cHM6Ly9zb21lLWRvbWFpbi8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEyMyIsImF1ZCI6ImFiYyIsImV4cCI6MTQ4NjA3MDA2MywiaWF0IjoxNDg2MDM0MDYzfQ._Hva8XNvTDOtU2nLSnYvqVgtLtAcvGipHFsBXZxJknw"
-  val legacyAuthHeaderWithoutAnyRoles = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhcHBfbWV0YWRhdGEiOnsibmRsYV9pZCI6ImFiYzEyMyJ9LCJuYW1lIjoiRG9uYWxkIER1Y2siLCJpc3MiOiJodHRwczovL3NvbWUtZG9tYWluLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTIzIiwiYXVkIjoiYWJjIiwiZXhwIjoxNDg2MDcwMDYzLCJpYXQiOjE0ODYwMzQwNjN9.eNEK5datycKuV292kOxT4IhCMvrrq0KpSyH8C69mdnM"
-  val legacyAuthHeaderWithWrongRole = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhcHBfbWV0YWRhdGEiOnsicm9sZXMiOlsiYXJ0aWNsZXM6d3JpdGUiXSwibmRsYV9pZCI6ImFiYzEyMyJ9LCJuYW1lIjoiRG9uYWxkIER1Y2siLCJpc3MiOiJodHRwczovL3NvbWUtZG9tYWluLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTIzIiwiYXVkIjoiYWJjIiwiZXhwIjoxNDg2MDcwMDYzLCJpYXQiOjE0ODYwMzQwNjN9.VxqM2bu2UF8IAalibIgdRdmsTDDWKEYpKzHPbCJcFzA"
-
-  val authHeaderWithWriteRole = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik9FSTFNVVU0T0RrNU56TTVNekkyTXpaRE9EazFOMFl3UXpkRE1EUXlPRFZDUXpRM1FUSTBNQSJ9.eyJodHRwczovL25kbGEubm8vY2xpZW50X2lkIjoieHh4eXl5IiwiaXNzIjoiaHR0cHM6Ly9uZGxhLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJ4eHh5eXlAY2xpZW50cyIsImF1ZCI6Im5kbGFfc3lzdGVtIiwiaWF0IjoxNTEwMzA1NzczLCJleHAiOjE1MTAzOTIxNzMsInNjb3BlIjoiaW1hZ2VzOndyaXRlIiwiZ3R5IjoiY2xpZW50LWNyZWRlbnRpYWxzIn0.RBUfclGy31VoNvnI_641E-UE4ccdBlVR7wk4CphDWkF_-RcmnIwqswy4d6qY8FydS7VDx9or0rX2Ofc9k7iBX5Ux0b30i6SXnJJ3JPS8wSNipmp5ZpnkKyv_FFAbozKf9ZvwF5LT93TuksKtHe_QiwzT3Jy3_ss3HMwp54MrB6M"
+  val authHeaderWithWriteRole = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik9FSTFNVVU0T0RrNU56TTVNekkyTXpaRE9EazFOMFl3UXpkRE1EUXlPRFZDUXpRM1FUSTBNQSJ9.eyJodHRwczovL25kbGEubm8vY2xpZW50X2lkIjoieHh4eXl5IiwiaXNzIjoiaHR0cHM6Ly9uZGxhLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJ4eHh5eXlAY2xpZW50cyIsImF1ZCI6Im5kbGFfc3lzdGVtIiwiaWF0IjoxNTEwMzA1NzczLCJleHAiOjE1MTAzOTIxNzMsInNjb3BlIjoiaW1hZ2VzLXRlc3Q6d3JpdGUiLCJndHkiOiJjbGllbnQtY3JlZGVudGlhbHMifQ.RBUfclGy31VoNvnI_641E-UE4ccdBlVR7wk4CphDWkF_-RcmnIwqswy4d6qY8FydS7VDx9or0rX2Ofc9k7iBX5Ux0b30i6SXnJJ3JPS8wSNipmp5ZpnkKyv_FFAbozKf9ZvwF5LT93TuksKtHe_QiwzT3Jy3_ss3HMwp54MrB6M"
   val authHeaderWithoutAnyRoles = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik9FSTFNVVU0T0RrNU56TTVNekkyTXpaRE9EazFOMFl3UXpkRE1EUXlPRFZDUXpRM1FUSTBNQSJ9.eyJodHRwczovL25kbGEubm8vY2xpZW50X2lkIjoieHh4eXl5IiwiaXNzIjoiaHR0cHM6Ly9uZGxhLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJ4eHh5eXlAY2xpZW50cyIsImF1ZCI6Im5kbGFfc3lzdGVtIiwiaWF0IjoxNTEwMzA1NzczLCJleHAiOjE1MTAzOTIxNzMsInNjb3BlIjoiIiwiZ3R5IjoiY2xpZW50LWNyZWRlbnRpYWxzIn0.fb9eTuBwIlbGDgDKBQ5FVpuSUdgDVBZjCenkOrWLzUByVCcaFhbFU8CVTWWKhKJqt6u-09-99hh86szURLqwl3F5rxSX9PrnbyhI9LsPut_3fr6vezs6592jPJRbdBz3-xLN0XY5HIiJElJD3Wb52obTqJCrMAKLZ5x_GLKGhcY"
   val authHeaderWithWrongRole = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik9FSTFNVVU0T0RrNU56TTVNekkyTXpaRE9EazFOMFl3UXpkRE1EUXlPRFZDUXpRM1FUSTBNQSJ9.eyJodHRwczovL25kbGEubm8vY2xpZW50X2lkIjoieHh4eXl5IiwiaXNzIjoiaHR0cHM6Ly9uZGxhLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJ4eHh5eXlAY2xpZW50cyIsImF1ZCI6Im5kbGFfc3lzdGVtIiwiaWF0IjoxNTEwMzA1NzczLCJleHAiOjE1MTAzOTIxNzMsInNjb3BlIjoic29tZTpvdGhlciIsImd0eSI6ImNsaWVudC1jcmVkZW50aWFscyJ9.Hbmh9KX19nx7yT3rEcP9pyzRO0uQJBRucfqH9QEZtLyXjYj_fAyOhsoicOVEbHSES7rtdiJK43-gijSpWWmGWOkE6Ym7nHGhB_nLdvp_25PDgdKHo-KawZdAyIcJFr5_t3CJ2Z2IPVbrXwUd99vuXEBaV0dMwkT0kDtkwHuS-8E"
 
@@ -239,80 +235,6 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
   test("That PATCH /<id> returns 403 when not permitted") {
     patch("/1", Map("metadata" -> sampleUpdateImageMeta), headers = Map("Authorization" -> authHeaderWithoutAnyRoles)) {
-      status should equal(403)
-    }
-  }
-
-  // Legacy tests. May be removed when the legacy token format in ndla.network v0.24 is removed
-  test("LEGACY - That POST / returns 400 if parameters are missing") {
-    post("/", Map("metadata" -> sampleNewImageMetaV2), headers = Map("Authorization" -> legacyAuthHeaderWithWriteRole)) {
-      status should equal(400)
-    }
-  }
-
-  test("LEGACY - That POST / returns 200 if everything went well") {
-    val titles: Seq[ImageTitle] = Seq()
-    val alttexts: Seq[ImageAltText] = Seq()
-    val copyright = Copyright(License("by", "description", None), "", Seq.empty, Seq.empty, Seq.empty, None, None, None)
-    val tags: Seq[ImageTag] = Seq()
-    val captions: Seq[ImageCaption] = Seq()
-
-    val sampleImageMeta = ImageMetaInformation(Some(1), titles, alttexts, "http://some.url/img.jpg", 1024, "image/jpeg", copyright, tags, captions, "updatedBy", new Date())
-
-    when(writeService.storeNewImage(any[NewImageMetaInformationV2], any[FileItem])).thenReturn(Success(sampleImageMeta))
-
-    post("/", Map("metadata" -> sampleNewImageMetaV2), Map("file" -> sampleUploadFile), headers = Map("Authorization" -> legacyAuthHeaderWithWriteRole)) {
-      status should equal(200)
-    }
-  }
-
-  test("LEGACY - That POST / returns 403 if auth header does not have expected role") {
-    post("/", Map("metadata" -> sampleNewImageMetaV2), headers = Map("Authorization" -> legacyAuthHeaderWithWrongRole)) {
-      status should equal(403)
-    }
-  }
-
-  test("LEGACY - That POST / returns 403 if auth header does not have any roles") {
-    post("/", Map("metadata" -> sampleNewImageMetaV2), headers = Map("Authorization" -> legacyAuthHeaderWithoutAnyRoles)) {
-      status should equal(403)
-    }
-  }
-
-  test("LEGACY - That POST / returns 413 if file is too big") {
-    val content: Array[Byte] = Array.fill(MaxImageFileSizeBytes + 1) {
-      0
-    }
-    post("/", Map("metadata" -> sampleNewImageMetaV2), Map("file" -> sampleUploadFile.copy(content)), headers = Map("Authorization" -> legacyAuthHeaderWithWriteRole)) {
-      status should equal(413)
-    }
-  }
-
-  test("LEGACY - That POST / returns 500 if an unexpected error occurs") {
-    when(writeService.storeNewImage(any[NewImageMetaInformationV2], any[FileItem])).thenReturn(Failure(mock[RuntimeException]))
-
-    post("/", Map("metadata" -> sampleNewImageMetaV2), Map("file" -> sampleUploadFile), headers = Map("Authorization" -> legacyAuthHeaderWithWriteRole)) {
-      status should equal(500)
-    }
-  }
-
-  test("LEGACY - That PATCH /<id> returns 200 when everything went well") {
-    reset(writeService)
-    when(writeService.updateImage(any[Long], any[UpdateImageMetaInformation])).thenReturn(Try(TestData.apiElg))
-    patch("/1", sampleUpdateImageMeta, headers = Map("Authorization" -> legacyAuthHeaderWithWriteRole)) {
-      status should equal(200)
-    }
-  }
-
-  test("LEGACY - That PATCH /<id> returns 404 when image doesn't exist") {
-    reset(writeService)
-    when(writeService.updateImage(any[Long], any[UpdateImageMetaInformation])).thenThrow(new ImageNotFoundException(s"Image with id 1 not found"))
-    patch("/1", sampleUpdateImageMeta, headers = Map("Authorization" -> legacyAuthHeaderWithWriteRole)) {
-      status should equal(404)
-    }
-  }
-
-  test("LEGACY - That PATCH /<id> returns 403 when not permitted") {
-    patch("/1", Map("metadata" -> sampleUpdateImageMeta), headers = Map("Authorization" -> legacyAuthHeaderWithoutAnyRoles)) {
       status should equal(403)
     }
   }
