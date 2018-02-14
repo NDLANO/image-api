@@ -44,85 +44,6 @@ trait ImageControllerV2 {
     val response413 = ResponseMessage(413, "File too big", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
-    val getImages =
-      (apiOperation[SearchResult]("getImages")
-        summary "Show all images"
-        notes "Shows all the images in the ndla.no database. You can search it too."
-        parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        queryParam[Option[String]]("query").description("Return only images with titles, alt-texts or tags matching the specified query."),
-        queryParam[Option[String]]("minimum-size").description("Return only images with full size larger than submitted value in bytes."),
-        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
-        queryParam[Option[String]]("license").description("Return only images with provided license."),
-        queryParam[Option[String]]("includeCopyrighted").description("Return copyrighted images. May be omitted."),
-        queryParam[Option[String]]("sort").description(
-        """The sorting used on results.
-             Default is by -relevance (desc) when querying.
-             When browsing, the default is title (asc).
-             The following are supported: relevance, -relevance, title, -title, lastUpdated, -lastUpdated, id, -id""".stripMargin),
-        queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
-        queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
-      )
-        authorizations "oauth2"
-        responseMessages response500)
-
-    val getImagesPost =
-      (apiOperation[List[SearchResult]]("getImagesPost")
-        summary "Show all images"
-        notes "Shows all the images in the ndla.no database. You can search it too."
-        parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id"),
-        headerParam[Option[String]]("app-key").description("Your app-key"),
-        queryParam[Option[String]]("sort").description(
-          """The sorting used on results.
-             Default is by -relevance (desc) when querying.
-             When browsing, the default is title (asc).
-             The following are supported: relevance, -relevance, title, -title, lastUpdated, -lastUpdated, id, -id""".stripMargin),
-        bodyParam[SearchParams]
-      )
-        authorizations "oauth2"
-        responseMessages(response400, response500))
-
-    val getByImageId =
-      (apiOperation[ImageMetaInformationV2]("findByImageId")
-        summary "Show image info"
-        notes "Shows info of the image with submitted id."
-        parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."),
-        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params.")
-      )
-        authorizations "oauth2"
-        responseMessages(response404, response500))
-
-    val newImage =
-      (apiOperation[ImageMetaInformationV2]("newImage")
-        summary "Upload a new image file with meta data"
-        notes "Upload a new image file with meta data"
-        consumes "multipart/form-data"
-        parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        formParam[String]("metadata").description("The metadata for the image file to submit. See NewImageMetaInformationV2."),
-        Parameter(name = "file", `type` = ValueDataType("file"), description = Some("The image file(s) to upload"), paramType = ParamType.Form)
-      )
-        authorizations "oauth2"
-        responseMessages(response400, response403, response413, response500))
-    val updateImage =
-      (apiOperation[ImageMetaInformationV2]("newImage")
-        summary "Update existing image with meta data"
-        notes "Updates an existing image with meta data."
-        consumes "form-data"
-        parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-        bodyParam[UpdateImageMetaInformation]("metadata").description("The metadata for the image file to submit. See UpdateImageMetaInformation."),
-      )
-        authorizations "oauth2"
-        responseMessages(response400, response403, response500))
-
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
 
     private def search(minimumSize: Option[Int], query: Option[String], language: Option[String], license: Option[String], sort: Option[Sort.Value], pageSize: Option[Int], page: Option[Int], includeCopyrighted: Boolean) = {
@@ -141,6 +62,28 @@ trait ImageControllerV2 {
       }
     }
 
+    val getImages =
+      (apiOperation[SearchResult]("getImages")
+        summary "Show all images"
+        notes "Shows all the images in the ndla.no database. You can search it too."
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        queryParam[Option[String]]("query").description("Return only images with titles, alt-texts or tags matching the specified query."),
+        queryParam[Option[String]]("minimum-size").description("Return only images with full size larger than submitted value in bytes."),
+        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
+        queryParam[Option[String]]("license").description("Return only images with provided license."),
+        queryParam[Option[String]]("includeCopyrighted").description("Return copyrighted images. May be omitted."),
+        queryParam[Option[String]]("sort").description(
+          """The sorting used on results.
+             Default is by -relevance (desc) when querying.
+             When browsing, the default is title (asc).
+             The following are supported: relevance, -relevance, title, -title, lastUpdated, -lastUpdated, id, -id""".stripMargin),
+        queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
+        queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
+      )
+        authorizations "oauth2"
+        responseMessages response500)
+
     get("/", operation(getImages)) {
       val minimumSize = intOrNone("minimum-size")
       val query = paramOrNone("query")
@@ -153,6 +96,22 @@ trait ImageControllerV2 {
 
       search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
     }
+
+    val getImagesPost =
+      (apiOperation[List[SearchResult]]("getImagesPost")
+        summary "Show all images"
+        notes "Shows all the images in the ndla.no database. You can search it too."
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id"),
+        queryParam[Option[String]]("sort").description(
+          """The sorting used on results.
+             Default is by -relevance (desc) when querying.
+             When browsing, the default is title (asc).
+             The following are supported: relevance, -relevance, title, -title, lastUpdated, -lastUpdated, id, -id""".stripMargin),
+        bodyParam[SearchParams]
+      )
+        authorizations "oauth2"
+        responseMessages(response400, response500))
 
     post("/search/", operation(getImagesPost)) {
       val searchParams = extract[SearchParams](request.body)
@@ -168,6 +127,19 @@ trait ImageControllerV2 {
       search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
     }
 
+    val getByImageId =
+      (apiOperation[ImageMetaInformationV2]("findByImageId")
+        summary "Show image info"
+        notes "Shows info of the image with submitted id."
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."),
+        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params.")
+      )
+        authorizations "oauth2"
+        responseMessages(response404, response500))
+
+
     get("/:image_id", operation(getByImageId)) {
       val imageId = long("image_id")
       val language = paramOrNone("language")
@@ -176,6 +148,19 @@ trait ImageControllerV2 {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId and language $language not found"))
       }
     }
+
+    val newImage =
+      (apiOperation[ImageMetaInformationV2]("newImage")
+        summary "Upload a new image file with meta data"
+        notes "Upload a new image file with meta data"
+        consumes "multipart/form-data"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        formParam[String]("metadata").description("The metadata for the image file to submit. See NewImageMetaInformationV2."),
+        Parameter(name = "file", `type` = ValueDataType("file"), description = Some("The image file(s) to upload"), paramType = ParamType.Form)
+      )
+        authorizations "oauth2"
+        responseMessages(response400, response403, response413, response500))
 
     post("/", operation(newImage)) {
       authUser.assertHasId()
@@ -193,6 +178,19 @@ trait ImageControllerV2 {
         case Failure(e) => errorHandler(e)
       }
     }
+
+    val updateImage =
+      (apiOperation[ImageMetaInformationV2]("newImage")
+        summary "Update existing image with meta data"
+        notes "Updates an existing image with meta data."
+        consumes "form-data"
+        parameters(
+        pathParam[String]("image_id").description("Image_id of the image that needs to be fetched."),
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        bodyParam[UpdateImageMetaInformation]("metadata").description("The metadata for the image file to submit. See UpdateImageMetaInformation."),
+      )
+        authorizations "oauth2"
+        responseMessages(response400, response403, response500))
 
     patch("/:image_id", operation(updateImage)) {
       authUser.assertHasId()

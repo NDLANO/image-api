@@ -45,9 +45,13 @@ trait RawController {
       .produces("application/octet-stream")
       .authorizations("oauth2")
       .parameters(
-        List[Parameter](pathParam[String]("name").description("The name of the image"))
+        List[Parameter](pathParam[String]("image_name").description("The name of the image"))
           ++ getImageParams:_*
       ).responseMessages(response404, response500)
+
+    get("/:image_name", operation(getImageFile)) {
+      getRawImage(params("image_name"))
+    }
 
 
     val getImageFileById = new OperationBuilder(ValueDataType("file", Some("binary")))
@@ -57,16 +61,12 @@ trait RawController {
       .produces("application/octet-stream")
       .authorizations("oauth2")
       .parameters(
-        List[Parameter](pathParam[String]("id").description("The ID of the image"))
-        ++ getImageParams:_*
+        List[Parameter](pathParam[String]("image_id").description("The ID of the image"))
+          ++ getImageParams:_*
       ).responseMessages(response404, response500)
 
-    get("/:name", operation(getImageFile)) {
-      getRawImage(params("name"))
-    }
-
-    get("/id/:id", operation(getImageFileById)) {
-     imageRepository.withId(long("id")) match {
+    get("/id/:image_id", operation(getImageFileById)) {
+     imageRepository.withId(long("image_id")) match {
         case Some(imageMeta) =>
           val imageName = uriParse(imageMeta.imageUrl).toStringRaw.substring(1) // Strip heading '/'
           getRawImage(imageName)
