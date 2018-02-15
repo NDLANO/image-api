@@ -30,7 +30,7 @@ trait ImageControllerV2 {
 
   class ImageControllerV2(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport with FileUploadSupport {
     // Swagger-stuff
-    protected val applicationDescription = "API for accessing images from ndla.no."
+    protected val applicationDescription = "Services for accessing images"
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     // Additional models used in error responses
@@ -64,8 +64,8 @@ trait ImageControllerV2 {
 
     val getImages =
       (apiOperation[SearchResult]("getImages")
-        summary "Show all images"
-        notes "Shows all the images in the ndla.no database. You can search it too."
+        summary "Find images"
+        notes "Find images in the ndla.no database."
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         queryParam[Option[String]]("query").description("Return only images with titles, alt-texts or tags matching the specified query."),
@@ -99,8 +99,8 @@ trait ImageControllerV2 {
 
     val getImagesPost =
       (apiOperation[List[SearchResult]]("getImagesPost")
-        summary "Show all images"
-        notes "Shows all the images in the ndla.no database. You can search it too."
+        summary "Find images"
+        notes "Find images in the ndla.no database."
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id"),
         queryParam[Option[String]]("sort").description(
@@ -129,7 +129,7 @@ trait ImageControllerV2 {
 
     val getByImageId =
       (apiOperation[ImageMetaInformationV2]("findByImageId")
-        summary "Show image info"
+        summary "Fetch information for image"
         notes "Shows info of the image with submitted id."
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
@@ -151,7 +151,7 @@ trait ImageControllerV2 {
 
     val newImage =
       (apiOperation[ImageMetaInformationV2]("newImage")
-        summary "Upload a new image file with meta data"
+        summary "Upload a new image with meta information"
         notes "Upload a new image file with meta data"
         consumes "multipart/form-data"
         parameters(
@@ -181,7 +181,7 @@ trait ImageControllerV2 {
 
     val updateImage =
       (apiOperation[ImageMetaInformationV2]("newImage")
-        summary "Update existing image with meta data"
+        summary "Update an existing image with meta information"
         notes "Updates an existing image with meta data."
         consumes "form-data"
         parameters(
