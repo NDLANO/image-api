@@ -19,7 +19,7 @@ class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with N
 
 object ImagesApiInfo {
   val apiInfo = ApiInfo(
-  "Image Api",
+  "Image API",
   "Services for accessing images",
   "https://ndla.no",
   ImageApiProperties.ContactEmail,
