@@ -76,7 +76,7 @@ trait ImageControllerV2 {
         queryParam[Option[String]]("sort").description(
           """The sorting used on results.
              The following are supported: relevance, -relevance, title, -title, lastUpdated, -lastUpdated, id, -id.
-|             Default is by -relevance (desc) when query is set, and title (asc) when query is empty.""".stripMargin)
+             Default is by -relevance (desc) when query is set, and title (asc) when query is empty.""".stripMargin),
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page.")
       )
