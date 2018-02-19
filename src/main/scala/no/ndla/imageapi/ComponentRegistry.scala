@@ -18,6 +18,7 @@ import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
 import no.ndla.network.NdlaClient
 import org.postgresql.ds.PGPoolingDataSource
+import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 object ComponentRegistry
   extends Elastic4sClient
@@ -46,6 +47,8 @@ object ComponentRegistry
   with Role
   with Clock
 {
+  def connectToDatabase(): Unit = ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
+
   implicit val swagger = new ImageSwagger
 
   val dataSource = new PGPoolingDataSource()
@@ -57,6 +60,9 @@ object ComponentRegistry
   dataSource.setInitialConnections(ImageApiProperties.MetaInitialConnections)
   dataSource.setMaxConnections(ImageApiProperties.MetaMaxConnections)
   dataSource.setCurrentSchema(ImageApiProperties.MetaSchema)
+
+
+  connectToDatabase()
 
   val amazonClient = AmazonS3ClientBuilder.standard().withRegion(Regions.EU_CENTRAL_1).build()
 
