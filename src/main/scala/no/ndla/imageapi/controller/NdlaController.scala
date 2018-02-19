@@ -24,6 +24,10 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.servlet.SizeConstraintExceededException
 import org.scalatra.{BadRequest, InternalServerError, RequestEntityTooLarge, ScalatraServlet, _}
 import java.lang.Math.{max, min}
+
+import no.ndla.imageapi.ComponentRegistry
+import org.postgresql.util.PSQLException
+
 import scala.util.{Failure, Success, Try}
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
@@ -59,6 +63,9 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     case _: SizeConstraintExceededException =>
       contentType = formats("json")
       RequestEntityTooLarge(body = Error.FileTooBigError)
+    case _: PSQLException =>
+      ComponentRegistry.connectToDatabase()
+      InternalServerError(Error.DatabaseUnavailableError)
     case t: Throwable => {
       logger.error(Error.GenericError.toString, t)
       InternalServerError(body = Error.GenericError)

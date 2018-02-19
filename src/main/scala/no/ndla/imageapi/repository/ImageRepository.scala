@@ -24,8 +24,6 @@ trait ImageRepository {
   class ImageRepository extends LazyLogging {
     implicit val formats = org.json4s.DefaultFormats + ImageMetaInformation.JSonSerializer
 
-    ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
-
     def withId(id: Long): Option[ImageMetaInformation] = {
       DB readOnly { implicit session =>
         imageMetaInformationWhere(sqls"im.id = $id")
