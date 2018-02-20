@@ -45,7 +45,7 @@ trait ImageControllerV2 {
     val response413 = ResponseMessage(413, "File too big", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
-    case class Param(param_name:String, description:String)
+    case class Param(paramName:String, description:String)
 
     private val correlationId = Param("X-Correlation-ID","User supplied correlation-id. May be omitted.")
     private val query = Param("query","Return only images with titles, alt-texts or tags matching the specified query.")
@@ -72,11 +72,11 @@ trait ImageControllerV2 {
     private val file = Param("file", "The image file(s) to upload")
 
 
-    private def asQueryParam[T: Manifest: NotNothing](param: Param) = queryParam[T](param.param_name).description(param.description)
-    private def asHeaderParam[T: Manifest: NotNothing](param: Param) = headerParam[T](param.param_name).description(param.description)
-    private def asPathParam[T: Manifest: NotNothing](param: Param) = pathParam[T](param.param_name).description(param.description)
-    private def asFormParam[T: Manifest: NotNothing](param: Param) = formParam[T](param.param_name).description(param.description)
-    private def asFileParam(param: Param) = Parameter(name = param.param_name, `type` = ValueDataType("file"), description = Some(param.description), paramType = ParamType.Form)
+    private def asQueryParam[T: Manifest: NotNothing](param: Param) = queryParam[T](param.paramName).description(param.description)
+    private def asHeaderParam[T: Manifest: NotNothing](param: Param) = headerParam[T](param.paramName).description(param.description)
+    private def asPathParam[T: Manifest: NotNothing](param: Param) = pathParam[T](param.paramName).description(param.description)
+    private def asFormParam[T: Manifest: NotNothing](param: Param) = formParam[T](param.paramName).description(param.description)
+    private def asFileParam(param: Param) = Parameter(name = param.paramName, `type` = ValueDataType("file"), description = Some(param.description), paramType = ParamType.Form)
 
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
@@ -116,14 +116,14 @@ trait ImageControllerV2 {
         responseMessages response500)
 
     get("/", operation(getImages)) {
-      val minimumSize = intOrNone(this.minSize.param_name)
-      val query = paramOrNone(this.query.param_name)
-      val language = paramOrNone(this.language.param_name)
-      val license = params.get(this.license.param_name)
-      val pageSize = intOrNone(this.pageSize.param_name)
-      val page = intOrNone(this.pageNo.param_name)
-      val sort = Sort.valueOf(paramOrDefault(this.sort.param_name, ""))
-      val includeCopyrighted = booleanOrDefault(this.includeCopyrighted.param_name, false)
+      val minimumSize = intOrNone(this.minSize.paramName)
+      val query = paramOrNone(this.query.paramName)
+      val language = paramOrNone(this.language.paramName)
+      val license = params.get(this.license.paramName)
+      val pageSize = intOrNone(this.pageSize.paramName)
+      val page = intOrNone(this.pageNo.paramName)
+      val sort = Sort.valueOf(paramOrDefault(this.sort.paramName, ""))
+      val includeCopyrighted = booleanOrDefault(this.includeCopyrighted.paramName, false)
 
       search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
     }
@@ -168,8 +168,8 @@ trait ImageControllerV2 {
 
 
     get("/:image_id", operation(getByImageId)) {
-      val imageId = long(this.imageId.param_name)
-      val language = paramOrNone(this.language.param_name)
+      val imageId = long(this.imageId.paramName)
+      val language = paramOrNone(this.language.paramName)
       imageRepository.withId(imageId).flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlV2(image, language)) match {
         case Some(image) => image
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId and language $language not found"))
@@ -193,11 +193,11 @@ trait ImageControllerV2 {
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
 
-      val newImage = params.get(this.metadata.param_name)
+      val newImage = params.get(this.metadata.paramName)
         .map(extract[NewImageMetaInformationV2])
         .getOrElse(throw new ValidationException(errors = Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
 
-      val file = fileParams.getOrElse(this.file.param_name, throw new ValidationException(errors = Seq(ValidationMessage("file", "The request must contain an image file"))))
+      val file = fileParams.getOrElse(this.file.paramName, throw new ValidationException(errors = Seq(ValidationMessage("file", "The request must contain an image file"))))
 
       writeService.storeNewImage(newImage, file)
         .map(img => converterService.asApiImageMetaInformationWithApplicationUrlV2(img, Some(newImage.language))) match {
@@ -222,7 +222,7 @@ trait ImageControllerV2 {
     patch("/:image_id", operation(updateImage)) {
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
-      val imageId = long(this.imageId.param_name)
+      val imageId = long(this.imageId.paramName)
       writeService.updateImage(imageId, extract[UpdateImageMetaInformation](request.body)) match {
         case Success(imageMeta) => imageMeta
         case Failure(e) => errorHandler(e)
