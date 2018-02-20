@@ -19,15 +19,15 @@ class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with N
 
 object ImagesApiInfo {
   val apiInfo = ApiInfo(
-  "Images Api",
-  "Documentation for the Images API of NDLA.no",
+  "Image API",
+  "Services for accessing images",
   "https://ndla.no",
   ImageApiProperties.ContactEmail,
   "GPL v3.0",
   "http://www.gnu.org/licenses/gpl-3.0.en.html")
 }
 
-class ImageSwagger extends Swagger("2.0", "0.8", ImagesApiInfo.apiInfo) {
+class ImageSwagger extends Swagger("2.0", "1.0", ImagesApiInfo.apiInfo) {
   val roleWithWriteAccessInTest = ImageApiProperties.RoleWithWriteAccess.replace(":", "-test:")
   addAuthorization(OAuth(List(roleWithWriteAccessInTest), List(ImplicitGrant(LoginEndpoint(ImageApiProperties.Auth0LoginEndpoint),"access_token"))))
 }

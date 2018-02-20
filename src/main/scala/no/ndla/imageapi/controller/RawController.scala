@@ -40,7 +40,7 @@ trait RawController {
 
     val getImageFile = new OperationBuilder(ValueDataType("file", Some("binary")))
       .nickname("getImageFile")
-      .summary("Fetches a raw image")
+      .summary("Fetch an image with options to resize and crop")
       .notes("Fetches a image with options to resize and crop")
       .produces("application/octet-stream")
       .authorizations("oauth2")
@@ -56,7 +56,7 @@ trait RawController {
 
     val getImageFileById = new OperationBuilder(ValueDataType("file", Some("binary")))
       .nickname("getImageFileById")
-      .summary("Fetches a raw image using the image id")
+      .summary("Fetch an image with options to resize and crop")
       .notes("Fetches a image with options to resize and crop")
       .produces("application/octet-stream")
       .authorizations("oauth2")
