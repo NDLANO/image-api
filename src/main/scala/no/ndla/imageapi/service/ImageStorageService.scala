@@ -8,7 +8,8 @@
 
 package no.ndla.imageapi.service
 
-import java.io.InputStream
+import java.awt.image.BufferedImage
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 import javax.imageio.ImageIO
 
 import com.amazonaws.services.s3.model._
@@ -26,10 +27,22 @@ trait ImageStorageService {
   val imageStorage: AmazonImageStorageService
 
   class AmazonImageStorageService extends LazyLogging {
+
     case class NdlaImage(s3Object: S3Object, fileName: String) extends ImageStream {
+      override val sourceImage: BufferedImage = {
+        val stream = s3Object.getObjectContent
+        val content = ImageIO.read(stream)
+        stream.close()
+        content
+      }
+
       override def contentType: String = s3Object.getObjectMetadata.getContentType
-      override def stream: InputStream = s3Object.getObjectContent
-      override lazy val sourceImage = ImageIO.read(stream)
+
+      override def stream: InputStream = {
+        val outputStream = new ByteArrayOutputStream()
+        ImageIO.write(sourceImage, format, outputStream)
+        new ByteArrayInputStream(outputStream.toByteArray)
+      }
     }
 
     def get(imageKey: String): Try[ImageStream] = {
@@ -60,8 +73,9 @@ trait ImageStorageService {
 
     def deleteObject(storageKey: String): Try[_] = Try(amazonClient.deleteObject(StorageName, storageKey))
 
-    def createBucket: Bucket =  amazonClient.createBucket(new CreateBucketRequest(StorageName))
+    def createBucket: Bucket = amazonClient.createBucket(new CreateBucketRequest(StorageName))
 
     def bucketExists: Boolean = amazonClient.doesBucketExist(StorageName)
   }
+
 }
