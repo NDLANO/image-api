@@ -55,7 +55,9 @@ trait IndexService {
         }
 
         response match {
-          case Success(_) => Success(imageMetaList.size)
+          case Success(r) =>
+            logger.info(s"Indexed ${imageMetaList.size} documents. No of failed items: ${r.result.failures.size}")
+            Success(imageMetaList.size)
           case Failure(ex) => Failure(ex)
         }
       }
@@ -83,14 +85,16 @@ trait IndexService {
       }
     }
 
-    def findAllIndexes: Try[Seq[String]] = {
+    def findAllIndexes(indexName: String): Try[Seq[String]] = {
       val response = e4sClient.execute{
         catIndices()
       }
 
       response match {
-        case Success(results) => Success(results.result.map(index => index.index))
-        case Failure(ex) => Failure(ex)
+        case Success(results) =>
+          Success(results.result.map(index => index.index).filter(_.startsWith(indexName)))
+        case Failure(ex) =>
+          Failure(ex)
       }
     }
 
