@@ -29,8 +29,9 @@ case class NdlaSearchException(rf: RequestFailure) extends RuntimeException(
      |type: ${rf.error.`type`}
    """.stripMargin
 )
+class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
+case class ElasticIndexingException(message: String) extends RuntimeException(message)
 
 class S3UploadException(message: String) extends RuntimeException(message)
 
-class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
 

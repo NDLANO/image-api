@@ -11,12 +11,13 @@ import java.text.SimpleDateFormat
 import java.util.{Calendar, UUID}
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.RequestSuccess
 import com.sksamuel.elastic4s.mappings.{MappingDefinition, NestedFieldDefinition}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.Elastic4sClient
 import no.ndla.imageapi.model.Language._
-import no.ndla.imageapi.model.domain
+import no.ndla.imageapi.model.{ElasticIndexingException, domain}
 import no.ndla.imageapi.model.search.SearchableLanguageFormats
 import org.json4s.native.Serialization.write
 
@@ -55,9 +56,16 @@ trait IndexService {
         }
 
         response match {
-          case Success(r) =>
-            logger.info(s"Indexed ${imageMetaList.size} documents. No of failed items: ${r.result.failures.size}")
+          case Success(RequestSuccess(_, _, _, result)) if !result.errors =>
+            logger.info(s"Indexed ${imageMetaList.size} documents")
             Success(imageMetaList.size)
+          case Success(RequestSuccess(_, _, _, result)) =>
+            val failed = result.items.collect {
+              case item if item.error.isDefined => s"'${item.id}: ${item.error.get.reason}'"
+            }
+
+            logger.error(s"Failed to index ${failed.length} items: ${failed.mkString(", ")}")
+            Failure(ElasticIndexingException(s"Failed to index ${failed.size}/${imageMetaList.size} images"))
           case Failure(ex) => Failure(ex)
         }
       }
