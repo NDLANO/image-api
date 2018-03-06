@@ -16,6 +16,7 @@ import org.json4s.jackson.Serialization._
 import org.mockito.Matchers
 import org.mockito.Matchers.{eq => eqTo}
 import org.mockito.Mockito._
+import org.mockito.Matchers._
 import org.scalatra.test.scalatest.ScalatraSuite
 
 import scala.util.{Failure, Success}
@@ -94,7 +95,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   }
 
   test("That DELETE /index removes all indexes") {
-    when(indexService.findAllIndexes).thenReturn(Success(List("index1", "index2", "index3")))
+    when(indexService.findAllIndexes(any[String])).thenReturn(Success(List("index1", "index2", "index3")))
     doReturn(Success("")).when(indexService).deleteIndexWithName(Some("index1"))
     doReturn(Success("")).when(indexService).deleteIndexWithName(Some("index2"))
     doReturn(Success("")).when(indexService).deleteIndexWithName(Some("index3"))
@@ -102,7 +103,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
       status should equal (200)
       body should equal ("Deleted 3 indexes")
     }
-    verify(indexService).findAllIndexes
+    verify(indexService).findAllIndexes(ImageApiProperties.SearchIndex)
     verify(indexService).deleteIndexWithName(Some("index1"))
     verify(indexService).deleteIndexWithName(Some("index2"))
     verify(indexService).deleteIndexWithName(Some("index3"))
@@ -110,7 +111,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   }
 
   test("That DELETE /index fails if at least one index isn't found, and no indexes are deleted") {
-    doReturn(Failure(new RuntimeException("Failed to find indexes"))).when(indexService).findAllIndexes
+    doReturn(Failure(new RuntimeException("Failed to find indexes"))).when(indexService).findAllIndexes(ImageApiProperties.SearchIndex)
     doReturn(Success("")).when(indexService).deleteIndexWithName(Some("index1"))
     doReturn(Success("")).when(indexService).deleteIndexWithName(Some("index2"))
     doReturn(Success("")).when(indexService).deleteIndexWithName(Some("index3"))
@@ -122,7 +123,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   }
 
   test("That DELETE /index fails if at least one index couldn't be deleted, but the other indexes are deleted regardless") {
-    when(indexService.findAllIndexes).thenReturn(Success(List("index1", "index2", "index3")))
+    when(indexService.findAllIndexes(any[String])).thenReturn(Success(List("index1", "index2", "index3")))
     doReturn(Success("")).when(indexService).deleteIndexWithName(Some("index1"))
     doReturn(Failure(new RuntimeException("No index with name 'index2' exists"))).when(indexService).deleteIndexWithName(Some("index2"))
     doReturn(Success("")).when(indexService).deleteIndexWithName(Some("index3"))

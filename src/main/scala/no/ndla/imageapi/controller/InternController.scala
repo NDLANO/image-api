@@ -8,6 +8,7 @@
 
 package no.ndla.imageapi.controller
 
+import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.S3UploadException
 import no.ndla.imageapi.model.api.Error
@@ -43,7 +44,7 @@ trait InternController {
 
     delete("/index") {
       def pluralIndex(n: Int) = if (n == 1) "1 index" else s"$n indexes"
-      val deleteResults = indexService.findAllIndexes match {
+      val deleteResults = indexService.findAllIndexes(ImageApiProperties.SearchIndex) match {
         case Failure(f) => halt(status = 500, body = f.getMessage)
         case Success(indexes) => indexes.map(index => {
           logger.info(s"Deleting index $index")
