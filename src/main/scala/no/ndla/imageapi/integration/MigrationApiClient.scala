@@ -24,9 +24,13 @@ trait MigrationApiClient {
     val imageMetadataEndpoint = s"$MigrationHost/images/:image_nid" ? (s"db-source" -> s"$ImageImportSource")
 
     def getMetaDataForImage(imageNid: String): Try[MainImageImport] = {
-      ndlaClient.fetchWithBasicAuth[MainImageImport](
-        Http(imageMetadataEndpoint.replace(":image_nid", imageNid)),
-        MigrationUser, MigrationPassword)
+      ndlaClient.fetchWithBasicAuth[MainImageImport](Http(imageMetadataEndpoint.replace(":image_nid", imageNid)), MigrationUser, MigrationPassword)
+        .map(trimAuthorTypes)
+    }
+
+    private def trimAuthorTypes(imageMeta: MainImageImport): MainImageImport = {
+      val authors = imageMeta.authors.map(a => a.copy(typeAuthor = a.typeAuthor.trim))
+      imageMeta.copy(authors = authors)
     }
   }
 
