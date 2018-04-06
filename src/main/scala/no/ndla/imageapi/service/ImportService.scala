@@ -134,7 +134,6 @@ trait ImportService {
         .getOrElse(domain.License(imageMeta.license.get, imageMeta.license.get, None))
 
       val creators = imageMeta.authors.filter(a => oldCreatorTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
-      // Filters out processor authors with old type `redaksjonelt` during import process since `redaksjonelt` exists both in processors and creators.
       val processors = imageMeta.authors.filter(a => oldProcessorTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
       val rightsholders = imageMeta.authors.filter(a => oldRightsholderTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
 
