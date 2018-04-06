@@ -105,7 +105,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be (1)
 
-    exception.errors.head.message.contains("Author is of illegal type. Must be one of originator, photographer, artist, editorial, writer, scriptwriter, reader, translator, director, illustrator, cowriter, composer") should be (true)
+    exception.errors.head.message.contains("Author is of illegal type. Must be one of originator, photographer, artist, writer, scriptwriter, reader, translator, director, illustrator, cowriter, composer") should be (true)
   }
 
   test("validate returns a validation error if tags contain html") {
