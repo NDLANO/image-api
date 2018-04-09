@@ -8,7 +8,8 @@ val Jettyversion = "9.4.9.v20180320"
 val AwsSdkversion = "1.11.46"
 val ScalaTestVersion = "3.0.1"
 val MockitoVersion = "1.10.19"
-val Elastic4sVersion = "6.1.2"
+val Elastic4sVersion = "6.1.4"
+val JacksonVersion = "2.9.4"
 val ElasticsearchVersion = "6.0.1"
 
 val appProperties = settingKey[Properties]("The application properties")
@@ -32,7 +33,7 @@ lazy val image_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8", "-unchecked", "-deprecation", "-feature"),
     libraryDependencies ++= Seq(
-      "ndla" %% "network" % "0.28",
+      "ndla" %% "network" % "0.29",
       "ndla" %% "mapping" % "0.7",
       "joda-time" % "joda-time" % "2.8.2",
       "org.scalatra" %% "scalatra" % Scalatraversion,
@@ -49,7 +50,6 @@ lazy val image_api = (project in file(".")).
       "org.json4s"   %% "json4s-native" % "3.5.0",
       "org.scalikejdbc" %% "scalikejdbc" % "2.5.0",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
-      "mysql" % "mysql-connector-java" % "5.1.36",
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
       "org.scalaj" %% "scalaj-http" % "2.3.0",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
@@ -59,10 +59,10 @@ lazy val image_api = (project in file(".")).
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-aws" % Elastic4sVersion,
+      "com.fasterxml.jackson.core" % "jackson-databind" % JacksonVersion, // Overriding jackson-databind used in elastic4s because of https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-32111
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
       "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
-      "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
-      "org.jsoup" % "jsoup" % "1.7.3",
+      "org.jsoup" % "jsoup" % "1.11.2",
       "org.imgscalr" % "imgscalr-lib" % "4.2",
       "com.netaporter" %% "scala-uri" % "0.4.16",
       // These two are not strictly needed, for most cases, but offers better handling of loading images with encoding issues
