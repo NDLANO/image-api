@@ -72,10 +72,6 @@ trait ImageStorageService {
     }
 
     def deleteObject(storageKey: String): Try[_] = Try(amazonClient.deleteObject(StorageName, storageKey))
-
-    def createBucket: Bucket = amazonClient.createBucket(new CreateBucketRequest(StorageName))
-
-    def bucketExists: Boolean = amazonClient.doesBucketExist(StorageName)
   }
 
 }

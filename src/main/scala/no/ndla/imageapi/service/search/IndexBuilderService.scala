@@ -35,8 +35,7 @@ trait IndexBuilderService {
         for {
           aliasTarget <- indexService.aliasTarget
           _ <- indexService.updateAliasTarget(aliasTarget, indexName)
-          _ <- indexService.deleteIndexWithName(aliasTarget)
-        } yield (aliasTarget)
+        } yield aliasTarget
       })
     }
 
@@ -48,17 +47,14 @@ trait IndexBuilderService {
             numIndexed <- sendToElastic(indexName)
             aliasTarget <- indexService.aliasTarget
             _ <- indexService.updateAliasTarget(aliasTarget, indexName)
-            _ <- indexService.deleteIndexWithName(aliasTarget)
           } yield numIndexed
 
           operations match {
-            case Failure(f) => {
+            case Failure(f) =>
               indexService.deleteIndexWithName(Some(indexName))
               Failure(f)
-            }
-            case Success(totalIndexed) => {
+            case Success(totalIndexed) =>
               Success(ReindexResult(totalIndexed, System.currentTimeMillis() - start))
-            }
           }
         })
       }

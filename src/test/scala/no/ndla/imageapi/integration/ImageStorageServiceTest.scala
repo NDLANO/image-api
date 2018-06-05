@@ -28,16 +28,6 @@ class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
     reset(amazonClient)
   }
 
-  test("That AmazonImageStorage.exists returns true when bucket exists") {
-    when(amazonClient.doesBucketExist(ImageStorageName)).thenReturn(true)
-    assert(imageStorage.bucketExists)
-  }
-
-  test("That AmazonImageStorage.exists returns false when bucket does not exist") {
-    when(amazonClient.doesBucketExist(ImageStorageName)).thenReturn(false)
-    assert(!imageStorage.bucketExists)
-  }
-
   test("That AmazonImageStorage.objectExists returns true when image exists") {
     when(amazonClient.doesObjectExist(any[String], any[String])).thenReturn(true)
     assert(imageStorage.objectExists("existingKey"))
