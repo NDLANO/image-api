@@ -9,7 +9,7 @@ val AwsSdkversion = "1.11.46"
 val ScalaTestVersion = "3.0.1"
 val MockitoVersion = "1.10.19"
 val Elastic4sVersion = "6.1.4"
-val JacksonVersion = "2.9.4"
+val JacksonVersion = "2.9.5"
 val ElasticsearchVersion = "6.0.1"
 
 val appProperties = settingKey[Properties]("The application properties")
