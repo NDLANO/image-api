@@ -139,9 +139,19 @@ trait IndexService {
     def cleanupIndexes(indexName: String = ImageApiProperties.SearchIndex): Try[String] = {
       e4sClient.execute(getAliases()) match {
         case Success(s) =>
-          val indexes = s.result.mappings.filter(_._1.name.startsWith(indexName))
-          val unreferencedIndexes = indexes.filter(_._2.isEmpty).map(_._1.name).toList
-          val (aliasTarget, aliasIndexesToDelete) = indexes.filter(_._2.nonEmpty).map(_._1.name) match {
+          val indexes = s.result.mappings.filter{
+            case (index, _) => index.name.startsWith(indexName)
+          }
+
+          val unreferencedIndexes = indexes.collect{
+            case (index, aliasesForIndex) if aliasesForIndex.isEmpty => index.name
+          }
+
+          val indexesWithAlias = indexes.collect{
+            case (index, aliasesForIndex) if aliasesForIndex.nonEmpty => index.name
+          }
+
+          val (aliasTarget, aliasIndexesToDelete) = indexesWithAlias match {
             case head :: tail =>
               (head, tail)
             case _ =>
