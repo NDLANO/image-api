@@ -75,10 +75,12 @@ object TestData {
     override def fileName: String = filename
 
     override lazy val sourceImage: BufferedImage = ImageIO.read(stream)
+    lazy val rawBytes = scala.io.Source.fromInputStream(stream).mkString
   }
 
   val NdlaLogoImage = DiskImage("ndla_logo.jpg")
   val NdlaLogoGIFImage = DiskImage("ndla_logo.gif")
+  val CCLogoSvgImage = DiskImage("cc.svg")
 
   val ChildrensImage = DiskImage("children-drawing-582306_640.jpg") // From https://pixabay.com/en/children-drawing-home-tree-meadow-582306/
 
