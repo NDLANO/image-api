@@ -3,7 +3,7 @@ package no.ndla.imageapi.controller
 import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 
-import no.ndla.imageapi.TestData.{NdlaLogoImage, NdlaLogoGIFImage}
+import no.ndla.imageapi.TestData.{NdlaLogoImage, NdlaLogoGIFImage, CCLogoSvgImage}
 import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
 import org.mockito.Matchers._
@@ -16,6 +16,7 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   implicit val swagger = new ImageSwagger
   val imageName = "ndla_logo.jpg"
   val imageGifName = "ndla_logo.gif"
+  val imageSvgName = "logo.svg"
 
   override val imageConverter = new ImageConverter
   lazy val controller = new RawController
@@ -195,6 +196,16 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
       image.getHeight should equal(60)
     }
   }
+
+  test("That GET /logo.svg with cropping and resizing returns the original image") {
+    when(imageStorage.get(any[String])).thenReturn(Success(CCLogoSvgImage))
+    get(s"/$imageSvgName?cropStartX=0&cropStartY=0&cropEndX=50&cropEndY=50&width=50") {
+      status should equal (200)
+
+      body should equal(CCLogoSvgImage.rawBytes)
+    }
+  }
+
   test("That GET /id/1 with width resizing returns the original image") {
     when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoGIFImage))
     get(s"/id/$idGif?width=100") {
