@@ -100,7 +100,7 @@ dockerfile in docker := {
     from("openjdk:8-jre-alpine")
 
     add(artifact, artifactTargetPath)
-    entryPoint("java", "-Dorg.scalatra.environment=production", "-jar", artifactTargetPath)
+    entryPoint("java", "-Dorg.scalatra.environment=production", "-Xmx512M", "-jar", artifactTargetPath)
   }
 }
 
