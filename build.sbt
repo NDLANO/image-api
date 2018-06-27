@@ -65,11 +65,10 @@ lazy val image_api = (project in file(".")).
       "org.jsoup" % "jsoup" % "1.11.2",
       "org.imgscalr" % "imgscalr-lib" % "4.2",
       "com.netaporter" %% "scala-uri" % "0.4.16",
-      // These are not strictly needed, for most cases, but offers better handling of loading images with encoding issues, and svg images
+      // These are not strictly needed, for most cases, but offers better handling of loading images with encoding issues
       "com.twelvemonkeys.imageio" % "imageio-core" % "3.3.2",
       "com.twelvemonkeys.imageio" % "imageio-jpeg" % "3.3.2",
-      "com.twelvemonkeys.imageio" % "imageio-batik" % "3.3.2",
-      "org.apache.xmlgraphics" % "batik-transcoder" % "1.10"
+      "commons-io" % "commons-io" % "2.6"
     )
   ).enablePlugins(DockerPlugin)
    .enablePlugins(GitVersioning)
@@ -82,14 +81,6 @@ assemblyMergeStrategy in assembly := {
   case PathList("org", "joda", "convert", "ToString.class")  => MergeStrategy.first
   case PathList("org", "joda", "convert", "FromString.class")  => MergeStrategy.first
   case PathList("org", "joda", "time", "base", "BaseDateTime.class")  => MergeStrategy.first
-  case PathList("org", "w3c", "dom", "events", "DocumentEvent.class") => MergeStrategy.last
-  case PathList("org", "w3c", "dom", "events", "Event.class") => MergeStrategy.last
-  case PathList("org", "w3c", "dom", "events", "EventException.class") => MergeStrategy.last
-  case PathList("org", "w3c", "dom", "events", "EventListener.class") => MergeStrategy.last
-  case PathList("org", "w3c", "dom", "events", "EventTarget.class") => MergeStrategy.last
-  case PathList("org", "w3c", "dom", "events", "MouseEvent.class") => MergeStrategy.last
-  case PathList("org", "w3c", "dom", "events", "MutationEvent.class") => MergeStrategy.last
-  case PathList("org", "w3c", "dom", "events", "UIEvent.class") => MergeStrategy.last
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
