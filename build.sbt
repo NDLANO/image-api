@@ -69,6 +69,24 @@ lazy val image_api = (project in file(".")).
   ).enablePlugins(DockerPlugin)
    .enablePlugins(JettyPlugin)
 
+val checkfmt = taskKey[Boolean]("Check for code style errors")
+checkfmt := {
+  val noErrorsInMainFiles = (Compile / scalafmtCheck).value
+  val noErrorsInTestFiles = (Test / scalafmtCheck).value
+  val noErrorsInSbtConfigFiles = (Compile / scalafmtSbtCheck).value
+
+  noErrorsInMainFiles && noErrorsInTestFiles && noErrorsInSbtConfigFiles
+}
+
+Test / test := ((Test / test).dependsOn(Test / checkfmt)).value
+
+val fmt = taskKey[Unit]("Automatically apply code style fixes")
+fmt := {
+  (Compile / scalafmt).value
+  (Test / scalafmt).value
+  (Compile / scalafmtSbt).value
+}
+
 assembly / assemblyJarName := "image-api.jar"
 assembly / mainClass := Some("no.ndla.imageapi.JettyLauncher")
 assembly / assemblyMergeStrategy := {
