@@ -20,16 +20,12 @@ appProperties := {
   prop
 }
 
-lazy val commonSettings = Seq(
-  organization := appProperties.value.getProperty("NDLAOrganization"),
-  version := appProperties.value.getProperty("NDLAComponentVersion"),
-  scalaVersion := Scalaversion
-)
-
 lazy val image_api = (project in file(".")).
-  settings(commonSettings: _*).
   settings(
     name := "image-api",
+    organization := appProperties.value.getProperty("NDLAOrganization"),
+    version := appProperties.value.getProperty("NDLAComponentVersion"),
+    scalaVersion := Scalaversion,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8", "-unchecked", "-deprecation", "-feature"),
     libraryDependencies ++= Seq(
@@ -71,12 +67,11 @@ lazy val image_api = (project in file(".")).
       "commons-io" % "commons-io" % "2.6"
     )
   ).enablePlugins(DockerPlugin)
-   .enablePlugins(GitVersioning)
    .enablePlugins(JettyPlugin)
 
-assemblyJarName in assembly := "image-api.jar"
-mainClass in assembly := Some("no.ndla.imageapi.JettyLauncher")
-assemblyMergeStrategy in assembly := {
+assembly / assemblyJarName := "image-api.jar"
+assembly / mainClass := Some("no.ndla.imageapi.JettyLauncher")
+assembly / assemblyMergeStrategy := {
   case "mime.types" => MergeStrategy.filterDistinctLines
   case PathList("org", "joda", "convert", "ToString.class")  => MergeStrategy.first
   case PathList("org", "joda", "convert", "FromString.class")  => MergeStrategy.first
@@ -91,13 +86,13 @@ assemblyMergeStrategy in assembly := {
 // sbt "test-only -- -n no.ndla.tag.IntegrationTest"
 // will not run unless this line gets commented out or you remove the tag over the test class
 // This should be solved better!
-testOptions in Test += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")
+Test / testOptions += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker := (docker dependsOn assembly).value
 
-dockerfile in docker := {
-  val artifact = (assemblyOutputPath in assembly).value
+docker / dockerfile := {
+  val artifact = (assembly / assemblyOutputPath).value
   val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
     from("openjdk:8-jre-alpine")
@@ -107,16 +102,13 @@ dockerfile in docker := {
   }
 }
 
-val gitHeadCommitSha = settingKey[String]("current git commit SHA")
-gitHeadCommitSha in ThisBuild := Process("git log --pretty=format:%h -n 1").lines.head
-
-imageNames in docker := Seq(
+docker / imageNames := Seq(
   ImageName(
     namespace = Some(organization.value),
     repository = name.value,
     tag = Some(System.getProperty("docker.tag", "SNAPSHOT")))
 )
 
-parallelExecution in Test := false
+Test / parallelExecution := false
 
 resolvers ++= scala.util.Properties.envOrNone("NDLA_RELEASES").map(repo => "Release Sonatype Nexus Repository Manager" at repo).toSeq
