@@ -55,10 +55,9 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     case e: IndexNotFoundException => InternalServerError(body = Error.IndexMissingError)
     case i: ImageNotFoundException => NotFound(body = Error(Error.NOT_FOUND, i.getMessage))
     case b: ImportException => UnprocessableEntity(body = Error(Error.IMPORT_FAILED, b.getMessage))
-    case s: S3UploadException => {
+    case s: S3UploadException =>
       contentType = formats("json")
       GatewayTimeout(body = Error(Error.GATEWAY_TIMEOUT, s.getMessage))
-    }
     case rw: ResultWindowTooLargeException => UnprocessableEntity(body = Error(Error.WINDOW_TOO_LARGE, rw.getMessage))
     case _: SizeConstraintExceededException =>
       contentType = formats("json")
@@ -66,10 +65,9 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     case _: PSQLException =>
       ComponentRegistry.connectToDatabase()
       InternalServerError(Error.DatabaseUnavailableError)
-    case t: Throwable => {
+    case t: Throwable =>
       logger.error(Error.GenericError.toString, t)
       InternalServerError(body = Error.GenericError)
-    }
   }
 
   private val streamRenderer: RenderPipeline = {

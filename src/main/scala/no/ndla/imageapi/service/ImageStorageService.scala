@@ -9,40 +9,35 @@
 package no.ndla.imageapi.service
 
 import java.awt.image.BufferedImage
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
-import javax.imageio.ImageIO
+import java.io.{ByteArrayInputStream, InputStream}
 
 import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
+import javax.imageio.ImageIO
 import no.ndla.imageapi.ImageApiProperties.StorageName
 import no.ndla.imageapi.integration.AmazonClient
 import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.model.domain.{Image, ImageStream}
+import org.apache.commons.io.IOUtils
+import scalaj.http.HttpRequest
 
 import scala.util.{Failure, Success, Try}
-import scalaj.http.{Http, HttpRequest}
 
 trait ImageStorageService {
   this: AmazonClient =>
   val imageStorage: AmazonImageStorageService
 
   class AmazonImageStorageService extends LazyLogging {
-
     case class NdlaImage(s3Object: S3Object, fileName: String) extends ImageStream {
-      override val sourceImage: BufferedImage = {
-        val stream = s3Object.getObjectContent
-        val content = ImageIO.read(stream)
-        stream.close()
+      lazy val imageContent = {
+        val content = IOUtils.toByteArray(s3Object.getObjectContent)
+        s3Object.getObjectContent.close()
         content
       }
 
+      override val sourceImage: BufferedImage = ImageIO.read(stream)
       override def contentType: String = s3Object.getObjectMetadata.getContentType
-
-      override def stream: InputStream = {
-        val outputStream = new ByteArrayOutputStream()
-        ImageIO.write(sourceImage, format, outputStream)
-        new ByteArrayInputStream(outputStream.toByteArray)
-      }
+      override def stream: InputStream = new ByteArrayInputStream(imageContent)
     }
 
     def get(imageKey: String): Try[ImageStream] = {
