@@ -71,26 +71,26 @@ trait SearchService {
     def getSortDefinition(sort: Sort.Value, language: String) = {
       val sortLanguage = language match {
         case Language.NoLanguage | Language.AllLanguages => "*"
-        case _ => language
+        case _                                           => language
       }
 
       sort match {
         case (Sort.ByTitleAsc) =>
           language match {
             case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.ASC).missing("_last")
-            case _ => fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").order(SortOrder.ASC).missing("_last")
+            case _   => fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").order(SortOrder.ASC).missing("_last")
           }
         case (Sort.ByTitleDesc) =>
           language match {
             case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.DESC).missing("_last")
-            case _ => fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").order(SortOrder.DESC).missing("_last")
+            case _   => fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").order(SortOrder.DESC).missing("_last")
           }
-        case (Sort.ByRelevanceAsc) => fieldSort("_score").order(SortOrder.ASC)
-        case (Sort.ByRelevanceDesc) => fieldSort("_score").order(SortOrder.DESC)
-        case (Sort.ByLastUpdatedAsc) => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByRelevanceAsc)    => fieldSort("_score").order(SortOrder.ASC)
+        case (Sort.ByRelevanceDesc)   => fieldSort("_score").order(SortOrder.DESC)
+        case (Sort.ByLastUpdatedAsc)  => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
         case (Sort.ByLastUpdatedDesc) => fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByIdAsc) => fieldSort("id").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByIdDesc) => fieldSort("id").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByIdAsc)           => fieldSort("id").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByIdDesc)          => fieldSort("id").order(SortOrder.DESC).missing("_last")
       }
     }
 
@@ -99,7 +99,10 @@ trait SearchService {
       searchConverterService.asImageMetaSummary(read[SearchableImage](hit), language)
     }
 
-    private def languageSpecificSearch(searchField: String, language: Option[String], query: String, boost: Float): QueryDefinition = {
+    private def languageSpecificSearch(searchField: String,
+                                       language: Option[String],
+                                       query: String,
+                                       boost: Float): QueryDefinition = {
       language match {
         case None | Some(Language.AllLanguages) =>
           val hi = highlight("*").preTag("").postTag("").numberOfFragments(0)
@@ -113,7 +116,14 @@ trait SearchService {
       }
     }
 
-    def matchingQuery(query: String, minimumSize: Option[Int], language: Option[String], license: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
+    def matchingQuery(query: String,
+                      minimumSize: Option[Int],
+                      language: Option[String],
+                      license: Option[String],
+                      sort: Sort.Value,
+                      page: Option[Int],
+                      pageSize: Option[Int],
+                      includeCopyrighted: Boolean): SearchResult = {
       val fullSearch = boolQuery()
         .must(
           boolQuery()
@@ -129,19 +139,32 @@ trait SearchService {
       executeSearch(fullSearch, minimumSize, license, language, sort: Sort.Value, page, pageSize, includeCopyrighted)
     }
 
-    def all(minimumSize: Option[Int], license: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult =
+    def all(minimumSize: Option[Int],
+            license: Option[String],
+            language: Option[String],
+            sort: Sort.Value,
+            page: Option[Int],
+            pageSize: Option[Int],
+            includeCopyrighted: Boolean): SearchResult =
       executeSearch(boolQuery(), minimumSize, license, language, sort, page, pageSize, includeCopyrighted)
 
-    def executeSearch(queryBuilder: BoolQueryDefinition, minimumSize: Option[Int], license: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int], includeCopyrighted: Boolean): SearchResult = {
+    def executeSearch(queryBuilder: BoolQueryDefinition,
+                      minimumSize: Option[Int],
+                      license: Option[String],
+                      language: Option[String],
+                      sort: Sort.Value,
+                      page: Option[Int],
+                      pageSize: Option[Int],
+                      includeCopyrighted: Boolean): SearchResult = {
 
       val licenseFilter = license match {
-        case None => if (!includeCopyrighted) Some(noCopyright) else None
+        case None      => if (!includeCopyrighted) Some(noCopyright) else None
         case Some(lic) => Some(termQuery("license", lic))
       }
 
       val sizeFilter = minimumSize match {
         case Some(size) => Some(rangeQuery("imageSize").gte(size))
-        case _ => None
+        case _          => None
       }
 
       val (languageFilter, searchLanguage) = language match {
@@ -155,17 +178,28 @@ trait SearchService {
       val filteredSearch = queryBuilder.filter(filters.flatten)
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-      val requestedResultWindow = page.getOrElse(1)*numResults
-      if(requestedResultWindow > ImageApiProperties.ElasticSearchIndexMaxResultWindow) {
-        logger.info(s"Max supported results are ${ImageApiProperties.ElasticSearchIndexMaxResultWindow}, user requested $requestedResultWindow")
+      val requestedResultWindow = page.getOrElse(1) * numResults
+      if (requestedResultWindow > ImageApiProperties.ElasticSearchIndexMaxResultWindow) {
+        logger.info(
+          s"Max supported results are ${ImageApiProperties.ElasticSearchIndexMaxResultWindow}, user requested $requestedResultWindow")
         throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
       }
 
-      e4sClient.execute{
-        search(ImageApiProperties.SearchIndex).size(numResults).from(startAt).query(filteredSearch).sortBy(getSortDefinition(sort, searchLanguage))
+      e4sClient.execute {
+        search(ImageApiProperties.SearchIndex)
+          .size(numResults)
+          .from(startAt)
+          .query(filteredSearch)
+          .sortBy(getSortDefinition(sort, searchLanguage))
       } match {
         case Success(response) =>
-          SearchResult(response.result.totalHits, page.getOrElse(1), numResults, if (searchLanguage == "*") Language.AllLanguages else searchLanguage, getHits(response.result, language))
+          SearchResult(
+            response.result.totalHits,
+            page.getOrElse(1),
+            numResults,
+            if (searchLanguage == "*") Language.AllLanguages else searchLanguage,
+            getHits(response.result, language)
+          )
         case Failure(ex) =>
           errorHandler(Failure(ex))
       }
@@ -173,13 +207,13 @@ trait SearchService {
     }
 
     def countDocuments(): Long = {
-      val response = e4sClient.execute{
+      val response = e4sClient.execute {
         catCount(ImageApiProperties.SearchIndex)
       }
 
       response match {
         case Success(resp) => resp.result.count
-        case Failure(_) => 0
+        case Failure(_)    => 0
       }
     }
 
@@ -192,7 +226,7 @@ trait SearchService {
 
       val startAt = page match {
         case Some(sa) => (sa - 1).max(0) * numResults
-        case None => 0
+        case None     => 0
       }
 
       (startAt, numResults)
@@ -205,11 +239,13 @@ trait SearchService {
             case notFound: Int if notFound == 404 => {
               logger.error(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex.")
               scheduleIndexDocuments()
-              throw new IndexNotFoundException(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex")
+              throw new IndexNotFoundException(
+                s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex")
             }
             case _ => {
               logger.error(e.getMessage)
-              throw new ElasticsearchException(s"Unable to execute search in ${ImageApiProperties.SearchIndex}", e.getMessage)
+              throw new ElasticsearchException(s"Unable to execute search in ${ImageApiProperties.SearchIndex}",
+                                               e.getMessage)
             }
           }
 
@@ -225,7 +261,9 @@ trait SearchService {
 
       f.failed.foreach(t => logger.warn("Unable to create index: " + t.getMessage, t))
       f.foreach {
-        case Success(reindexResult) => logger.info(s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms.")
+        case Success(reindexResult) =>
+          logger.info(
+            s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms.")
         case Failure(ex) => logger.warn(ex.getMessage, ex)
       }
     }

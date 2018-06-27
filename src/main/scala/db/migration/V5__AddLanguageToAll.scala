@@ -40,22 +40,25 @@ class V5__AddLanguageToAll extends JdbcMigration {
   }
 
   def allImages(implicit session: DBSession): List[V5_ImageMetaInformation] = {
-    sql"select id, metadata from imagemetadata".map(rs => {
-      val meta = read[V5_ImageMetaInformation](rs.string("metadata"))
-      V5_ImageMetaInformation(
-        Some(rs.long("id")),
-        meta.titles,
-        meta.alttexts,
-        meta.imageUrl,
-        meta.size,
-        meta.contentType,
-        meta.copyright,
-        meta.tags,
-        meta.captions,
-        meta.updatedBy,
-        meta.updated)
-    }
-    ).list().apply()
+    sql"select id, metadata from imagemetadata"
+      .map(rs => {
+        val meta = read[V5_ImageMetaInformation](rs.string("metadata"))
+        V5_ImageMetaInformation(
+          Some(rs.long("id")),
+          meta.titles,
+          meta.alttexts,
+          meta.imageUrl,
+          meta.size,
+          meta.contentType,
+          meta.copyright,
+          meta.tags,
+          meta.captions,
+          meta.updatedBy,
+          meta.updated
+        )
+      })
+      .list()
+      .apply()
   }
 
   def update(imagemetadata: V5_ImageMetaInformation)(implicit session: DBSession) = {
@@ -77,13 +80,13 @@ case class V5_Copyright(license: V5_License, origin: String, authors: Seq[V5_Aut
 case class V5_License(license: String, description: String, url: Option[String])
 case class V5_Author(`type`: String, name: String)
 case class V5_ImageMetaInformation(id: Option[Long],
-                                 titles: Seq[V5_ImageTitle],
-                                 alttexts: Seq[V5_ImageAltText],
-                                 imageUrl: String,
-                                 size: Long,
-                                 contentType: String,
-                                 copyright: V5_Copyright,
-                                 tags: Seq[V5_ImageTag],
-                                 captions: Seq[V5_ImageCaption],
-                                 updatedBy: String,
-                                 updated: Date)
+                                   titles: Seq[V5_ImageTitle],
+                                   alttexts: Seq[V5_ImageAltText],
+                                   imageUrl: String,
+                                   size: Long,
+                                   contentType: String,
+                                   copyright: V5_Copyright,
+                                   tags: Seq[V5_ImageTag],
+                                   captions: Seq[V5_ImageCaption],
+                                   updatedBy: String,
+                                   updated: Date)

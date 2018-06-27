@@ -18,7 +18,6 @@ import org.json4s.native.JsonMethods._
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
-
 class V3__AddUpdatedColoums extends JdbcMigration with LazyLogging {
 
   implicit val formats = org.json4s.DefaultFormats
@@ -37,7 +36,10 @@ class V3__AddUpdatedColoums extends JdbcMigration with LazyLogging {
   }
 
   def allImages(implicit session: DBSession): List[V3__DBImageMetaInformation] = {
-    sql"select id, metadata from imagemetadata".map(rs => V3__DBImageMetaInformation(rs.long("id"), rs.string("metadata"))).list().apply()
+    sql"select id, metadata from imagemetadata"
+      .map(rs => V3__DBImageMetaInformation(rs.long("id"), rs.string("metadata")))
+      .list()
+      .apply()
   }
 
   def convertImageUpdate(imageMeta: V3__DBImageMetaInformation): V3__DBImageMetaInformation = {
@@ -62,6 +64,7 @@ class V3__AddUpdatedColoums extends JdbcMigration with LazyLogging {
 case class V3__DBImageMetaInformation(id: Long, document: String)
 
 class TimeService() {
+
   def nowAsString(): String = {
     //NB!!! BUG day format is wrong should have been dd, and the Z should have been 'Z'
     val formatter: DateTimeFormatter = DateTimeFormat.forPattern("YYYY-MM-DD'T'HH:mm:ssZ")

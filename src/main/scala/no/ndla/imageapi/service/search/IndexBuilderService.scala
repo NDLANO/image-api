@@ -24,39 +24,44 @@ trait IndexBuilderService {
       for {
         _ <- indexService.aliasTarget.map {
           case Some(index) => Success(index)
-          case None => indexService.createIndexWithGeneratedName().map(newIndex => indexService.updateAliasTarget(None, newIndex))
+          case None =>
+            indexService.createIndexWithGeneratedName().map(newIndex => indexService.updateAliasTarget(None, newIndex))
         }
         imported <- indexService.indexDocument(imported)
       } yield imported
     }
 
     def createEmptyIndex: Try[Option[String]] = {
-      indexService.createIndexWithGeneratedName().flatMap(indexName => {
-        for {
-          aliasTarget <- indexService.aliasTarget
-          _ <- indexService.updateAliasTarget(aliasTarget, indexName)
-        } yield aliasTarget
-      })
+      indexService
+        .createIndexWithGeneratedName()
+        .flatMap(indexName => {
+          for {
+            aliasTarget <- indexService.aliasTarget
+            _ <- indexService.updateAliasTarget(aliasTarget, indexName)
+          } yield aliasTarget
+        })
     }
 
     def indexDocuments: Try[ReindexResult] = {
       synchronized {
         val start = System.currentTimeMillis()
-        indexService.createIndexWithGeneratedName().flatMap(indexName => {
-          val operations = for {
-            numIndexed <- sendToElastic(indexName)
-            aliasTarget <- indexService.aliasTarget
-            _ <- indexService.updateAliasTarget(aliasTarget, indexName)
-          } yield numIndexed
+        indexService
+          .createIndexWithGeneratedName()
+          .flatMap(indexName => {
+            val operations = for {
+              numIndexed <- sendToElastic(indexName)
+              aliasTarget <- indexService.aliasTarget
+              _ <- indexService.updateAliasTarget(aliasTarget, indexName)
+            } yield numIndexed
 
-          operations match {
-            case Failure(f) =>
-              indexService.deleteIndexWithName(Some(indexName))
-              Failure(f)
-            case Success(totalIndexed) =>
-              Success(ReindexResult(totalIndexed, System.currentTimeMillis() - start))
-          }
-        })
+            operations match {
+              case Failure(f) =>
+                indexService.deleteIndexWithName(Some(indexName))
+                Failure(f)
+              case Success(totalIndexed) =>
+                Success(ReindexResult(totalIndexed, System.currentTimeMillis() - start))
+            }
+          })
       }
     }
 
@@ -64,20 +69,25 @@ trait IndexBuilderService {
       var numIndexed = 0
       getRanges.map(ranges => {
         ranges.foreach(range => {
-          val numberInBulk = indexService.indexDocuments(imageRepository.imagesWithIdBetween(range._1, range._2), indexName)
+          val numberInBulk =
+            indexService.indexDocuments(imageRepository.imagesWithIdBetween(range._1, range._2), indexName)
           numberInBulk match {
             case Success(num) => numIndexed += num
-            case Failure(f) => return Failure(f)
+            case Failure(f)   => return Failure(f)
           }
         })
         numIndexed
       })
     }
 
-    def getRanges:Try[List[(Long,Long)]] = {
-      Try{
+    def getRanges: Try[List[(Long, Long)]] = {
+      Try {
         val (minId, maxId) = imageRepository.minMaxId
-        Seq.range(minId, maxId + 1).grouped(ImageApiProperties.IndexBulkSize).map(group => (group.head, group.last)).toList
+        Seq
+          .range(minId, maxId + 1)
+          .grouped(ImageApiProperties.IndexBulkSize)
+          .map(group => (group.head, group.last))
+          .toList
       }
     }
   }

@@ -20,8 +20,8 @@ appProperties := {
   prop
 }
 
-lazy val image_api = (project in file(".")).
-  settings(
+lazy val image_api = (project in file("."))
+  .settings(
     name := "image-api",
     organization := appProperties.value.getProperty("NDLAOrganization"),
     version := appProperties.value.getProperty("NDLAComponentVersion"),
@@ -34,7 +34,7 @@ lazy val image_api = (project in file(".")).
       "joda-time" % "joda-time" % "2.8.2",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
-      "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
+      "org.scalatra" %% "scalatra-swagger" % Scalatraversion,
       "org.scalatra" %% "scalatra-scalatest" % Scalatraversion % "test",
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
       "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
@@ -43,7 +43,7 @@ lazy val image_api = (project in file(".")).
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",
-      "org.json4s"   %% "json4s-native" % "3.5.0",
+      "org.json4s" %% "json4s-native" % "3.5.0",
       "org.scalikejdbc" %% "scalikejdbc" % "2.5.0",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
@@ -66,8 +66,9 @@ lazy val image_api = (project in file(".")).
       "com.twelvemonkeys.imageio" % "imageio-jpeg" % "3.3.2",
       "commons-io" % "commons-io" % "2.6"
     )
-  ).enablePlugins(DockerPlugin)
-   .enablePlugins(JettyPlugin)
+  )
+  .enablePlugins(DockerPlugin)
+  .enablePlugins(JettyPlugin)
 
 val checkfmt = taskKey[Boolean]("Check for code style errors")
 checkfmt := {
@@ -90,10 +91,10 @@ fmt := {
 assembly / assemblyJarName := "image-api.jar"
 assembly / mainClass := Some("no.ndla.imageapi.JettyLauncher")
 assembly / assemblyMergeStrategy := {
-  case "mime.types" => MergeStrategy.filterDistinctLines
-  case PathList("org", "joda", "convert", "ToString.class")  => MergeStrategy.first
-  case PathList("org", "joda", "convert", "FromString.class")  => MergeStrategy.first
-  case PathList("org", "joda", "time", "base", "BaseDateTime.class")  => MergeStrategy.first
+  case "mime.types"                                                  => MergeStrategy.filterDistinctLines
+  case PathList("org", "joda", "convert", "ToString.class")          => MergeStrategy.first
+  case PathList("org", "joda", "convert", "FromString.class")        => MergeStrategy.first
+  case PathList("org", "joda", "time", "base", "BaseDateTime.class") => MergeStrategy.first
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
@@ -121,12 +122,14 @@ docker / dockerfile := {
 }
 
 docker / imageNames := Seq(
-  ImageName(
-    namespace = Some(organization.value),
-    repository = name.value,
-    tag = Some(System.getProperty("docker.tag", "SNAPSHOT")))
+  ImageName(namespace = Some(organization.value),
+            repository = name.value,
+            tag = Some(System.getProperty("docker.tag", "SNAPSHOT")))
 )
 
 Test / parallelExecution := false
 
-resolvers ++= scala.util.Properties.envOrNone("NDLA_RELEASES").map(repo => "Release Sonatype Nexus Repository Manager" at repo).toSeq
+resolvers ++= scala.util.Properties
+  .envOrNone("NDLA_RELEASES")
+  .map(repo => "Release Sonatype Nexus Repository Manager" at repo)
+  .toSeq

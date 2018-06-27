@@ -10,7 +10,18 @@ package no.ndla.imageapi.service
 
 import com.netaporter.uri.Uri.parse
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, NdlaRedPassword, NdlaRedUsername, redDBSource, oldCreatorTypes, oldProcessorTypes, oldRightsholderTypes, creatorTypes, processorTypes, rightsholderTypes}
+import no.ndla.imageapi.ImageApiProperties.{
+  ImageImportSource,
+  NdlaRedPassword,
+  NdlaRedUsername,
+  redDBSource,
+  oldCreatorTypes,
+  oldProcessorTypes,
+  oldRightsholderTypes,
+  creatorTypes,
+  processorTypes,
+  rightsholderTypes
+}
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain.ImageMetaInformation
@@ -20,14 +31,18 @@ import no.ndla.imageapi.service.search.IndexBuilderService
 import no.ndla.mapping.License.getLicense
 import no.ndla.mapping.LicenseDefinition
 
-
-
 import scala.util.{Failure, Success, Try}
 import scalaj.http.Http
 
 trait ImportService {
-  this: ImageStorageService with ImageRepository with MigrationApiClient with IndexBuilderService with ConverterService with TagsService
-    with Clock with User =>
+  this: ImageStorageService
+    with ImageRepository
+    with MigrationApiClient
+    with IndexBuilderService
+    with ConverterService
+    with TagsService
+    with Clock
+    with User =>
   val importService: ImportService
 
   class ImportService extends LazyLogging {
@@ -44,7 +59,9 @@ trait ImportService {
       } yield importedImage
 
       importedImage match {
-        case Success(i) => logger.info(s"Successfully imported image with external ID $externalImageId (${i.id.get}) in ${System.currentTimeMillis() - start} ms")
+        case Success(i) =>
+          logger.info(
+            s"Successfully imported image with external ID $externalImageId (${i.id.get}) in ${System.currentTimeMillis() - start} ms")
         case Failure(f) => logger.error(s"Failed to import image with externalId $externalImageId: ${f.getMessage}")
       }
 
@@ -52,7 +69,8 @@ trait ImportService {
     }
 
     private[service] def uploadRawImage(rawImgMeta: ImageMeta): Try[domain.Image] = {
-      val image = domain.Image(parse(rawImgMeta.originalFile).toString, rawImgMeta.originalSize.toInt, rawImgMeta.originalMime)
+      val image =
+        domain.Image(parse(rawImgMeta.originalFile).toString, rawImgMeta.originalSize.toInt, rawImgMeta.originalMime)
 
       if (imageStorage.objectExists(rawImgMeta.originalFile) && imageStorage.objectSize(rawImgMeta.originalFile) == rawImgMeta.originalSize.toInt) {
         Success(image)
@@ -65,7 +83,8 @@ trait ImportService {
 
         val tryResUpload = imageStorage.uploadFromUrl(image, rawImgMeta.originalFile, request)
         tryResUpload match {
-          case Failure(f) => Failure(new S3UploadException(s"Upload of image '${image.fileName}' to S3 failed.: ${f.getMessage}"))
+          case Failure(f) =>
+            Failure(new S3UploadException(s"Upload of image '${image.fileName}' to S3 failed.: ${f.getMessage}"))
           case Success(_) => Success(image)
         }
       }
@@ -81,8 +100,12 @@ trait ImportService {
       }
       val mainLanguage = Option(imageMeta.mainImage.language).filter(_.nonEmpty).getOrElse(Language.UnknownLanguage)
       val titles = translationTitles :+ domain.ImageTitle(imageMeta.mainImage.title, mainLanguage)
-      val altTexts = translationAltTexts ++ imageMeta.mainImage.alttext.map(alt => Seq(domain.ImageAltText(alt, mainLanguage))).getOrElse(Seq.empty)
-      val captions = translationCaptions ++ imageMeta.mainImage.caption.map(cap => Seq(domain.ImageCaption(cap, mainLanguage))).getOrElse(Seq.empty)
+      val altTexts = translationAltTexts ++ imageMeta.mainImage.alttext
+        .map(alt => Seq(domain.ImageAltText(alt, mainLanguage)))
+        .getOrElse(Seq.empty)
+      val captions = translationCaptions ++ imageMeta.mainImage.caption
+        .map(cap => Seq(domain.ImageCaption(cap, mainLanguage)))
+        .getOrElse(Seq.empty)
 
       domain.ImageMetaInformation(
         None,
@@ -99,10 +122,11 @@ trait ImportService {
       )
     }
 
-    private def persistMetadata(image: domain.ImageMetaInformation, externalImageId: String): Try[ImageMetaInformation] = {
+    private def persistMetadata(image: domain.ImageMetaInformation,
+                                externalImageId: String): Try[ImageMetaInformation] = {
       imageRepository.withExternalId(externalImageId) match {
         case Some(dbMeta) => Try(imageRepository.update(image.copy(id = dbMeta.id), dbMeta.id.get))
-        case None => Try(imageRepository.insertWithExternalId(image, externalImageId))
+        case None         => Try(imageRepository.insertWithExternalId(image, externalImageId))
       }
     }
 
@@ -120,40 +144,49 @@ trait ImportService {
       val processorMap = (oldProcessorTypes zip processorTypes).toMap.withDefaultValue(None)
       val rightsholderMap = (oldRightsholderTypes zip rightsholderTypes).toMap.withDefaultValue(None)
 
-      (creatorMap(author.typeAuthor.toLowerCase), processorMap(author.typeAuthor.toLowerCase), rightsholderMap(author.typeAuthor.toLowerCase)) match {
+      (creatorMap(author.typeAuthor.toLowerCase),
+       processorMap(author.typeAuthor.toLowerCase),
+       rightsholderMap(author.typeAuthor.toLowerCase)) match {
         case (t: String, _, _) => domain.Author(t.capitalize, author.name)
         case (_, t: String, _) => domain.Author(t.capitalize, author.name)
         case (_, _, t: String) => domain.Author(t.capitalize, author.name)
-        case (_, _, _) => domain.Author(author.typeAuthor, author.name)
+        case (_, _, _)         => domain.Author(author.typeAuthor, author.name)
       }
     }
 
     private[service] def toDomainCopyright(imageMeta: MainImageImport): domain.Copyright = {
-      val domainLicense = imageMeta.license.flatMap(oldToNewLicenseKey)
+      val domainLicense = imageMeta.license
+        .flatMap(oldToNewLicenseKey)
         .map(license => domain.License(license.license, license.description, license.url))
         .getOrElse(domain.License(imageMeta.license.get, imageMeta.license.get, None))
 
-      val creators = imageMeta.authors.filter(a => oldCreatorTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
-      val processors = imageMeta.authors.filter(a => oldProcessorTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
-      val rightsholders = imageMeta.authors.filter(a => oldRightsholderTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
+      val creators =
+        imageMeta.authors.filter(a => oldCreatorTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
+      val processors =
+        imageMeta.authors.filter(a => oldProcessorTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
+      val rightsholders =
+        imageMeta.authors.filter(a => oldRightsholderTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
 
       domain.Copyright(domainLicense,
-        imageMeta.origin.getOrElse(""),
-        creators,
-        processors,
-        rightsholders,
-        agreementId = None,
-        validFrom = None,
-        validTo = None)
+                       imageMeta.origin.getOrElse(""),
+                       creators,
+                       processors,
+                       rightsholders,
+                       agreementId = None,
+                       validFrom = None,
+                       validTo = None)
     }
 
-    private def toDomainTranslationFields(imageMeta: MainImageImport): (Seq[domain.ImageTitle], Seq[domain.ImageAltText], Seq[domain.ImageCaption]) = {
-      imageMeta.translations.map(tr => {
-        val language = tr.language
-        (domain.ImageTitle(tr.title, language),
-          domain.ImageAltText(tr.alttext.getOrElse(""), language),
-          domain.ImageCaption(tr.caption.getOrElse(""), language))
-      }).unzip3
+    private def toDomainTranslationFields(
+        imageMeta: MainImageImport): (Seq[domain.ImageTitle], Seq[domain.ImageAltText], Seq[domain.ImageCaption]) = {
+      imageMeta.translations
+        .map(tr => {
+          val language = tr.language
+          (domain.ImageTitle(tr.title, language),
+           domain.ImageAltText(tr.alttext.getOrElse(""), language),
+           domain.ImageCaption(tr.caption.getOrElse(""), language))
+        })
+        .unzip3
     }
 
   }

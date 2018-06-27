@@ -25,7 +25,6 @@ trait ConverterService {
 
   class ConverterService extends LazyLogging {
 
-
     def asApiAuthor(domainAuthor: domain.Author): api.Author = {
       api.Author(domainAuthor.`type`, domainAuthor.name)
     }
@@ -39,7 +38,8 @@ trait ConverterService {
         domainCopyright.rightsholders.map(asApiAuthor),
         domainCopyright.agreementId,
         domainCopyright.validFrom,
-        domainCopyright.validTo)
+        domainCopyright.validTo
+      )
     }
 
     def asApiImage(domainImage: domain.Image, baseUrl: Option[String] = None): api.Image = {
@@ -50,51 +50,71 @@ trait ConverterService {
       api.ImageAltText(domainImageAltText.alttext, domainImageAltText.language)
     }
 
-    def asApiImageMetaInformationWithApplicationUrlV2(domainImageMetaInformation: domain.ImageMetaInformation, language: Option[String]): Option[api.ImageMetaInformationV2] = {
+    def asApiImageMetaInformationWithApplicationUrlV2(domainImageMetaInformation: domain.ImageMetaInformation,
+                                                      language: Option[String]): Option[api.ImageMetaInformationV2] = {
       val rawPath = ApplicationUrl.get.replace("/v2/images/", "/raw")
       asImageMetaInformationV2(domainImageMetaInformation, language, ApplicationUrl.get, Some(rawPath))
     }
 
-    def asApiImageMetaInformationWithDomainUrlV2(domainImageMetaInformation: domain.ImageMetaInformation, language: Option[String]): Option[api.ImageMetaInformationV2] = {
-      asImageMetaInformationV2(domainImageMetaInformation, language, ImageApiProperties.ImageApiUrlBase, Some(ImageApiProperties.RawImageUrlBase))
+    def asApiImageMetaInformationWithDomainUrlV2(domainImageMetaInformation: domain.ImageMetaInformation,
+                                                 language: Option[String]): Option[api.ImageMetaInformationV2] = {
+      asImageMetaInformationV2(domainImageMetaInformation,
+                               language,
+                               ImageApiProperties.ImageApiUrlBase,
+                               Some(ImageApiProperties.RawImageUrlBase))
     }
 
-    private[service] def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation, language: Option[String], baseUrl: String, rawBaseUrl: Option[String]): Option[api.ImageMetaInformationV2] = {
-      val title = findByLanguageOrBestEffort(imageMeta.titles, language).map(asApiImageTitle).getOrElse(api.ImageTitle("", DefaultLanguage))
-      val alttext = findByLanguageOrBestEffort(imageMeta.alttexts, language).map(asApiImageAltText).getOrElse(api.ImageAltText("", DefaultLanguage))
-      val tags = findByLanguageOrBestEffort(imageMeta.tags, language).map(asApiImageTag).getOrElse(api.ImageTag(Seq(), DefaultLanguage))
-      val caption = findByLanguageOrBestEffort(imageMeta.captions, language).map(asApiCaption).getOrElse(api.ImageCaption("", DefaultLanguage))
+    private[service] def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation,
+                                                  language: Option[String],
+                                                  baseUrl: String,
+                                                  rawBaseUrl: Option[String]): Option[api.ImageMetaInformationV2] = {
+      val title = findByLanguageOrBestEffort(imageMeta.titles, language)
+        .map(asApiImageTitle)
+        .getOrElse(api.ImageTitle("", DefaultLanguage))
+      val alttext = findByLanguageOrBestEffort(imageMeta.alttexts, language)
+        .map(asApiImageAltText)
+        .getOrElse(api.ImageAltText("", DefaultLanguage))
+      val tags = findByLanguageOrBestEffort(imageMeta.tags, language)
+        .map(asApiImageTag)
+        .getOrElse(api.ImageTag(Seq(), DefaultLanguage))
+      val caption = findByLanguageOrBestEffort(imageMeta.captions, language)
+        .map(asApiCaption)
+        .getOrElse(api.ImageCaption("", DefaultLanguage))
 
-      Some(api.ImageMetaInformationV2(
-        imageMeta.id.get.toString,
-        baseUrl + imageMeta.id.get,
-        title,
-        alttext,
-        asApiUrl(imageMeta.imageUrl, rawBaseUrl),
-        imageMeta.size,
-        imageMeta.contentType,
-        withAgreementCopyright(asApiCopyright(imageMeta.copyright)),
-        tags,
-        caption,
-        getSupportedLanguages(imageMeta)))
+      Some(
+        api.ImageMetaInformationV2(
+          imageMeta.id.get.toString,
+          baseUrl + imageMeta.id.get,
+          title,
+          alttext,
+          asApiUrl(imageMeta.imageUrl, rawBaseUrl),
+          imageMeta.size,
+          imageMeta.contentType,
+          withAgreementCopyright(asApiCopyright(imageMeta.copyright)),
+          tags,
+          caption,
+          getSupportedLanguages(imageMeta)
+        ))
     }
 
     def withAgreementCopyright(image: domain.ImageMetaInformation): domain.ImageMetaInformation = {
-      val agreementCopyright = image.copyright.agreementId.flatMap(aid =>
-        draftApiClient.getAgreementCopyright(aid).map(toDomainCopyright)
-      ).getOrElse(image.copyright)
+      val agreementCopyright = image.copyright.agreementId
+        .flatMap(aid => draftApiClient.getAgreementCopyright(aid).map(toDomainCopyright))
+        .getOrElse(image.copyright)
 
-      image.copy(copyright = image.copyright.copy(
-        license = agreementCopyright.license,
-        creators = agreementCopyright.creators,
-        rightsholders = agreementCopyright.rightsholders,
-        validFrom = agreementCopyright.validFrom,
-        validTo = agreementCopyright.validTo
-      ))
+      image.copy(
+        copyright = image.copyright.copy(
+          license = agreementCopyright.license,
+          creators = agreementCopyright.creators,
+          rightsholders = agreementCopyright.rightsholders,
+          validFrom = agreementCopyright.validFrom,
+          validTo = agreementCopyright.validTo
+        ))
     }
 
     def withAgreementCopyright(copyright: api.Copyright): api.Copyright = {
-      val agreementCopyright = copyright.agreementId.flatMap(aid => draftApiClient.getAgreementCopyright(aid)).getOrElse(copyright)
+      val agreementCopyright =
+        copyright.agreementId.flatMap(aid => draftApiClient.getAgreementCopyright(aid)).getOrElse(copyright)
       copyright.copy(
         license = agreementCopyright.license,
         creators = agreementCopyright.creators,
@@ -123,7 +143,8 @@ trait ConverterService {
       baseUrl.getOrElse("") + parse(url).toString
     }
 
-    def asDomainImageMetaInformationV2(imageMeta: api.NewImageMetaInformationV2, image: domain.Image): domain.ImageMetaInformation = {
+    def asDomainImageMetaInformationV2(imageMeta: api.NewImageMetaInformationV2,
+                                       image: domain.Image): domain.ImageMetaInformation = {
       domain.ImageMetaInformation(
         None,
         Seq(asDomainTitle(imageMeta.title, imageMeta.language)),
@@ -156,7 +177,8 @@ trait ConverterService {
         copyright.rightsholders.map(toDomainAuthor),
         copyright.agreementId,
         copyright.validFrom,
-        copyright.validTo)
+        copyright.validTo
+      )
     }
 
     def toDomainLicense(license: api.License): domain.License = {

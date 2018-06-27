@@ -19,20 +19,24 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
     when(image.getHeight).thenReturn(imageHeight)
   }
 
-
   test("transformCoordinates returns a CoordOptions object with correctly transformed coordinates") {
-    service.transformCoordinates(image, PercentPoint(10, 5), PercentPoint(1, 20)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
-    service.transformCoordinates(image, PercentPoint(10, 20),PercentPoint(1, 5)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
-    service.transformCoordinates(image, PercentPoint(1, 5), PercentPoint(10, 20)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
-    service.transformCoordinates(image, PercentPoint(1, 20), PercentPoint(10, 5)) should equal (PixelPoint(10, 50), PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(10, 5), PercentPoint(1, 20)) should equal(PixelPoint(10, 50),
+                                                                                               PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(10, 20), PercentPoint(1, 5)) should equal(PixelPoint(10, 50),
+                                                                                               PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(1, 5), PercentPoint(10, 20)) should equal(PixelPoint(10, 50),
+                                                                                               PixelPoint(100, 200))
+    service.transformCoordinates(image, PercentPoint(1, 20), PercentPoint(10, 5)) should equal(PixelPoint(10, 50),
+                                                                                               PixelPoint(100, 200))
   }
 
   test("getWidthHeight returns the width and height of a segment to crop") {
-    service.getWidthHeight(PixelPoint(10, 200), PixelPoint(100, 50), image) should equal ((90, 150))
+    service.getWidthHeight(PixelPoint(10, 200), PixelPoint(100, 50), image) should equal((90, 150))
   }
 
   test("getWidthHeight returns max values if one coordinate is outside of image") {
-    service.getWidthHeight(PixelPoint(10, 200), PixelPoint(imageWidth + 1, imageHeight + 1), image) should equal ((990, 800))
+    service.getWidthHeight(PixelPoint(10, 200), PixelPoint(imageWidth + 1, imageHeight + 1), image) should equal(
+      (990, 800))
   }
 
   test("toConvertedImage converts a BufferedImage to an ImageStream") {
@@ -44,9 +48,9 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
     when(origImage.format).thenReturn("jpg")
 
     val result = service.toImageStream(bufferedImage, origImage)
-    result.fileName should equal (origImage.fileName)
-    result.contentType should equal (origImage.contentType)
-    result.format should equal (origImage.format)
+    result.fileName should equal(origImage.fileName)
+    result.contentType should equal(origImage.contentType)
+    result.format should equal(origImage.format)
   }
 
   test("crop crops an image according to given settings") {
@@ -123,17 +127,18 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
   }
 
   test("minimalCropSizesToPreserveRatio calculates correct image sizes given ratio") {
-    service.minimalCropSizesToPreserveRatio(640, 426, 0.81) should equal (345, 426)
-    service.minimalCropSizesToPreserveRatio(851, 597, 1.5) should equal (850, 567)
-    service.minimalCropSizesToPreserveRatio(851, 597, 1.2) should equal (716, 597)
+    service.minimalCropSizesToPreserveRatio(640, 426, 0.81) should equal(345, 426)
+    service.minimalCropSizesToPreserveRatio(851, 597, 1.5) should equal(850, 567)
+    service.minimalCropSizesToPreserveRatio(851, 597, 1.2) should equal(716, 597)
   }
 
-  test("minimalCropSizesToPreserveRatio calculates image sizes with (about) correct aspect ratio for lots of ratios and image sizes") {
+  test(
+    "minimalCropSizesToPreserveRatio calculates image sizes with (about) correct aspect ratio for lots of ratios and image sizes") {
     def testRatio(ratio: Double, width: Int, height: Int) = {
       implicit val doubleEquality = TolerantNumerics.tolerantDoubleEquality(0.1)
       val (newWidth, newHeight) = service.minimalCropSizesToPreserveRatio(width, height, ratio)
       val calculatedRatio = newWidth.toDouble / newHeight.toDouble
-      calculatedRatio should equal (ratio)
+      calculatedRatio should equal(ratio)
     }
     for {
       ratio <- Seq(0.1, 0.2, 0.81, 1, 1.1, 1.5, 2, 5, 10)
@@ -152,12 +157,13 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
 
     def testRatio(ratio: Double, focalX: Int, focalY: Int, expectedWidth: Int, expectedHeight: Int): Unit = {
       implicit val doubleEquality = TolerantNumerics.tolerantDoubleEquality(0.01)
-      val croppedImage = service.dynamicCrop(TestData.ChildrensImage, PercentPoint(focalX, focalY), Some(100), Some(100), Some(ratio))
+      val croppedImage =
+        service.dynamicCrop(TestData.ChildrensImage, PercentPoint(focalX, focalY), Some(100), Some(100), Some(ratio))
       val image = ImageIO.read(croppedImage.get.stream)
       val calculatedRatio = image.getWidth.toDouble / image.getHeight.toDouble
-      image.getWidth should equal (expectedWidth)
-      image.getHeight should equal (expectedHeight)
-      calculatedRatio should equal (ratio)
+      image.getWidth should equal(expectedWidth)
+      image.getHeight should equal(expectedHeight)
+      calculatedRatio should equal(ratio)
     }
   }
 

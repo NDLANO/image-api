@@ -41,7 +41,8 @@ trait ImageStorageService {
     }
 
     def get(imageKey: String): Try[ImageStream] = {
-      Try(amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))).map(s3Object => NdlaImage(s3Object, imageKey)) match {
+      Try(amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))).map(s3Object =>
+        NdlaImage(s3Object, imageKey)) match {
         case Success(e) => Success(e)
         case Failure(e) => Failure(new ImageNotFoundException(s"Image $imageKey does not exist"))
       }

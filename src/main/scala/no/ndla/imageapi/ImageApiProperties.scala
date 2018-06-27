@@ -16,7 +16,6 @@ import no.ndla.network.secrets.Secrets.readSecrets
 import scala.util.{Failure, Success}
 import scala.util.Properties._
 
-
 object ImageApiProperties extends LazyLogging {
   val Auth0LoginEndpoint = "https://ndla.eu.auth0.com/authorize"
 
@@ -36,10 +35,32 @@ object ImageApiProperties extends LazyLogging {
 
   val DefaultLanguage = "nb"
 
-  val oldCreatorTypes = List("opphavsmann", "fotograf", "kunstner", "forfatter", "manusforfatter", "innleser", "oversetter", "regissør", "illustratør", "medforfatter", "komponist")
-  val creatorTypes = List("originator", "photographer", "artist", "writer", "scriptwriter", "reader", "translator", "director", "illustrator", "cowriter", "composer")
+  val oldCreatorTypes = List("opphavsmann",
+                             "fotograf",
+                             "kunstner",
+                             "forfatter",
+                             "manusforfatter",
+                             "innleser",
+                             "oversetter",
+                             "regissør",
+                             "illustratør",
+                             "medforfatter",
+                             "komponist")
 
-  val oldProcessorTypes = List("bearbeider", "tilrettelegger", "redaksjonelt", "språklig", "ide", "sammenstiller", "korrektur")
+  val creatorTypes = List("originator",
+                          "photographer",
+                          "artist",
+                          "writer",
+                          "scriptwriter",
+                          "reader",
+                          "translator",
+                          "director",
+                          "illustrator",
+                          "cowriter",
+                          "composer")
+
+  val oldProcessorTypes =
+    List("bearbeider", "tilrettelegger", "redaksjonelt", "språklig", "ide", "sammenstiller", "korrektur")
   val processorTypes = List("processor", "facilitator", "editorial", "linguistic", "idea", "compiler", "correction")
 
   val oldRightsholderTypes = List("rettighetshaver", "forlag", "distributør", "leverandør")
@@ -92,9 +113,9 @@ object ImageApiProperties extends LazyLogging {
   val RawImageUrlBase = Domain + RawControllerPath
 
   lazy val secrets = readSecrets(SecretsFile) match {
-     case Success(values) => values
-     case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
-   }
+    case Success(values)    => values
+    case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
+  }
 
   def prop(key: String): String = {
     propOrElse(key, throw new RuntimeException(s"Unable to load property $key"))
@@ -106,7 +127,7 @@ object ImageApiProperties extends LazyLogging {
       case None =>
         envOrNone(key) match {
           case Some(env) => env
-          case None => default
+          case None      => default
         }
     }
   }

@@ -24,7 +24,10 @@ trait MigrationApiClient {
     val imageMetadataEndpoint = s"$MigrationHost/images/:image_nid" ? (s"db-source" -> s"$ImageImportSource")
 
     def getMetaDataForImage(imageNid: String): Try[MainImageImport] = {
-      ndlaClient.fetchWithBasicAuth[MainImageImport](Http(imageMetadataEndpoint.replace(":image_nid", imageNid)), MigrationUser, MigrationPassword)
+      ndlaClient
+        .fetchWithBasicAuth[MainImageImport](Http(imageMetadataEndpoint.replace(":image_nid", imageNid)),
+                                             MigrationUser,
+                                             MigrationPassword)
         .map(trimAuthorTypes)
     }
 
@@ -36,9 +39,22 @@ trait MigrationApiClient {
 
 }
 
-case class MainImageImport(mainImage: ImageMeta, authors: List[ImageAuthor], license: Option[String], origin: Option[String], translations: List[ImageMeta])
+case class MainImageImport(mainImage: ImageMeta,
+                           authors: List[ImageAuthor],
+                           license: Option[String],
+                           origin: Option[String],
+                           translations: List[ImageMeta])
 
-case class ImageMeta(nid: String, tnid: String, language: String, title: String, alttext: Option[String], changed: String, originalFile: String, originalMime: String, originalSize: String, caption: Option[String]) {
+case class ImageMeta(nid: String,
+                     tnid: String,
+                     language: String,
+                     title: String,
+                     alttext: Option[String],
+                     changed: String,
+                     originalFile: String,
+                     originalMime: String,
+                     originalSize: String,
+                     caption: Option[String]) {
   def isMainImage = nid == tnid || tnid == "0"
 
   def isTranslation = !isMainImage

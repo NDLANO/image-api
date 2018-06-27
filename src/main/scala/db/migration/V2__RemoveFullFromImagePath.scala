@@ -17,7 +17,7 @@ import org.json4s.native.JsonMethods._
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
-class V2__RemoveFullFromImagePath extends JdbcMigration with LazyLogging  {
+class V2__RemoveFullFromImagePath extends JdbcMigration with LazyLogging {
 
   implicit val formats = org.json4s.DefaultFormats
 
@@ -35,7 +35,10 @@ class V2__RemoveFullFromImagePath extends JdbcMigration with LazyLogging  {
   }
 
   def allImages(implicit session: DBSession): List[V2_DBImageMetaInformation] = {
-    sql"select id, metadata from imagemetadata".map(rs => V2_DBImageMetaInformation(rs.long("id"), rs.string("metadata"))).list().apply()
+    sql"select id, metadata from imagemetadata"
+      .map(rs => V2_DBImageMetaInformation(rs.long("id"), rs.string("metadata")))
+      .list()
+      .apply()
   }
 
   def convertImageUrl(imageMeta: V2_DBImageMetaInformation): V2_DBImageMetaInformation = {
@@ -43,7 +46,7 @@ class V2__RemoveFullFromImagePath extends JdbcMigration with LazyLogging  {
 
     val updatedDocument = oldDocument mapField {
       case ("imageUrl", JString(oldUrl)) => ("imageUrl", JString(oldUrl.replace("full/", "")))
-      case x => x
+      case x                             => x
     }
     imageMeta.copy(document = compact(render(updatedDocument)))
   }

@@ -39,7 +39,10 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     ThreadContext.put(CorrelationIdKey, CorrelationID.get.getOrElse(""))
     ApplicationUrl.set(request)
     AuthUser.set(request)
-    logger.info("{} {}{}", request.getMethod, request.getRequestURI, Option(request.getQueryString).map(s => s"?$s").getOrElse(""))
+    logger.info("{} {}{}",
+                request.getMethod,
+                request.getRequestURI,
+                Option(request.getQueryString).map(s => s"?$s").getOrElse(""))
   }
 
   after() {
@@ -50,11 +53,11 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   }
 
   error {
-    case v: ValidationException => BadRequest(body = ValidationError(messages = v.errors))
-    case a: AccessDeniedException => Forbidden(body = Error(Error.ACCESS_DENIED, a.getMessage))
+    case v: ValidationException    => BadRequest(body = ValidationError(messages = v.errors))
+    case a: AccessDeniedException  => Forbidden(body = Error(Error.ACCESS_DENIED, a.getMessage))
     case e: IndexNotFoundException => InternalServerError(body = Error.IndexMissingError)
     case i: ImageNotFoundException => NotFound(body = Error(Error.NOT_FOUND, i.getMessage))
-    case b: ImportException => UnprocessableEntity(body = Error(Error.IMPORT_FAILED, b.getMessage))
+    case b: ImportException        => UnprocessableEntity(body = Error(Error.IMPORT_FAILED, b.getMessage))
     case s: S3UploadException =>
       contentType = formats("json")
       GatewayTimeout(body = Error(Error.GATEWAY_TIMEOUT, s.getMessage))
@@ -87,7 +90,8 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   def long(paramName: String)(implicit request: HttpServletRequest): Long = {
     val paramValue = params(paramName)
     if (!isInteger(paramValue))
-      throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only digits are allowed.")))
+      throw new ValidationException(
+        errors = Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only digits are allowed.")))
 
     paramValue.toLong
   }
@@ -97,7 +101,8 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
       params.get(paramName) match {
         case Some(value) =>
           if (!isDouble(value))
-            throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only numbers are allowed.")))
+            throw new ValidationException(
+              errors = Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Only numbers are allowed.")))
 
           Some(value.toDouble)
         case _ => None
@@ -129,7 +134,10 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   def doubleInRange(paramName: String, from: Int, to: Int)(implicit request: HttpServletRequest): Option[Double] = {
     doubleOrNone(paramName) match {
       case Some(d) if d >= min(from, to) && d <= max(from, to) => Some(d)
-      case Some(d) => throw new ValidationException(errors=Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Must be in range $from-$to but was $d")))
+      case Some(d) =>
+        throw new ValidationException(
+          errors =
+            Seq(ValidationMessage(paramName, s"Invalid value for $paramName. Must be in range $from-$to but was $d")))
       case None => None
     }
   }
@@ -139,7 +147,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
       case Success(data) => data
       case Failure(e) =>
         logger.error(e.getMessage, e)
-        throw new ValidationException(errors=Seq(ValidationMessage("body", e.getMessage)))
+        throw new ValidationException(errors = Seq(ValidationMessage("body", e.getMessage)))
     }
   }
 }

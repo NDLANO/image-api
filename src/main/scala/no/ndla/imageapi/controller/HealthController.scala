@@ -38,7 +38,7 @@ trait HealthController {
     def getReturnCode(imageResponse: HttpResponse[String]): ActionResult = {
       imageResponse.code match {
         case 200 => Ok()
-        case _ => InternalServerError()
+        case _   => InternalServerError()
       }
     }
 
@@ -47,10 +47,13 @@ trait HealthController {
       val host = applicationUrl.host.getOrElse("0")
       val port = applicationUrl.port.getOrElse("80")
 
-      imageRepository.getRandomImage().map(image => {
-        val previewUrl = s"http://$host:$port${ImageApiProperties.RawControllerPath}${parse(image.imageUrl).toString}"
-        getReturnCode(getApiResponse(previewUrl))
-      }).getOrElse(Ok())
+      imageRepository
+        .getRandomImage()
+        .map(image => {
+          val previewUrl = s"http://$host:$port${ImageApiProperties.RawControllerPath}${parse(image.imageUrl).toString}"
+          getReturnCode(getApiResponse(previewUrl))
+        })
+        .getOrElse(Ok())
     }
   }
 

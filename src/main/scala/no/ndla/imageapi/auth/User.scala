@@ -10,8 +10,6 @@ package no.ndla.imageapi.auth
 import no.ndla.imageapi.model.AccessDeniedException
 import no.ndla.network.AuthUser
 
-
-
 trait User {
 
   val authUser: AuthUser
@@ -22,11 +20,9 @@ trait User {
     def userOrClientid(): String = {
       if (AuthUser.get.isDefined) {
         AuthUser.get.get
-      }
-      else if (AuthUser.getClientId.isDefined) {
+      } else if (AuthUser.getClientId.isDefined) {
         AuthUser.getClientId.get
-      }
-      else throw new AccessDeniedException("User id or Client id required to perform this operation")
+      } else throw new AccessDeniedException("User id or Client id required to perform this operation")
     }
 
   }

@@ -13,14 +13,15 @@ import org.imgscalr.Scalr.Mode
 
 import scala.util.{Success, Try}
 
-
 trait ImageConverter {
   val imageConverter: ImageConverter
   case class PixelPoint(x: Int, y: Int) // A point given with pixles
   case class PercentPoint(x: Int, y: Int) { // A point given with values from MinValue to MaxValue. MinValue,MinValue is top-left, MaxValue,MaxValue is bottom-right
     import PercentPoint._
     if (!inRange(x) || !inRange(y))
-      throw new ValidationException(errors=Seq(ValidationMessage("PercentPoint", s"Invalid value for a PixelPoint. Must be in range $MinValue-$MaxValue")))
+      throw new ValidationException(
+        errors = Seq(
+          ValidationMessage("PercentPoint", s"Invalid value for a PixelPoint. Must be in range $MinValue-$MaxValue")))
 
     lazy val normalizedX: Double = normalise(x)
     lazy val normalizedY: Double = normalise(y)
@@ -45,7 +46,8 @@ trait ImageConverter {
         writer.setOutput(imageOutputStream)
         writer.write(bufferedImage)
       } else {
-        logger.warn(s"Writer for content-type ${originalImage.contentType} not found, using ${originalImage.format} as format")
+        logger.warn(
+          s"Writer for content-type ${originalImage.contentType} not found, using ${originalImage.format} as format")
         ImageIO.write(bufferedImage, originalImage.format, imageOutputStream)
       }
 
@@ -68,11 +70,16 @@ trait ImageConverter {
       Try(Scalr.resize(sourceImage, mode, targetSize)).map(resized => toImageStream(resized, originalImage))
     }
 
-    def resizeWidth(originalImage: ImageStream, size: Int): Try[ImageStream] = resize(originalImage, Mode.FIT_TO_WIDTH, Math.min(size, originalImage.sourceImage.getWidth))
+    def resizeWidth(originalImage: ImageStream, size: Int): Try[ImageStream] =
+      resize(originalImage, Mode.FIT_TO_WIDTH, Math.min(size, originalImage.sourceImage.getWidth))
 
-    def resizeHeight(originalImage: ImageStream, size: Int): Try[ImageStream] = resize(originalImage, Mode.FIT_TO_HEIGHT, Math.min(size, originalImage.sourceImage.getHeight))
+    def resizeHeight(originalImage: ImageStream, size: Int): Try[ImageStream] =
+      resize(originalImage, Mode.FIT_TO_HEIGHT, Math.min(size, originalImage.sourceImage.getHeight))
 
-    private def crop(image: ImageStream, sourceImage: BufferedImage, topLeft: PixelPoint, bottomRight: PixelPoint): Try[ImageStream] = {
+    private def crop(image: ImageStream,
+                     sourceImage: BufferedImage,
+                     topLeft: PixelPoint,
+                     bottomRight: PixelPoint): Try[ImageStream] = {
       val (width, height) = getWidthHeight(topLeft, bottomRight, sourceImage)
 
       Try(Scalr.crop(sourceImage, topLeft.x, topLeft.y, width, height))
@@ -93,14 +100,18 @@ trait ImageConverter {
       (max(start - endRem, 0), min(end + startRem, originalDimensionSize))
     }
 
-    def dynamicCrop(image: ImageStream, percentFocalPoint: PercentPoint, targetWidthOpt: Option[Int], targetHeightOpt: Option[Int], ratioOpt: Option[Double]): Try[ImageStream] = {
+    def dynamicCrop(image: ImageStream,
+                    percentFocalPoint: PercentPoint,
+                    targetWidthOpt: Option[Int],
+                    targetHeightOpt: Option[Int],
+                    ratioOpt: Option[Double]): Try[ImageStream] = {
       val sourceImage = image.sourceImage
       val focalPoint = toPixelPoint(percentFocalPoint, sourceImage)
       val (imageWidth, imageHeight) = (sourceImage.getWidth, sourceImage.getHeight)
 
       val (targetWidth: Int, targetHeight: Int) = (targetWidthOpt, targetHeightOpt, ratioOpt) match {
-        case (_, _, Some(ratio)) => minimalCropSizesToPreserveRatio(imageWidth, imageHeight, ratio)
-        case (None, None, _) => return Success(image)
+        case (_, _, Some(ratio))   => minimalCropSizesToPreserveRatio(imageWidth, imageHeight, ratio)
+        case (None, None, _)       => return Success(image)
         case (Some(w), Some(h), _) => (min(w, imageWidth), min(h, imageHeight))
         case (Some(w), None, _) =>
           val actualTargetWidth = min(imageWidth, w)
@@ -126,7 +137,9 @@ trait ImageConverter {
 
     // Given two sets of coordinates; reorganize them so that the first coordinate is the top-left,
     // and the other coordinate is the bottom-right
-    private[service] def transformCoordinates(image: BufferedImage, start: PercentPoint, end: PercentPoint): (PixelPoint, PixelPoint) = {
+    private[service] def transformCoordinates(image: BufferedImage,
+                                              start: PercentPoint,
+                                              end: PercentPoint): (PixelPoint, PixelPoint) = {
       val topLeft = PercentPoint(min(start.x, end.x), min(start.y, end.y))
       val bottomRight = PercentPoint(max(start.x, end.x), max(start.y, end.y))
 

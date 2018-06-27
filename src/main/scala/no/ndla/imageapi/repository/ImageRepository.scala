@@ -16,7 +16,6 @@ import org.json4s.native.Serialization.write
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
-
 trait ImageRepository {
   this: DataSource with ConverterService =>
   val imageRepository: ImageRepository
@@ -30,9 +29,12 @@ trait ImageRepository {
       }
     }
 
-   def getRandomImage()(implicit session: DBSession = ReadOnlyAutoSession): Option[ImageMetaInformation] = {
+    def getRandomImage()(implicit session: DBSession = ReadOnlyAutoSession): Option[ImageMetaInformation] = {
       val im = ImageMetaInformation.syntax("im")
-      sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where metadata is not null order by random() limit 1".map(ImageMetaInformation(im)).single().apply()
+      sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where metadata is not null order by random() limit 1"
+        .map(ImageMetaInformation(im))
+        .single()
+        .apply()
     }
 
     def withExternalId(externalId: String): Option[ImageMetaInformation] = {
@@ -58,7 +60,8 @@ trait ImageRepository {
       dataObject.setValue(json)
 
       DB localTx { implicit session =>
-        val imageId = sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})".updateAndReturnGeneratedKey.apply
+        val imageId =
+          sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})".updateAndReturnGeneratedKey.apply
         imageMetaInformation.copy(id = Some(imageId))
       }
     }
@@ -81,25 +84,37 @@ trait ImageRepository {
 
     def minMaxId: (Long, Long) = {
       DB readOnly { implicit session =>
-        sql"select coalesce(MIN(id),0) as mi, coalesce(MAX(id),0) as ma from imagemetadata".map(rs => {
-          (rs.long("mi"), rs.long("ma"))
-        }).single().apply() match {
+        sql"select coalesce(MIN(id),0) as mi, coalesce(MAX(id),0) as ma from imagemetadata"
+          .map(rs => {
+            (rs.long("mi"), rs.long("ma"))
+          })
+          .single()
+          .apply() match {
           case Some(minmax) => minmax
-          case None => (0L, 0L)
+          case None         => (0L, 0L)
         }
       }
     }
 
-    def imagesWithIdBetween(min: Long, max: Long): List[ImageMetaInformation] = imageMetaInformationsWhere(sqls"im.id between $min and $max")
+    def imagesWithIdBetween(min: Long, max: Long): List[ImageMetaInformation] =
+      imageMetaInformationsWhere(sqls"im.id between $min and $max")
 
-    private def imageMetaInformationWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): Option[ImageMetaInformation] = {
+    private def imageMetaInformationWhere(whereClause: SQLSyntax)(
+        implicit session: DBSession = ReadOnlyAutoSession): Option[ImageMetaInformation] = {
       val im = ImageMetaInformation.syntax("im")
-      sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause".map(ImageMetaInformation(im)).single().apply()
+      sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause"
+        .map(ImageMetaInformation(im))
+        .single()
+        .apply()
     }
 
-    private def imageMetaInformationsWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): List[ImageMetaInformation] = {
+    private def imageMetaInformationsWhere(whereClause: SQLSyntax)(
+        implicit session: DBSession = ReadOnlyAutoSession): List[ImageMetaInformation] = {
       val im = ImageMetaInformation.syntax("im")
-      sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause".map(ImageMetaInformation(im)).list.apply()
+      sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause"
+        .map(ImageMetaInformation(im))
+        .list
+        .apply()
     }
   }
 }
