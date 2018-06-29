@@ -30,9 +30,12 @@ class V7__TranslateUntranslatedAuthors extends JdbcMigration with LazyLogging {
   }
 
   def imagesToUpdate(implicit session: DBSession): List[(Long, String)] = {
-    sql"select id, metadata from imagemetadata".map(rs => {
-      (rs.long("id"), rs.string("metadata"))
-    }).list().apply()
+    sql"select id, metadata from imagemetadata"
+      .map(rs => {
+        (rs.long("id"), rs.string("metadata"))
+      })
+      .list()
+      .apply()
   }
 
   def toNewAuthorType(author: V5_Author): V5_Author = {
@@ -40,11 +43,13 @@ class V7__TranslateUntranslatedAuthors extends JdbcMigration with LazyLogging {
     val processorMap = (oldProcessorTypes zip processorTypes).toMap.withDefaultValue(None)
     val rightsholderMap = (oldRightsholderTypes zip rightsholderTypes).toMap.withDefaultValue(None)
 
-    (creatorMap(author.`type`.toLowerCase), processorMap(author.`type`.toLowerCase), rightsholderMap(author.`type`.toLowerCase)) match {
+    (creatorMap(author.`type`.toLowerCase),
+     processorMap(author.`type`.toLowerCase),
+     rightsholderMap(author.`type`.toLowerCase)) match {
       case (t: String, _, _) => V5_Author(t.capitalize, author.name)
       case (_, t: String, _) => V5_Author(t.capitalize, author.name)
       case (_, _, t: String) => V5_Author(t.capitalize, author.name)
-      case (_, _, _) => author
+      case (_, _, _)         => author
     }
   }
 
@@ -55,9 +60,9 @@ class V7__TranslateUntranslatedAuthors extends JdbcMigration with LazyLogging {
     val processors = meta.copyright.processors.map(toNewAuthorType)
     val rightsholders = meta.copyright.rightsholders.map(toNewAuthorType)
 
-    meta.copy(
-      Some(id),
-      copyright = meta.copyright.copy(creators = creators, processors = processors, rightsholders = rightsholders))
+    meta.copy(Some(id),
+              copyright =
+                meta.copyright.copy(creators = creators, processors = processors, rightsholders = rightsholders))
   }
 
   def update(imagemetadata: V6_ImageMetaInformation)(implicit session: DBSession) = {

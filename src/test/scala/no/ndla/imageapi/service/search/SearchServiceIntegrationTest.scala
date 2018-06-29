@@ -38,16 +38,105 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   val largeImage = Image("large-full-url", 10000, "jpg")
   val smallImage = Image("small-full-url", 100, "jpg")
 
-  val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None), "Gotham City", List(Author("Forfatter", "DC Comics")), List(), List(), None, None, None)
-  val publicDomain = Copyright(License("publicdomain", "Public Domain", None), "Metropolis", List(Author("Forfatter", "Bruce Wayne")), List(), List(), None, None, None)
-  val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
-  val agreement1Copyright = api.Copyright(api.License("gnu", "gnustuff", Some("http://gnugnusen")), "Simsalabim", List(), List(), List(), None, None, None)
+  val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None),
+                         "Gotham City",
+                         List(Author("Forfatter", "DC Comics")),
+                         List(),
+                         List(),
+                         None,
+                         None,
+                         None)
 
-  val image1 = ImageMetaInformation(Some(1), List(ImageTitle("Batmen er på vift med en bil", "nb")), List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", "nb")), largeImage.fileName, largeImage.size, largeImage.contentType, byNcSa, List(ImageTag(List("fugl"), "nb")), List(), "ndla124", updated)
-  val image2 = ImageMetaInformation(Some(2), List(ImageTitle("Pingvinen er ute og går", "nb")), List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", "nb")), largeImage.fileName, largeImage.size, largeImage.contentType, publicDomain, List(ImageTag(List("fugl"), "nb")), List(), "ndla124", updated)
-  val image3 = ImageMetaInformation(Some(3), List(ImageTitle("Donald Duck kjører bil", "nb")), List(ImageAltText("Bilde av en en and som kjører en rød bil.", "nb")), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, List(ImageTag(List("and"), "nb")), List(), "ndla124", updated)
-  val image4 = ImageMetaInformation(Some(4), List(ImageTitle("Hulken er ute og lukter på blomstene", "unknown")), Seq(), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa, Seq(), Seq(), "ndla124", updated)
-  val image5 = ImageMetaInformation(Some(5), List(ImageTitle("Dette er et urelatert bilde", "unknown"), ImageTitle("This is a unrelated photo", "en"), ImageTitle("Nynoreg", "nn")), Seq(ImageAltText("urelatert alttext", "unknown"), ImageAltText("Nynoreg", "nn")), smallImage.fileName, smallImage.size, smallImage.contentType, byNcSa.copy(agreementId = Some(1)), Seq(), Seq(), "ndla124", updated)
+  val publicDomain = Copyright(License("publicdomain", "Public Domain", None),
+                               "Metropolis",
+                               List(Author("Forfatter", "Bruce Wayne")),
+                               List(),
+                               List(),
+                               None,
+                               None,
+                               None)
+  val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
+
+  val agreement1Copyright = api.Copyright(api.License("gnu", "gnustuff", Some("http://gnugnusen")),
+                                          "Simsalabim",
+                                          List(),
+                                          List(),
+                                          List(),
+                                          None,
+                                          None,
+                                          None)
+
+  val image1 = ImageMetaInformation(
+    Some(1),
+    List(ImageTitle("Batmen er på vift med en bil", "nb")),
+    List(ImageAltText("Bilde av en bil flaggermusmann som vifter med vingene bil.", "nb")),
+    largeImage.fileName,
+    largeImage.size,
+    largeImage.contentType,
+    byNcSa,
+    List(ImageTag(List("fugl"), "nb")),
+    List(),
+    "ndla124",
+    updated
+  )
+
+  val image2 = ImageMetaInformation(
+    Some(2),
+    List(ImageTitle("Pingvinen er ute og går", "nb")),
+    List(ImageAltText("Bilde av en en pingvin som vagger borover en gate.", "nb")),
+    largeImage.fileName,
+    largeImage.size,
+    largeImage.contentType,
+    publicDomain,
+    List(ImageTag(List("fugl"), "nb")),
+    List(),
+    "ndla124",
+    updated
+  )
+
+  val image3 = ImageMetaInformation(
+    Some(3),
+    List(ImageTitle("Donald Duck kjører bil", "nb")),
+    List(ImageAltText("Bilde av en en and som kjører en rød bil.", "nb")),
+    smallImage.fileName,
+    smallImage.size,
+    smallImage.contentType,
+    byNcSa,
+    List(ImageTag(List("and"), "nb")),
+    List(),
+    "ndla124",
+    updated
+  )
+
+  val image4 = ImageMetaInformation(
+    Some(4),
+    List(ImageTitle("Hulken er ute og lukter på blomstene", "unknown")),
+    Seq(),
+    smallImage.fileName,
+    smallImage.size,
+    smallImage.contentType,
+    byNcSa,
+    Seq(),
+    Seq(),
+    "ndla124",
+    updated
+  )
+
+  val image5 = ImageMetaInformation(
+    Some(5),
+    List(ImageTitle("Dette er et urelatert bilde", "unknown"),
+         ImageTitle("This is a unrelated photo", "en"),
+         ImageTitle("Nynoreg", "nn")),
+    Seq(ImageAltText("urelatert alttext", "unknown"), ImageAltText("Nynoreg", "nn")),
+    smallImage.fileName,
+    smallImage.size,
+    smallImage.contentType,
+    byNcSa.copy(agreementId = Some(1)),
+    Seq(),
+    Seq(),
+    "ndla124",
+    updated
+  )
 
   override def beforeAll() = {
     indexService.createIndexWithName(ImageApiProperties.SearchIndex)
@@ -83,17 +172,20 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
     searchService invokePrivate getStartAtAndNumResults(None, Some(1000)) should equal((0, MaxPageSize))
   }
 
-  test("That getStartAtAndNumResults returns the correct calculated start at for page and page-size with default page-size") {
+  test(
+    "That getStartAtAndNumResults returns the correct calculated start at for page and page-size with default page-size") {
     val page = 74
     val expectedStartAt = (page - 1) * DefaultPageSize
-    searchService invokePrivate getStartAtAndNumResults(Some(page), None) should equal((expectedStartAt, DefaultPageSize))
+    searchService invokePrivate getStartAtAndNumResults(Some(page), None) should equal(
+      (expectedStartAt, DefaultPageSize))
   }
 
   test("That getStartAtAndNumResults returns the correct calculated start at for page and page-size") {
     val page = 123
     val pageSize = 43
     val expectedStartAt = (page - 1) * pageSize
-    searchService invokePrivate getStartAtAndNumResults(Some(page), Some(pageSize)) should equal((expectedStartAt, pageSize))
+    searchService invokePrivate getStartAtAndNumResults(Some(page), Some(pageSize)) should equal(
+      (expectedStartAt, pageSize))
   }
 
   test("That all returns all documents ordered by id ascending") {
@@ -176,79 +268,91 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
 
   test("That search defaults to nb if no language is specified") {
     val searchResult = searchService.matchingQuery("Bilde av en and", None, None, None, Sort.ByIdAsc, None, None, false)
-    searchResult.totalCount should be (4)
-    searchResult.results.size should be (4)
-    searchResult.results.head.id should be ("1")
-    searchResult.results(1).id should be ("2")
-    searchResult.results(2).id should be ("3")
-    searchResult.results.last.id should be ("5")
+    searchResult.totalCount should be(4)
+    searchResult.results.size should be(4)
+    searchResult.results.head.id should be("1")
+    searchResult.results(1).id should be("2")
+    searchResult.results(2).id should be("3")
+    searchResult.results.last.id should be("5")
   }
 
   test("That search matches title with unknown language analyzed in Norwegian") {
     val searchResult = searchService.matchingQuery("blomst", None, None, None, Sort.ByIdAsc, None, None, false)
-    searchResult.totalCount should be (1)
-    searchResult.results.size should be (1)
-    searchResult.results.head.id should be ("4")
+    searchResult.totalCount should be(1)
+    searchResult.results.size should be(1)
+    searchResult.results.head.id should be("4")
   }
 
   test("Searching with logical AND only returns results with all terms") {
-    val search1 = searchService.matchingQuery("batmen AND bil", None, Some("nb"), None, Sort.ByIdAsc, Some(1), Some(10), false)
-    search1.results.map(_.id) should equal (Seq("1", "3"))
+    val search1 =
+      searchService.matchingQuery("batmen AND bil", None, Some("nb"), None, Sort.ByIdAsc, Some(1), Some(10), false)
+    search1.results.map(_.id) should equal(Seq("1", "3"))
 
-    val search2 = searchService.matchingQuery("batmen | pingvinen", None, Some("nb"), None, Sort.ByIdAsc, Some(1), Some(10), false)
-    search2.results.map(_.id) should equal (Seq("1", "2"))
+    val search2 =
+      searchService.matchingQuery("batmen | pingvinen", None, Some("nb"), None, Sort.ByIdAsc, Some(1), Some(10), false)
+    search2.results.map(_.id) should equal(Seq("1", "2"))
 
-    val search3 = searchService.matchingQuery("bilde + -flaggermusmann", None, Some("nb"), None, Sort.ByIdAsc, Some(1), Some(10), false)
-    search3.results.map(_.id) should equal (Seq("2", "3"))
+    val search3 = searchService.matchingQuery("bilde + -flaggermusmann",
+                                              None,
+                                              Some("nb"),
+                                              None,
+                                              Sort.ByIdAsc,
+                                              Some(1),
+                                              Some(10),
+                                              false)
+    search3.results.map(_.id) should equal(Seq("2", "3"))
 
-    val search4 = searchService.matchingQuery("batmen + bil", None, Some("nb"), None, Sort.ByIdAsc, Some(1), Some(10), false)
-    search4.results.map(_.id) should equal (Seq("1"))
+    val search4 =
+      searchService.matchingQuery("batmen + bil", None, Some("nb"), None, Sort.ByIdAsc, Some(1), Some(10), false)
+    search4.results.map(_.id) should equal(Seq("1"))
   }
 
   test("Agreement information should be used in search") {
     val searchResult = searchService.matchingQuery("urelatert", None, None, None, Sort.ByIdAsc, None, None, false)
-    searchResult.totalCount should be (1)
-    searchResult.results.size should be (1)
-    searchResult.results.head.id should be ("5")
+    searchResult.totalCount should be(1)
+    searchResult.results.size should be(1)
+    searchResult.results.head.id should be("5")
     searchResult.results.head.license should equal(agreement1Copyright.license.license)
   }
 
   test("Searching for multiple languages should returned matched language") {
-    val searchResult1 = searchService.matchingQuery("urelatert", None, Some("all"), None, Sort.ByIdAsc, None, None, false)
-    searchResult1.totalCount should be (1)
-    searchResult1.results.size should be (1)
-    searchResult1.results.head.id should be ("5")
+    val searchResult1 =
+      searchService.matchingQuery("urelatert", None, Some("all"), None, Sort.ByIdAsc, None, None, false)
+    searchResult1.totalCount should be(1)
+    searchResult1.results.size should be(1)
+    searchResult1.results.head.id should be("5")
     searchResult1.results.head.title.language should equal("unknown")
     searchResult1.results.head.altText.language should equal("unknown")
 
-    val searchResult2 = searchService.matchingQuery("unrelated", None, Some("all"), None, Sort.ByTitleDesc, None, None, false)
-    searchResult2.totalCount should be (1)
-    searchResult2.results.size should be (1)
-    searchResult2.results.head.id should be ("5")
+    val searchResult2 =
+      searchService.matchingQuery("unrelated", None, Some("all"), None, Sort.ByTitleDesc, None, None, false)
+    searchResult2.totalCount should be(1)
+    searchResult2.results.size should be(1)
+    searchResult2.results.head.id should be("5")
     searchResult2.results.head.title.language should equal("en")
     searchResult2.results.head.altText.language should equal("unknown")
   }
 
   test("That field should be returned in another language if match does not contain searchLanguage") {
     val searchResult = searchService.matchingQuery("unrelated", None, Some("en"), None, Sort.ByIdAsc, None, None, false)
-    searchResult.totalCount should be (1)
-    searchResult.results.size should be (1)
-    searchResult.results.head.id should be ("5")
+    searchResult.totalCount should be(1)
+    searchResult.results.size should be(1)
+    searchResult.results.head.id should be("5")
     searchResult.results.head.title.language should equal("en")
     searchResult.results.head.altText.language should equal("unknown")
 
     val searchResult2 = searchService.matchingQuery("nynoreg", None, Some("nn"), None, Sort.ByIdAsc, None, None, false)
-    searchResult2.totalCount should be (1)
-    searchResult2.results.size should be (1)
-    searchResult2.results.head.id should be ("5")
+    searchResult2.totalCount should be(1)
+    searchResult2.results.size should be(1)
+    searchResult2.results.head.id should be("5")
     searchResult2.results.head.title.language should equal("nn")
     searchResult2.results.head.altText.language should equal("nn")
   }
 
   test("That supportedLanguages returns in order") {
     val result = searchService.matchingQuery("nynoreg", None, Some("nn"), None, Sort.ByIdAsc, None, None, false)
-    result.totalCount should be (1)
-    result.results.size should be (1)
+    result.totalCount should be(1)
+    result.results.size should be(1)
 
     result.results.head.supportedLanguages should be(Seq("unknown", "nn", "en"))
   }

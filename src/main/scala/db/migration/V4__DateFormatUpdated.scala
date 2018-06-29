@@ -17,7 +17,7 @@ import org.json4s.native.JsonMethods._
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
-class V4__DateFormatUpdated extends JdbcMigration with LazyLogging  {
+class V4__DateFormatUpdated extends JdbcMigration with LazyLogging {
   //There was a bug in the dateformat of V3__AddUpdatedColoums had days as DD and the 'Z' got stored as +0000 not as 'Z'.
   implicit val formats = org.json4s.DefaultFormats
   val timeService = new TimeService2()
@@ -35,7 +35,10 @@ class V4__DateFormatUpdated extends JdbcMigration with LazyLogging  {
   }
 
   def allImages(implicit session: DBSession): List[V4__DBImageMetaInformation] = {
-    sql"select id, metadata from imagemetadata".map(rs => V4__DBImageMetaInformation(rs.long("id"), rs.string("metadata"))).list().apply()
+    sql"select id, metadata from imagemetadata"
+      .map(rs => V4__DBImageMetaInformation(rs.long("id"), rs.string("metadata")))
+      .list()
+      .apply()
   }
 
   def fixImageUpdatestring(imageMeta: V4__DBImageMetaInformation): V4__DBImageMetaInformation = {
@@ -43,7 +46,7 @@ class V4__DateFormatUpdated extends JdbcMigration with LazyLogging  {
 
     val updatedDocument = oldDocument mapField {
       case ("updated", JString(oldUpdated)) => ("updated", JString(timeService.nowAsString()))
-      case x => x
+      case x                                => x
     }
 
     imageMeta.copy(document = compact(render(updatedDocument)))
@@ -62,6 +65,7 @@ class V4__DateFormatUpdated extends JdbcMigration with LazyLogging  {
 case class V4__DBImageMetaInformation(id: Long, document: String)
 
 class TimeService2() {
+
   def nowAsString(): String = {
     (new DateTime()).toString("yyyy-MM-dd'T'HH:mm:ss'Z'")
   }

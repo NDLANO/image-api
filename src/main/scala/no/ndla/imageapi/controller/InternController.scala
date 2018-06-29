@@ -31,7 +31,8 @@ trait InternController {
     post("/index") {
       indexBuilderService.indexDocuments match {
         case Success(reindexResult) => {
-          val result = s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms."
+          val result =
+            s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms."
           logger.info(result)
           Ok(result)
         }
@@ -46,10 +47,11 @@ trait InternController {
       def pluralIndex(n: Int) = if (n == 1) "1 index" else s"$n indexes"
       val deleteResults = indexService.findAllIndexes(ImageApiProperties.SearchIndex) match {
         case Failure(f) => halt(status = 500, body = f.getMessage)
-        case Success(indexes) => indexes.map(index => {
-          logger.info(s"Deleting index $index")
-          indexService.deleteIndexWithName(Option(index))
-        })
+        case Success(indexes) =>
+          indexes.map(index => {
+            logger.info(s"Deleting index $index")
+            indexService.deleteIndexWithName(Option(index))
+          })
       }
       val (errors, successes) = deleteResults.partition(_.isFailure)
       if (errors.nonEmpty) {
@@ -67,7 +69,7 @@ trait InternController {
       val language = paramOrNone("language")
       imageRepository.withExternalId(externalId) match {
         case Some(image) => Ok(converterService.asApiImageMetaInformationWithDomainUrlV2(image, language))
-        case None => NotFound(Error(Error.NOT_FOUND, s"Image with external id $externalId not found"))
+        case None        => NotFound(Error(Error.NOT_FOUND, s"Image with external id $externalId not found"))
       }
     }
 
@@ -81,12 +83,14 @@ trait InternController {
           Ok(converterService.asApiImageMetaInformationWithDomainUrlV2(imageMeta, None))
         }
         case Failure(s: S3UploadException) => {
-          val errMsg = s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${s.getMessage}\n"
+          val errMsg =
+            s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${s.getMessage}\n"
           logger.warn(errMsg, s)
           GatewayTimeout(body = Error(Error.GATEWAY_TIMEOUT, errMsg))
         }
         case Failure(ex: Throwable) => {
-          val errMsg = s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${ex.getMessage}\n"
+          val errMsg =
+            s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${ex.getMessage}\n"
           logger.warn(errMsg, ex)
           InternalServerError(body = errMsg)
         }

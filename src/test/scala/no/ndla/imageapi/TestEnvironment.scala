@@ -8,7 +8,6 @@
 
 package no.ndla.imageapi
 
-
 import com.amazonaws.services.s3.AmazonS3
 import com.sksamuel.elastic4s.http.HttpClient
 import no.ndla.imageapi.auth.{Role, User}
@@ -46,8 +45,7 @@ trait TestEnvironment
     with MockitoSugar
     with User
     with Role
-    with Clock
-{
+    with Clock {
   val amazonClient = mock[AmazonS3]
 
   val dataSource = mock[javax.sql.DataSource]
@@ -64,7 +62,7 @@ trait TestEnvironment
   val draftApiClient = mock[DraftApiClient]
   val rawController = mock[RawController]
   val internController = mock[InternController]
-  val imageControllerV2= mock[ImageControllerV2]
+  val imageControllerV2 = mock[ImageControllerV2]
   val converterService = mock[ConverterService]
   val validationService = mock[ValidationService]
   val tagsService = mock[TagsService]

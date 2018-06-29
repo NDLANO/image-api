@@ -34,20 +34,21 @@ trait TagsService {
 
     def streamToImageTags(stream: InputStream) = {
       implicit val formats = org.json4s.DefaultFormats
-      read[Keywords](Source.fromInputStream(stream).mkString)
-        .keyword
+      read[Keywords](Source.fromInputStream(stream).mkString).keyword
         .flatMap(_.names)
         .flatMap(_.data)
         .flatMap(_.toIterable)
         .map(t => (getISO639(t._1), t._2.trim.toLowerCase))
-        .groupBy(_._1).map(entry => (entry._1, entry._2.map(_._2)))
-        .map(t => ImageTag(t._2, Language.languageOrUnknown(t._1))).toList
+        .groupBy(_._1)
+        .map(entry => (entry._1, entry._2.map(_._2)))
+        .map(t => ImageTag(t._2, Language.languageOrUnknown(t._1)))
+        .toList
     }
 
     def getISO639(languageUrl: String): Option[String] = {
       Option(languageUrl) collect { case pattern(group) => group } match {
         case Some(x) => if (x == "language-neutral") None else get6391CodeFor6392Code(x)
-        case None => None
+        case None    => None
       }
     }
   }
@@ -56,8 +57,15 @@ trait TagsService {
 
 case class Keywords(keyword: List[Keyword])
 
-case class Keyword(psi: Option[String], topicId: Option[String], visibility: Option[String], approved: Option[String], processState: Option[String], psis: List[String],
-                   originatingSites: List[String], types: List[Any], names: List[KeywordName])
+case class Keyword(psi: Option[String],
+                   topicId: Option[String],
+                   visibility: Option[String],
+                   approved: Option[String],
+                   processState: Option[String],
+                   psis: List[String],
+                   originatingSites: List[String],
+                   types: List[Any],
+                   names: List[KeywordName])
 
 case class Type(typeId: String)
 

@@ -17,16 +17,31 @@ trait ValidationService {
   val validationService: ValidationService
 
   class ValidationService {
+
     def validateImageFile(imageFile: FileItem): Option[ValidationMessage] = {
       val validFileExtensions = Seq(".jpg", ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg")
       if (!hasValidFileExtension(imageFile.name.toLowerCase, validFileExtensions))
-        return Some(ValidationMessage("file", s"The file ${imageFile.name} does not have a known file extension. Must be one of ${validFileExtensions.mkString(",")}"))
+        return Some(
+          ValidationMessage(
+            "file",
+            s"The file ${imageFile.name} does not have a known file extension. Must be one of ${validFileExtensions
+              .mkString(",")}"))
 
-      val validMimeTypes = Seq("image/bmp", "image/gif", "image/jpeg", "image/x-citrix-jpeg", "image/pjpeg", "image/png", "image/x-citrix-png", "image/x-png", "image/svg+xml")
+      val validMimeTypes = Seq("image/bmp",
+                               "image/gif",
+                               "image/jpeg",
+                               "image/x-citrix-jpeg",
+                               "image/pjpeg",
+                               "image/png",
+                               "image/x-citrix-png",
+                               "image/x-png",
+                               "image/svg+xml")
       val actualMimeType = imageFile.contentType.getOrElse("")
 
       if (!validMimeTypes.contains(actualMimeType))
-        return Some(ValidationMessage("file", s"The file ${imageFile.name} is not a valid image file. Only valid type is '${validMimeTypes.mkString(",")}', but was '$actualMimeType'"))
+        return Some(ValidationMessage(
+          "file",
+          s"The file ${imageFile.name} is not a valid image file. Only valid type is '${validMimeTypes.mkString(",")}', but was '$actualMimeType'"))
 
       None
     }
@@ -36,7 +51,7 @@ trait ValidationService {
     }
 
     def validate(image: ImageMetaInformation): Try[ImageMetaInformation] = {
-      val validationMessages = image.titles.flatMap(title => validateTitle("title", title))  ++
+      val validationMessages = image.titles.flatMap(title => validateTitle("title", title)) ++
         validateCopyright(image.copyright) ++
         validateTags(image.tags) ++
         image.alttexts.flatMap(alt => validateAltText("altTexts", alt)) ++
@@ -65,19 +80,20 @@ trait ValidationService {
 
     def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
       validateLicense(copyright.license).toList ++
-      copyright.creators.flatMap(a => validateAuthor("copyright.creators", a, ImageApiProperties.creatorTypes)) ++
-      copyright.processors.flatMap(a => validateAuthor("copyright.processors", a, ImageApiProperties.processorTypes)) ++
-      copyright.rightsholders.flatMap(a => validateAuthor("copyright.rightsholders", a, ImageApiProperties.rightsholderTypes)) ++
-      containsNoHtml("copyright.origin", copyright.origin) ++
-      validateAgreement(copyright)
+        copyright.creators.flatMap(a => validateAuthor("copyright.creators", a, ImageApiProperties.creatorTypes)) ++
+        copyright.processors.flatMap(a => validateAuthor("copyright.processors", a, ImageApiProperties.processorTypes)) ++
+        copyright.rightsholders.flatMap(a =>
+          validateAuthor("copyright.rightsholders", a, ImageApiProperties.rightsholderTypes)) ++
+        containsNoHtml("copyright.origin", copyright.origin) ++
+        validateAgreement(copyright)
     }
 
     def validateAgreement(copyright: Copyright): Seq[ValidationMessage] = {
       copyright.agreementId match {
         case Some(id) =>
           draftApiClient.agreementExists(id) match {
-            case false => Seq (ValidationMessage ("copyright.agreement", s"Agreement with id $id does not exist") )
-            case _ => Seq()
+            case false => Seq(ValidationMessage("copyright.agreement", s"Agreement with id $id does not exist"))
+            case _     => Seq()
           }
         case _ => Seq()
       }
@@ -86,7 +102,7 @@ trait ValidationService {
     def validateLicense(license: License): Seq[ValidationMessage] = {
       getLicense(license.license) match {
         case None => Seq(ValidationMessage("license.license", s"${license.license} is not a valid license"))
-        case _ => Seq()
+        case _    => Seq()
       }
     }
 
@@ -97,7 +113,7 @@ trait ValidationService {
     }
 
     def validateAuthorType(fieldPath: String, `type`: String, allowedTypes: Seq[String]): Option[ValidationMessage] = {
-      if(allowedTypes.contains(`type`.toLowerCase)) {
+      if (allowedTypes.contains(`type`.toLowerCase)) {
         None
       } else {
         Some(ValidationMessage(fieldPath, s"Author is of illegal type. Must be one of ${allowedTypes.mkString(", ")}"))

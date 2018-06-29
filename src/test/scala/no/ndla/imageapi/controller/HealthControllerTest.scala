@@ -28,7 +28,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
     when(imageRepository.getRandomImage()).thenReturn(Some(TestData.bjorn))
 
     get("/") {
-      status should equal (200)
+      status should equal(200)
     }
   }
 

@@ -12,7 +12,16 @@ import no.ndla.network.secrets.PropertyKeys
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
 
-abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfterAll with PrivateMethodTester {
+abstract class UnitSuite
+    extends FunSuite
+    with Matchers
+    with OptionValues
+    with Inside
+    with Inspectors
+    with MockitoSugar
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll
+    with PrivateMethodTester {
 
   setEnv("NDLA_ENVIRONMENT", "local")
   setEnv(PropertyKeys.MetaUserNameKey, "username")
@@ -30,7 +39,6 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
   setEnv("SEARCH_INDEX_NAME", "image-integration-test-index")
   setEnv("NDLA_RED_USERNAME", "user")
   setEnv("NDLA_RED_PASSWORD", "pass")
-
 
   def setEnv(key: String, value: String) = {
     val field = System.getenv().getClass.getDeclaredField("m")

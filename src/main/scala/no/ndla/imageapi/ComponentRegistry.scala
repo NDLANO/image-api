@@ -21,32 +21,31 @@ import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 object ComponentRegistry
-  extends Elastic4sClient
-  with IndexService
-  with SearchService
-  with SearchConverterService
-  with DataSource
-  with ImageRepository
-  with WriteService
-  with AmazonClient
-  with ImageStorageService
-  with IndexBuilderService
-  with NdlaClient
-  with MigrationApiClient
-  with DraftApiClient
-  with ImportService
-  with ConverterService
-  with ValidationService
-  with TagsService
-  with ImageControllerV2
-  with RawController
-  with InternController
-  with HealthController
-  with ImageConverter
-  with User
-  with Role
-  with Clock
-{
+    extends Elastic4sClient
+    with IndexService
+    with SearchService
+    with SearchConverterService
+    with DataSource
+    with ImageRepository
+    with WriteService
+    with AmazonClient
+    with ImageStorageService
+    with IndexBuilderService
+    with NdlaClient
+    with MigrationApiClient
+    with DraftApiClient
+    with ImportService
+    with ConverterService
+    with ValidationService
+    with TagsService
+    with ImageControllerV2
+    with RawController
+    with InternController
+    with HealthController
+    with ImageConverter
+    with User
+    with Role
+    with Clock {
   def connectToDatabase(): Unit = ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
   implicit val swagger = new ImageSwagger
@@ -60,7 +59,6 @@ object ComponentRegistry
   dataSource.setInitialConnections(ImageApiProperties.MetaInitialConnections)
   dataSource.setMaxConnections(ImageApiProperties.MetaMaxConnections)
   dataSource.setCurrentSchema(ImageApiProperties.MetaSchema)
-
 
   connectToDatabase()
 
