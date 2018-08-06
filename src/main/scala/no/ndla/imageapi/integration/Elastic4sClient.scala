@@ -77,7 +77,9 @@ object Elastic4sClientFactory {
   }
 
   /** This is the same code as [[Aws4ElasticClient]] uses,
-    * however Aws4ElasticClient does not expose a way to configure [[RequestConfigCallback]] */
+    * however [[Aws4ElasticClient]] does not expose a way to configure [[RequestConfigCallback]]
+    * This is subject to change in the near future (See elastic4s PR#1322)
+    * When that happens we should go back to using the [[Aws4ElasticClient]] instead of this */
   private class AwsHttpInterceptor extends HttpRequestInterceptor {
     private val defaultChainProvider = new DefaultAWSCredentialsProviderChain
     private val region = sys.env("AWS_DEFAULT_REGION")
