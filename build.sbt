@@ -5,7 +5,7 @@ val Scalatraversion = "2.5.1"
 val ScalaLoggingVersion = "3.5.0"
 val Log4JVersion = "2.9.1"
 val Jettyversion = "9.4.11.v20180605"
-val AwsSdkversion = "1.11.46"
+val AwsSdkversion = "1.11.297"
 val ScalaTestVersion = "3.0.1"
 val MockitoVersion = "1.10.19"
 val Elastic4sVersion = "6.1.4"
@@ -47,6 +47,7 @@ lazy val image_api = (project in file("."))
       "org.scalikejdbc" %% "scalikejdbc" % "2.5.0",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
+      "com.amazonaws" % "aws-java-sdk-cloudwatch" % AwsSdkversion,
       "org.scalaj" %% "scalaj-http" % "2.3.0",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
@@ -59,6 +60,9 @@ lazy val image_api = (project in file("."))
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
       "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
       "org.jsoup" % "jsoup" % "1.11.2",
+      "log4j" % "log4j" % "1.2.16",
+      "net.bull.javamelody" % "javamelody-core" % "1.73.1",
+      "org.jrobin" % "jrobin" % "1.5.9",
       "org.imgscalr" % "imgscalr-lib" % "4.2",
       "com.netaporter" %% "scala-uri" % "0.4.16",
       // These are not strictly needed, for most cases, but offers better handling of loading images with encoding issues
@@ -115,7 +119,7 @@ docker / dockerfile := {
   val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
     from("openjdk:8-jre-alpine")
-
+    run("apk", "--no-cache", "add", "ttf-dejavu")
     add(artifact, artifactTargetPath)
     entryPoint("java", "-Dorg.scalatra.environment=production", "-Xmx512M", "-jar", artifactTargetPath)
   }

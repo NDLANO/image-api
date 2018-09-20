@@ -17,6 +17,7 @@ import scala.util.{Failure, Success}
 import scala.util.Properties._
 
 object ImageApiProperties extends LazyLogging {
+  val ApplicationName = "image-api"
   val Auth0LoginEndpoint = "https://ndla.eu.auth0.com/authorize"
 
   val SecretsFile = "image-api.secrets"
