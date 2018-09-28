@@ -99,9 +99,9 @@ trait ValidationService {
       }
     }
 
-    def validateLicense(license: License): Seq[ValidationMessage] = {
-      getLicense(license.license) match {
-        case None => Seq(ValidationMessage("license.license", s"${license.license} is not a valid license"))
+    def validateLicense(license: String): Seq[ValidationMessage] = {
+      getLicense(license) match {
+        case None => Seq(ValidationMessage("license.license", s"$license is not a valid license"))
         case _    => Seq()
       }
     }

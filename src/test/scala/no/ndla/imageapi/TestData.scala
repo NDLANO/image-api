@@ -10,11 +10,12 @@ package no.ndla.imageapi
 
 import java.awt.image.BufferedImage
 import java.io.InputStream
-import javax.imageio.ImageIO
 
+import javax.imageio.ImageIO
 import no.ndla.imageapi.integration.{ImageAuthor, ImageMeta, MainImageImport}
 import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.domain._
+import no.ndla.mapping
 import org.joda.time.{DateTime, DateTimeZone}
 
 /**
@@ -25,9 +26,7 @@ object TestData {
 
   def updated() = (new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC)).toDate
 
-  val ByNcSa = License("by-nc-sa",
-                       "Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic",
-                       Some("https://creativecommons.org/licenses/by-nc-sa/2.0/"))
+  val ByNcSa = mapping.License.CC_BY_NC_SA.toString
 
   val elg = ImageMetaInformation(
     Some(1),

@@ -16,8 +16,7 @@ import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
 import com.netaporter.uri.Uri.parse
 import no.ndla.imageapi.integration.DraftApiClient
-import no.ndla.imageapi.model.api.ImageMetaInformationV2
-import no.ndla.mapping.ISO639
+import no.ndla.mapping.License.getLicense
 
 trait ConverterService {
   this: User with Clock with DraftApiClient =>
@@ -135,8 +134,10 @@ trait ConverterService {
       api.ImageTitle(domainImageTitle.title, domainImageTitle.language)
     }
 
-    def asApiLicense(domainLicense: domain.License): api.License = {
-      api.License(domainLicense.license, domainLicense.description, domainLicense.url)
+    def asApiLicense(license: String): api.License = {
+      getLicense(license)
+        .map(l => api.License(l.license.toString, l.description, l.url))
+        .getOrElse(api.License("unknown", "", None))
     }
 
     def asApiUrl(url: String, baseUrl: Option[String] = None): String = {
@@ -170,7 +171,7 @@ trait ConverterService {
 
     def toDomainCopyright(copyright: api.Copyright): domain.Copyright = {
       domain.Copyright(
-        toDomainLicense(copyright.license),
+        copyright.license.license,
         copyright.origin,
         copyright.creators.map(toDomainAuthor),
         copyright.processors.map(toDomainAuthor),
@@ -179,10 +180,6 @@ trait ConverterService {
         copyright.validFrom,
         copyright.validTo
       )
-    }
-
-    def toDomainLicense(license: api.License): domain.License = {
-      domain.License(license.license, license.description, license.url)
     }
 
     def toDomainAuthor(author: api.Author): domain.Author = {

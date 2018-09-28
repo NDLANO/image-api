@@ -16,6 +16,7 @@ import no.ndla.imageapi.model.api
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
 import no.ndla.tag.IntegrationTest
+import no.ndla.mapping.License.{CC_BY_NC_SA, PublicDomain}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Matchers._
 import org.mockito.Mockito
@@ -38,7 +39,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   val largeImage = Image("large-full-url", 10000, "jpg")
   val smallImage = Image("small-full-url", 100, "jpg")
 
-  val byNcSa = Copyright(License("by-nc-sa", "Attribution-NonCommercial-ShareAlike", None),
+  val byNcSa = Copyright(CC_BY_NC_SA.toString,
                          "Gotham City",
                          List(Author("Forfatter", "DC Comics")),
                          List(),
@@ -47,7 +48,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
                          None,
                          None)
 
-  val publicDomain = Copyright(License("publicdomain", "Public Domain", None),
+  val publicDomain = Copyright(PublicDomain.toString,
                                "Metropolis",
                                List(Author("Forfatter", "Bruce Wayne")),
                                List(),
@@ -206,7 +207,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all filtering on license only returns images with given license") {
-    val searchResult = searchService.all(None, Some("publicdomain"), None, Sort.ByIdAsc, None, None, false)
+    val searchResult = searchService.all(None, Some(PublicDomain.toString), None, Sort.ByIdAsc, None, None, false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
@@ -231,7 +232,7 @@ class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
   }
 
   test("That both minimum-size and license filters are applied.") {
-    val searchResult = searchService.all(Some(500), Some("publicdomain"), None, Sort.ByIdAsc, None, None, false)
+    val searchResult = searchService.all(Some(500), Some(PublicDomain.toString), None, Sort.ByIdAsc, None, None, false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")

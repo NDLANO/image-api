@@ -300,7 +300,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     val expectedResult = existing.copy(
       titles = List(domain.ImageTitle("Title", "nb")),
       alttexts = List(domain.ImageAltText("AltText", "nb")),
-      copyright = domain.Copyright(domain.License("testLic", "License for testing", None),
+      copyright = domain.Copyright("testLic",
                                    "test",
                                    List(domain.Author("Opphavsmann", "Testerud")),
                                    List(),
