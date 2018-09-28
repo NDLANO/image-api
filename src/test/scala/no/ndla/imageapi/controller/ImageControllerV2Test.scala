@@ -16,6 +16,7 @@ import no.ndla.imageapi.model.api.{NewImageMetaInformationV2, SearchResult, Upda
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
+import no.ndla.mapping.License.CC_BY
 import org.json4s.DefaultFormats
 import org.json4s.native.JsonParser
 import org.mockito.Matchers._
@@ -139,7 +140,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     implicit val formats = DefaultFormats
     val testUrl = "http://test.test/1"
     val expectedBody =
-      s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"by-nc-sa","description":"Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic","url":"https://creativecommons.org/licenses/by-nc-sa/2.0/"},"origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
+      s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"CC-BY-NC-SA-4.0","description":"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International","url":"https://creativecommons.org/licenses/by-nc-sa/4.0/"},"origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
     val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
     when(imageRepository.withId(1)).thenReturn(Option(TestData.elg))
 
@@ -204,7 +205,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     implicit val formats = DefaultFormats
     val testUrl = "http://test.test/1"
     val expectedBody =
-      s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"by-nc-sa","description":"Creative Commons Attribution-NonCommercial-ShareAlike 2.0 Generic","url":"https://creativecommons.org/licenses/by-nc-sa/2.0/"}, "agreementId":1, "origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
+      s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"CC-BY-NC-SA-4.0","description":"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International","url":"https://creativecommons.org/licenses/by-nc-sa/4.0/"}, "agreementId":1, "origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
     val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
     val agreementElg = ImageMetaInformation(
       Some(1),
@@ -253,7 +254,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   test("That POST / returns 200 if everything went well") {
     val titles: Seq[ImageTitle] = Seq()
     val alttexts: Seq[ImageAltText] = Seq()
-    val copyright = Copyright(License("by", "description", None), "", Seq.empty, Seq.empty, Seq.empty, None, None, None)
+    val copyright = Copyright(CC_BY.toString, "", Seq.empty, Seq.empty, Seq.empty, None, None, None)
     val tags: Seq[ImageTag] = Seq()
     val captions: Seq[ImageCaption] = Seq()
 

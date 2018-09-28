@@ -11,6 +11,7 @@ import no.ndla.imageapi.model.domain.{Author, ImageMetaInformation}
 import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.model.{ImportException, S3UploadException, domain}
 import no.ndla.mapping._
+import no.ndla.mapping.License.{CC0, PublicDomain, CC_BY_SA}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import no.ndla.imageapi.integration
@@ -92,14 +93,14 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That oldToNewLicenseKey converts correctly") {
-    val cc0 = License.getLicense("cc0")
-    val pd = License.getLicense("pd")
+    val cc0 = License.getLicense(CC0.toString)
+    val pd = License.getLicense(PublicDomain.toString)
     importService.oldToNewLicenseKey("nolaw") should be(cc0)
     importService.oldToNewLicenseKey("noc") should be(pd)
   }
 
   test("That oldToNewLicenseKey does not convert an license that should not be converted") {
-    val bySa = License.getLicense("by-sa")
+    val bySa = License.getLicense(CC_BY_SA.toString)
     importService.oldToNewLicenseKey("by-sa") should be(bySa)
   }
 

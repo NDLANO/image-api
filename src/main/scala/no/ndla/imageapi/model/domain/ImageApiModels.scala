@@ -29,7 +29,7 @@ case class ImageTag(tags: Seq[String], language: String) extends LanguageField[S
   override def value: Seq[String] = tags
 }
 case class Image(fileName: String, size: Long, contentType: String)
-case class Copyright(license: License,
+case class Copyright(license: String,
                      origin: String,
                      creators: Seq[Author],
                      processors: Seq[Author],

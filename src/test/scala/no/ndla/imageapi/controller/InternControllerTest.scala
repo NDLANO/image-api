@@ -11,6 +11,7 @@ package no.ndla.imageapi.controller
 import no.ndla.imageapi.model.api.{ImageAltText, ImageCaption, ImageTag, ImageTitle}
 import no.ndla.imageapi.model.{S3UploadException, api, domain}
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
+import no.ndla.mapping.License.{CC_BY, getLicense}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s.jackson.Serialization._
 import org.mockito.Matchers
@@ -28,6 +29,8 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   addServlet(controller, "/*")
   val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
+  val BySa = getLicense(CC_BY.toString).get
+
   val DefaultApiImageMetaInformation = api.ImageMetaInformationV2(
     "1",
     s"${ImageApiProperties.ImageApiUrlBase}1",
@@ -36,7 +39,14 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
     s"${ImageApiProperties.RawImageUrlBase}/test.jpg",
     0,
     "",
-    api.Copyright(api.License("", "", None), "", List(), List(), List(), None, None, None),
+    api.Copyright(api.License(BySa.license.toString, BySa.description, BySa.url),
+                  "",
+                  List(),
+                  List(),
+                  List(),
+                  None,
+                  None,
+                  None),
     ImageTag(Seq.empty, "nb"),
     ImageCaption("", "nb"),
     Seq()
@@ -49,7 +59,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
     "test.jpg",
     0,
     "",
-    domain.Copyright(domain.License("", "", None), "", List(), List(), List(), None, None, None),
+    domain.Copyright(CC_BY.toString, "", List(), List(), List(), None, None, None),
     List(),
     List(),
     "ndla124",

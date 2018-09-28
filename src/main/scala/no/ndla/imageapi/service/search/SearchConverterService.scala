@@ -45,7 +45,7 @@ trait SearchConverterService {
         tags = SearchableLanguageList(imageWithAgreement.tags.map(tag => LanguageValue(tag.language, tag.tags))),
         contributors = image.copyright.creators.map(c => c.name) ++ image.copyright.processors
           .map(p => p.name) ++ image.copyright.rightsholders.map(r => r.name),
-        license = imageWithAgreement.copyright.license.license,
+        license = imageWithAgreement.copyright.license,
         imageSize = imageWithAgreement.size,
         previewUrl = parse(imageWithAgreement.imageUrl).toString,
         lastUpdated = imageWithAgreement.updated,

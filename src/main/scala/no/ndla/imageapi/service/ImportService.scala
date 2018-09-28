@@ -131,7 +131,25 @@ trait ImportService {
     }
 
     private[service] def oldToNewLicenseKey(license: String): Option[LicenseDefinition] = {
-      val licenses = Map("nolaw" -> "cc0", "noc" -> "pd")
+      val licenses = Map(
+        "by" -> "CC-BY-4.0",
+        "by-sa" -> "CC-BY-SA-4.0",
+        "by-nc" -> "CC-BY-NC-4.0",
+        "by-nd" -> "CC-BY-ND-4.0",
+        "by-nc-sa" -> "CC-BY-NC-SA-4.0",
+        "by-nc-nd" -> "CC-BY-NC-ND-4.0",
+        "by-3.0" -> "CC-BY-4.0",
+        "by-sa-3.0" -> "CC-BY-SA-4.0",
+        "by-nc-3.0" -> "CC-BY-NC-4.0",
+        "by-nd-3.0" -> "CC-BY-ND-4.0",
+        "by-nc-sa-3.0" -> "CC-BY-NC-SA-4.0",
+        "by-nc-nd-3.0" -> "CC-BY-NC-ND-4.0",
+        "copyrighted" -> "COPYRIGHTED",
+        "cc0" -> "CC0-1.0",
+        "pd" -> "PD",
+        "nolaw" -> "CC0-1.0",
+        "noc" -> "PD"
+      )
       val newLicense = getLicense(licenses.getOrElse(license, license))
       if (newLicense.isEmpty) {
         throw new ImportException(s"License $license is not supported.")
@@ -155,10 +173,7 @@ trait ImportService {
     }
 
     private[service] def toDomainCopyright(imageMeta: MainImageImport): domain.Copyright = {
-      val domainLicense = imageMeta.license
-        .flatMap(oldToNewLicenseKey)
-        .map(license => domain.License(license.license, license.description, license.url))
-        .getOrElse(domain.License(imageMeta.license.get, imageMeta.license.get, None))
+      val domainLicense = imageMeta.license.flatMap(oldToNewLicenseKey).map(_.license.toString).getOrElse("COPYRIGHTED")
 
       val creators =
         imageMeta.authors.filter(a => oldCreatorTypes.contains(a.typeAuthor.toLowerCase)).map(toNewAuthorType)
