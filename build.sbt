@@ -121,7 +121,7 @@ docker / dockerfile := {
     from("openjdk:8-jre-alpine")
     run("apk", "--no-cache", "add", "ttf-dejavu")
     add(artifact, artifactTargetPath)
-    entryPoint("java", "-Dorg.scalatra.environment=production", "-Xmx512M", "-jar", artifactTargetPath)
+    entryPoint("java", "-Dorg.scalatra.environment=production", "-XX:MaxRAMFraction=2", "-jar", artifactTargetPath)
   }
 }
 
