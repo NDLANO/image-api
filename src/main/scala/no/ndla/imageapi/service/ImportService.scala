@@ -92,13 +92,7 @@ trait ImportService {
 
     private def getTags(nodeIds: Seq[String], langs: Seq[String]): Seq[ImageTag] = {
       nodeIds
-        .flatMap(nid =>
-          tagsService.forImage(nid) match {
-            case Success(t) => t
-            case Failure(e) =>
-              logger.warn(s"Could not import tags for node $nid", e)
-              List.empty
-        })
+        .flatMap(nid => tagsService.forImage(nid).getOrElse(Seq.empty))
         .groupBy(_.language)
         .map { case (lang, t) => ImageTag(t.flatMap(_.tags), lang) }
         .filter(tag => langs.contains(tag.language))
