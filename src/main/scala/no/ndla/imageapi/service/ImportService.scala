@@ -14,17 +14,17 @@ import no.ndla.imageapi.ImageApiProperties.{
   ImageImportSource,
   NdlaRedPassword,
   NdlaRedUsername,
-  redDBSource,
+  creatorTypes,
   oldCreatorTypes,
   oldProcessorTypes,
   oldRightsholderTypes,
-  creatorTypes,
   processorTypes,
+  redDBSource,
   rightsholderTypes
 }
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
-import no.ndla.imageapi.model.domain.ImageMetaInformation
+import no.ndla.imageapi.model.domain.{ImageMetaInformation, ImageTag}
 import no.ndla.imageapi.model.{ImportException, Language, S3UploadException, domain}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexBuilderService
@@ -90,14 +90,18 @@ trait ImportService {
       }
     }
 
-    private def toDomainImage(imageMeta: MainImageImport, rawImage: domain.Image): domain.ImageMetaInformation = {
+    private def getTags(nodeIds: Seq[String], langs: Seq[String]): Seq[ImageTag] = {
+      nodeIds
+        .flatMap(nid => tagsService.forImage(nid).getOrElse(Seq.empty))
+        .groupBy(_.language)
+        .map { case (lang, t) => ImageTag(t.flatMap(_.tags), lang) }
+        .filter(tag => langs.contains(tag.language))
+        .toSeq
+    }
+
+    private[service] def toDomainImage(imageMeta: MainImageImport,
+                                       rawImage: domain.Image): domain.ImageMetaInformation = {
       val (translationTitles, translationAltTexts, translationCaptions) = toDomainTranslationFields(imageMeta)
-      val tags = tagsService.forImage(imageMeta.mainImage.nid) match {
-        case Success(t) => t
-        case Failure(e) =>
-          logger.warn(s"Could not import tags for node ${imageMeta.mainImage.nid}", e)
-          List.empty
-      }
       val mainLanguage = Option(imageMeta.mainImage.language).filter(_.nonEmpty).getOrElse(Language.UnknownLanguage)
       val titles = translationTitles :+ domain.ImageTitle(imageMeta.mainImage.title, mainLanguage)
       val altTexts = translationAltTexts ++ imageMeta.mainImage.alttext
@@ -106,6 +110,8 @@ trait ImportService {
       val captions = translationCaptions ++ imageMeta.mainImage.caption
         .map(cap => Seq(domain.ImageCaption(cap, mainLanguage)))
         .getOrElse(Seq.empty)
+      val tags = getTags(imageMeta.mainImage.nid +: imageMeta.translations.map(_.nid),
+                         Language.findSupportedLanguages(titles, altTexts, captions))
 
       domain.ImageMetaInformation(
         None,

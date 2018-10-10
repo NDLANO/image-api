@@ -7,11 +7,11 @@
 
 package no.ndla.imageapi.service
 
-import no.ndla.imageapi.model.domain.{Author, ImageMetaInformation}
+import no.ndla.imageapi.model.domain.{Author, ImageMetaInformation, ImageTag}
 import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.model.{ImportException, S3UploadException, domain}
 import no.ndla.mapping._
-import no.ndla.mapping.License.{CC0, PublicDomain, CC_BY_SA}
+import no.ndla.mapping.License.{CC0, CC_BY_SA, PublicDomain}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import no.ndla.imageapi.integration
@@ -129,6 +129,27 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
     copyright.processors should contain(Author("Editorial", "B"))
     copyright.processors should contain(Author("Editorial", "C"))
 
+  }
+
+  test("That only tags with relevant languages are stored") {
+    val nbTags = ImageTag(Seq("hei", "norge", "knekkebrød"), "nb")
+    val nbTags2 = ImageTag(Seq("brunost", "også"), "nb")
+    val nbMerged = ImageTag(nbTags.tags ++ nbTags2.tags, "nb")
+    val enTags = ImageTag(Seq("hello", "englang", "chips"), "en")
+    val zhTags = ImageTag(Seq("我不懂中文", "亨里克"), "zh")
+
+    when(tagsService.forImage("1")).thenReturn(Success(List(nbTags, enTags)))
+    when(tagsService.forImage("2")).thenReturn(Success(List(nbTags2, zhTags)))
+
+    val image = domain.Image("/123.png", 200, "image/png")
+    val nbMeta = integration.ImageMeta("1", "1", "nb", "a", None, "", "", "", "", None)
+    val zhMeta = integration.ImageMeta("2", "1", "zh", "a", None, "", "", "", "", None)
+
+    val meta = integration.MainImageImport(nbMeta, List.empty, Some("by-sa"), None, List(zhMeta))
+
+    val result = importService.toDomainImage(meta, image)
+
+    result.tags should be(Seq(zhTags, nbMerged))
   }
 
 }
