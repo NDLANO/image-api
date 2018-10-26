@@ -7,10 +7,13 @@
 
 package no.ndla.imageapi.service.search
 
-import javax.servlet.http.HttpServletRequest
+import java.nio.file.{Files, Path}
 
+import com.sksamuel.elastic4s.embedded.LocalNode
+import com.sksamuel.elastic4s.http.ElasticClient
+import javax.servlet.http.HttpServletRequest
 import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
-import no.ndla.imageapi.integration.Elastic4sClientFactory
+import no.ndla.imageapi.integration.{Elastic4sClientFactory, NdlaE4sClient}
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.model.api
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
@@ -18,17 +21,16 @@ import no.ndla.network.ApplicationUrl
 import no.ndla.tag.IntegrationTest
 import no.ndla.mapping.License.{CC_BY_NC_SA, PublicDomain}
 import org.joda.time.{DateTime, DateTimeZone}
-import org.mockito.Matchers._
-import org.mockito.Mockito
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.mockito.invocation.InvocationOnMock
 
 @IntegrationTest
 class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
+  val tmpDir: Path = Files.createTempDirectory(this.getClass.getName)
+  val localNodeSettings: Map[String, String] = LocalNode.requiredSettings(this.getClass.getName, tmpDir.toString)
+  val localNode = LocalNode(localNodeSettings)
+  override val e4sClient = NdlaE4sClient(localNode.client(true))
 
-  val esPort = 9200
-
-  override val e4sClient = Elastic4sClientFactory.getClient(searchServer = s"http://localhost:$esPort")
   override val searchConverterService = new SearchConverterService
   override val converterService = new ConverterService
   override val indexService = new IndexService

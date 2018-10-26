@@ -8,21 +8,19 @@
 
 package db.migration
 
-import java.sql.Connection
-
 import com.typesafe.scalalogging.LazyLogging
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration
+import org.flywaydb.core.api.migration.{BaseJavaMigration, Context}
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
-class V2__RemoveFullFromImagePath extends JdbcMigration with LazyLogging {
+class V2__RemoveFullFromImagePath extends BaseJavaMigration with LazyLogging {
 
   implicit val formats = org.json4s.DefaultFormats
 
-  override def migrate(connection: Connection) = {
-    val db = DB(connection)
+  override def migrate(context: Context) = {
+    val db = DB(context.getConnection)
     db.autoClose(false)
     logger.info("Starting V2__RemoveFullFromImagePath DB Migration")
     val dBstartMillis = System.currentTimeMillis()

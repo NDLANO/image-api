@@ -12,7 +12,7 @@ import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.model.{ImportException, S3UploadException, domain}
 import no.ndla.mapping._
 import no.ndla.mapping.License.{CC0, CC_BY_SA, PublicDomain}
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import no.ndla.imageapi.integration
 

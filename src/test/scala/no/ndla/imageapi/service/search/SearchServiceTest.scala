@@ -9,8 +9,7 @@ package no.ndla.imageapi.service.search
 
 import no.ndla.imageapi.{TestEnvironment, UnitSuite}
 import org.mockito.Mockito._
-import org.mockito.Matchers._
-
+import org.mockito.ArgumentMatchers._
 import scala.util.Success
 
 class SearchServiceTest extends UnitSuite with TestEnvironment {

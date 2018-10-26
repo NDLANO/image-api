@@ -146,7 +146,7 @@ trait ImageControllerV2 {
     val getImages =
       (apiOperation[SearchResult]("getImages")
         summary "Find images"
-        notes "Find images in the ndla.no database."
+        description "Find images in the ndla.no database."
         parameters (
           asHeaderParam[Option[String]](correlationId),
           asQueryParam[Option[String]](query),
@@ -177,7 +177,7 @@ trait ImageControllerV2 {
     val getImagesPost =
       (apiOperation[List[SearchResult]]("getImagesPost")
         summary "Find images"
-        notes "Find images in the ndla.no database."
+        description "Find images in the ndla.no database."
         parameters (
           asHeaderParam[Option[String]](correlationId),
           bodyParam[SearchParams]
@@ -202,7 +202,7 @@ trait ImageControllerV2 {
     val getByImageId =
       (apiOperation[ImageMetaInformationV2]("findByImageId")
         summary "Fetch information for image"
-        notes "Shows info of the image with submitted id."
+        description "Shows info of the image with submitted id."
         parameters (
           asHeaderParam[Option[String]](correlationId),
           asPathParam[String](imageId),
@@ -226,7 +226,7 @@ trait ImageControllerV2 {
     val newImage =
       (apiOperation[ImageMetaInformationV2]("newImage")
         summary "Upload a new image with meta information"
-        notes "Upload a new image file with meta data"
+        description "Upload a new image file with meta data"
         consumes "multipart/form-data"
         parameters (
           asHeaderParam[Option[String]](correlationId),
@@ -267,7 +267,7 @@ trait ImageControllerV2 {
     val updateImage =
       (apiOperation[ImageMetaInformationV2]("newImage")
         summary "Update an existing image with meta information"
-        notes "Updates an existing image with meta data."
+        description "Updates an existing image with meta data."
         consumes "form-data"
         parameters (
           asHeaderParam[Option[String]](correlationId),

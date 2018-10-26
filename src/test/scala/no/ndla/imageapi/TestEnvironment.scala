@@ -10,6 +10,7 @@ package no.ndla.imageapi
 
 import com.amazonaws.services.s3.AmazonS3
 import com.sksamuel.elastic4s.http.HttpClient
+import com.zaxxer.hikari.HikariDataSource
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.controller.{HealthController, ImageControllerV2, InternController, RawController}
 import no.ndla.imageapi.integration._
@@ -48,7 +49,7 @@ trait TestEnvironment
     with Clock {
   val amazonClient = mock[AmazonS3]
 
-  val dataSource = mock[javax.sql.DataSource]
+  val dataSource = mock[HikariDataSource]
   val indexService = mock[IndexService]
   val searchService = mock[SearchService]
   val indexBuilderService = mock[IndexBuilderService]

@@ -7,7 +7,7 @@
 
 package no.ndla.imageapi.service.search
 
-import com.netaporter.uri.Uri.parse
+import io.lemonlabs.uri.Uri.parse
 import com.sksamuel.elastic4s.http.search.SearchHit
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
@@ -16,6 +16,7 @@ import no.ndla.imageapi.model.api.{ImageAltText, ImageMetaSummary, ImageTitle}
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.model.search.{LanguageValue, SearchableImage, SearchableLanguageList, SearchableLanguageValues}
 import no.ndla.imageapi.service.ConverterService
+import no.ndla.mapping.ISO639
 import no.ndla.network.ApplicationUrl
 
 trait SearchConverterService {
@@ -84,46 +85,72 @@ trait SearchConverterService {
     }
 
     def getLanguageFromHit(result: SearchHit): Option[String] = {
-      val sortedInnerHits = result.innerHits.toList
-        .filter(ih => ih._2.total > 0)
-        .sortBy {
-          case (_, hit) => hit.max_score
-        }
-        .reverse
+      def keyToLanguage(keys: Iterable[String]): Option[String] = {
+        val keyLanguages = keys.toList.flatMap(key =>
+          key.split('.').toList match {
+            case _ :: language :: _ => Some(language)
+            case _                  => None
+        })
 
-      val matchLanguage = sortedInnerHits.headOption.flatMap {
-        case (_, innerHit) =>
-          innerHit.hits
-            .sortBy(hit => hit.score)
-            .reverse
-            .headOption
-            .flatMap(hit => {
-              hit.highlight.headOption.map(hl => hl._1.split('.').last)
-            })
+        keyLanguages
+          .sortBy(lang => {
+            ISO639.languagePriority.reverse.indexOf(lang)
+          })
+          .lastOption
       }
+
+      val highlightKeys: Option[Map[String, _]] = Option(result.highlight)
+      val matchLanguage = keyToLanguage(highlightKeys.getOrElse(Map()).keys)
 
       matchLanguage match {
         case Some(lang) =>
           Some(lang)
         case _ =>
-          val titles = result.sourceAsMap.get("titles")
-          val titleMap = titles.map(tm => {
-            tm.asInstanceOf[Map[String, _]]
-          })
-
-          val languages = titleMap.map(title => title.keySet.toList)
-
-          languages.flatMap(languageList => {
-            languageList
-              .sortBy(lang => {
-                val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
-                languagePriority.indexOf(lang)
-              })
-              .lastOption
-          })
+          keyToLanguage(result.sourceAsMap.keys)
       }
-
     }
+
+//    def getLanguageFromHit(result: SearchHit): Option[String] = {
+//      val sortedInnerHits = result.innerHits.toList
+//        .filter(ih => ih._2.total > 0)
+//        .sortBy {
+//          case (_, hit) => hit.maxScore
+//        }
+//        .reverse
+//
+//      val matchLanguage = sortedInnerHits.headOption.flatMap {
+//        case (_, innerHit) =>
+//          innerHit.hits
+//            .sortBy(hit => hit.score)
+//            .reverse
+//            .headOption
+//            .flatMap(hit => {
+//              hit.highlight.headOption.map(hl => hl._1.split('.').last)
+//            })
+//      }
+//
+//      matchLanguage match {
+//        case Some(lang) =>
+//          Some(lang)
+//        case _ =>
+//          val titles = result.sourceAsMap.get("titles")
+//          val titleMap = titles.map(tm => {
+//            tm.asInstanceOf[Map[String, _]]
+//          })
+//
+//          val languages = titleMap.map(title => title.keySet.toList)
+//
+//          languages.flatMap(languageList => {
+//            languageList
+//              .sortBy(lang => {
+//                val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
+//                languagePriority.indexOf(lang)
+//              })
+//              .lastOption
+//          })
+//      }
+//
+//    }
 
   }
 

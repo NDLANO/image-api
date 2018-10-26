@@ -13,7 +13,7 @@ import java.io.ByteArrayInputStream
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, PutObjectRequest, S3Object}
 import no.ndla.imageapi.{ImageApiProperties, TestData, TestEnvironment, UnitSuite}
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 
 class ImageStorageServiceTest extends UnitSuite with TestEnvironment {

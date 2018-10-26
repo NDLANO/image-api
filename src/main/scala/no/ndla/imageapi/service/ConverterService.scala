@@ -14,7 +14,8 @@ import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.Language._
 import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
-import com.netaporter.uri.Uri.parse
+import io.lemonlabs.uri.{Uri, Url, UrlPath}
+import io.lemonlabs.uri.dsl._
 import no.ndla.imageapi.integration.DraftApiClient
 import no.ndla.mapping.License.getLicense
 
@@ -141,7 +142,10 @@ trait ConverterService {
     }
 
     def asApiUrl(url: String, baseUrl: Option[String] = None): String = {
-      baseUrl.getOrElse("") + parse(url).toString
+      val pathToAdd = UrlPath.parse(url)
+      val base = baseUrl.getOrElse("")
+      val basePath = base.path.addParts(pathToAdd.parts)
+      base.withPath(basePath).toString
     }
 
     def asDomainImageMetaInformationV2(imageMeta: api.NewImageMetaInformationV2,
@@ -150,7 +154,7 @@ trait ConverterService {
         None,
         Seq(asDomainTitle(imageMeta.title, imageMeta.language)),
         Seq(asDomainAltText(imageMeta.alttext, imageMeta.language)),
-        parse(image.fileName).toString,
+        Uri.parse(image.fileName).toString,
         image.size,
         image.contentType,
         toDomainCopyright(imageMeta.copyright),

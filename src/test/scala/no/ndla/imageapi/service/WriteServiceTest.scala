@@ -19,7 +19,7 @@ import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
 import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
 import org.joda.time.{DateTime, DateTimeZone}
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatra.servlet.FileItem
 import scalikejdbc.DBSession

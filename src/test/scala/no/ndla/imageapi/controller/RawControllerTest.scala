@@ -6,7 +6,7 @@ import javax.imageio.ImageIO
 import no.ndla.imageapi.TestData.{NdlaLogoImage, NdlaLogoGIFImage, CCLogoSvgImage}
 import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatra.test.scalatest.ScalatraSuite
 

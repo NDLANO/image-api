@@ -1,15 +1,14 @@
 package no.ndla.imageapi.controller
 
 import javax.servlet.http.HttpServletRequest
-
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.{ImageConverter, ImageStorageService}
-import org.scalatra.swagger.DataType.ValueDataType
-import org.scalatra.swagger.SwaggerSupportSyntax.OperationBuilder
 import org.scalatra.swagger.{Parameter, ResponseMessage, Swagger, SwaggerSupport}
-import com.netaporter.uri.Uri.{parse => uriParse}
+import io.lemonlabs.uri.Uri
+import org.json4s.{DefaultFormats, Formats}
+
 import scala.util.{Failure, Success, Try}
 
 trait RawController {
@@ -17,6 +16,7 @@ trait RawController {
   val rawController: RawController
 
   class RawController(implicit val swagger: Swagger) extends NdlaController with SwaggerSupport {
+    protected implicit override val jsonFormats: Formats = DefaultFormats
     protected val applicationDescription = "API for accessing image files from ndla.no."
 
     registerModel[Error]()
@@ -48,10 +48,9 @@ trait RawController {
         "The wanted aspect ratio, defined as width/height. To be used together with the focal parameters. If used the width and height is ignored and derived from the aspect ratio instead.")
     )
 
-    val getImageFile = new OperationBuilder(ValueDataType("file", Some("binary")))
-      .nickname("getImageFile")
+    val imageFromName = apiOperation("getImageFile")
       .summary("Fetch an image with options to resize and crop")
-      .notes("Fetches a image with options to resize and crop")
+      .description("Fetches a image with options to resize and crop")
       .produces("application/octet-stream")
       .authorizations("oauth2")
       .parameters(
@@ -60,14 +59,16 @@ trait RawController {
       )
       .responseMessages(response404, response500)
 
-    get("/:image_name", operation(getImageFile)) {
+    get(
+      "/:image_name",
+      operation(imageFromName)
+    ) {
       getRawImage(params("image_name"))
     }
 
-    val getImageFileById = new OperationBuilder(ValueDataType("file", Some("binary")))
-      .nickname("getImageFileById")
+    val imageFromId = apiOperation("getImageFileById")
       .summary("Fetch an image with options to resize and crop")
-      .notes("Fetches a image with options to resize and crop")
+      .description("Fetches a image with options to resize and crop")
       .produces("application/octet-stream")
       .authorizations("oauth2")
       .parameters(
@@ -76,10 +77,13 @@ trait RawController {
       )
       .responseMessages(response404, response500)
 
-    get("/id/:image_id", operation(getImageFileById)) {
+    get(
+      "/id/:image_id",
+      operation(imageFromId)
+    ) {
       imageRepository.withId(long("image_id")) match {
         case Some(imageMeta) =>
-          val imageName = uriParse(imageMeta.imageUrl).toStringRaw.substring(1) // Strip heading '/'
+          val imageName = Uri.parse(imageMeta.imageUrl).toStringRaw.substring(1) // Strip heading '/'
           getRawImage(imageName)
         case None => None
       }

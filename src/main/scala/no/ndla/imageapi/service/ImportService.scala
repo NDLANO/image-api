@@ -8,7 +8,7 @@
 
 package no.ndla.imageapi.service
 
-import com.netaporter.uri.Uri.parse
+import io.lemonlabs.uri.{Uri, Url, UrlPath}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.{
   ImageImportSource,
@@ -70,15 +70,18 @@ trait ImportService {
 
     private[service] def uploadRawImage(rawImgMeta: ImageMeta): Try[domain.Image] = {
       val image =
-        domain.Image(parse(rawImgMeta.originalFile).toString, rawImgMeta.originalSize.toInt, rawImgMeta.originalMime)
+        domain.Image(UrlPath.parse(rawImgMeta.originalFile).toAbsolute.toString,
+                     rawImgMeta.originalSize.toInt,
+                     rawImgMeta.originalMime)
+      val sizeMatches = imageStorage.objectSize(rawImgMeta.originalFile) == rawImgMeta.originalSize.toInt
 
-      if (imageStorage.objectExists(rawImgMeta.originalFile) && imageStorage.objectSize(rawImgMeta.originalFile) == rawImgMeta.originalSize.toInt) {
+      if (imageStorage.objectExists(rawImgMeta.originalFile) && sizeMatches) {
         Success(image)
       } else {
         val request = if (ImageImportSource == redDBSource) {
-          Http(parse(redHost + image.fileName).toString).auth(NdlaRedUsername, NdlaRedPassword)
+          Http(Url.parse(redHost + image.fileName).toString).auth(NdlaRedUsername, NdlaRedPassword)
         } else {
-          Http(parse(cmHost + image.fileName).toString)
+          Http(Url.parse(cmHost + image.fileName).toString)
         }
 
         val tryResUpload = imageStorage.uploadFromUrl(image, rawImgMeta.originalFile, request)
