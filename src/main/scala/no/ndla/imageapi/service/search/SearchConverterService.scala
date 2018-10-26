@@ -110,48 +110,6 @@ trait SearchConverterService {
       }
     }
 
-//    def getLanguageFromHit(result: SearchHit): Option[String] = {
-//      val sortedInnerHits = result.innerHits.toList
-//        .filter(ih => ih._2.total > 0)
-//        .sortBy {
-//          case (_, hit) => hit.maxScore
-//        }
-//        .reverse
-//
-//      val matchLanguage = sortedInnerHits.headOption.flatMap {
-//        case (_, innerHit) =>
-//          innerHit.hits
-//            .sortBy(hit => hit.score)
-//            .reverse
-//            .headOption
-//            .flatMap(hit => {
-//              hit.highlight.headOption.map(hl => hl._1.split('.').last)
-//            })
-//      }
-//
-//      matchLanguage match {
-//        case Some(lang) =>
-//          Some(lang)
-//        case _ =>
-//          val titles = result.sourceAsMap.get("titles")
-//          val titleMap = titles.map(tm => {
-//            tm.asInstanceOf[Map[String, _]]
-//          })
-//
-//          val languages = titleMap.map(title => title.keySet.toList)
-//
-//          languages.flatMap(languageList => {
-//            languageList
-//              .sortBy(lang => {
-//                val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
-//                languagePriority.indexOf(lang)
-//              })
-//              .lastOption
-//          })
-//      }
-//
-//    }
-
   }
 
 }
