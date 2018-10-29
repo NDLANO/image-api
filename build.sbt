@@ -63,6 +63,7 @@ lazy val image_api = (project in file("."))
       "com.sksamuel.elastic4s" %% "elastic4s-aws" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-embedded" % Elastic4sVersion % "test",
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
+      "com.fasterxml.jackson.core" % "jackson-databind" % JacksonVersion, // Overriding jackson-databind used in elastic4s because of https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-32111
       "org.jsoup" % "jsoup" % "1.11.3",
       "log4j" % "log4j" % "1.2.16",
       "net.bull.javamelody" % "javamelody-core" % "1.74.0",
