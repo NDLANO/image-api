@@ -10,6 +10,7 @@ package no.ndla.imageapi
 
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.zaxxer.hikari.HikariDataSource
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.controller._
 import no.ndla.imageapi.integration._
@@ -17,7 +18,6 @@ import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
 import no.ndla.network.NdlaClient
-import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 object ComponentRegistry
@@ -50,16 +50,7 @@ object ComponentRegistry
 
   implicit val swagger = new ImageSwagger
 
-  val dataSource = new PGPoolingDataSource()
-  dataSource.setUser(ImageApiProperties.MetaUserName)
-  dataSource.setPassword(ImageApiProperties.MetaPassword)
-  dataSource.setDatabaseName(ImageApiProperties.MetaResource)
-  dataSource.setServerName(ImageApiProperties.MetaServer)
-  dataSource.setPortNumber(ImageApiProperties.MetaPort)
-  dataSource.setInitialConnections(ImageApiProperties.MetaInitialConnections)
-  dataSource.setMaxConnections(ImageApiProperties.MetaMaxConnections)
-  dataSource.setCurrentSchema(ImageApiProperties.MetaSchema)
-
+  override val dataSource: HikariDataSource = DataSource.getHikariDataSource
   connectToDatabase()
 
   val amazonClient = AmazonS3ClientBuilder.standard().withRegion(Regions.EU_CENTRAL_1).build()

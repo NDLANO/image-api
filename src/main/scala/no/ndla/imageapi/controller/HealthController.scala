@@ -8,8 +8,8 @@
 
 package no.ndla.imageapi.controller
 
-import com.netaporter.uri.dsl._
-import com.netaporter.uri.Uri.parse
+import io.lemonlabs.uri.dsl._
+import io.lemonlabs.uri.Uri.parse
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.network.ApplicationUrl
@@ -44,7 +44,7 @@ trait HealthController {
 
     get("/") {
       val applicationUrl = ApplicationUrl.get
-      val host = applicationUrl.host.getOrElse("0")
+      val host = applicationUrl.hostOption.map(_.toString).getOrElse("0")
       val port = applicationUrl.port.getOrElse("80")
 
       imageRepository

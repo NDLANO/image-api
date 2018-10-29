@@ -10,10 +10,10 @@ package no.ndla.imageapi.service.search
 import java.text.SimpleDateFormat
 import java.util.{Calendar, UUID}
 
-import com.sksamuel.elastic4s.alias.AliasActionDefinition
+import com.sksamuel.elastic4s.alias.AliasAction
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.RequestSuccess
-import com.sksamuel.elastic4s.mappings.{MappingDefinition, NestedFieldDefinition}
+import com.sksamuel.elastic4s.mappings.{MappingDefinition, NestedField}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.Elastic4sClient
@@ -114,10 +114,10 @@ trait IndexService {
       } else {
         val actions = oldIndexName match {
           case None =>
-            List[AliasActionDefinition](addAlias(ImageApiProperties.SearchIndex).on(newIndexName))
+            List[AliasAction](addAlias(ImageApiProperties.SearchIndex).on(newIndexName))
           case Some(oldIndex) =>
-            List[AliasActionDefinition](removeAlias(ImageApiProperties.SearchIndex).on(oldIndex),
-                                        addAlias(ImageApiProperties.SearchIndex).on(newIndexName))
+            List[AliasAction](removeAlias(ImageApiProperties.SearchIndex).on(oldIndex),
+                              addAlias(ImageApiProperties.SearchIndex).on(newIndexName))
         }
 
         e4sClient.execute(aliases(actions)) match {
@@ -239,7 +239,7 @@ trait IndexService {
     }
 
     private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
-      val languageSupportedField = NestedFieldDefinition(fieldName).fields(
+      val languageSupportedField = NestedField(fieldName).fields(
         keepRaw match {
           case true =>
             languageAnalyzers.map(langAnalyzer =>

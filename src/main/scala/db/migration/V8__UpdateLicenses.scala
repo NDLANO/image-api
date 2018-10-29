@@ -7,20 +7,18 @@
 
 package db.migration
 
-import java.sql.Connection
-
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration
+import org.flywaydb.core.api.migration.{BaseJavaMigration, Context}
 import org.json4s.JsonAST.JString
 import org.json4s.native.JsonMethods.{compact, parse, render}
 import org.json4s.{DefaultFormats, JObject}
 import org.postgresql.util.PGobject
 import scalikejdbc.{DB, DBSession, _}
 
-class V8__UpdateLicenses extends JdbcMigration {
+class V8__UpdateLicenses extends BaseJavaMigration {
   implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
 
-  override def migrate(connection: Connection): Unit = {
-    val db = DB(connection)
+  override def migrate(context: Context): Unit = {
+    val db = DB(context.getConnection)
     db.autoClose(false)
 
     db.withinTx { implicit session =>

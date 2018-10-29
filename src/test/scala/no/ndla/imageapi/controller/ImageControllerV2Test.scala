@@ -19,7 +19,7 @@ import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
 import no.ndla.mapping.License.CC_BY
 import org.json4s.DefaultFormats
 import org.json4s.native.JsonParser
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatra.servlet.FileItem
 import org.scalatra.test.Uploadable
