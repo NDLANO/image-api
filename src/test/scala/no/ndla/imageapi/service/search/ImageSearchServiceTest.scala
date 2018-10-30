@@ -10,22 +10,21 @@ package no.ndla.imageapi.service.search
 import java.nio.file.{Files, Path}
 
 import com.sksamuel.elastic4s.embedded.LocalNode
-import com.sksamuel.elastic4s.http.ElasticClient
 import javax.servlet.http.HttpServletRequest
 import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
-import no.ndla.imageapi.integration.{Elastic4sClientFactory, NdlaE4sClient}
-import no.ndla.imageapi.model.domain._
+import no.ndla.imageapi.integration.NdlaE4sClient
 import no.ndla.imageapi.model.api
+import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
-import no.ndla.network.ApplicationUrl
-import no.ndla.tag.IntegrationTest
 import no.ndla.mapping.License.{CC_BY_NC_SA, PublicDomain}
+import no.ndla.network.ApplicationUrl
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 
-@IntegrationTest
-class SearchServiceIntegrationTest extends UnitSuite with TestEnvironment {
+import scala.util.Success
+
+class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   val tmpDir: Path = Files.createTempDirectory(this.getClass.getName)
   val localNodeSettings: Map[String, String] = LocalNode.requiredSettings(this.getClass.getName, tmpDir.toString)
   val localNode = LocalNode(localNodeSettings)
