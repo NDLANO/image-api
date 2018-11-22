@@ -21,8 +21,6 @@ object ImageApiProperties extends LazyLogging {
   val ApplicationName = "image-api"
   val Auth0LoginEndpoint = s"https://${AuthUser.getAuth0HostForEnv(Environment)}/authorize"
 
-  val SecretsFile = "image-api.secrets"
-
   val RoleWithWriteAccess = "images:write"
 
   val ApplicationPort = propOrElse("APPLICATION_PORT", "80").toInt
@@ -113,9 +111,13 @@ object ImageApiProperties extends LazyLogging {
   val ImageApiUrlBase = Domain + ImageControllerPath + "/"
   val RawImageUrlBase = Domain + RawControllerPath
 
-  lazy val secrets = readSecrets(SecretsFile) match {
-    case Success(values)    => values
-    case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
+  lazy val secrets = {
+    val SecretsFile = "image-api.secrets"
+    readSecrets(SecretsFile) match {
+      case Success(values) => values
+      case Failure(exception) =>
+        throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
+    }
   }
 
   def prop(key: String): String = {
