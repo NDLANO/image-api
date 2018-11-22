@@ -9,7 +9,7 @@
 package no.ndla.imageapi
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.network.Domains
+import no.ndla.network.{AuthUser, Domains}
 import no.ndla.network.secrets.PropertyKeys
 import no.ndla.network.secrets.Secrets.readSecrets
 
@@ -17,8 +17,9 @@ import scala.util.{Failure, Success}
 import scala.util.Properties._
 
 object ImageApiProperties extends LazyLogging {
+  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
   val ApplicationName = "image-api"
-  val Auth0LoginEndpoint = "https://ndla.eu.auth0.com/authorize"
+  val Auth0LoginEndpoint = s"https://${AuthUser.getAuth0HostForEnv(Environment)}/authorize"
 
   val SecretsFile = "image-api.secrets"
 
@@ -75,7 +76,6 @@ object ImageApiProperties extends LazyLogging {
 
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
-  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
   val (redDBSource, cmDBSource) = ("red", "cm")
   val ImageImportSource = redDBSource
 
