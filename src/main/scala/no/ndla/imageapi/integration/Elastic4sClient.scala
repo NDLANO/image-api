@@ -9,10 +9,12 @@
 package no.ndla.imageapi.integration
 
 import java.util.concurrent.Executors
+
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.regions.{Region, Regions}
 import com.sksamuel.elastic4s.aws._
 import com.sksamuel.elastic4s.http._
+import com.typesafe.scalalogging.LazyLogging
 import io.lemonlabs.uri.dsl._
 import no.ndla.imageapi.ImageApiProperties.{RunWithSignedSearchRequests, SearchServer}
 import no.ndla.imageapi.model.NdlaSearchException
@@ -21,6 +23,7 @@ import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import org.apache.http.protocol.HttpContext
 import org.apache.http.{HttpRequest, HttpRequestInterceptor}
 import org.elasticsearch.client.RestClientBuilder.{HttpClientConfigCallback, RequestConfigCallback}
+
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
 import scala.util.{Failure, Success, Try}
@@ -51,7 +54,7 @@ case class NdlaE4sClient(client: ElasticClient) {
   }
 }
 
-object Elastic4sClientFactory {
+object Elastic4sClientFactory extends LazyLogging {
 
   def getClient(searchServer: String = SearchServer): NdlaE4sClient = {
     RunWithSignedSearchRequests match {
@@ -101,7 +104,9 @@ object Elastic4sClientFactory {
     val elasticSearchUri =
       s"${searchServer.schemeOption.getOrElse("http")}://${searchServer.hostOption
         .map(_.toString)
-        .getOrElse("localhost")}:${searchServer.port.getOrElse(80)}?ssl=false"
+        .getOrElse("localhost")}:${searchServer.port.getOrElse(80)}/?ssl=false"
+
+    logger.info(s"Creating client for '$elasticSearchUri'")
 
     val awsRegion = Option(Regions.getCurrentRegion).getOrElse(Region.getRegion(Regions.EU_CENTRAL_1)).toString
     setEnv("AWS_DEFAULT_REGION", awsRegion)
