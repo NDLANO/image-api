@@ -194,7 +194,7 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.all(None, None, None, Sort.ByIdAsc, None, None, false)
     searchResult.totalCount should be(5)
     searchResult.results.size should be(5)
-    searchResult.page should be(1)
+    searchResult.page.get should be(1)
     searchResult.results.head.id should be("1")
     searchResult.results.last.id should be("5")
   }
@@ -218,14 +218,14 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResultPage1 = searchService.all(None, None, None, Sort.ByIdAsc, Some(1), Some(2), false)
     val searchResultPage2 = searchService.all(None, None, None, Sort.ByIdAsc, Some(2), Some(2), false)
     searchResultPage1.totalCount should be(5)
-    searchResultPage1.page should be(1)
+    searchResultPage1.page.get should be(1)
     searchResultPage1.pageSize should be(2)
     searchResultPage1.results.size should be(2)
     searchResultPage1.results.head.id should be("1")
     searchResultPage1.results.last.id should be("2")
 
     searchResultPage2.totalCount should be(5)
-    searchResultPage2.page should be(2)
+    searchResultPage2.page.get should be(2)
     searchResultPage2.pageSize should be(2)
     searchResultPage2.results.size should be(2)
     searchResultPage2.results.head.id should be("3")
@@ -357,6 +357,23 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
     result.results.size should be(1)
 
     result.results.head.supportedLanguages should be(Seq("unknown", "nn", "en"))
+  }
+
+  test("That scrolling works as expected") {
+    val pageSize = 2
+    val expectedIds = List("1", "2", "3", "4", "5").sliding(pageSize, pageSize).toList
+
+    val initialSearch =
+      searchService.all(None, None, None, Sort.ByIdAsc, None, Some(pageSize), includeCopyrighted = false)
+
+    val Success(scroll1) = searchService.scroll(initialSearch.scrollId.get, "all")
+    val Success(scroll2) = searchService.scroll(scroll1.scrollId.get, "all")
+    val Success(scroll3) = searchService.scroll(scroll2.scrollId.get, "all")
+
+    initialSearch.results.map(_.id) should be(expectedIds.head)
+    scroll1.results.map(_.id) should be(expectedIds(1))
+    scroll2.results.map(_.id) should be(expectedIds(2))
+    scroll3.results.map(_.id) should be(List.empty)
   }
 
   def blockUntil(predicate: () => Boolean) = {

@@ -14,12 +14,13 @@ import no.ndla.imageapi.model.domain.Sort
 import no.ndla.imageapi.model.{ImageNotFoundException, Language, api, domain}
 import no.ndla.imageapi.model.api.{NewImageMetaInformationV2, SearchResult, UpdateImageMetaInformation}
 import no.ndla.imageapi.model.domain._
+import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
 import no.ndla.mapping.License.CC_BY
 import org.json4s.DefaultFormats
 import org.json4s.native.JsonParser
-import org.mockito.ArgumentMatchers._
+import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatra.servlet.FileItem
 import org.scalatra.test.Uploadable
@@ -94,7 +95,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
                         any[Sort.Value],
                         Option(any[Int]),
                         Option(any[Int]),
-                        any[Boolean])).thenReturn(SearchResult(0, 1, 10, "nb", List()))
+                        any[Boolean])).thenReturn(domain.SearchResult(0, Some(1), 10, "nb", List(), None))
     get("/") {
       status should equal(200)
       body should equal(expectedBody)
@@ -122,7 +123,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
                         any[Sort.Value],
                         Option(any[Int]),
                         Option(any[Int]),
-                        any[Boolean])).thenReturn(SearchResult(1, 1, 10, "nb", List(imageSummary)))
+                        any[Boolean])).thenReturn(domain.SearchResult(1, Some(1), 10, "nb", List(imageSummary), None))
     get("/") {
       status should equal(200)
       body should equal(expectedBody)
@@ -337,6 +338,118 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     patch("/1", Map("metadata" -> sampleUpdateImageMeta), headers = Map("Authorization" -> authHeaderWithoutAnyRoles)) {
       status should equal(403)
     }
+  }
+
+  test("That scrollId is in header, and not in body") {
+    val scrollId =
+      "DnF1ZXJ5VGhlbkZldGNoCgAAAAAAAAC1Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAthYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALcWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC4Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuRYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALsWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC9Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuhYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAAL4WLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC8Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFE="
+    val searchResponse = domain.SearchResult(
+      0,
+      Some(1),
+      10,
+      "nb",
+      Seq.empty,
+      Some(scrollId)
+    )
+    when(
+      searchService.all(
+        any[Option[Int]],
+        any[Option[String]],
+        any[Option[String]],
+        any[Sort.Value],
+        any[Option[Int]],
+        any[Option[Int]],
+        any[Boolean]
+      ))
+      .thenReturn(searchResponse)
+
+    get(s"/") {
+      status should be(200)
+      body.contains(scrollId) should be(false)
+      header("search-context") should be(scrollId)
+    }
+  }
+
+  test("That scrolling uses scroll and not searches normally") {
+    reset(searchService)
+    val scrollId =
+      "DnF1ZXJ5VGhlbkZldGNoCgAAAAAAAAC1Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAthYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALcWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC4Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuRYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALsWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC9Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuhYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAAL4WLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC8Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFE="
+    val searchResponse = domain.SearchResult(
+      0,
+      Some(1),
+      10,
+      "nb",
+      Seq.empty,
+      Some(scrollId)
+    )
+
+    when(searchService.scroll(anyString, anyString)).thenReturn(Success(searchResponse))
+
+    get(s"/?search-context=$scrollId") {
+      status should be(200)
+    }
+
+    verify(searchService, times(0)).all(
+      any[Option[Int]],
+      any[Option[String]],
+      any[Option[String]],
+      any[Sort.Value],
+      any[Option[Int]],
+      any[Option[Int]],
+      any[Boolean]
+    )
+    verify(searchService, times(0)).matchingQuery(
+      any[String],
+      any[Option[Int]],
+      any[Option[String]],
+      any[Option[String]],
+      any[Sort.Value],
+      any[Option[Int]],
+      any[Option[Int]],
+      any[Boolean]
+    )
+    verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
+  }
+
+  test("That scrolling with POST uses scroll and not searches normally") {
+    reset(searchService)
+    val scrollId =
+      "DnF1ZXJ5VGhlbkZldGNoCgAAAAAAAAC1Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAthYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALcWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC4Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuRYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALsWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC9Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuhYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAAL4WLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC8Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFE="
+    val searchResponse = domain.SearchResult(
+      0,
+      Some(1),
+      10,
+      "nb",
+      Seq.empty,
+      Some(scrollId)
+    )
+
+    when(searchService.scroll(anyString, anyString)).thenReturn(Success(searchResponse))
+
+    post(s"/search/?search-context=$scrollId") {
+      status should be(200)
+    }
+
+    verify(searchService, times(0)).all(
+      any[Option[Int]],
+      any[Option[String]],
+      any[Option[String]],
+      any[Sort.Value],
+      any[Option[Int]],
+      any[Option[Int]],
+      any[Boolean]
+    )
+    verify(searchService, times(0)).matchingQuery(
+      any[String],
+      any[Option[Int]],
+      any[Option[String]],
+      any[Option[String]],
+      any[Sort.Value],
+      any[Option[Int]],
+      any[Option[Int]],
+      any[Boolean]
+    )
+    verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
   }
 
 }

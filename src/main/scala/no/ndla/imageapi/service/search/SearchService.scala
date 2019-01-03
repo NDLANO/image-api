@@ -14,18 +14,21 @@ import com.sksamuel.elastic4s.searches.queries.{BoolQuery, Query}
 import com.sksamuel.elastic4s.searches.sort.{FieldSort, SortOrder}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
+import no.ndla.imageapi.ImageApiProperties.{ElasticSearchIndexMaxResultWindow, ElasticSearchScrollKeepAlive}
 import no.ndla.imageapi.integration.Elastic4sClient
-import no.ndla.imageapi.model.api.{Error, ImageMetaSummary, SearchResult}
+import no.ndla.imageapi.model.api.{Error, ImageMetaSummary}
+import no.ndla.imageapi.model.domain.SearchResult
 import no.ndla.imageapi.model.domain.Sort
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
 import no.ndla.imageapi.model.{Language, NdlaSearchException, ResultWindowTooLargeException}
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
+import org.json4s.Formats
 import org.json4s.native.Serialization.read
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 trait SearchService {
   this: Elastic4sClient with IndexBuilderService with IndexService with SearchConverterService =>
@@ -33,6 +36,23 @@ trait SearchService {
 
   class SearchService extends LazyLogging {
     private val noCopyright = boolQuery().not(termQuery("license", "copyrighted"))
+
+    def scroll(scrollId: String, language: String): Try[SearchResult] =
+      e4sClient
+        .execute {
+          searchScroll(scrollId, ElasticSearchScrollKeepAlive)
+        }
+        .map(response => {
+          val hits = getHits(response.result, Some(language))
+          SearchResult(
+            totalCount = response.result.totalHits,
+            page = None,
+            pageSize = response.result.hits.hits.length,
+            language = if (language == "*") Language.AllLanguages else language,
+            results = hits,
+            scrollId = response.result.scrollId
+          )
+        })
 
     def createEmptyIndexIfNoIndexesExist(): Unit = {
       val noIndexesExist = indexService.findAllIndexes(ImageApiProperties.SearchIndex).map(_.isEmpty).getOrElse(true)
@@ -93,7 +113,7 @@ trait SearchService {
     }
 
     def hitAsImageMetaSummary(hit: String, language: Option[String]): ImageMetaSummary = {
-      implicit val formats = SearchableLanguageFormats.JSonFormats
+      implicit val formats: Formats = SearchableLanguageFormats.JSonFormats
       searchConverterService.asImageMetaSummary(read[SearchableImage](hit), language)
     }
 
@@ -174,27 +194,33 @@ trait SearchService {
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val requestedResultWindow = page.getOrElse(1) * numResults
-      if (requestedResultWindow > ImageApiProperties.ElasticSearchIndexMaxResultWindow) {
+      if (requestedResultWindow > ElasticSearchIndexMaxResultWindow) {
         logger.info(
-          s"Max supported results are ${ImageApiProperties.ElasticSearchIndexMaxResultWindow}, user requested $requestedResultWindow")
+          s"Max supported results are $ElasticSearchIndexMaxResultWindow, user requested $requestedResultWindow")
         throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
       }
 
-      e4sClient.execute {
+      val searchToExecute =
         search(ImageApiProperties.SearchIndex)
           .size(numResults)
           .from(startAt)
           .highlighting(highlight("*"))
           .query(filteredSearch)
           .sortBy(getSortDefinition(sort, searchLanguage))
-      } match {
+
+      // Only add scroll param if it is first page
+      val searchWithScroll =
+        if (startAt != 0) { searchToExecute } else { searchToExecute.scroll(ElasticSearchScrollKeepAlive) }
+
+      e4sClient.execute(searchWithScroll) match {
         case Success(response) =>
           SearchResult(
             response.result.totalHits,
-            page.getOrElse(1),
+            Some(page.getOrElse(1)),
             numResults,
             if (searchLanguage == "*") Language.AllLanguages else searchLanguage,
-            getHits(response.result, language)
+            getHits(response.result, language),
+            response.result.scrollId
           )
         case Failure(ex) =>
           errorHandler(Failure(ex))
@@ -230,27 +256,23 @@ trait SearchService {
 
     private def errorHandler[T](failure: Failure[T]) = {
       failure match {
-        case Failure(e: NdlaSearchException) => {
+        case Failure(e: NdlaSearchException) =>
           e.rf.status match {
-            case notFound: Int if notFound == 404 => {
+            case notFound: Int if notFound == 404 =>
               logger.error(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex.")
               scheduleIndexDocuments()
               throw new IndexNotFoundException(
                 s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex")
-            }
-            case _ => {
+            case _ =>
               logger.error(e.getMessage)
               throw new ElasticsearchException(s"Unable to execute search in ${ImageApiProperties.SearchIndex}",
                                                e.getMessage)
-            }
           }
-
-        }
         case Failure(t: Throwable) => throw t
       }
     }
 
-    private def scheduleIndexDocuments() = {
+    private def scheduleIndexDocuments(): Unit = {
       val f = Future {
         indexBuilderService.indexDocuments
       }

@@ -32,6 +32,7 @@ object Error {
   val WINDOW_TOO_LARGE = "RESULT WINDOW TOO LARGE"
   val IMPORT_FAILED = "IMPORT FAILED"
   val DATABASE_UNAVAILABLE = "DATABASE_UNAVAILABLE"
+  val INVALID_SEARCH_CONTEXT = "INVALID_SEARCH_CONTEXT"
 
   val GenericError = Error(
     GENERIC,
@@ -50,7 +51,11 @@ object Error {
 
   val WindowTooLargeError = Error(
     WINDOW_TOO_LARGE,
-    s"The result window is too large. Fetching pages above ${ImageApiProperties.ElasticSearchIndexMaxResultWindow} results are unsupported."
+    s"The result window is too large. For fetching pages above ${ImageApiProperties.ElasticSearchIndexMaxResultWindow} results requires scrolling, see query-parameter 'search-context'."
   )
   val DatabaseUnavailableError = Error(DATABASE_UNAVAILABLE, s"Database seems to be unavailable, retrying connection.")
+
+  val InvalidSearchContext = Error(
+    INVALID_SEARCH_CONTEXT,
+    "The search-context specified was not expected. Please create one by searching from page 1.")
 }
