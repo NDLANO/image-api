@@ -138,7 +138,7 @@ trait SearchService {
                       sort: Sort.Value,
                       page: Option[Int],
                       pageSize: Option[Int],
-                      includeCopyrighted: Boolean): SearchResult = {
+                      includeCopyrighted: Boolean): Try[SearchResult] = {
       val fullSearch = boolQuery()
         .must(
           boolQuery()
@@ -160,7 +160,7 @@ trait SearchService {
             sort: Sort.Value,
             page: Option[Int],
             pageSize: Option[Int],
-            includeCopyrighted: Boolean): SearchResult =
+            includeCopyrighted: Boolean): Try[SearchResult] =
       executeSearch(boolQuery(), minimumSize, license, language, sort, page, pageSize, includeCopyrighted)
 
     def executeSearch(queryBuilder: BoolQuery,
@@ -170,7 +170,7 @@ trait SearchService {
                       sort: Sort.Value,
                       page: Option[Int],
                       pageSize: Option[Int],
-                      includeCopyrighted: Boolean): SearchResult = {
+                      includeCopyrighted: Boolean): Try[SearchResult] = {
 
       val licenseFilter = license match {
         case None      => if (!includeCopyrighted) Some(noCopyright) else None
@@ -197,35 +197,35 @@ trait SearchService {
       if (requestedResultWindow > ElasticSearchIndexMaxResultWindow) {
         logger.info(
           s"Max supported results are $ElasticSearchIndexMaxResultWindow, user requested $requestedResultWindow")
-        throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
+        Failure(new ResultWindowTooLargeException(Error.WindowTooLargeError.description))
+      } else {
+        val searchToExecute =
+          search(ImageApiProperties.SearchIndex)
+            .size(numResults)
+            .from(startAt)
+            .highlighting(highlight("*"))
+            .query(filteredSearch)
+            .sortBy(getSortDefinition(sort, searchLanguage))
+
+        // Only add scroll param if it is first page
+        val searchWithScroll =
+          if (startAt != 0) { searchToExecute } else { searchToExecute.scroll(ElasticSearchScrollKeepAlive) }
+
+        e4sClient
+          .execute(searchWithScroll) match {
+          case Success(response) =>
+            Success(
+              SearchResult(
+                response.result.totalHits,
+                Some(page.getOrElse(1)),
+                numResults,
+                if (searchLanguage == "*") Language.AllLanguages else searchLanguage,
+                getHits(response.result, language),
+                response.result.scrollId
+              ))
+          case Failure(ex) => errorHandler(ex)
+        }
       }
-
-      val searchToExecute =
-        search(ImageApiProperties.SearchIndex)
-          .size(numResults)
-          .from(startAt)
-          .highlighting(highlight("*"))
-          .query(filteredSearch)
-          .sortBy(getSortDefinition(sort, searchLanguage))
-
-      // Only add scroll param if it is first page
-      val searchWithScroll =
-        if (startAt != 0) { searchToExecute } else { searchToExecute.scroll(ElasticSearchScrollKeepAlive) }
-
-      e4sClient.execute(searchWithScroll) match {
-        case Success(response) =>
-          SearchResult(
-            response.result.totalHits,
-            Some(page.getOrElse(1)),
-            numResults,
-            if (searchLanguage == "*") Language.AllLanguages else searchLanguage,
-            getHits(response.result, language),
-            response.result.scrollId
-          )
-        case Failure(ex) =>
-          errorHandler(Failure(ex))
-      }
-
     }
 
     def countDocuments(): Long = {
@@ -254,21 +254,22 @@ trait SearchService {
       (startAt, numResults)
     }
 
-    private def errorHandler[T](failure: Failure[T]) = {
-      failure match {
-        case Failure(e: NdlaSearchException) =>
+    private def errorHandler[T](exception: Throwable): Failure[T] = {
+      exception match {
+        case e: NdlaSearchException =>
           e.rf.status match {
             case notFound: Int if notFound == 404 =>
               logger.error(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex.")
               scheduleIndexDocuments()
-              throw new IndexNotFoundException(
-                s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex")
+              Failure(
+                new IndexNotFoundException(s"Index ${ImageApiProperties.SearchIndex} not found. Scheduling a reindex"))
             case _ =>
               logger.error(e.getMessage)
-              throw new ElasticsearchException(s"Unable to execute search in ${ImageApiProperties.SearchIndex}",
-                                               e.getMessage)
+              Failure(
+                new ElasticsearchException(s"Unable to execute search in ${ImageApiProperties.SearchIndex}",
+                                           e.getMessage))
           }
-        case Failure(t: Throwable) => throw t
+        case t => Failure(t)
       }
     }
 

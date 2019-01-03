@@ -10,13 +10,11 @@ package no.ndla.imageapi.controller
 
 import java.util.Date
 
-import no.ndla.imageapi.model.domain.Sort
-import no.ndla.imageapi.model.{ImageNotFoundException, Language, api, domain}
-import no.ndla.imageapi.model.api.{NewImageMetaInformationV2, SearchResult, UpdateImageMetaInformation}
-import no.ndla.imageapi.model.domain._
-import no.ndla.imageapi.model.domain
-import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
+import no.ndla.imageapi.model.api.{NewImageMetaInformationV2, SearchResult, UpdateImageMetaInformation}
+import no.ndla.imageapi.model.domain.{Sort, _}
+import no.ndla.imageapi.model.{ImageNotFoundException, api, domain}
+import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.CC_BY
 import org.json4s.DefaultFormats
 import org.json4s.native.JsonParser
@@ -39,7 +37,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   val authHeaderWithWrongRole =
     "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik9FSTFNVVU0T0RrNU56TTVNekkyTXpaRE9EazFOMFl3UXpkRE1EUXlPRFZDUXpRM1FUSTBNQSJ9.eyJodHRwczovL25kbGEubm8vY2xpZW50X2lkIjoieHh4eXl5IiwiaXNzIjoiaHR0cHM6Ly9uZGxhLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJ4eHh5eXlAY2xpZW50cyIsImF1ZCI6Im5kbGFfc3lzdGVtIiwiaWF0IjoxNTEwMzA1NzczLCJleHAiOjE1MTAzOTIxNzMsInNjb3BlIjoic29tZTpvdGhlciIsImd0eSI6ImNsaWVudC1jcmVkZW50aWFscyJ9.Hbmh9KX19nx7yT3rEcP9pyzRO0uQJBRucfqH9QEZtLyXjYj_fAyOhsoicOVEbHSES7rtdiJK43-gijSpWWmGWOkE6Ym7nHGhB_nLdvp_25PDgdKHo-KawZdAyIcJFr5_t3CJ2Z2IPVbrXwUd99vuXEBaV0dMwkT0kDtkwHuS-8E"
 
-  implicit val swagger = new ImageSwagger
+  implicit val swagger: ImageSwagger = new ImageSwagger
   override val converterService = new ConverterService
   lazy val controller = new ImageControllerV2
   addServlet(controller, "/*")
@@ -50,7 +48,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
   val sampleUploadFile = PretendFile(Array[Byte](-1, -40, -1), "image/jpeg", "image.jpg")
 
-  val sampleNewImageMetaV2 =
+  val sampleNewImageMetaV2: String =
     """
       |{
       |  "title":"test1",
@@ -77,7 +75,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       |}
     """.stripMargin
 
-  val sampleUpdateImageMeta =
+  val sampleUpdateImageMeta: String =
     """
       |{
       | "title":"TestTittel",
@@ -88,6 +86,8 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
   test("That GET / returns body and 200") {
     val expectedBody = """{"totalCount":0,"page":1,"pageSize":10,"language":"nb","results":[]}"""
+    val domainSearchResult = domain.SearchResult(0, Some(1), 10, "nb", List(), None)
+    val apiSearchResult = SearchResult(0, Some(1), 10, "nb", List())
     when(
       searchService.all(Option(any[Int]),
                         Option(any[String]),
@@ -95,7 +95,8 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
                         any[Sort.Value],
                         Option(any[Int]),
                         Option(any[Int]),
-                        any[Boolean])).thenReturn(domain.SearchResult(0, Some(1), 10, "nb", List(), None))
+                        any[Boolean])).thenReturn(Success(domainSearchResult))
+    when(searchConverterService.asApiSearchResult(domainSearchResult)).thenReturn(apiSearchResult)
     get("/") {
       status should equal(200)
       body should equal(expectedBody)
@@ -116,6 +117,8 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     )
     val expectedBody =
       """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"]}]}"""
+    val domainSearchResult = domain.SearchResult(1, Some(1), 10, "nb", List(imageSummary), None)
+    val apiSearchResult = api.SearchResult(1, Some(1), 10, "nb", List(imageSummary))
     when(
       searchService.all(Option(any[Int]),
                         Option(any[String]),
@@ -123,7 +126,9 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
                         any[Sort.Value],
                         Option(any[Int]),
                         Option(any[Int]),
-                        any[Boolean])).thenReturn(domain.SearchResult(1, Some(1), 10, "nb", List(imageSummary), None))
+                        any[Boolean]))
+      .thenReturn(Success(domainSearchResult))
+    when(searchConverterService.asApiSearchResult(domainSearchResult)).thenReturn(apiSearchResult)
     get("/") {
       status should equal(200)
       body should equal(expectedBody)
@@ -138,7 +143,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   }
 
   test("That GET /<id> returns body and 200 when image exists") {
-    implicit val formats = DefaultFormats
+    implicit val formats: DefaultFormats.type = DefaultFormats
     val testUrl = "http://test.test/1"
     val expectedBody =
       s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"CC-BY-NC-SA-4.0","description":"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International","url":"https://creativecommons.org/licenses/by-nc-sa/4.0/"},"origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
@@ -164,7 +169,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
         None,
         None
       )))
-    implicit val formats = DefaultFormats
+    implicit val formats: DefaultFormats.type = DefaultFormats
     val testUrl = "http://test.test/1"
     val expectedBody =
       s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"gnu","description":"gnuggert","url":"https://gnuli/"},"agreementId": 1,"origin":"http://www.scanpix.no","creators":[{"type":"Forfatter","name":"Knutulf Knagsen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
@@ -203,7 +208,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
   test("That GET /<id> returns body with original copyright if agreement doesnt exist") {
     when(draftApiClient.getAgreementCopyright(1)).thenReturn(None)
-    implicit val formats = DefaultFormats
+    implicit val formats: DefaultFormats.type = DefaultFormats
     val testUrl = "http://test.test/1"
     val expectedBody =
       s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"CC-BY-NC-SA-4.0","description":"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International","url":"https://creativecommons.org/licenses/by-nc-sa/4.0/"}, "agreementId":1, "origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
@@ -361,7 +366,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
         any[Option[Int]],
         any[Boolean]
       ))
-      .thenReturn(searchResponse)
+      .thenReturn(Success(searchResponse))
 
     get(s"/") {
       status should be(200)

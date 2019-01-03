@@ -51,7 +51,7 @@ object Error {
 
   val WindowTooLargeError = Error(
     WINDOW_TOO_LARGE,
-    s"The result window is too large. For fetching pages above ${ImageApiProperties.ElasticSearchIndexMaxResultWindow} results requires scrolling, see query-parameter 'search-context'."
+    s"The result window is too large. Fetching pages above ${ImageApiProperties.ElasticSearchIndexMaxResultWindow} results requires scrolling, see query-parameter 'search-context'."
   )
   val DatabaseUnavailableError = Error(DATABASE_UNAVAILABLE, s"Database seems to be unavailable, retrying connection.")
 

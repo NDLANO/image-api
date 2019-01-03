@@ -160,7 +160,7 @@ trait ImageControllerV2 {
                        pageSize: Option[Int],
                        page: Option[Int],
                        includeCopyrighted: Boolean) = {
-      query match {
+      val result = query match {
         case Some(searchString) =>
           searchService.matchingQuery(
             query = searchString.trim,
@@ -172,15 +172,22 @@ trait ImageControllerV2 {
             pageSize,
             includeCopyrighted
           )
-
         case None =>
-          searchService.all(minimumSize = minimumSize,
-                            license = license,
-                            language = language,
-                            sort = sort.getOrElse(Sort.ByTitleAsc),
-                            page,
-                            pageSize,
-                            includeCopyrighted)
+          searchService.all(
+            minimumSize = minimumSize,
+            license = license,
+            language = language,
+            sort = sort.getOrElse(Sort.ByTitleAsc),
+            page,
+            pageSize,
+            includeCopyrighted
+          )
+      }
+      result match {
+        case Success(searchResult) =>
+          val responseHeader = searchResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
+          Ok(searchConverterService.asApiSearchResult(searchResult), headers = responseHeader)
+        case Failure(ex) => errorHandler(ex)
       }
     }
 
@@ -199,21 +206,24 @@ trait ImageControllerV2 {
             asQueryParam(includeCopyrighted),
             asQueryParam(sort),
             asQueryParam(pageNo),
-            asQueryParam(pageSize)
+            asQueryParam(pageSize),
+            asQueryParam(scrollId)
         )
           authorizations "oauth2"
           responseMessages response500)
     ) {
-      val minimumSize = intOrNone(this.minSize.paramName)
-      val query = paramOrNone(this.query.paramName)
-      val language = paramOrNone(this.language.paramName)
-      val license = params.get(this.license.paramName)
-      val pageSize = intOrNone(this.pageSize.paramName)
-      val page = intOrNone(this.pageNo.paramName)
-      val sort = Sort.valueOf(paramOrDefault(this.sort.paramName, ""))
-      val includeCopyrighted = booleanOrDefault(this.includeCopyrighted.paramName, default = false)
+      scrollOr {
+        val minimumSize = intOrNone(this.minSize.paramName)
+        val query = paramOrNone(this.query.paramName)
+        val language = paramOrNone(this.language.paramName)
+        val license = params.get(this.license.paramName)
+        val pageSize = intOrNone(this.pageSize.paramName)
+        val page = intOrNone(this.pageNo.paramName)
+        val sort = Sort.valueOf(paramOrDefault(this.sort.paramName, ""))
+        val includeCopyrighted = booleanOrDefault(this.includeCopyrighted.paramName, default = false)
 
-      search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
+        search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
+      }
     }
 
     post(
@@ -224,22 +234,25 @@ trait ImageControllerV2 {
           description "Find images in the ndla.no database."
           parameters (
             asHeaderParam(correlationId),
-            bodyParam[SearchParams]
+            bodyParam[SearchParams],
+            asQueryParam(scrollId)
         )
           authorizations "oauth2"
           responseMessages (response400, response500))
     ) {
-      val searchParams = extract[SearchParams](request.body)
-      val minimumSize = searchParams.minimumSize
-      val query = searchParams.query
-      val language = searchParams.language
-      val license = searchParams.license
-      val pageSize = searchParams.pageSize
-      val page = searchParams.page
-      val sort = Sort.valueOf(searchParams.sort)
-      val includeCopyrighted = searchParams.includeCopyrighted.getOrElse(false)
+      scrollOr {
+        val searchParams = extract[SearchParams](request.body)
+        val minimumSize = searchParams.minimumSize
+        val query = searchParams.query
+        val language = searchParams.language
+        val license = searchParams.license
+        val pageSize = searchParams.pageSize
+        val page = searchParams.page
+        val sort = Sort.valueOf(searchParams.sort)
+        val includeCopyrighted = searchParams.includeCopyrighted.getOrElse(false)
 
-      search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
+        search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
+      }
     }
 
     get(
