@@ -78,29 +78,21 @@ trait ImageControllerV2 {
     private val minSize =
       Param[Option[Int]]("minimum-size", "Return only images with full size larger than submitted value in bytes.")
     private val language = Param[Option[String]]("language", "The ISO 639-1 language code describing language.")
-    private val languagePath = Param[String]("language", "The ISO 639-1 language code describing language.")
     private val license = Param[Option[String]]("license", "Return only images with provided license.")
     private val includeCopyrighted =
       Param[Option[Boolean]]("includeCopyrighted", "Return copyrighted images. May be omitted.")
     private val sort = Param[Option[String]](
       "sort",
-      """The sorting used on results.
-             The following are supported: relevance, -relevance, title, -title, lastUpdated, -lastUpdated, id, -id.
+      s"""The sorting used on results.
+             The following are supported: ${Sort.values.mkString(", ")}.
              Default is by -relevance (desc) when query is set, and title (asc) when query is empty.""".stripMargin
     )
     private val pageNo = Param[Option[Int]]("page", "The page number of the search hits to display.")
     private val pageSize = Param[Option[Int]]("page-size", "The number of search hits to display for each page.")
     private val imageId = Param[String]("image_id", "Image_id of the image that needs to be fetched.")
-    private val metadata = Param[String]( // TODO: Er ikke denne syntaxen potensielt feil?
+    private val metadata = Param[NewImageMetaInformationV2](
       "metadata",
-      """The metadata for the image file to submit. Format (as JSON):
-            {
-             title: String,
-             alttext: String,
-             tags: Array[String],
-             caption: String,
-             language: String
-             }""".stripMargin
+      """The metadata for the image file to submit.""".stripMargin
     )
     private val file = Param("file", "The image file(s) to upload")
 
@@ -120,8 +112,18 @@ trait ImageControllerV2 {
       headerParam[T](param.paramName).description(param.description)
     private def asPathParam[T: Manifest: NotNothing](param: Param[T]) =
       pathParam[T](param.paramName).description(param.description)
-    private def asFormParam[T: Manifest: NotNothing](param: Param[T]) =
-      formParam[T](param.paramName).description(param.description)
+    private def asObjectFormParam[T: Manifest: NotNothing](param: Param[T]) = {
+      val className = manifest[T].runtimeClass.getSimpleName
+      val modelOpt = models.get(className)
+
+      modelOpt match {
+        case Some(value) =>
+          formParam(param.paramName, value).description(param.description)
+        case None =>
+          logger.error(s"${param.paramName} could not be resolved as object formParam, doing regular formParam.")
+          formParam[T](param.paramName).description(param.description)
+      }
+    }
     private def asFileParam(param: Param[_]) =
       Parameter(name = param.paramName,
                 `type` = ValueDataType("file"),
@@ -289,7 +291,8 @@ trait ImageControllerV2 {
           consumes "multipart/form-data"
           parameters (
             asHeaderParam(correlationId),
-            asFormParam(metadata),
+            asObjectFormParam(metadata),
+            formParam(metadata.paramName, models("NewImageMetaInformationV2")),
             asFileParam(file)
         )
           authorizations "oauth2"
