@@ -8,7 +8,7 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.ImageApiProperties.{MaxImageFileSizeBytes, RoleWithWriteAccess}
+import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize, MaxImageFileSizeBytes, RoleWithWriteAccess}
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.integration.DraftApiClient
 import no.ndla.imageapi.model.api.{
@@ -49,7 +49,7 @@ trait ImageControllerV2 {
       with SwaggerSupport
       with FileUploadSupport {
     // Swagger-stuff
-    protected val applicationDescription = "Services for accessing images"
+    protected val applicationDescription = "Services for accessing images from NDLA."
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     // Additional models used in error responses
@@ -75,12 +75,14 @@ trait ImageControllerV2 {
     private val includeCopyrighted = Param("includeCopyrighted", "Return copyrighted images. May be omitted.")
     private val sort = Param(
       "sort",
-      """The sorting used on results.
-             The following are supported: relevance, -relevance, title, -title, lastUpdated, -lastUpdated, id, -id.
+      s"""The sorting used on results.
+             The following are supported: ${Sort.values.mkString(", ")}.
              Default is by -relevance (desc) when query is set, and title (asc) when query is empty.""".stripMargin
     )
     private val pageNo = Param("page", "The page number of the search hits to display.")
-    private val pageSize = Param("page-size", "The number of search hits to display for each page.")
+    private val pageSize = Param(
+      "page-size",
+      s"The number of search hits to display for each page. Defaults to $DefaultPageSize and max is $MaxPageSize.")
     private val imageId = Param("image_id", "Image_id of the image that needs to be fetched.")
     private val metadata = Param(
       "metadata",
@@ -143,25 +145,26 @@ trait ImageControllerV2 {
       }
     }
 
-    val getImages =
-      (apiOperation[SearchResult]("getImages")
-        summary "Find images"
-        description "Find images in the ndla.no database."
-        parameters (
-          asHeaderParam[Option[String]](correlationId),
-          asQueryParam[Option[String]](query),
-          asQueryParam[Option[Int]](minSize),
-          asQueryParam[Option[String]](language),
-          asQueryParam[Option[String]](license),
-          asQueryParam[Option[Boolean]](includeCopyrighted),
-          asQueryParam[Option[String]](sort),
-          asQueryParam[Option[Int]](pageNo),
-          asQueryParam[Option[Int]](pageSize)
+    get(
+      "/",
+      operation(
+        apiOperation[SearchResult]("getImages")
+          summary "Find images."
+          description "Find images in the ndla.no database."
+          parameters (
+            asHeaderParam[Option[String]](correlationId),
+            asQueryParam[Option[String]](query),
+            asQueryParam[Option[Int]](minSize),
+            asQueryParam[Option[String]](language),
+            asQueryParam[Option[String]](license),
+            asQueryParam[Option[Boolean]](includeCopyrighted),
+            asQueryParam[Option[String]](sort),
+            asQueryParam[Option[Int]](pageNo),
+            asQueryParam[Option[Int]](pageSize)
+        )
+          responseMessages response500
       )
-        authorizations "oauth2"
-        responseMessages response500)
-
-    get("/", operation(getImages)) {
+    ) {
       val minimumSize = intOrNone(this.minSize.paramName)
       val query = paramOrNone(this.query.paramName)
       val language = paramOrNone(this.language.paramName)
@@ -174,18 +177,19 @@ trait ImageControllerV2 {
       search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
     }
 
-    val getImagesPost =
-      (apiOperation[List[SearchResult]]("getImagesPost")
-        summary "Find images"
-        description "Find images in the ndla.no database."
-        parameters (
-          asHeaderParam[Option[String]](correlationId),
-          bodyParam[SearchParams]
+    post(
+      "/search/",
+      operation(
+        apiOperation[List[SearchResult]]("getImagesPost")
+          summary "Find images."
+          description "Search for images in the ndla.no database."
+          parameters (
+            asHeaderParam[Option[String]](correlationId),
+            bodyParam[SearchParams]
+        )
+          responseMessages (response400, response500)
       )
-        authorizations "oauth2"
-        responseMessages (response400, response500))
-
-    post("/search/", operation(getImagesPost)) {
+    ) {
       val searchParams = extract[SearchParams](request.body)
       val minimumSize = searchParams.minimumSize
       val query = searchParams.query
@@ -199,19 +203,20 @@ trait ImageControllerV2 {
       search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
     }
 
-    val getByImageId =
-      (apiOperation[ImageMetaInformationV2]("findByImageId")
-        summary "Fetch information for image"
-        description "Shows info of the image with submitted id."
-        parameters (
-          asHeaderParam[Option[String]](correlationId),
-          asPathParam[String](imageId),
-          asQueryParam[String](language)
+    get(
+      "/:image_id",
+      operation(
+        apiOperation[ImageMetaInformationV2]("findByImageId")
+          summary "Fetch information for image."
+          description "Shows info of the image with submitted id."
+          parameters (
+            asHeaderParam[Option[String]](correlationId),
+            asPathParam[String](imageId),
+            asQueryParam[String](language)
+        )
+          responseMessages (response404, response500)
       )
-        authorizations "oauth2"
-        responseMessages (response404, response500))
-
-    get("/:image_id", operation(getByImageId)) {
+    ) {
       val imageId = long(this.imageId.paramName)
       val language = paramOrNone(this.language.paramName)
       imageRepository
@@ -223,20 +228,22 @@ trait ImageControllerV2 {
       }
     }
 
-    val newImage =
-      (apiOperation[ImageMetaInformationV2]("newImage")
-        summary "Upload a new image with meta information"
-        description "Upload a new image file with meta data"
-        consumes "multipart/form-data"
-        parameters (
-          asHeaderParam[Option[String]](correlationId),
-          asFormParam[String](metadata),
-          asFileParam(file)
+    post(
+      "/",
+      operation(
+        apiOperation[ImageMetaInformationV2]("newImage")
+          summary "Upload a new image with meta information."
+          description "Upload a new image file with meta data."
+          consumes "multipart/form-data"
+          parameters (
+            asHeaderParam[Option[String]](correlationId),
+            asFormParam[String](metadata),
+            asFileParam(file)
+        )
+          authorizations "oauth2"
+          responseMessages (response400, response403, response413, response500)
       )
-        authorizations "oauth2"
-        responseMessages (response400, response403, response413, response500))
-
-    post("/", operation(newImage)) {
+    ) {
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
 
@@ -264,20 +271,22 @@ trait ImageControllerV2 {
       }
     }
 
-    val updateImage =
-      (apiOperation[ImageMetaInformationV2]("newImage")
-        summary "Update an existing image with meta information"
-        description "Updates an existing image with meta data."
-        consumes "form-data"
-        parameters (
-          asHeaderParam[Option[String]](correlationId),
-          asPathParam[String](imageId),
-          bodyParam[UpdateImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
+    patch(
+      "/:image_id",
+      operation(
+        apiOperation[ImageMetaInformationV2]("newImage")
+          summary "Update an existing image with meta information."
+          description "Updates an existing image with meta data."
+          consumes "form-data"
+          parameters (
+            asHeaderParam[Option[String]](correlationId),
+            asPathParam[String](imageId),
+            bodyParam[UpdateImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
+        )
+          authorizations "oauth2"
+          responseMessages (response400, response403, response500)
       )
-        authorizations "oauth2"
-        responseMessages (response400, response403, response500))
-
-    patch("/:image_id", operation(updateImage)) {
+    ) {
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
       val imageId = long(this.imageId.paramName)
