@@ -68,6 +68,10 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     case _: PSQLException =>
       ComponentRegistry.connectToDatabase()
       InternalServerError(Error.DatabaseUnavailableError)
+    case nse: NdlaSearchException
+        if nse.rf.error.rootCause.exists(x =>
+          x.`type` == "search_context_missing_exception" || x.reason == "Cannot parse scroll id") =>
+      BadRequest(body = Error.InvalidSearchContext)
     case t: Throwable =>
       logger.error(Error.GenericError.toString, t)
       InternalServerError(body = Error.GenericError)

@@ -14,6 +14,8 @@ import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import no.ndla.imageapi.model.Language
 import no.ndla.imageapi.model.api.{ImageAltText, ImageMetaSummary, ImageTitle}
 import no.ndla.imageapi.model.domain.ImageMetaInformation
+import no.ndla.imageapi.model.api
+import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.model.search.{LanguageValue, SearchableImage, SearchableLanguageList, SearchableLanguageValues}
 import no.ndla.imageapi.service.ConverterService
 import no.ndla.mapping.ISO639
@@ -109,6 +111,15 @@ trait SearchConverterService {
           keyToLanguage(result.sourceAsMap.keys)
       }
     }
+
+    def asApiSearchResult(searchResult: domain.SearchResult): api.SearchResult =
+      api.SearchResult(
+        searchResult.totalCount,
+        searchResult.page,
+        searchResult.pageSize,
+        searchResult.language,
+        searchResult.results
+      )
 
   }
 
