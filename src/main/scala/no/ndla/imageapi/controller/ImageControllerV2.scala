@@ -8,7 +8,14 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize, MaxImageFileSizeBytes, RoleWithWriteAccess}
+import no.ndla.imageapi.ImageApiProperties.{
+  DefaultPageSize,
+  MaxPageSize,
+  MaxImageFileSizeBytes,
+  RoleWithWriteAccess,
+  ElasticSearchScrollKeepAlive,
+  ElasticSearchIndexMaxResultWindow
+}
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.integration.DraftApiClient
 import no.ndla.imageapi.model.api.{
@@ -22,11 +29,14 @@ import no.ndla.imageapi.model.api.{
   ValidationError
 }
 import no.ndla.imageapi.model.domain.Sort
+import no.ndla.imageapi.model.{Language, ValidationException, ValidationMessage}
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
+import no.ndla.imageapi.service.search.{SearchConverterService, SearchService}
 import no.ndla.imageapi.service.search.SearchService
 import no.ndla.imageapi.service.{ConverterService, WriteService}
 import org.json4s.{DefaultFormats, Formats}
+import org.scalatra.Ok
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
@@ -40,6 +50,7 @@ trait ImageControllerV2 {
     with ConverterService
     with WriteService
     with DraftApiClient
+    with SearchConverterService
     with Role
     with User =>
   val imageControllerV2: ImageControllerV2
@@ -49,7 +60,7 @@ trait ImageControllerV2 {
       with SwaggerSupport
       with FileUploadSupport {
     // Swagger-stuff
-    protected val applicationDescription = "Services for accessing images from NDLA."
+    protected val applicationDescription = "Services for accessing images from NDLA"
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     // Additional models used in error responses
@@ -63,55 +74,92 @@ trait ImageControllerV2 {
     val response413 = ResponseMessage(413, "File too big", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
 
-    case class Param(paramName: String, description: String)
+    case class Param[T](paramName: String, description: String)
 
-    private val correlationId = Param("X-Correlation-ID", "User supplied correlation-id. May be omitted.")
+    private val correlationId =
+      Param[Option[String]]("X-Correlation-ID", "User supplied correlation-id. May be omitted.")
     private val query =
-      Param("query", "Return only images with titles, alt-texts or tags matching the specified query.")
+      Param[Option[String]]("query", "Return only images with titles, alt-texts or tags matching the specified query.")
     private val minSize =
-      Param("minimum-size", "Return only images with full size larger than submitted value in bytes.")
-    private val language = Param("language", "The ISO 639-1 language code describing language.")
-    private val license = Param("license", "Return only images with provided license.")
-    private val includeCopyrighted = Param("includeCopyrighted", "Return copyrighted images. May be omitted.")
-    private val sort = Param(
+      Param[Option[Int]]("minimum-size", "Return only images with full size larger than submitted value in bytes.")
+    private val language = Param[Option[String]]("language", "The ISO 639-1 language code describing language.")
+    private val license = Param[Option[String]]("license", "Return only images with provided license.")
+    private val includeCopyrighted =
+      Param[Option[Boolean]]("includeCopyrighted", "Return copyrighted images. May be omitted.")
+    private val sort = Param[Option[String]](
       "sort",
       s"""The sorting used on results.
              The following are supported: ${Sort.values.mkString(", ")}.
              Default is by -relevance (desc) when query is set, and title (asc) when query is empty.""".stripMargin
     )
-    private val pageNo = Param("page", "The page number of the search hits to display.")
-    private val pageSize = Param(
+    private val pageNo = Param[Option[Int]]("page", "The page number of the search hits to display.")
+    private val pageSize = Param[Option[Int]](
       "page-size",
       s"The number of search hits to display for each page. Defaults to $DefaultPageSize and max is $MaxPageSize.")
-    private val imageId = Param("image_id", "Image_id of the image that needs to be fetched.")
-    private val metadata = Param(
+    private val imageId = Param[String]("image_id", "Image_id of the image that needs to be fetched.")
+    private val metadata = Param[NewImageMetaInformationV2](
       "metadata",
-      """The metadata for the image file to submit. Format (as JSON):
-            {
-             title: String,
-             alttext: String,
-             tags: Array[String],
-             caption: String,
-             language: String
-             }""".stripMargin
+      """The metadata for the image file to submit.""".stripMargin
     )
     private val file = Param("file", "The image file(s) to upload")
 
-    private def asQueryParam[T: Manifest: NotNothing](param: Param) =
+    private val scrollId = Param[Option[String]](
+      "search-context",
+      s"""A search context retrieved from the response header of a previous search.
+         |If search-context is specified, all other query parameters, except '${this.language.paramName}' is ignored.
+         |For the rest of the parameters the original search of the search-context is used.
+         |The search context may change between scrolls. Always use the most recent one (The context if unused dies after $ElasticSearchScrollKeepAlive).
+         |Used to enable scrolling past $ElasticSearchIndexMaxResultWindow results.
+      """.stripMargin
+    )
+
+    private def asQueryParam[T: Manifest: NotNothing](param: Param[T]) =
       queryParam[T](param.paramName).description(param.description)
-    private def asHeaderParam[T: Manifest: NotNothing](param: Param) =
+    private def asHeaderParam[T: Manifest: NotNothing](param: Param[T]) =
       headerParam[T](param.paramName).description(param.description)
-    private def asPathParam[T: Manifest: NotNothing](param: Param) =
+    private def asPathParam[T: Manifest: NotNothing](param: Param[T]) =
       pathParam[T](param.paramName).description(param.description)
-    private def asFormParam[T: Manifest: NotNothing](param: Param) =
-      formParam[T](param.paramName).description(param.description)
-    private def asFileParam(param: Param) =
+    private def asObjectFormParam[T: Manifest: NotNothing](param: Param[T]) = {
+      val className = manifest[T].runtimeClass.getSimpleName
+      val modelOpt = models.get(className)
+
+      modelOpt match {
+        case Some(value) =>
+          formParam(param.paramName, value).description(param.description)
+        case None =>
+          logger.error(s"${param.paramName} could not be resolved as object formParam, doing regular formParam.")
+          formParam[T](param.paramName).description(param.description)
+      }
+    }
+    private def asFileParam(param: Param[_]) =
       Parameter(name = param.paramName,
                 `type` = ValueDataType("file"),
                 description = Some(param.description),
                 paramType = ParamType.Form)
 
     configureMultipartHandling(MultipartConfig(maxFileSize = Some(MaxImageFileSizeBytes)))
+
+    /**
+      * Does a scroll with [[SearchService]]
+      * If no scrollId is specified execute the function @orFunction in the second parameter list.
+      *
+      * @param orFunction Function to execute if no scrollId in parameters (Usually searching)
+      * @return A Try with scroll result, or the return of the orFunction (Usually a try with a search result).
+      */
+    private def scrollSearchOr(orFunction: => Any): Any = {
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+
+      paramOrNone(this.scrollId.paramName) match {
+        case Some(scroll) =>
+          searchService.scroll(scroll, language) match {
+            case Success(scrollResult) =>
+              val responseHeader = scrollResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
+              Ok(searchConverterService.asApiSearchResult(scrollResult), headers = responseHeader)
+            case Failure(ex) => errorHandler(ex)
+          }
+        case None => orFunction
+      }
+    }
 
     private def search(minimumSize: Option[Int],
                        query: Option[String],
@@ -121,7 +169,7 @@ trait ImageControllerV2 {
                        pageSize: Option[Int],
                        page: Option[Int],
                        includeCopyrighted: Boolean) = {
-      query match {
+      val result = query match {
         case Some(searchString) =>
           searchService.matchingQuery(
             query = searchString.trim,
@@ -133,15 +181,22 @@ trait ImageControllerV2 {
             pageSize,
             includeCopyrighted
           )
-
         case None =>
-          searchService.all(minimumSize = minimumSize,
-                            license = license,
-                            language = language,
-                            sort = sort.getOrElse(Sort.ByTitleAsc),
-                            page,
-                            pageSize,
-                            includeCopyrighted)
+          searchService.all(
+            minimumSize = minimumSize,
+            license = license,
+            language = language,
+            sort = sort.getOrElse(Sort.ByTitleAsc),
+            page,
+            pageSize,
+            includeCopyrighted
+          )
+      }
+      result match {
+        case Success(searchResult) =>
+          val responseHeader = searchResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
+          Ok(searchConverterService.asApiSearchResult(searchResult), headers = responseHeader)
+        case Failure(ex) => errorHandler(ex)
       }
     }
 
@@ -152,29 +207,32 @@ trait ImageControllerV2 {
           summary "Find images."
           description "Find images in the ndla.no database."
           parameters (
-            asHeaderParam[Option[String]](correlationId),
-            asQueryParam[Option[String]](query),
-            asQueryParam[Option[Int]](minSize),
-            asQueryParam[Option[String]](language),
-            asQueryParam[Option[String]](license),
-            asQueryParam[Option[Boolean]](includeCopyrighted),
-            asQueryParam[Option[String]](sort),
-            asQueryParam[Option[Int]](pageNo),
-            asQueryParam[Option[Int]](pageSize)
+            asHeaderParam(correlationId),
+            asQueryParam(query),
+            asQueryParam(minSize),
+            asQueryParam(language),
+            asQueryParam(license),
+            asQueryParam(includeCopyrighted),
+            asQueryParam(sort),
+            asQueryParam(pageNo),
+            asQueryParam(pageSize),
+            asQueryParam(scrollId)
         )
           responseMessages response500
       )
     ) {
-      val minimumSize = intOrNone(this.minSize.paramName)
-      val query = paramOrNone(this.query.paramName)
-      val language = paramOrNone(this.language.paramName)
-      val license = params.get(this.license.paramName)
-      val pageSize = intOrNone(this.pageSize.paramName)
-      val page = intOrNone(this.pageNo.paramName)
-      val sort = Sort.valueOf(paramOrDefault(this.sort.paramName, ""))
-      val includeCopyrighted = booleanOrDefault(this.includeCopyrighted.paramName, false)
+      scrollSearchOr {
+        val minimumSize = intOrNone(this.minSize.paramName)
+        val query = paramOrNone(this.query.paramName)
+        val language = paramOrNone(this.language.paramName)
+        val license = params.get(this.license.paramName)
+        val pageSize = intOrNone(this.pageSize.paramName)
+        val page = intOrNone(this.pageNo.paramName)
+        val sort = Sort.valueOf(paramOrDefault(this.sort.paramName, ""))
+        val includeCopyrighted = booleanOrDefault(this.includeCopyrighted.paramName, default = false)
 
-      search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
+        search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
+      }
     }
 
     post(
@@ -184,23 +242,26 @@ trait ImageControllerV2 {
           summary "Find images."
           description "Search for images in the ndla.no database."
           parameters (
-            asHeaderParam[Option[String]](correlationId),
-            bodyParam[SearchParams]
+            asHeaderParam(correlationId),
+            bodyParam[SearchParams],
+            asQueryParam(scrollId)
         )
           responseMessages (response400, response500)
       )
     ) {
-      val searchParams = extract[SearchParams](request.body)
-      val minimumSize = searchParams.minimumSize
-      val query = searchParams.query
-      val language = searchParams.language
-      val license = searchParams.license
-      val pageSize = searchParams.pageSize
-      val page = searchParams.page
-      val sort = Sort.valueOf(searchParams.sort)
-      val includeCopyrighted = searchParams.includeCopyrighted.getOrElse(false)
+      scrollSearchOr {
+        val searchParams = extract[SearchParams](request.body)
+        val minimumSize = searchParams.minimumSize
+        val query = searchParams.query
+        val language = searchParams.language
+        val license = searchParams.license
+        val pageSize = searchParams.pageSize
+        val page = searchParams.page
+        val sort = Sort.valueOf(searchParams.sort)
+        val includeCopyrighted = searchParams.includeCopyrighted.getOrElse(false)
 
-      search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
+        search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
+      }
     }
 
     get(
@@ -210,9 +271,9 @@ trait ImageControllerV2 {
           summary "Fetch information for image."
           description "Shows info of the image with submitted id."
           parameters (
-            asHeaderParam[Option[String]](correlationId),
-            asPathParam[String](imageId),
-            asQueryParam[String](language)
+            asHeaderParam(correlationId),
+            asPathParam(imageId),
+            asQueryParam(language)
         )
           responseMessages (response404, response500)
       )
@@ -236,8 +297,9 @@ trait ImageControllerV2 {
           description "Upload a new image file with meta data."
           consumes "multipart/form-data"
           parameters (
-            asHeaderParam[Option[String]](correlationId),
-            asFormParam[String](metadata),
+            asHeaderParam(correlationId),
+            asObjectFormParam(metadata),
+            formParam(metadata.paramName, models("NewImageMetaInformationV2")),
             asFileParam(file)
         )
           authorizations "oauth2"
@@ -279,8 +341,8 @@ trait ImageControllerV2 {
           description "Updates an existing image with meta data."
           consumes "form-data"
           parameters (
-            asHeaderParam[Option[String]](correlationId),
-            asPathParam[String](imageId),
+            asHeaderParam(correlationId),
+            asPathParam(imageId),
             bodyParam[UpdateImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
         )
           authorizations "oauth2"

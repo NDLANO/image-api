@@ -8,6 +8,7 @@
 package no.ndla.imageapi.service.search
 
 import java.nio.file.{Files, Path}
+import java.util.Date
 
 import com.sksamuel.elastic4s.embedded.LocalNode
 import javax.servlet.http.HttpServletRequest
@@ -35,7 +36,7 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   override val indexService = new IndexService
   override val searchService = new SearchService
 
-  val getStartAtAndNumResults = PrivateMethod[(Int, Int)]('getStartAtAndNumResults)
+  val getStartAtAndNumResults: PrivateMethod[(Int, Int)] = PrivateMethod[(Int, Int)]('getStartAtAndNumResults)
 
   val largeImage = Image("large-full-url", 10000, "jpg")
   val smallImage = Image("small-full-url", 100, "jpg")
@@ -57,7 +58,7 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
                                None,
                                None,
                                None)
-  val updated = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
+  val updated: Date = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
   val agreement1Copyright = api.Copyright(api.License("gnu", "gnustuff", Some("http://gnugnusen")),
                                           "Simsalabim",
@@ -140,7 +141,7 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
     updated
   )
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     indexService.createIndexWithName(ImageApiProperties.SearchIndex)
 
     when(draftApiClient.getAgreementCopyright(any[Long])).thenReturn(None)
@@ -162,7 +163,7 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
     blockUntil(() => searchService.countDocuments() == 5)
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     indexService.deleteIndexWithName(Some(ImageApiProperties.SearchIndex))
   }
 
@@ -191,16 +192,18 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all returns all documents ordered by id ascending") {
-    val searchResult = searchService.all(None, None, None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.all(None, None, None, Sort.ByIdAsc, None, None, includeCopyrighted = false)
     searchResult.totalCount should be(5)
     searchResult.results.size should be(5)
-    searchResult.page should be(1)
+    searchResult.page.get should be(1)
     searchResult.results.head.id should be("1")
     searchResult.results.last.id should be("5")
   }
 
   test("That all filtering on minimumsize only returns images larger than minimumsize") {
-    val searchResult = searchService.all(Some(500), None, None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.all(Some(500), None, None, Sort.ByIdAsc, None, None, includeCopyrighted = false)
     searchResult.totalCount should be(2)
     searchResult.results.size should be(2)
     searchResult.results.head.id should be("1")
@@ -208,24 +211,27 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all filtering on license only returns images with given license") {
-    val searchResult = searchService.all(None, Some(PublicDomain.toString), None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.all(None, Some(PublicDomain.toString), None, Sort.ByIdAsc, None, None, includeCopyrighted = false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
   test("That paging returns only hits on current page and not more than page-size") {
-    val searchResultPage1 = searchService.all(None, None, None, Sort.ByIdAsc, Some(1), Some(2), false)
-    val searchResultPage2 = searchService.all(None, None, None, Sort.ByIdAsc, Some(2), Some(2), false)
+    val Success(searchResultPage1) =
+      searchService.all(None, None, None, Sort.ByIdAsc, Some(1), Some(2), includeCopyrighted = false)
+    val Success(searchResultPage2) =
+      searchService.all(None, None, None, Sort.ByIdAsc, Some(2), Some(2), includeCopyrighted = false)
     searchResultPage1.totalCount should be(5)
-    searchResultPage1.page should be(1)
+    searchResultPage1.page.get should be(1)
     searchResultPage1.pageSize should be(2)
     searchResultPage1.results.size should be(2)
     searchResultPage1.results.head.id should be("1")
     searchResultPage1.results.last.id should be("2")
 
     searchResultPage2.totalCount should be(5)
-    searchResultPage2.page should be(2)
+    searchResultPage2.page.get should be(2)
     searchResultPage2.pageSize should be(2)
     searchResultPage2.results.size should be(2)
     searchResultPage2.results.head.id should be("3")
@@ -233,14 +239,22 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That both minimum-size and license filters are applied.") {
-    val searchResult = searchService.all(Some(500), Some(PublicDomain.toString), None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.all(Some(500),
+                        Some(PublicDomain.toString),
+                        None,
+                        Sort.ByIdAsc,
+                        None,
+                        None,
+                        includeCopyrighted = false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
   test("That search matches title and alttext ordered by relevance") {
-    val searchResult = searchService.matchingQuery("bil", None, None, None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.matchingQuery("bil", None, None, None, Sort.ByIdAsc, None, None, includeCopyrighted = false)
     searchResult.totalCount should be(2)
     searchResult.results.size should be(2)
     searchResult.results.head.id should be("1")
@@ -248,28 +262,46 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That search matches title") {
-    val searchResult = searchService.matchingQuery("Pingvinen", None, Some("nb"), None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.matchingQuery("Pingvinen",
+                                  None,
+                                  Some("nb"),
+                                  None,
+                                  Sort.ByIdAsc,
+                                  None,
+                                  None,
+                                  includeCopyrighted = false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
   test("That search on author matches corresponding author on image") {
-    val searchResult = searchService.matchingQuery("Bruce Wayne", None, None, None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.matchingQuery("Bruce Wayne", None, None, None, Sort.ByIdAsc, None, None, includeCopyrighted = false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("2")
   }
 
   test("That search matches tags") {
-    val searchResult = searchService.matchingQuery("and", None, Some("nb"), None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.matchingQuery("and", None, Some("nb"), None, Sort.ByIdAsc, None, None, includeCopyrighted = false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("3")
   }
 
   test("That search defaults to nb if no language is specified") {
-    val searchResult = searchService.matchingQuery("Bilde av en and", None, None, None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.matchingQuery("Bilde av en and",
+                                  None,
+                                  None,
+                                  None,
+                                  Sort.ByIdAsc,
+                                  None,
+                                  None,
+                                  includeCopyrighted = false)
     searchResult.totalCount should be(4)
     searchResult.results.size should be(4)
     searchResult.results.head.id should be("1")
@@ -279,38 +311,61 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That search matches title with unknown language analyzed in Norwegian") {
-    val searchResult = searchService.matchingQuery("blomst", None, None, None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.matchingQuery("blomst", None, None, None, Sort.ByIdAsc, None, None, includeCopyrighted = false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("4")
   }
 
   test("Searching with logical AND only returns results with all terms") {
-    val search1 =
-      searchService.matchingQuery("batmen AND bil", None, Some("nb"), None, Sort.ByIdAsc, Some(1), Some(10), false)
+    val Success(search1) =
+      searchService.matchingQuery("batmen AND bil",
+                                  None,
+                                  Some("nb"),
+                                  None,
+                                  Sort.ByIdAsc,
+                                  Some(1),
+                                  Some(10),
+                                  includeCopyrighted = false)
     search1.results.map(_.id) should equal(Seq("1", "3"))
 
-    val search2 =
-      searchService.matchingQuery("batmen | pingvinen", None, Some("nb"), None, Sort.ByIdAsc, Some(1), Some(10), false)
+    val Success(search2) =
+      searchService.matchingQuery("batmen | pingvinen",
+                                  None,
+                                  Some("nb"),
+                                  None,
+                                  Sort.ByIdAsc,
+                                  Some(1),
+                                  Some(10),
+                                  includeCopyrighted = false)
     search2.results.map(_.id) should equal(Seq("1", "2"))
 
-    val search3 = searchService.matchingQuery("bilde + -flaggermusmann",
-                                              None,
-                                              Some("nb"),
-                                              None,
-                                              Sort.ByIdAsc,
-                                              Some(1),
-                                              Some(10),
-                                              false)
+    val Success(search3) = searchService.matchingQuery("bilde + -flaggermusmann",
+                                                       None,
+                                                       Some("nb"),
+                                                       None,
+                                                       Sort.ByIdAsc,
+                                                       Some(1),
+                                                       Some(10),
+                                                       includeCopyrighted = false)
     search3.results.map(_.id) should equal(Seq("2", "3"))
 
-    val search4 =
-      searchService.matchingQuery("batmen + bil", None, Some("nb"), None, Sort.ByIdAsc, Some(1), Some(10), false)
+    val Success(search4) =
+      searchService.matchingQuery("batmen + bil",
+                                  None,
+                                  Some("nb"),
+                                  None,
+                                  Sort.ByIdAsc,
+                                  Some(1),
+                                  Some(10),
+                                  includeCopyrighted = false)
     search4.results.map(_.id) should equal(Seq("1"))
   }
 
   test("Agreement information should be used in search") {
-    val searchResult = searchService.matchingQuery("urelatert", None, None, None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.matchingQuery("urelatert", None, None, None, Sort.ByIdAsc, None, None, includeCopyrighted = false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("5")
@@ -318,16 +373,30 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("Searching for multiple languages should returned matched language") {
-    val searchResult1 =
-      searchService.matchingQuery("urelatert", None, Some("all"), None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult1) =
+      searchService.matchingQuery("urelatert",
+                                  None,
+                                  Some("all"),
+                                  None,
+                                  Sort.ByIdAsc,
+                                  None,
+                                  None,
+                                  includeCopyrighted = false)
     searchResult1.totalCount should be(1)
     searchResult1.results.size should be(1)
     searchResult1.results.head.id should be("5")
     searchResult1.results.head.title.language should equal("unknown")
     searchResult1.results.head.altText.language should equal("unknown")
 
-    val searchResult2 =
-      searchService.matchingQuery("unrelated", None, Some("all"), None, Sort.ByTitleDesc, None, None, false)
+    val Success(searchResult2) =
+      searchService.matchingQuery("unrelated",
+                                  None,
+                                  Some("all"),
+                                  None,
+                                  Sort.ByTitleDesc,
+                                  None,
+                                  None,
+                                  includeCopyrighted = false)
     searchResult2.totalCount should be(1)
     searchResult2.results.size should be(1)
     searchResult2.results.head.id should be("5")
@@ -336,14 +405,30 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That field should be returned in another language if match does not contain searchLanguage") {
-    val searchResult = searchService.matchingQuery("unrelated", None, Some("en"), None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult) =
+      searchService.matchingQuery("unrelated",
+                                  None,
+                                  Some("en"),
+                                  None,
+                                  Sort.ByIdAsc,
+                                  None,
+                                  None,
+                                  includeCopyrighted = false)
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("5")
     searchResult.results.head.title.language should equal("en")
     searchResult.results.head.altText.language should equal("unknown")
 
-    val searchResult2 = searchService.matchingQuery("nynoreg", None, Some("nn"), None, Sort.ByIdAsc, None, None, false)
+    val Success(searchResult2) =
+      searchService.matchingQuery("nynoreg",
+                                  None,
+                                  Some("nn"),
+                                  None,
+                                  Sort.ByIdAsc,
+                                  None,
+                                  None,
+                                  includeCopyrighted = false)
     searchResult2.totalCount should be(1)
     searchResult2.results.size should be(1)
     searchResult2.results.head.id should be("5")
@@ -352,14 +437,39 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That supportedLanguages returns in order") {
-    val result = searchService.matchingQuery("nynoreg", None, Some("nn"), None, Sort.ByIdAsc, None, None, false)
+    val Success(result) =
+      searchService.matchingQuery("nynoreg",
+                                  None,
+                                  Some("nn"),
+                                  None,
+                                  Sort.ByIdAsc,
+                                  None,
+                                  None,
+                                  includeCopyrighted = false)
     result.totalCount should be(1)
     result.results.size should be(1)
 
     result.results.head.supportedLanguages should be(Seq("unknown", "nn", "en"))
   }
 
-  def blockUntil(predicate: () => Boolean) = {
+  test("That scrolling works as expected") {
+    val pageSize = 2
+    val expectedIds = List("1", "2", "3", "4", "5").sliding(pageSize, pageSize).toList
+
+    val Success(initialSearch) =
+      searchService.all(None, None, None, Sort.ByIdAsc, None, Some(pageSize), includeCopyrighted = false)
+
+    val Success(scroll1) = searchService.scroll(initialSearch.scrollId.get, "all")
+    val Success(scroll2) = searchService.scroll(scroll1.scrollId.get, "all")
+    val Success(scroll3) = searchService.scroll(scroll2.scrollId.get, "all")
+
+    initialSearch.results.map(_.id) should be(expectedIds.head)
+    scroll1.results.map(_.id) should be(expectedIds(1))
+    scroll2.results.map(_.id) should be(expectedIds(2))
+    scroll3.results.map(_.id) should be(List.empty)
+  }
+
+  def blockUntil(predicate: () => Boolean): Unit = {
     var backoff = 0
     var done = false
 

@@ -88,7 +88,7 @@ checkfmt := {
   noErrorsInMainFiles && noErrorsInTestFiles && noErrorsInSbtConfigFiles
 }
 
-Test / test := ((Test / test).dependsOn(Test / checkfmt)).value
+Test / test := (Test / test).dependsOn(Test / checkfmt).value
 
 val fmt = taskKey[Unit]("Automatically apply code style fixes")
 fmt := {

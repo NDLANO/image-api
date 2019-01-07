@@ -95,6 +95,7 @@ object ImageApiProperties extends LazyLogging {
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
   val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
   val ElasticSearchIndexMaxResultWindow = 10000
+  val ElasticSearchScrollKeepAlive = "10s"
 
   val MappingHost = "mapping-api.ndla-local"
   val DraftApiHost = propOrElse("DRAFT_API_HOST", "draft-api.ndla-local")

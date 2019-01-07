@@ -48,38 +48,36 @@ trait RawController {
         "The wanted aspect ratio, defined as width/height. To be used together with the focal parameters. If used the width and height is ignored and derived from the aspect ratio instead.")
     )
 
-    val imageFromName = apiOperation("getImageFile")
-      .summary("Fetch an image with options to resize and crop")
-      .description("Fetches a image with options to resize and crop")
-      .produces("application/octet-stream")
-      .authorizations("oauth2")
-      .parameters(
-        List[Parameter](pathParam[String]("image_name").description("The name of the image"))
-          ++ getImageParams: _*
-      )
-      .responseMessages(response404, response500)
-
     get(
       "/:image_name",
-      operation(imageFromName)
+      operation(
+        apiOperation("getImageFile")
+          .summary("Fetch an image with options to resize and crop")
+          .description("Fetches a image with options to resize and crop")
+          .produces("application/octet-stream")
+          .authorizations("oauth2")
+          .parameters(
+            List[Parameter](pathParam[String]("image_name").description("The name of the image"))
+              ++ getImageParams: _*
+          )
+          .responseMessages(response404, response500))
     ) {
       getRawImage(params("image_name"))
     }
 
-    val imageFromId = apiOperation("getImageFileById")
-      .summary("Fetch an image with options to resize and crop")
-      .description("Fetches a image with options to resize and crop")
-      .produces("application/octet-stream")
-      .authorizations("oauth2")
-      .parameters(
-        List[Parameter](pathParam[String]("image_id").description("The ID of the image"))
-          ++ getImageParams: _*
-      )
-      .responseMessages(response404, response500)
-
     get(
       "/id/:image_id",
-      operation(imageFromId)
+      operation(
+        apiOperation("getImageFileById")
+          .summary("Fetch an image with options to resize and crop")
+          .description("Fetches a image with options to resize and crop")
+          .produces("application/octet-stream")
+          .authorizations("oauth2")
+          .parameters(
+            List[Parameter](pathParam[String]("image_id").description("The ID of the image"))
+              ++ getImageParams: _*
+          )
+          .responseMessages(response404, response500))
     ) {
       imageRepository.withId(long("image_id")) match {
         case Some(imageMeta) =>
@@ -102,7 +100,7 @@ trait RawController {
       }
     }
 
-    def crop(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
+    private def crop(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
       val startX = doubleInRange("cropStartX", PercentPoint.MinValue, PercentPoint.MaxValue)
       val startY = doubleInRange("cropStartY", PercentPoint.MinValue, PercentPoint.MaxValue)
       val endX = doubleInRange("cropEndX", PercentPoint.MinValue, PercentPoint.MaxValue)
@@ -119,7 +117,7 @@ trait RawController {
       doubleOrNone("focalX").isDefined && doubleOrNone("focalY").isDefined && (doubleOrNone("width").isDefined || doubleOrNone(
         "height").isDefined || doubleOrNone("ratio").isDefined)
 
-    def dynamicCrop(image: ImageStream): Try[ImageStream] = {
+    private def dynamicCrop(image: ImageStream): Try[ImageStream] = {
       val focalX = doubleInRange("focalX", PercentPoint.MinValue, PercentPoint.MaxValue)
       val focalY = doubleInRange("focalY", PercentPoint.MinValue, PercentPoint.MaxValue)
       val ratio = doubleOrNone("ratio")
@@ -132,7 +130,7 @@ trait RawController {
       }
     }
 
-    def resize(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
+    private def resize(image: ImageStream)(implicit request: HttpServletRequest): Try[ImageStream] = {
       val Seq(widthOpt, heightOpt) = extractDoubleOpts("width", "height")
       (widthOpt, heightOpt) match {
         case (Some(width), Some(height)) => imageConverter.resize(image, width.toInt, height.toInt)
