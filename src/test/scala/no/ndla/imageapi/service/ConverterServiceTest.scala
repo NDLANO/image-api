@@ -25,6 +25,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   val updated: Date = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
   val full = Image("/123.png", 200, "image/png")
+  val wanting = Image("123.png", 200, "image/png")
 
   val DefaultImageMetaInformation = ImageMetaInformation(
     Some(1),
@@ -33,6 +34,20 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     full.fileName,
     full.size,
     full.contentType,
+    Copyright("", "", List(), List(), List(), None, None, None),
+    List(),
+    List(),
+    "ndla124",
+    updated
+  )
+
+  val WantingImageMetaInformation = ImageMetaInformation(
+    Some(1),
+    List(ImageTitle("test", "nb")),
+    List(),
+    wanting.fileName,
+    wanting.size,
+    wanting.contentType,
     Copyright("", "", List(), List(), List(), None, None, None),
     List(),
     List(),
@@ -79,9 +94,16 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That asApiImageMetaInformationWithDomainUrl returns links with domain urls") {
-    val apiImage = converterService.asApiImageMetaInformationWithDomainUrlV2(DefaultImageMetaInformation, Some("nb"))
-    apiImage.get.metaUrl should equal(s"${ImageApiProperties.ImageApiUrlBase}1")
-    apiImage.get.imageUrl should equal(s"${ImageApiProperties.RawImageUrlBase}/123.png")
+    {
+      val apiImage = converterService.asApiImageMetaInformationWithDomainUrlV2(DefaultImageMetaInformation, Some("nb"))
+      apiImage.get.metaUrl should equal(s"${ImageApiProperties.ImageApiUrlBase}1")
+      apiImage.get.imageUrl should equal(s"${ImageApiProperties.RawImageUrlBase}/123.png")
+    }
+    {
+      val apiImage = converterService.asApiImageMetaInformationWithDomainUrlV2(WantingImageMetaInformation, Some("nb"))
+      apiImage.get.metaUrl should equal(s"${ImageApiProperties.ImageApiUrlBase}1")
+      apiImage.get.imageUrl should equal(s"${ImageApiProperties.RawImageUrlBase}/123.png")
+    }
   }
 
   test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links with applicationUrl") {

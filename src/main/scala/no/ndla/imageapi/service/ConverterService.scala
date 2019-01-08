@@ -142,7 +142,7 @@ trait ConverterService {
     }
 
     def asApiUrl(url: String, baseUrl: Option[String] = None): String = {
-      val pathToAdd = UrlPath.parse(url)
+      val pathToAdd = UrlPath.parse("/" + url.dropWhile(_ == '/'))
       val base = baseUrl.getOrElse("")
       val basePath = base.path.addParts(pathToAdd.parts)
       base.withPath(basePath).toString

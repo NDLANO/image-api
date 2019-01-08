@@ -55,7 +55,6 @@ trait RawController {
           .summary("Fetch an image with options to resize and crop")
           .description("Fetches a image with options to resize and crop")
           .produces("application/octet-stream")
-          .authorizations("oauth2")
           .parameters(
             List[Parameter](pathParam[String]("image_name").description("The name of the image"))
               ++ getImageParams: _*
@@ -72,7 +71,6 @@ trait RawController {
           .summary("Fetch an image with options to resize and crop")
           .description("Fetches a image with options to resize and crop")
           .produces("application/octet-stream")
-          .authorizations("oauth2")
           .parameters(
             List[Parameter](pathParam[String]("image_id").description("The ID of the image"))
               ++ getImageParams: _*
