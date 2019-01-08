@@ -9,6 +9,8 @@
 package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.ImageApiProperties.{
+  DefaultPageSize,
+  MaxPageSize,
   MaxImageFileSizeBytes,
   RoleWithWriteAccess,
   ElasticSearchScrollKeepAlive,
@@ -19,6 +21,7 @@ import no.ndla.imageapi.integration.DraftApiClient
 import no.ndla.imageapi.model.api.{
   Error,
   ImageMetaInformationV2,
+  License,
   NewImageMetaInformationV2,
   SearchParams,
   SearchResult,
@@ -27,8 +30,10 @@ import no.ndla.imageapi.model.api.{
 }
 import no.ndla.imageapi.model.domain.Sort
 import no.ndla.imageapi.model.{Language, ValidationException, ValidationMessage}
+import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{SearchConverterService, SearchService}
+import no.ndla.imageapi.service.search.SearchService
 import no.ndla.imageapi.service.{ConverterService, WriteService}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.Ok
@@ -55,7 +60,7 @@ trait ImageControllerV2 {
       with SwaggerSupport
       with FileUploadSupport {
     // Swagger-stuff
-    protected val applicationDescription = "Services for accessing images"
+    protected val applicationDescription = "Services for accessing images from NDLA"
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     // Additional models used in error responses
@@ -88,7 +93,9 @@ trait ImageControllerV2 {
              Default is by -relevance (desc) when query is set, and title (asc) when query is empty.""".stripMargin
     )
     private val pageNo = Param[Option[Int]]("page", "The page number of the search hits to display.")
-    private val pageSize = Param[Option[Int]]("page-size", "The number of search hits to display for each page.")
+    private val pageSize = Param[Option[Int]](
+      "page-size",
+      s"The number of search hits to display for each page. Defaults to $DefaultPageSize and max is $MaxPageSize.")
     private val imageId = Param[String]("image_id", "Image_id of the image that needs to be fetched.")
     private val metadata = Param[NewImageMetaInformationV2](
       "metadata",
@@ -197,7 +204,7 @@ trait ImageControllerV2 {
       "/",
       operation(
         apiOperation[SearchResult]("getImages")
-          summary "Find images"
+          summary "Find images."
           description "Find images in the ndla.no database."
           parameters (
             asHeaderParam(correlationId),
@@ -211,8 +218,8 @@ trait ImageControllerV2 {
             asQueryParam(pageSize),
             asQueryParam(scrollId)
         )
-          authorizations "oauth2"
-          responseMessages response500)
+          responseMessages response500
+      )
     ) {
       scrollSearchOr {
         val minimumSize = intOrNone(this.minSize.paramName)
@@ -232,15 +239,15 @@ trait ImageControllerV2 {
       "/search/",
       operation(
         apiOperation[List[SearchResult]]("getImagesPost")
-          summary "Find images"
-          description "Find images in the ndla.no database."
+          summary "Find images."
+          description "Search for images in the ndla.no database."
           parameters (
             asHeaderParam(correlationId),
             bodyParam[SearchParams],
             asQueryParam(scrollId)
         )
-          authorizations "oauth2"
-          responseMessages (response400, response500))
+          responseMessages (response400, response500)
+      )
     ) {
       scrollSearchOr {
         val searchParams = extract[SearchParams](request.body)
@@ -261,15 +268,15 @@ trait ImageControllerV2 {
       "/:image_id",
       operation(
         apiOperation[ImageMetaInformationV2]("findByImageId")
-          summary "Fetch information for image"
+          summary "Fetch information for image."
           description "Shows info of the image with submitted id."
           parameters (
             asHeaderParam(correlationId),
             asPathParam(imageId),
             asQueryParam(language)
         )
-          authorizations "oauth2"
-          responseMessages (response404, response500))
+          responseMessages (response404, response500)
+      )
     ) {
       val imageId = long(this.imageId.paramName)
       val language = paramOrNone(this.language.paramName)
@@ -286,8 +293,8 @@ trait ImageControllerV2 {
       "/",
       operation(
         apiOperation[ImageMetaInformationV2]("newImage")
-          summary "Upload a new image with meta information"
-          description "Upload a new image file with meta data"
+          summary "Upload a new image with meta information."
+          description "Upload a new image file with meta data."
           consumes "multipart/form-data"
           parameters (
             asHeaderParam(correlationId),
@@ -296,7 +303,8 @@ trait ImageControllerV2 {
             asFileParam(file)
         )
           authorizations "oauth2"
-          responseMessages (response400, response403, response413, response500))
+          responseMessages (response400, response403, response413, response500)
+      )
     ) {
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
@@ -329,7 +337,7 @@ trait ImageControllerV2 {
       "/:image_id",
       operation(
         apiOperation[ImageMetaInformationV2]("newImage")
-          summary "Update an existing image with meta information"
+          summary "Update an existing image with meta information."
           description "Updates an existing image with meta data."
           consumes "form-data"
           parameters (
@@ -338,7 +346,8 @@ trait ImageControllerV2 {
             bodyParam[UpdateImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
         )
           authorizations "oauth2"
-          responseMessages (response400, response403, response500))
+          responseMessages (response400, response403, response500)
+      )
     ) {
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)

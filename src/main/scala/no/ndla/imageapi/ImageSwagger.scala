@@ -21,7 +21,7 @@ object ImagesApiInfo {
 
   val apiInfo = ApiInfo(
     "Image API",
-    "Services for accessing images",
+    "Services for accessing images from NDLA",
     "https://ndla.no",
     ImageApiProperties.ContactEmail,
     "GPL v3.0",
@@ -30,8 +30,7 @@ object ImagesApiInfo {
 }
 
 class ImageSwagger extends Swagger("2.0", "1.0", ImagesApiInfo.apiInfo) {
-  val roleWithWriteAccessInTest = ImageApiProperties.RoleWithWriteAccess.replace(":", "-test:")
   addAuthorization(
-    OAuth(List(roleWithWriteAccessInTest),
+    OAuth(List(ImageApiProperties.RoleWithWriteAccess),
           List(ImplicitGrant(LoginEndpoint(ImageApiProperties.Auth0LoginEndpoint), "access_token"))))
 }
