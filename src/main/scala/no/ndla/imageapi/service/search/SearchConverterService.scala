@@ -50,7 +50,7 @@ trait SearchConverterService {
           .map(p => p.name) ++ image.copyright.rightsholders.map(r => r.name),
         license = imageWithAgreement.copyright.license,
         imageSize = imageWithAgreement.size,
-        previewUrl = parse(imageWithAgreement.imageUrl).toString,
+        previewUrl = parse("/" + imageWithAgreement.imageUrl.dropWhile(_ == '/')).toString,
         lastUpdated = imageWithAgreement.updated,
         defaultTitle = defaultTitle.map(t => t.title)
       )
