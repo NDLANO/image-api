@@ -17,6 +17,8 @@ import scala.util.{Failure, Success}
 import scala.util.Properties._
 
 object ImageApiProperties extends LazyLogging {
+  val IsKubernetes: Boolean = envOrNone("NDLA_IS_KUBERNETES").isDefined
+
   val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
   val ApplicationName = "image-api"
   val Auth0LoginEndpoint = s"https://${AuthUser.getAuth0HostForEnv(Environment)}/authorize"
@@ -97,7 +99,6 @@ object ImageApiProperties extends LazyLogging {
   val ElasticSearchIndexMaxResultWindow = 10000
   val ElasticSearchScrollKeepAlive = "10s"
 
-  val MappingHost = "mapping-api.ndla-local"
   val DraftApiHost = propOrElse("DRAFT_API_HOST", "draft-api.ndla-local")
   val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
 
@@ -126,13 +127,11 @@ object ImageApiProperties extends LazyLogging {
   }
 
   def propOrElse(key: String, default: => String): String = {
-    secrets.get(key).flatten match {
-      case Some(secret) => secret
-      case None =>
-        envOrNone(key) match {
-          case Some(env) => env
-          case None      => default
-        }
+    envOrNone(key) match {
+      case Some(prop)            => prop
+      case None if !IsKubernetes => secrets.get(key).flatten.getOrElse(default)
+      case _                     => default
     }
   }
+
 }
