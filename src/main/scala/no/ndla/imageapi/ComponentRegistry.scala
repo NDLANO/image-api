@@ -9,7 +9,7 @@
 package no.ndla.imageapi
 
 import com.amazonaws.regions.Regions
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.zaxxer.hikari.HikariDataSource
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.controller._
@@ -53,7 +53,13 @@ object ComponentRegistry
   override val dataSource: HikariDataSource = DataSource.getHikariDataSource
   connectToDatabase()
 
-  val amazonClient = AmazonS3ClientBuilder.standard().withRegion(Regions.EU_CENTRAL_1).build()
+  val currentRegion: Option[Regions] = Option(Regions.getCurrentRegion).map(region => Regions.fromName(region.getName))
+
+  val amazonClient: AmazonS3 =
+    AmazonS3ClientBuilder
+      .standard()
+      .withRegion(currentRegion.getOrElse(Regions.EU_CENTRAL_1))
+      .build()
 
   lazy val indexService = new IndexService
   lazy val searchService = new SearchService
