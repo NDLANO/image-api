@@ -21,8 +21,12 @@ object ImagesApiInfo {
 
   val apiInfo = ApiInfo(
     "Image API",
-    "Services for accessing images from NDLA",
-    "https://ndla.no",
+    "Searching and fetching all images used in the NDLA platform.\n\n" +
+      "The Image API provides an endpoint for searching in and fetching images used in NDLA resources. Meta-data are " +
+      "also searched and returned in the results. Examples of meta-data are title, alt-text, language and license.\n" +
+      "The API can resize and crop transitions on the returned images to enable use in special contexts, e.g. " +
+      "low bandwidth scenarios",
+    "https://om.ndla.no/terms",
     ImageApiProperties.ContactEmail,
     "GPL v3.0",
     "http://www.gnu.org/licenses/gpl-3.0.en.html"
