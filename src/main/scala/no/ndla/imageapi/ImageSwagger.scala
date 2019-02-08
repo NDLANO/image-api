@@ -26,7 +26,7 @@ object ImagesApiInfo {
       "also searched and returned in the results. Examples of meta-data are title, alt-text, language and license.\n" +
       "The API can resize and crop transitions on the returned images to enable use in special contexts, e.g. " +
       "low bandwidth scenarios",
-    "https://om.ndla.no/terms",
+    "https://om.ndla.no/tos",
     ImageApiProperties.ContactEmail,
     "GPL v3.0",
     "http://www.gnu.org/licenses/gpl-3.0.en.html"
