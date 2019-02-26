@@ -276,6 +276,14 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
     searchResult.results.head.id should be("2")
   }
 
+  test("That search matches id search") {
+    val Success(searchResult) =
+      searchService.matchingQuery("1", None, Some("nb"), None, Sort.ByIdAsc, None, None, includeCopyrighted = false)
+    searchResult.totalCount should be(1)
+    searchResult.results.size should be(1)
+    searchResult.results.head.id should be("1")
+  }
+
   test("That search on author matches corresponding author on image") {
     val Success(searchResult) =
       searchService.matchingQuery("Bruce Wayne", None, None, None, Sort.ByIdAsc, None, None, includeCopyrighted = false)
