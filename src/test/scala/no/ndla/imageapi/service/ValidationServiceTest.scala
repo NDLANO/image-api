@@ -223,4 +223,20 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
     result.isSuccess should be(false)
   }
 
+  test("validate returns error with unknown language if it does not already exist") {
+    val imageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("new image title", "unknown")))
+    val result = validationService.validate(imageMeta, None)
+    val exception = result.failed.get.asInstanceOf[ValidationException]
+    exception.errors.length should be(1)
+    exception.errors.head.message.contains("Language 'unknown' is not a supported value.") should be(true)
+    result.isSuccess should be(false)
+  }
+
+  test("validate returns success with unknown language if it already exist") {
+    val imageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("new image title", "unknown")))
+    val oldImageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("old image title", "unknown")))
+    val result = validationService.validate(imageMeta, Some(oldImageMeta))
+    result.isSuccess should be(true)
+  }
+
 }
