@@ -39,7 +39,7 @@ trait WriteService {
         case Success(image) => image
       }
 
-      validationService.validate(domainImage) match {
+      validationService.validate(domainImage, None) match {
         case Failure(e) =>
           imageStorage.deleteObject(domainImage.imageUrl)
           return Failure(e)
@@ -89,13 +89,14 @@ trait WriteService {
     }
 
     def updateImage(imageId: Long, image: UpdateImageMetaInformation): Try[ImageMetaInformationV2] = {
-      val updateImage = imageRepository.withId(imageId) match {
+      val oldImage = imageRepository.withId(imageId)
+      val updateImage = oldImage match {
         case None           => Failure(new ImageNotFoundException(s"Image with id $imageId found"))
         case Some(existing) => Success(mergeImages(existing, image))
       }
 
       updateImage
-        .flatMap(validationService.validate)
+        .flatMap(validationService.validate(_, oldImage))
         .map(imageMeta => imageRepository.update(imageMeta, imageId))
         .flatMap(indexService.indexDocument)
         .map(updatedImage =>

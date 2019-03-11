@@ -19,7 +19,7 @@ import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
 import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
 import org.joda.time.{DateTime, DateTimeZone}
-import org.mockito.ArgumentMatchers._
+import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatra.servlet.FileItem
 import scalikejdbc.DBSession
@@ -103,7 +103,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
   test("storeNewImage should return Failure if validation fails") {
     when(validationService.validateImageFile(any[FileItem])).thenReturn(None)
-    when(validationService.validate(any[ImageMetaInformation]))
+    when(validationService.validate(any[ImageMetaInformation], eqTo(None)))
       .thenReturn(Failure(new ValidationException(errors = Seq())))
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long]))
       .thenReturn(Success(newFileName))
@@ -116,7 +116,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
   test("storeNewImage should return Failure if failed to insert into database") {
     when(validationService.validateImageFile(any[FileItem])).thenReturn(None)
-    when(validationService.validate(any[ImageMetaInformation])).thenReturn(Success(domainImageMeta))
+    when(validationService.validate(any[ImageMetaInformation], eqTo(None))).thenReturn(Success(domainImageMeta))
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long]))
       .thenReturn(Success(newFileName))
     when(imageRepository.insert(any[ImageMetaInformation])(any[DBSession])).thenThrow(new RuntimeException)
@@ -128,7 +128,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
   test("storeNewImage should return Failure if failed to index image metadata") {
     when(validationService.validateImageFile(any[FileItem])).thenReturn(None)
-    when(validationService.validate(any[ImageMetaInformation])).thenReturn(Success(domainImageMeta))
+    when(validationService.validate(any[ImageMetaInformation], eqTo(None))).thenReturn(Success(domainImageMeta))
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long]))
       .thenReturn(Success(newFileName))
     when(indexService.indexDocument(any[ImageMetaInformation])).thenReturn(Failure(new RuntimeException))
@@ -141,7 +141,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   test("storeNewImage should return Success if creation of new image file succeeded") {
     val afterInsert = domainImageMeta.copy(id = Some(1))
     when(validationService.validateImageFile(any[FileItem])).thenReturn(None)
-    when(validationService.validate(any[ImageMetaInformation])).thenReturn(Success(domainImageMeta))
+    when(validationService.validate(any[ImageMetaInformation], eqTo(None))).thenReturn(Success(domainImageMeta))
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long]))
       .thenReturn(Success(newFileName))
     when(indexService.indexDocument(any[ImageMetaInformation])).thenReturn(Success(afterInsert))
