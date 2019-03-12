@@ -50,12 +50,17 @@ trait ValidationService {
       extensions.exists(extension => filename.toLowerCase.endsWith(extension))
     }
 
-    def validate(image: ImageMetaInformation): Try[ImageMetaInformation] = {
-      val validationMessages = image.titles.flatMap(title => validateTitle("title", title)) ++
+    def validate(image: ImageMetaInformation, oldImage: Option[ImageMetaInformation]): Try[ImageMetaInformation] = {
+      val oldTitleLanguages = oldImage.map(_.titles.map(_.language)).getOrElse(Seq())
+      val oldTagLanguages = oldImage.map(_.tags.map(_.language)).getOrElse(Seq())
+      val oldAltTextLanguages = oldImage.map(_.alttexts.map(_.language)).getOrElse(Seq())
+      val oldCaptionLanguages = oldImage.map(_.captions.map(_.language)).getOrElse(Seq())
+
+      val validationMessages = image.titles.flatMap(title => validateTitle("title", title, oldTitleLanguages)) ++
         validateCopyright(image.copyright) ++
-        validateTags(image.tags) ++
-        image.alttexts.flatMap(alt => validateAltText("altTexts", alt)) ++
-        image.captions.flatMap(caption => validateCaption("captions", caption))
+        validateTags(image.tags, oldTagLanguages) ++
+        image.alttexts.flatMap(alt => validateAltText("altTexts", alt, oldAltTextLanguages)) ++
+        image.captions.flatMap(caption => validateCaption("captions", caption, oldCaptionLanguages))
 
       if (validationMessages.isEmpty)
         return Success(image)
@@ -63,19 +68,25 @@ trait ValidationService {
       Failure(new ValidationException(errors = validationMessages))
     }
 
-    private def validateTitle(fieldPath: String, title: ImageTitle): Seq[ValidationMessage] = {
+    private def validateTitle(fieldPath: String,
+                              title: ImageTitle,
+                              oldLanguages: Seq[String]): Seq[ValidationMessage] = {
       containsNoHtml(fieldPath, title.title).toList ++
-        validateLanguage(fieldPath, title.language)
+        validateLanguage(fieldPath, title.language, oldLanguages)
     }
 
-    private def validateAltText(fieldPath: String, altText: ImageAltText): Seq[ValidationMessage] = {
+    private def validateAltText(fieldPath: String,
+                                altText: ImageAltText,
+                                oldLanguages: Seq[String]): Seq[ValidationMessage] = {
       containsNoHtml(fieldPath, altText.alttext).toList ++
-        validateLanguage(fieldPath, altText.language)
+        validateLanguage(fieldPath, altText.language, oldLanguages)
     }
 
-    private def validateCaption(fieldPath: String, caption: ImageCaption): Seq[ValidationMessage] = {
+    private def validateCaption(fieldPath: String,
+                                caption: ImageCaption,
+                                oldLanguages: Seq[String]): Seq[ValidationMessage] = {
       containsNoHtml(fieldPath, caption.caption).toList ++
-        validateLanguage(fieldPath, caption.language)
+        validateLanguage(fieldPath, caption.language, oldLanguages)
     }
 
     def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
@@ -120,10 +131,10 @@ trait ValidationService {
       }
     }
 
-    def validateTags(tags: Seq[ImageTag]): Seq[ValidationMessage] = {
+    def validateTags(tags: Seq[ImageTag], oldLanguages: Seq[String]): Seq[ValidationMessage] = {
       tags.flatMap(tagList => {
         tagList.tags.flatMap(containsNoHtml("tags.tags", _)).toList :::
-          validateLanguage("tags.language", tagList.language).toList
+          validateLanguage("tags.language", tagList.language, oldLanguages).toList
       })
     }
 
@@ -135,8 +146,11 @@ trait ValidationService {
       }
     }
 
-    private def validateLanguage(fieldPath: String, languageCode: String): Option[ValidationMessage] = {
-      if (languageCodeSupported6391(languageCode)) {
+    private def validateLanguage(fieldPath: String,
+                                 languageCode: String,
+                                 oldLanguages: Seq[String]): Option[ValidationMessage] = {
+
+      if (languageCodeSupported6391(languageCode) || oldLanguages.contains(languageCode)) {
         None
       } else {
         Some(ValidationMessage(fieldPath, s"Language '$languageCode' is not a supported value."))
