@@ -56,11 +56,13 @@ trait ValidationService {
       val oldAltTextLanguages = oldImage.map(_.alttexts.map(_.language)).getOrElse(Seq())
       val oldCaptionLanguages = oldImage.map(_.captions.map(_.language)).getOrElse(Seq())
 
-      val validationMessages = image.titles.flatMap(title => validateTitle("title", title, oldTitleLanguages)) ++
+      val oldLanguages = (oldTitleLanguages ++ oldTagLanguages ++ oldAltTextLanguages ++ oldCaptionLanguages).distinct
+
+      val validationMessages = image.titles.flatMap(title => validateTitle("title", title, oldLanguages)) ++
         validateCopyright(image.copyright) ++
-        validateTags(image.tags, oldTagLanguages) ++
-        image.alttexts.flatMap(alt => validateAltText("altTexts", alt, oldAltTextLanguages)) ++
-        image.captions.flatMap(caption => validateCaption("captions", caption, oldCaptionLanguages))
+        validateTags(image.tags, oldLanguages) ++
+        image.alttexts.flatMap(alt => validateAltText("altTexts", alt, oldLanguages)) ++
+        image.captions.flatMap(caption => validateCaption("captions", caption, oldLanguages))
 
       if (validationMessages.isEmpty)
         return Success(image)

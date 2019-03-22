@@ -239,4 +239,11 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
     result.isSuccess should be(true)
   }
 
+  test("validate returns success with unknown language if it already exist, also in another field") {
+    val imageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("new image title", "unknown")))
+    val oldImageMeta = sampleImageMeta.copy(alttexts = Seq(ImageAltText("new image alttext", "unknown")))
+    val result = validationService.validate(imageMeta, Some(oldImageMeta))
+    result.isSuccess should be(true)
+  }
+
 }
