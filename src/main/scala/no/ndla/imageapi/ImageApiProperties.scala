@@ -74,8 +74,7 @@ object ImageApiProperties extends LazyLogging {
 
   val MaxImageFileSizeBytes = 1024 * 1024 * 40 // 40 MiB
 
-  val MetaInitialConnections = 3
-  val MetaMaxConnections = 20
+  val MetaMaxConnections = 10
   val (redDBSource, cmDBSource) = ("red", "cm")
   val ImageImportSource = redDBSource
 
