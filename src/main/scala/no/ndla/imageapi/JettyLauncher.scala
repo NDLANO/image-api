@@ -40,6 +40,7 @@ object JettyLauncher extends LazyLogging {
     servletContext.addEventListener(new ScalatraListener)
     servletContext.addServlet(classOf[DefaultServlet], "/")
     servletContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
+    servletContext.setInitParameter("org.scalatra.cors.allowCredentials", "false")
 
     servletContext.addServlet(classOf[ReportServlet], "/monitoring")
     servletContext.addEventListener(new SessionListener)
