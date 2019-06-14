@@ -1,6 +1,7 @@
+dist: trusty
 language: scala
 scala:
-    - 2.12.2
+    - 2.12.7
 jdk:
   - oraclejdk8
 # Use container-based infrastructure
