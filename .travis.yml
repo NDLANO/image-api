@@ -1,24 +1,82 @@
-dist: trusty
-language: scala
-scala:
-    - 2.12.7
-jdk:
-  - oraclejdk8
-# Use container-based infrastructure
-sudo: false
-# These directories are cached to S3 at the end of the build
-cache:
-  directories:
-    - $HOME/.ivy2/cache
-    - $HOME/.sbt/boot/
-before_cache:
-  # Tricks to avoid unnecessary cache updates
-  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
-  - find $HOME/.sbt -name "*.lock" -delete
-
 notifications:
   slack:
     on_success: change
     on_failure: always
     rooms:
       secure: rlD82tYO/xUJC9Kfh/X3aDDR4Lz+84PiToYLvpccubTY64jjOmXinCYQMLrNywYcTMOwgXkxoHhKWzmP+tf3EDGy+HhKRcZGc6rhaXmGy5t0vZ56FLWwx90+McfiXJx3hSAxPMgTAaVX87xpTS+lCXCbZlvDAVX0SulGEuypz4WW5lRzPCSG9/9sNPA5j1HB/GpKur+lwsgIzsQnsomEMetCbvywjxo5izy0GNGrGHew29BKxeVxlHlIE3F0JIkatqPgDOMh2lFr/UkGniZwzI50pxEfbApGqS9XHpX242MRZnrMRU/soIEFrfqMLR2xa94QWLuz2o1XVw8co+K4Qkf/kMFyImMUTliMZZr6POCnpYzkIsp2q0tQKZCPMGMYWKh8JQ7Wr+NWwo4mVQGv83Ktifs159PPH9Mww4xgpawW1NfwJVMMANr0OoUaorZrsZiik7klLeaCMUI1O1wngnQpQAM+9XNjEhOoo8czsVvNlip6Uggd15V4cuPzDg0gDToE74LkB5Zg6SW5IMxtW9NakNJ4wp1PwStbf1/XFUmFHE7GgOPzVVZDu7eBwVTGC0lc1Ws7FyXNCdN+Zyjax6gsk3x6OFs1irKDujV28RADcgIuPQn98HTuKJlQDR/HMELPaWHK8C4s5bcwUOlYo4FkmRaAD/hXLzgiwRkPlVQ=
+matrix:
+  fast_finish: true
+  include:
+    - name: "Test"
+
+      env:
+        - META_PASSWORD=""
+      services:
+        - postgresql
+      before_script:
+        - psql -c 'drop database if exists test_db;' -U postgres
+        - psql -c 'create database test_db;' -U postgres
+      addons:
+        postgresql: '9.5'
+
+      language: scala
+      dist: trusty
+      scala:
+          - 2.12.7
+      jdk:
+        - oraclejdk8
+      cache:
+        directories:
+          - $HOME/.ivy2/cache
+          - $HOME/.sbt/boot/
+      before_cache:
+        # Tricks to avoid unnecessary cache updates
+        - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+        - find $HOME/.sbt -name "*.lock" -delete
+
+    - name: "Release"
+      language: python
+      # if: branch = master AND type = push
+      python: 3.7
+      dist: bionic
+      services:
+        - docker
+      cache:
+        pip: true
+        directories:
+          - $HOME/.ivy2/cache
+          - $HOME/.sbt/boot/
+      before_install:
+        # Authenticate docker client to deploy aws registry
+        - pip install awscli
+        - $(aws ecr get-login --no-include-email --region eu-west-1)
+
+        # Fetch deploy repo
+        - git clone --depth 1 https://knowit-at-ndla:$TRAVIS_RELEASE_GITHUB_TOKEN@github.com/ndlano/deploy.git ../deploy
+
+        # Setup env
+        - export NDLA_HOME=$(realpath $(pwd)/../)
+        - export NDLA_DEPLOY=$NDLA_HOME/deploy
+        - export DEPLOY_VERSION=$(git -C $NDLA_DEPLOY rev-parse --short=7 HEAD)
+        - export DEPLOY_DOCKER_REPO=784120951859.dkr.ecr.eu-west-1.amazonaws.com/ndla/deploy
+
+        # Get cache, and don't fail if missing
+        - docker pull $DEPLOY_DOCKER_REPO:$DEPLOY_VERSION || true
+      install:
+        - eval "$($NDLA_DEPLOY/scripts/bin/ndla init -)"
+      env:
+        - SSH_AUTH_SOCK=/tmp/mock_sock
+      script:
+        - ndla release test image-api --update-chart
+        - ndla release staging image-api
+
+      before_cache: # Save docker image as cache
+        - docker push $DEPLOY_DOCKER_REPO:$DEPLOY_VERSION
+
+        # Tricks to avoid unnecessary cache updates
+        - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+        - find $HOME/.sbt -name "*.lock" -delete
+
+  allow_failures:
+      - name: "Release"
+    
