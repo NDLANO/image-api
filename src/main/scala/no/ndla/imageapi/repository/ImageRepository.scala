@@ -23,6 +23,13 @@ trait ImageRepository {
   class ImageRepository extends LazyLogging {
     implicit val formats = org.json4s.DefaultFormats + ImageMetaInformation.JSonSerializer
 
+    def imageCount(implicit session: DBSession = ReadOnlyAutoSession) =
+      sql"select count(*) from ${ImageMetaInformation.table}"
+        .map(rs => rs.long("count"))
+        .single()
+        .apply()
+        .getOrElse(0)
+
     def withId(id: Long): Option[ImageMetaInformation] = {
       DB readOnly { implicit session =>
         imageMetaInformationWhere(sqls"im.id = $id")
@@ -116,5 +123,19 @@ trait ImageRepository {
         .list
         .apply()
     }
+
+    def getImageFromFilePath(filePath: String)(implicit session: DBSession = ReadOnlyAutoSession) = {
+      val im = ImageMetaInformation.syntax("im")
+      sql"""
+            select ${im.result.*}
+            from ${ImageMetaInformation.as(im)}
+            where metadata->>'imageUrl' = $filePath
+        """
+        .map(ImageMetaInformation(im))
+        .single
+        .apply()
+
+    }
+
   }
 }
