@@ -10,11 +10,11 @@ package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.ImageApiProperties.{
   DefaultPageSize,
-  MaxPageSize,
-  MaxImageFileSizeBytes,
-  RoleWithWriteAccess,
+  ElasticSearchIndexMaxResultWindow,
   ElasticSearchScrollKeepAlive,
-  ElasticSearchIndexMaxResultWindow
+  MaxImageFileSizeBytes,
+  MaxPageSize,
+  RoleWithWriteAccess
 }
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.integration.DraftApiClient
@@ -34,7 +34,7 @@ import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{SearchConverterService, SearchService}
 import no.ndla.imageapi.service.search.SearchService
-import no.ndla.imageapi.service.{ConverterService, WriteService}
+import no.ndla.imageapi.service.{ConverterService, ReadService, WriteService}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.Ok
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
@@ -48,6 +48,7 @@ trait ImageControllerV2 {
   this: ImageRepository
     with SearchService
     with ConverterService
+    with ReadService
     with WriteService
     with DraftApiClient
     with SearchConverterService
@@ -280,9 +281,8 @@ trait ImageControllerV2 {
     ) {
       val imageId = long(this.imageId.paramName)
       val language = paramOrNone(this.language.paramName)
-      imageRepository
-        .withId(imageId)
-        .flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlV2(image, language)) match {
+
+      readService.withId(imageId, language) match {
         case Some(image) => image
         case None =>
           halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId and language $language not found"))

@@ -52,7 +52,8 @@ trait ConverterService {
 
     def asApiImageMetaInformationWithApplicationUrlV2(domainImageMetaInformation: domain.ImageMetaInformation,
                                                       language: Option[String]): Option[api.ImageMetaInformationV2] = {
-      val rawPath = ApplicationUrl.get.replace("/v2/images/", "/raw")
+      val baseUrl = ApplicationUrl.get
+      val rawPath = baseUrl.replace("/v2/images/", "/raw")
       asImageMetaInformationV2(domainImageMetaInformation, language, ApplicationUrl.get, Some(rawPath))
     }
 
@@ -80,6 +81,8 @@ trait ConverterService {
       val caption = findByLanguageOrBestEffort(imageMeta.captions, language)
         .map(asApiCaption)
         .getOrElse(api.ImageCaption("", DefaultLanguage))
+
+      val apiUrl = asApiUrl(imageMeta.imageUrl, rawBaseUrl)
 
       Some(
         api.ImageMetaInformationV2(
