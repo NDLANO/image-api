@@ -79,16 +79,15 @@ trait InternController {
       }
     }
 
-    post("/image_from_path/") {
+    post("/id_from_path/") {
       val path = paramOrNone("path")
-
       path match {
         case Some(p) =>
-          readService.getImageMetaFromPath(p) match {
-            case Success(image) => Ok(image)
-            case Failure(ex)    => errorHandler(ex)
+          readService.getImageIdFromPath(p) match {
+            case Success(imageId) => Ok(imageId)
+            case Failure(ex)      => errorHandler(ex)
           }
-        case None => BadRequest(Error(Error.VALIDATION, "Query param 'path' needs to be specified to return an image"))
+        case None => BadRequest(Error(Error.VALIDATION, "Query param 'path' needs to be specified to return an id"))
       }
     }
 

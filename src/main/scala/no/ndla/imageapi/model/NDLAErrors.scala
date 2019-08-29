@@ -19,6 +19,8 @@ class ImportException(message: String) extends RuntimeException(message)
 class ValidationException(message: String = "Validation error", val errors: Seq[ValidationMessage])
     extends RuntimeException(message)
 
+case class InvalidUrlException(message: String) extends RuntimeException(message)
+
 case class ValidationMessage(field: String, message: String)
 
 case class NdlaSearchException(rf: RequestFailure)

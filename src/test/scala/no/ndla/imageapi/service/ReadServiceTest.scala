@@ -9,14 +9,15 @@
 package no.ndla.imageapi.service
 
 import javax.servlet.http.HttpServletRequest
-import no.ndla.imageapi.model.api
-import no.ndla.imageapi.model.domain
+import no.ndla.imageapi.model.{InvalidUrlException, api, domain}
 import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
 import org.json4s.DefaultFormats
 import org.json4s.native.JsonParser
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
+
+import scala.util.{Failure, Success}
 
 class ReadServiceTest extends UnitSuite with TestEnvironment {
   override val readService = new ReadService
@@ -33,11 +34,20 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That path to id conversion works as expected for id paths") {
+    val id = 1234
+    val imageUrl = "/apekatt.jpg"
+    val expectedImage = TestData.bjorn.copy(id = Some(id), imageUrl = imageUrl)
 
-    ???
-    // TODO:
-//    readService.getIdFromPath("/image-api/raw/id/1234").get.id should be("1234")
-//    readService.getIdFromPath("/image-api/raw/id/1234").get.id should be("1234")
+    when(imageRepository.withId(id)).thenReturn(Some(expectedImage))
+    readService.getDomainImageMetaFromPath(s"/image-api/raw/id/$id") should be(Success(expectedImage))
+
+    when(imageRepository.getImageFromFilePath(imageUrl)).thenReturn(Some(expectedImage))
+    readService.getDomainImageMetaFromPath(s"/image-api/raw$imageUrl") should be(Success(expectedImage))
+
+    readService.getDomainImageMetaFromPath("/image-api/raw/id/apekatt") should be(
+      Failure(InvalidUrlException("Could not extract id from id url.")))
+    readService.getDomainImageMetaFromPath("/apepe/pawpda/pleps.jpg") should be(
+      Failure(InvalidUrlException("Could not extract id or path from url.")))
   }
 
   test("That withId returns with agreement license and authors") {
