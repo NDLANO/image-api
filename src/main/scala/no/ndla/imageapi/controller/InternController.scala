@@ -79,15 +79,17 @@ trait InternController {
       }
     }
 
-    post("/id_from_path/") {
-      val path = paramOrNone("path")
-      path match {
+    get("/id_from_url/") {
+      val urlQueryParam = "url"
+      val url = paramOrNone(urlQueryParam)
+      url match {
         case Some(p) =>
-          readService.getImageIdFromPath(p) match {
+          readService.getImageIdFromUrl(p) match {
             case Success(imageId) => Ok(imageId)
             case Failure(ex)      => errorHandler(ex)
           }
-        case None => BadRequest(Error(Error.VALIDATION, "Query param 'path' needs to be specified to return an id"))
+        case None =>
+          BadRequest(Error(Error.VALIDATION, s"Query param '$urlQueryParam' needs to be specified to return an id"))
       }
     }
 

@@ -32,12 +32,12 @@ trait ReadService {
 
     def getFilePathFromRawPath(path: String): Option[String] = { ??? }
 
-    def getImageIdFromPath(path: String): Try[ImageId] = {
-      getDomainImageMetaFromPath(path).flatMap(image => Try(ImageId(image.id.get)))
+    def getImageIdFromUrl(url: String): Try[ImageId] = {
+      getDomainImageMetaFromUrl(url).flatMap(image => Try(ImageId(image.id.get)))
     }
 
-    private[service] def getDomainImageMetaFromPath(path: String): Try[ImageMetaInformation] = {
-      val pathParts = path.path.parts.toList
+    private[service] def getDomainImageMetaFromUrl(url: String): Try[ImageMetaInformation] = {
+      val pathParts = url.path.parts.toList
       if (pathParts.slice(0, 3) == List("image-api", "raw", "id")) {
         Try(pathParts(3).toLong) match {
           case Failure(_) => Failure(new InvalidUrlException("Could not extract id from id url."))

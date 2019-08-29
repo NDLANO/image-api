@@ -39,14 +39,14 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
     val expectedImage = TestData.bjorn.copy(id = Some(id), imageUrl = imageUrl)
 
     when(imageRepository.withId(id)).thenReturn(Some(expectedImage))
-    readService.getDomainImageMetaFromPath(s"/image-api/raw/id/$id") should be(Success(expectedImage))
+    readService.getDomainImageMetaFromUrl(s"/image-api/raw/id/$id") should be(Success(expectedImage))
 
     when(imageRepository.getImageFromFilePath(imageUrl)).thenReturn(Some(expectedImage))
-    readService.getDomainImageMetaFromPath(s"/image-api/raw$imageUrl") should be(Success(expectedImage))
+    readService.getDomainImageMetaFromUrl(s"/image-api/raw$imageUrl") should be(Success(expectedImage))
 
-    readService.getDomainImageMetaFromPath("/image-api/raw/id/apekatt") should be(
+    readService.getDomainImageMetaFromUrl("/image-api/raw/id/apekatt") should be(
       Failure(InvalidUrlException("Could not extract id from id url.")))
-    readService.getDomainImageMetaFromPath("/apepe/pawpda/pleps.jpg") should be(
+    readService.getDomainImageMetaFromUrl("/apepe/pawpda/pleps.jpg") should be(
       Failure(InvalidUrlException("Could not extract id or path from url.")))
   }
 
