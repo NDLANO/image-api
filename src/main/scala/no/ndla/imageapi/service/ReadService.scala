@@ -36,29 +36,35 @@ trait ReadService {
       getDomainImageMetaFromUrl(url).flatMap(image => Try(ImageId(image.id.get)))
     }
 
+    private def handleIdPathParts(pathParts: List[String]): Try[ImageMetaInformation] =
+      Try(pathParts(3).toLong) match {
+        case Failure(_) => Failure(new InvalidUrlException("Could not extract id from id url."))
+        case Success(id) =>
+          imageRepository.withId(id) match {
+            case Some(image) => Success(image)
+            case None        => Failure(new ImageNotFoundException(s"Extracted id '$id', but no image with that id was found"))
+          }
+      }
+
+    private def handleRawPathPathParts(pathParts: List[String]): Try[ImageMetaInformation] =
+      pathParts.lift(2) match {
+        case Some(path) if path.size > 0 =>
+          imageRepository.getImageFromFilePath(s"/$path") match {
+            case Some(image) => Success(image)
+            case None =>
+              Failure(new ImageNotFoundException(s"Extracted path '$path', but no image with that path was found"))
+          }
+        case _ => Failure(new InvalidUrlException("Could not extract path from url."))
+      }
+
     private[service] def getDomainImageMetaFromUrl(url: String): Try[ImageMetaInformation] = {
       val pathParts = url.path.parts.toList
-      if (pathParts.slice(0, 3) == List("image-api", "raw", "id")) {
-        Try(pathParts(3).toLong) match {
-          case Failure(_) => Failure(new InvalidUrlException("Could not extract id from id url."))
-          case Success(id) =>
-            imageRepository.withId(id) match {
-              case Some(image) => Success(image)
-              case None =>
-                Failure(new ImageNotFoundException(s"Extracted id '$id', but no image with that id was found"))
-            }
-        }
-      } else if (pathParts.slice(0, 2) == List("image-api", "raw")) {
-        pathParts.lift(2) match {
-          case Some(path) if path.size > 0 =>
-            imageRepository.getImageFromFilePath(s"/$path") match {
-              case Some(image) => Success(image)
-              case None =>
-                Failure(new ImageNotFoundException(s"Extracted path '$path', but no image with that path was found"))
-            }
-          case _ => Failure(new InvalidUrlException("Could not extract path from url."))
-        }
-      } else { Failure(new InvalidUrlException("Could not extract id or path from url.")) }
+      val isRawControllerUrl = pathParts.slice(0, 2) == List("image-api", "raw")
+      val isIdUrl = pathParts.slice(0, 3) == List("image-api", "raw", "id")
+
+      if (isIdUrl) handleIdPathParts(pathParts)
+      else if (isRawControllerUrl) handleRawPathPathParts(pathParts)
+      else Failure(new InvalidUrlException("Could not extract id or path from url."))
     }
   }
 
