@@ -28,10 +28,6 @@ trait ReadService {
         .withId(imageId)
         .flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlV2(image, language))
 
-    def getIdFromIdPath(path: String): Option[Long] = { ??? }
-
-    def getFilePathFromRawPath(path: String): Option[String] = { ??? }
-
     def getImageIdFromUrl(url: String): Try[ImageId] = {
       getDomainImageMetaFromUrl(url).flatMap(image => Try(ImageId(image.id.get)))
     }
@@ -46,7 +42,7 @@ trait ReadService {
           }
       }
 
-    private def handleRawPathPathParts(pathParts: List[String]): Try[ImageMetaInformation] =
+    private def handleRawPathParts(pathParts: List[String]): Try[ImageMetaInformation] =
       pathParts.lift(2) match {
         case Some(path) if path.size > 0 =>
           imageRepository.getImageFromFilePath(s"/$path") match {
@@ -63,7 +59,7 @@ trait ReadService {
       val isIdUrl = pathParts.slice(0, 3) == List("image-api", "raw", "id")
 
       if (isIdUrl) handleIdPathParts(pathParts)
-      else if (isRawControllerUrl) handleRawPathPathParts(pathParts)
+      else if (isRawControllerUrl) handleRawPathParts(pathParts)
       else Failure(new InvalidUrlException("Could not extract id or path from url."))
     }
   }
