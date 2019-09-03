@@ -75,4 +75,45 @@ class ImageRepositoryTest extends IntegrationSuite with TestEnvironment {
     repository.getImageFromFilePath("/nonexistant.png") should be(None)
   }
 
+  test("that fetching based on path works with and without slash") {
+    assume(databaseIsAvailable)
+    val path1 = "/path1.jpg"
+    val image1 = TestData.bjorn.copy(id = None, imageUrl = path1)
+    val id1 = repository.insert(image1).id.get
+
+    val path2 = "path2.jpg"
+    val image2 = TestData.bjorn.copy(id = None, imageUrl = path2)
+    val id2 = repository.insert(image2).id.get
+
+    repository.getImageFromFilePath(path1).get should be(image1.copy(id = Some(id1)))
+    repository.getImageFromFilePath("/" + path1).get should be(image1.copy(id = Some(id1)))
+
+    repository.getImageFromFilePath(path2).get should be(image2.copy(id = Some(id2)))
+    repository.getImageFromFilePath("/" + path2).get should be(image2.copy(id = Some(id2)))
+  }
+
+  test("That fetching image from url where there exists multiple works") {
+    assume(databaseIsAvailable)
+    val path1 = "/path1.jpg"
+    val image1 = TestData.bjorn.copy(id = None, imageUrl = path1)
+    val id1 = repository.insert(image1).id.get
+    val id2 = repository.insert(image1.copy(id = None)).id.get
+
+    repository.getImageFromFilePath(path1).get should be(image1.copy(id = Some(id1)))
+  }
+
+  test("That fetching image from url with special characters are escaped") {
+    assume(databaseIsAvailable)
+    val path1 = "/path1.jpg"
+    val image1 = TestData.bjorn.copy(id = None, imageUrl = path1)
+    val id1 = repository.insert(image1).id.get
+
+    val path2 = "/pa%h1.jpg"
+    val image2 = TestData.bjorn.copy(id = None, imageUrl = path2)
+    val id2 = repository.insert(image2).id.get
+
+    repository.getImageFromFilePath(path1).get should be(image1.copy(id = Some(id1)))
+    repository.getImageFromFilePath(path2).get should be(image2.copy(id = Some(id2)))
+  }
+
 }

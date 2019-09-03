@@ -84,9 +84,9 @@ trait InternController {
       val url = paramOrNone(urlQueryParam)
       url match {
         case Some(p) =>
-          readService.getImageIdFromUrl(p) match {
-            case Success(imageId) => Ok(imageId)
-            case Failure(ex)      => errorHandler(ex)
+          readService.getDomainImageMetaFromUrl(p) match {
+            case Success(image) => Ok(image)
+            case Failure(ex)    => errorHandler(ex)
           }
         case None =>
           BadRequest(Error(Error.VALIDATION, s"Query param '$urlQueryParam' needs to be specified to return an id"))

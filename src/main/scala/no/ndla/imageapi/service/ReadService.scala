@@ -2,6 +2,7 @@ package no.ndla.imageapi.service
 
 import com.typesafe.scalalogging.LazyLogging
 import io.lemonlabs.uri.dsl._
+import io.lemonlabs.uri.UrlPath
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.api.{ImageId, ImageMetaInformationV2}
 import no.ndla.imageapi.model.domain.ImageMetaInformation
@@ -28,10 +29,6 @@ trait ReadService {
         .withId(imageId)
         .flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlV2(image, language))
 
-    def getImageIdFromUrl(url: String): Try[ImageId] = {
-      getDomainImageMetaFromUrl(url).flatMap(image => Try(ImageId(image.id.get)))
-    }
-
     private def handleIdPathParts(pathParts: List[String]): Try[ImageMetaInformation] =
       Try(pathParts(3).toLong) match {
         case Failure(_) => Failure(new InvalidUrlException("Could not extract id from id url."))
@@ -42,18 +39,22 @@ trait ReadService {
           }
       }
 
+    private def urlEncodePath(path: String) = UrlPath.parse(path).toString
+
     private def handleRawPathParts(pathParts: List[String]): Try[ImageMetaInformation] =
       pathParts.lift(2) match {
         case Some(path) if path.size > 0 =>
-          imageRepository.getImageFromFilePath(s"/$path") match {
+          val encodedPath = urlEncodePath(path)
+          imageRepository.getImageFromFilePath(encodedPath) match {
             case Some(image) => Success(image)
             case None =>
-              Failure(new ImageNotFoundException(s"Extracted path '$path', but no image with that path was found"))
+              Failure(
+                new ImageNotFoundException(s"Extracted path '$encodedPath', but no image with that path was found"))
           }
         case _ => Failure(new InvalidUrlException("Could not extract path from url."))
       }
 
-    private[service] def getDomainImageMetaFromUrl(url: String): Try[ImageMetaInformation] = {
+    def getDomainImageMetaFromUrl(url: String): Try[ImageMetaInformation] = {
       val pathParts = url.path.parts.toList
       val isRawControllerUrl = pathParts.slice(0, 2) == List("image-api", "raw")
       val isIdUrl = pathParts.slice(0, 3) == List("image-api", "raw", "id")

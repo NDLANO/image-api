@@ -16,6 +16,7 @@ import org.json4s.DefaultFormats
 import org.json4s.native.JsonParser
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
+import scalikejdbc.DBSession
 
 import scala.util.{Failure, Success}
 
@@ -35,14 +36,14 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
 
   test("That path to id conversion works as expected for id paths") {
     val id = 1234
-    val imageUrl = "/apekatt.jpg"
-    val expectedImage = TestData.bjorn.copy(id = Some(id), imageUrl = imageUrl)
+    val imageUrl = "apekatt.jpg"
+    val expectedImage = TestData.bjorn.copy(id = Some(id), imageUrl = "/" + imageUrl)
 
     when(imageRepository.withId(id)).thenReturn(Some(expectedImage))
     readService.getDomainImageMetaFromUrl(s"/image-api/raw/id/$id") should be(Success(expectedImage))
 
     when(imageRepository.getImageFromFilePath(imageUrl)).thenReturn(Some(expectedImage))
-    readService.getDomainImageMetaFromUrl(s"/image-api/raw$imageUrl") should be(Success(expectedImage))
+    readService.getDomainImageMetaFromUrl(s"/image-api/raw/$imageUrl") should be(Success(expectedImage))
 
     readService.getDomainImageMetaFromUrl("/image-api/raw/id/apekatt") should be(
       Failure(InvalidUrlException("Could not extract id from id url.")))
@@ -129,6 +130,22 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
 
     when(imageRepository.withId(1)).thenReturn(Some(agreementElg))
     readService.withId(1, None) should be(Some(expectedObject))
+  }
+
+  test("That path to raw conversion works with non-ascii characters in paths") {
+    reset(imageRepository)
+    val id = 1234
+    val imageUrl = "Jordbær.jpg"
+    val encodedPath = "Jordb%C3%A6r.jpg"
+    val expectedImage = TestData.bjorn.copy(id = Some(id), imageUrl = imageUrl)
+
+    doReturn(Some(expectedImage), Some(expectedImage))
+      .when(imageRepository)
+      .getImageFromFilePath(eqTo(encodedPath))(any[DBSession])
+    readService.getDomainImageMetaFromUrl(s"/image-api/raw/$imageUrl") should be(Success(expectedImage))
+
+    verify(imageRepository, times(1)).getImageFromFilePath(encodedPath)
+    verify(imageRepository, times(0)).getImageFromFilePath(imageUrl)
   }
 
 }

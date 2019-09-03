@@ -124,12 +124,16 @@ trait ImageRepository {
         .apply()
     }
 
+    private def escapeSQLWildcards(str: String): String = str.replaceAllLiterally("%", "\\%")
+
     def getImageFromFilePath(filePath: String)(implicit session: DBSession = ReadOnlyAutoSession) = {
+      val wildcardMatch = '%' + escapeSQLWildcards(filePath.dropWhile(_ == '/'))
       val im = ImageMetaInformation.syntax("im")
       sql"""
             select ${im.result.*}
             from ${ImageMetaInformation.as(im)}
-            where metadata->>'imageUrl' = $filePath
+            where metadata->>'imageUrl' like $wildcardMatch
+            limit 1;
         """
         .map(ImageMetaInformation(im))
         .single
