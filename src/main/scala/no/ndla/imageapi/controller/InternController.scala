@@ -79,7 +79,7 @@ trait InternController {
       }
     }
 
-    get("/id_from_url/") {
+    get("/domain_image_from_url/") {
       val urlQueryParam = "url"
       val url = paramOrNone(urlQueryParam)
       url match {
@@ -89,7 +89,7 @@ trait InternController {
             case Failure(ex)    => errorHandler(ex)
           }
         case None =>
-          BadRequest(Error(Error.VALIDATION, s"Query param '$urlQueryParam' needs to be specified to return an id"))
+          BadRequest(Error(Error.VALIDATION, s"Query param '$urlQueryParam' needs to be specified to return an image"))
       }
     }
 

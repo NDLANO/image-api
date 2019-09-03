@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.lemonlabs.uri.dsl._
 import io.lemonlabs.uri.UrlPath
 import no.ndla.imageapi.auth.User
-import no.ndla.imageapi.model.api.{ImageId, ImageMetaInformationV2}
+import no.ndla.imageapi.model.api.ImageMetaInformationV2
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexService
