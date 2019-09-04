@@ -40,10 +40,11 @@ abstract class UnitSuite
   setEnv("NDLA_RED_USERNAME", "user")
   setEnv("NDLA_RED_PASSWORD", "pass")
 
-  def setEnv(key: String, value: String) = {
+  def setEnv(key: String, value: String) = env.put(key, value)
+
+  private def env = {
     val field = System.getenv().getClass.getDeclaredField("m")
     field.setAccessible(true)
-    val map = field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
-    map.put(key, value)
+    field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
   }
 }

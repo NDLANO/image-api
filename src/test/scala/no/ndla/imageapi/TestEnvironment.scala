@@ -29,6 +29,7 @@ trait TestEnvironment
     with ConverterService
     with ValidationService
     with ImageRepository
+    with ReadService
     with WriteService
     with AmazonClient
     with ImageStorageService
@@ -54,6 +55,7 @@ trait TestEnvironment
   val searchService = mock[SearchService]
   val indexBuilderService = mock[IndexBuilderService]
   val imageRepository = mock[ImageRepository]
+  val readService = mock[ReadService]
   val writeService = mock[WriteService]
   val imageStorage = mock[AmazonImageStorageService]
 

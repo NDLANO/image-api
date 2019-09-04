@@ -14,14 +14,20 @@ import no.ndla.imageapi.model.S3UploadException
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService}
-import no.ndla.imageapi.service.{ConverterService, ImportService}
+import no.ndla.imageapi.service.{ConverterService, ImportService, ReadService}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.{GatewayTimeout, InternalServerError, NotFound, Ok}
+import org.scalatra.{BadRequest, GatewayTimeout, InternalServerError, NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImageRepository with ImportService with ConverterService with IndexBuilderService with IndexService with User =>
+  this: ImageRepository
+    with ReadService
+    with ImportService
+    with ConverterService
+    with IndexBuilderService
+    with IndexService
+    with User =>
   val internController: InternController
 
   class InternController extends NdlaController {
@@ -70,6 +76,20 @@ trait InternController {
       imageRepository.withExternalId(externalId) match {
         case Some(image) => Ok(converterService.asApiImageMetaInformationWithDomainUrlV2(image, language))
         case None        => NotFound(Error(Error.NOT_FOUND, s"Image with external id $externalId not found"))
+      }
+    }
+
+    get("/domain_image_from_url/") {
+      val urlQueryParam = "url"
+      val url = paramOrNone(urlQueryParam)
+      url match {
+        case Some(p) =>
+          readService.getDomainImageMetaFromUrl(p) match {
+            case Success(image) => Ok(image)
+            case Failure(ex)    => errorHandler(ex)
+          }
+        case None =>
+          BadRequest(Error(Error.VALIDATION, s"Query param '$urlQueryParam' needs to be specified to return an image"))
       }
     }
 
