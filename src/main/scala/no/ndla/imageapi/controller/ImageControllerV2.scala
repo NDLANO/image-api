@@ -36,7 +36,7 @@ import no.ndla.imageapi.service.search.{SearchConverterService, SearchService}
 import no.ndla.imageapi.service.search.SearchService
 import no.ndla.imageapi.service.{ConverterService, ReadService, WriteService}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.Ok
+import org.scalatra.{NotFound, Ok}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
@@ -98,6 +98,7 @@ trait ImageControllerV2 {
       "page-size",
       s"The number of search hits to display for each page. Defaults to $DefaultPageSize and max is $MaxPageSize.")
     private val imageId = Param[String]("image_id", "Image_id of the image that needs to be fetched.")
+    private val externalId = Param[String]("external_id", "External node id of the image that needs to be fetched.")
     private val metadata = Param[NewImageMetaInformationV2](
       "metadata",
       """The metadata for the image file to submit.""".stripMargin
@@ -286,6 +287,29 @@ trait ImageControllerV2 {
         case Some(image) => image
         case None =>
           halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId and language $language not found"))
+      }
+    }
+
+    get(
+      "/external_id/:external_id",
+      operation(
+        apiOperation[ImageMetaInformationV2]("findImageByExternalId")
+          summary "Fetch information for image by external id."
+          description "Shows info of the image with submitted external id."
+          parameters (
+            asHeaderParam(correlationId),
+            asPathParam(externalId),
+            asQueryParam(language)
+        )
+          responseMessages (response404, response500)
+      )
+    ) {
+      val externalId = params(this.externalId.paramName)
+      val language = paramOrNone(this.language.paramName)
+
+      imageRepository.withExternalId(externalId) match {
+        case Some(image) => Ok(converterService.asApiImageMetaInformationWithDomainUrlV2(image, language))
+        case None        => NotFound(Error(Error.NOT_FOUND, s"Image with external id $externalId not found"))
       }
     }
 
