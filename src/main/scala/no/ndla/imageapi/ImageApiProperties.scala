@@ -90,7 +90,7 @@ object ImageApiProperties extends LazyLogging {
   val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "images")
   val SearchDocument = "image"
   val DefaultPageSize: Int = 10
-  val MaxPageSize: Int = 100
+  val MaxPageSize: Int = 10000
   val IndexBulkSize = 1000
   val SearchServer = propOrElse("SEARCH_SERVER", "http://search-image-api.ndla-local")
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")

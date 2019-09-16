@@ -172,7 +172,7 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That getStartAtAndNumResults returns SEARCH_MAX_PAGE_SIZE for value greater than SEARCH_MAX_PAGE_SIZE") {
-    searchService invokePrivate getStartAtAndNumResults(None, Some(1000)) should equal((0, MaxPageSize))
+    searchService invokePrivate getStartAtAndNumResults(None, Some(10001)) should equal((0, MaxPageSize))
   }
 
   test(
