@@ -7,13 +7,11 @@
 
 package no.ndla.imageapi.service.search
 
-import java.nio.file.{Files, Path}
 import java.util.Date
 
-import com.sksamuel.elastic4s.embedded.LocalNode
 import javax.servlet.http.HttpServletRequest
 import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
-import no.ndla.imageapi.integration.NdlaE4sClient
+import no.ndla.imageapi.integration.{Elastic4sClientFactory, NdlaE4sClient}
 import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
@@ -22,14 +20,28 @@ import no.ndla.network.ApplicationUrl
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
+import org.scalatest.Outcome
+import org.testcontainers.elasticsearch.ElasticsearchContainer
 
-import scala.util.Success
+import scala.util.{Success, Try}
 
 class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
-  val tmpDir: Path = Files.createTempDirectory(this.getClass.getName)
-  val localNodeSettings: Map[String, String] = LocalNode.requiredSettings(this.getClass.getName, tmpDir.toString)
-  val localNode = LocalNode(localNodeSettings)
-  override val e4sClient = NdlaE4sClient(localNode.client(true))
+
+  val container = Try {
+    val esVersion = "6.3.2"
+    val c = new ElasticsearchContainer(s"docker.elastic.co/elasticsearch/elasticsearch:$esVersion")
+    c.start()
+    c
+  }
+
+  // Skip tests if no docker environment available
+  override def withFixture(test: NoArgTest): Outcome = {
+    assume(container.isSuccess)
+    super.withFixture(test)
+  }
+
+  val host = container.map(c => s"http://${c.getHttpHostAddress}")
+  override val e4sClient: NdlaE4sClient = Elastic4sClientFactory.getClient(host.getOrElse("http://localhost:9200"))
 
   override val searchConverterService = new SearchConverterService
   override val converterService = new ConverterService
@@ -141,7 +153,7 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
     updated
   )
 
-  override def beforeAll(): Unit = {
+  override def beforeAll(): Unit = if (container.isSuccess) {
     indexService.createIndexWithName(ImageApiProperties.SearchIndex)
 
     when(draftApiClient.getAgreementCopyright(any[Long])).thenReturn(None)
@@ -163,7 +175,7 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
     blockUntil(() => searchService.countDocuments() == 5)
   }
 
-  override def afterAll(): Unit = {
+  override def afterAll(): Unit = if (container.isSuccess) {
     indexService.deleteIndexWithName(Some(ImageApiProperties.SearchIndex))
   }
 
