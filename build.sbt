@@ -63,6 +63,7 @@ lazy val image_api = (project in file("."))
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.22",
       "com.google.guava" % "guava" % "28.1-jre", // Overridden because vulnerability in request interceptor
+      "org.apache.httpcomponents" % "httpclient" % "4.5.10", // Overridden because vulnerability in request interceptor
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % JacksonVersion, // Overriding jackson-databind used in dependencies because of https://app.snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-72884
       "org.jsoup" % "jsoup" % "1.11.3",
