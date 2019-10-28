@@ -71,7 +71,7 @@ lazy val image_api = (project in file("."))
       "net.bull.javamelody" % "javamelody-core" % "1.74.0",
       "org.jrobin" % "jrobin" % "1.5.9", // This is needed for javamelody graphing
       "org.imgscalr" % "imgscalr-lib" % "4.2",
-      "io.lemonlabs" %% "scala-uri" % "1.3.1",
+      "io.lemonlabs" %% "scala-uri" % "1.5.1",
       "org.testcontainers" % "elasticsearch" % TestContainersVersion % "test",
       "org.testcontainers" % "testcontainers" % TestContainersVersion % "test",
       // These are not strictly needed, for most cases, but offers better handling of loading images with encoding issues
