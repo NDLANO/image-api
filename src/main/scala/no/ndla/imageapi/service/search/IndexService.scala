@@ -29,6 +29,14 @@ trait IndexService {
   val indexService: IndexService
 
   class IndexService extends LazyLogging {
+
+    def deleteDocument(audioId: Long) =
+      e4sClient
+        .execute {
+          delete(audioId.toString).from(ImageApiProperties.SearchIndex / ImageApiProperties.SearchDocument)
+        }
+        .map(_.isSuccess)
+
     implicit val formats = SearchableLanguageFormats.JSonFormats
 
     def indexDocument(imageMetaInformation: domain.ImageMetaInformation): Try[domain.ImageMetaInformation] = {

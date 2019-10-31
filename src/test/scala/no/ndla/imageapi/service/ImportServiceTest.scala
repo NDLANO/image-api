@@ -9,7 +9,7 @@ package no.ndla.imageapi.service
 
 import no.ndla.imageapi.model.domain.{Author, ImageMetaInformation, ImageTag}
 import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
-import no.ndla.imageapi.model.{ImportException, S3UploadException, domain}
+import no.ndla.imageapi.model.{ImportException, ImageStorageException, domain}
 import no.ndla.mapping._
 import no.ndla.mapping.License.{CC0, CC_BY_SA, PublicDomain}
 import org.mockito.ArgumentMatchers._
@@ -41,7 +41,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
 
     val result = importService.importImage("1234")
     result.isFailure should be(true)
-    result.failed.get.isInstanceOf[S3UploadException] should be(true)
+    result.failed.get.isInstanceOf[ImageStorageException] should be(true)
     result.failed.get.getMessage should equal(
       s"Upload of image '/${TestData.migrationImageElg.mainImage.originalFile}' to S3 failed.: upload failed")
   }

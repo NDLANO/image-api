@@ -36,4 +36,4 @@ case class NdlaSearchException(rf: RequestFailure)
 class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
 case class ElasticIndexingException(message: String) extends RuntimeException(message)
 
-class S3UploadException(message: String) extends RuntimeException(message)
+class ImageStorageException(message: String) extends RuntimeException(message)

@@ -67,7 +67,7 @@ trait ImageStorageService {
       Try(amazonClient.getObjectMetadata(StorageName, storageKey)).map(_.getContentLength).getOrElse(0)
     }
 
-    def deleteObject(storageKey: String): Try[_] = Try(amazonClient.deleteObject(StorageName, storageKey))
+    def deleteObject(storageKey: String): Try[Unit] = Try(amazonClient.deleteObject(StorageName, storageKey))
   }
 
 }

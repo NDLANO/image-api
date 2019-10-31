@@ -25,7 +25,7 @@ import no.ndla.imageapi.ImageApiProperties.{
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain.{ImageMetaInformation, ImageTag}
-import no.ndla.imageapi.model.{ImportException, Language, S3UploadException, domain}
+import no.ndla.imageapi.model.{ImportException, Language, ImageStorageException, domain}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexBuilderService
 import no.ndla.mapping.License.getLicense
@@ -87,7 +87,7 @@ trait ImportService {
         val tryResUpload = imageStorage.uploadFromUrl(image, rawImgMeta.originalFile, request)
         tryResUpload match {
           case Failure(f) =>
-            Failure(new S3UploadException(s"Upload of image '${image.fileName}' to S3 failed.: ${f.getMessage}"))
+            Failure(new ImageStorageException(s"Upload of image '${image.fileName}' to S3 failed.: ${f.getMessage}"))
           case Success(_) => Success(image)
         }
       }

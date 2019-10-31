@@ -5,10 +5,15 @@ import java.lang.Math.max
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.auth.User
-import no.ndla.imageapi.model.{ImageNotFoundException, ValidationException}
+import no.ndla.imageapi.model.{
+  ElasticIndexingException,
+  ImageNotFoundException,
+  ImageStorageException,
+  ValidationException,
+  domain
+}
 import no.ndla.imageapi.model.api.{ImageMetaInformationV2, NewImageMetaInformationV2, UpdateImageMetaInformation}
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, LanguageField}
-import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexService
 import org.scalatra.servlet.FileItem
@@ -26,6 +31,30 @@ trait WriteService {
   val writeService: WriteService
 
   class WriteService extends LazyLogging {
+
+    def deleteImageAndFiles(imageId: Long) = {
+      imageRepository.withId(imageId) match {
+        case Some(toDelete) =>
+          val metaDeleted = imageRepository.delete(imageId)
+          val fileDeleted = imageStorage.deleteObject(toDelete.imageUrl)
+          val indexDeleted = indexService.deleteDocument(imageId)
+
+          if (metaDeleted < 1) {
+            Failure(new ImageNotFoundException(s"Image with id $imageId was not found, and could not be deleted."))
+          } else if (fileDeleted.isFailure) {
+            Failure(new ImageStorageException("Something went wrong when deleting image file from storage."))
+          } else if (indexDeleted.isFailure) {
+            indexDeleted match {
+              case Success(true) => Success(imageId)
+              case Failure(ex)   => Failure(ex)
+              case Success(false) =>
+                Failure(new ElasticIndexingException(s"Something went wrong when deleting search index of $imageId"))
+            }
+          } else { Success(imageId) }
+        case None =>
+          Failure(new ImageNotFoundException(s"Image with id $imageId was not found, and could not be deleted."))
+      }
+    }
 
     def storeNewImage(newImage: NewImageMetaInformationV2, file: FileItem): Try[ImageMetaInformation] = {
       validationService.validateImageFile(file) match {
