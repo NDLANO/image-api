@@ -43,14 +43,14 @@ trait WriteService {
             Failure(new ImageNotFoundException(s"Image with id $imageId was not found, and could not be deleted."))
           } else if (fileDeleted.isFailure) {
             Failure(new ImageStorageException("Something went wrong when deleting image file from storage."))
-          } else if (indexDeleted.isFailure) {
+          } else {
             indexDeleted match {
               case Success(true) => Success(imageId)
               case Failure(ex)   => Failure(ex)
               case Success(false) =>
                 Failure(new ElasticIndexingException(s"Something went wrong when deleting search index of $imageId"))
             }
-          } else { Success(imageId) }
+          }
         case None =>
           Failure(new ImageNotFoundException(s"Image with id $imageId was not found, and could not be deleted."))
       }
