@@ -10,7 +10,7 @@ package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.auth.User
-import no.ndla.imageapi.model.S3UploadException
+import no.ndla.imageapi.model.ImageStorageException
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService}
@@ -102,7 +102,7 @@ trait InternController {
         case Success(imageMeta) => {
           Ok(converterService.asApiImageMetaInformationWithDomainUrlV2(imageMeta, None))
         }
-        case Failure(s: S3UploadException) => {
+        case Failure(s: ImageStorageException) => {
           val errMsg =
             s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${s.getMessage}\n"
           logger.warn(errMsg, s)

@@ -317,4 +317,23 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
     writeService.mergeImages(existing, toUpdate) should equal(expectedResult)
   }
+
+  test("that deleting image deletes database entry, s3 object, and indexed document") {
+    reset(imageRepository)
+    reset(imageStorage)
+    reset(indexService)
+
+    val imageId = 4444.toLong
+
+    when(imageRepository.withId(imageId)).thenReturn(Some(domainImageMeta))
+    when(imageRepository.delete(eqTo(imageId))(any[DBSession])).thenReturn(1)
+    when(imageStorage.deleteObject(any[String])).thenReturn(Success(()))
+    when(indexService.deleteDocument(any[Long])).thenReturn(Success(true))
+
+    writeService.deleteImageAndFiles(imageId)
+
+    verify(imageStorage, times(1)).deleteObject(domainImageMeta.imageUrl)
+    verify(indexService, times(1)).deleteDocument(imageId)
+    verify(imageRepository, times(1)).delete(eqTo(imageId))(any[DBSession])
+  }
 }

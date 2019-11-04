@@ -8,20 +8,12 @@
 
 package no.ndla.imageapi.controller
 
-import no.ndla.imageapi.ImageApiProperties.{
-  DefaultPageSize,
-  ElasticSearchIndexMaxResultWindow,
-  ElasticSearchScrollKeepAlive,
-  MaxImageFileSizeBytes,
-  MaxPageSize,
-  RoleWithWriteAccess
-}
+import no.ndla.imageapi.ImageApiProperties._
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.integration.DraftApiClient
 import no.ndla.imageapi.model.api.{
   Error,
   ImageMetaInformationV2,
-  License,
   NewImageMetaInformationV2,
   SearchParams,
   SearchResult,
@@ -30,17 +22,15 @@ import no.ndla.imageapi.model.api.{
 }
 import no.ndla.imageapi.model.domain.Sort
 import no.ndla.imageapi.model.{Language, ValidationException, ValidationMessage}
-import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{SearchConverterService, SearchService}
-import no.ndla.imageapi.service.search.SearchService
 import no.ndla.imageapi.service.{ConverterService, ReadService, WriteService}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.{NotFound, Ok}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
 import org.scalatra.util.NotNothing
+import org.scalatra.{NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
@@ -355,6 +345,31 @@ trait ImageControllerV2 {
         case Success(meta) => meta
         case Failure(e)    => errorHandler(e)
       }
+    }
+
+    delete(
+      "/:image_id",
+      operation(
+        apiOperation[Unit]("deleteImage")
+          summary "Deletes the specified images meta data and file"
+          description "Deletes the specified images meta data and file"
+          parameters (
+            asHeaderParam(correlationId),
+            asPathParam(imageId)
+        )
+          authorizations "oauth2"
+          responseMessages (response400, response403, response413, response500)
+      )
+    ) {
+      authUser.assertHasId()
+      authRole.assertHasRole(RoleWithWriteAccess)
+
+      val imageId = long(this.imageId.paramName)
+      writeService.deleteImageAndFiles(imageId) match {
+        case Failure(ex) => errorHandler(ex)
+        case Success(_)  => Ok()
+      }
+
     }
 
     patch(

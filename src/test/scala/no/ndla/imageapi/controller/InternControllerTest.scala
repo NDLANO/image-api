@@ -9,7 +9,7 @@
 package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.model.api.{ImageAltText, ImageCaption, ImageTag, ImageTitle}
-import no.ndla.imageapi.model.{S3UploadException, api, domain}
+import no.ndla.imageapi.model.{ImageStorageException, api, domain}
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.{CC_BY, getLicense}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -109,7 +109,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
 
   test("That POST /import/123 returns 504 with error message when import failed on S3 upload") {
     when(importService.importImage(eqTo("123")))
-      .thenThrow(new S3UploadException(s"Upload of image:[name] to S3 failed."))
+      .thenThrow(new ImageStorageException(s"Upload of image:[name] to S3 failed."))
     post("/import/123") {
       status should equal(504)
       body indexOf "Upload of image:[name] to S3 failed" should be > 0
