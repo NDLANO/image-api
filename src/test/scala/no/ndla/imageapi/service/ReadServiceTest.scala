@@ -10,7 +10,7 @@ package no.ndla.imageapi.service
 
 import javax.servlet.http.HttpServletRequest
 import no.ndla.imageapi.model.{InvalidUrlException, api, domain}
-import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
+import no.ndla.imageapi.{ImageApiProperties, TestData, TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
 import org.json4s.DefaultFormats
 import org.json4s.native.JsonParser
@@ -64,8 +64,8 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
         None
       )))
     implicit val formats: DefaultFormats.type = DefaultFormats
-    val testUrl = "http://test.test/image-api/v2/images/1"
-    val testRawUrl = "http://test.test/image-api/raw/Elg.jpg"
+    val testUrl = s"${ImageApiProperties.Domain}/image-api/v2/images/1"
+    val testRawUrl = s"${ImageApiProperties.Domain}/image-api/raw/Elg.jpg"
     val expectedBody =
       s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testRawUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"gnu","description":"gnuggert","url":"https://gnuli/"},"agreementId": 1,"origin":"http://www.scanpix.no","creators":[{"type":"Forfatter","name":"Knutulf Knagsen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
     val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
@@ -100,8 +100,8 @@ class ReadServiceTest extends UnitSuite with TestEnvironment {
   test("That GET /<id> returns body with original copyright if agreement doesnt exist") {
     when(draftApiClient.getAgreementCopyright(1)).thenReturn(None)
     implicit val formats: DefaultFormats.type = DefaultFormats
-    val testUrl = "http://test.test/image-api/v2/images/1"
-    val testRawUrl = "http://test.test/image-api/raw/Elg.jpg"
+    val testUrl = s"${ImageApiProperties.Domain}/image-api/v2/images/1"
+    val testRawUrl = s"${ImageApiProperties.Domain}/image-api/raw/Elg.jpg"
     val expectedBody =
       s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testRawUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"CC-BY-NC-SA-4.0","description":"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International","url":"https://creativecommons.org/licenses/by-nc-sa/4.0/"}, "agreementId":1, "origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
     val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
