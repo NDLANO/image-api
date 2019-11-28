@@ -9,12 +9,12 @@
 package no.ndla.imageapi.service
 
 import java.util.Date
-import javax.servlet.http.HttpServletRequest
 
+import javax.servlet.http.HttpServletRequest
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.model.api
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
-import no.ndla.network.ApplicationUrl
+import no.ndla.network.{ApplicationUrl, Domains}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito._
 
@@ -110,8 +110,8 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     setApplicationUrl()
 
     val apiImage = converterService.asApiImageMetaInformationWithApplicationUrlV2(DefaultImageMetaInformation, None)
-    apiImage.get.metaUrl should equal("http://image-api/v2/images/1")
-    apiImage.get.imageUrl should equal("http://image-api/raw/123.png")
+    apiImage.get.metaUrl should equal(s"${ImageApiProperties.Domain}/v2/images/1")
+    apiImage.get.imageUrl should equal(s"${ImageApiProperties.Domain}/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns links with domain urls") {
@@ -128,8 +128,8 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     val apiImage = converterService.asApiImageMetaInformationWithApplicationUrlV2(DefaultImageMetaInformation,
                                                                                   Some("RandomLangauge"))
 
-    apiImage.get.metaUrl should equal("http://image-api/v2/images/1")
-    apiImage.get.imageUrl should equal("http://image-api/raw/123.png")
+    apiImage.get.metaUrl should equal(s"${ImageApiProperties.Domain}/v2/images/1")
+    apiImage.get.imageUrl should equal(s"${ImageApiProperties.Domain}/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns links even if language is not supported") {
