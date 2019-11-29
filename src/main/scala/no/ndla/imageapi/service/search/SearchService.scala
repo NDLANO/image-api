@@ -190,7 +190,7 @@ trait SearchService {
           (Some(nestedQuery("titles", existsQuery(s"titles.$lang")).scoreMode(ScoreMode.Avg)), lang)
       }
 
-      val filters = List(licenseFilter, sizeFilter)
+      val filters = List(languageFilter, licenseFilter, sizeFilter)
       val filteredSearch = queryBuilder.filter(filters.flatten)
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
