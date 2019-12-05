@@ -396,7 +396,6 @@ trait ImageControllerV2 {
         case Success(Some(image)) => Ok(image)
         case Success(None)        => Ok()
       }
-
     }
 
     patch(

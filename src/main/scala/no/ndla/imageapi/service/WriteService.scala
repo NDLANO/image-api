@@ -35,19 +35,17 @@ trait WriteService {
 
     def deleteImageLanguageVersion(imageId: Long, language: String): Try[Option[ImageMetaInformationV2]] =
       imageRepository.withId(imageId) match {
-        case Some(existing) =>
-          if (converterService.getSupportedLanguages(existing).contains(language)) {
-            val newImage = converterService.withoutLanguage(existing, language)
+        case Some(existing) if converterService.getSupportedLanguages(existing).contains(language) =>
+          val newImage = converterService.withoutLanguage(existing, language)
 
-            if (converterService.getSupportedLanguages(newImage).isEmpty) {
-              // If last language version delete entire image
-              deleteImageAndFiles(imageId).map(_ => None)
-            } else {
-              updateImage(imageId, newImage, Some(existing), None).map(Some(_))
-            }
-          } else {
-            Failure(new ImageNotFoundException(s"Image with id $imageId does not exist in language '$language'."))
-          }
+          // If last language version delete entire image
+          if (converterService.getSupportedLanguages(newImage).isEmpty)
+            deleteImageAndFiles(imageId).map(_ => None)
+          else
+            updateImage(imageId, newImage, Some(existing), None).map(Some(_))
+
+        case Some(_) =>
+          Failure(new ImageNotFoundException(s"Image with id $imageId does not exist in language '$language'."))
         case None =>
           Failure(new ImageNotFoundException(s"Image with id $imageId was not found, and could not be deleted."))
       }
