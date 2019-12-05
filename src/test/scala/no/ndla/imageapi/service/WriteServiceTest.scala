@@ -10,8 +10,8 @@ package no.ndla.imageapi.service
 
 import java.io.InputStream
 import java.util.Date
-import javax.servlet.http.HttpServletRequest
 
+import javax.servlet.http.HttpServletRequest
 import no.ndla.imageapi.model.ValidationException
 import no.ndla.imageapi.model.api._
 import no.ndla.imageapi.model.domain
@@ -21,6 +21,7 @@ import no.ndla.network.ApplicationUrl
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
+import org.mockito.invocation.InvocationOnMock
 import org.scalatra.servlet.FileItem
 import scalikejdbc.DBSession
 
@@ -45,6 +46,20 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
   val domainImageMeta =
     converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg"))
+
+  val multiLangImage = domain.ImageMetaInformation(
+    Some(2),
+    List(domain.ImageTitle("nynorsk", "nn"), domain.ImageTitle("english", "en"), domain.ImageTitle("norsk", "unknown")),
+    List(),
+    "yolo.jpeg",
+    100,
+    "image/jpeg",
+    domain.Copyright("", "", List(), List(), List(), None, None, None),
+    List(),
+    List(),
+    "ndla124",
+    updated
+  )
 
   override def beforeEach = {
     when(fileMock1.getContentType).thenReturn(Some("image/jpeg"))
@@ -333,6 +348,55 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     writeService.deleteImageAndFiles(imageId)
 
     verify(imageStorage, times(1)).deleteObject(domainImageMeta.imageUrl)
+    verify(indexService, times(1)).deleteDocument(imageId)
+    verify(imageRepository, times(1)).delete(eqTo(imageId))(any[DBSession])
+  }
+
+  test("That deleting language version deletes language") {
+    reset(imageRepository)
+    reset(imageStorage)
+    reset(indexService)
+
+    val imageId = 5555.toLong
+    val image = multiLangImage.copy(id = Some(imageId))
+    val expectedImage =
+      image.copy(titles = List(domain.ImageTitle("english", "en"), domain.ImageTitle("norsk", "unknown")))
+
+    when(imageRepository.withId(imageId)).thenReturn(Some(image))
+    when(imageRepository.update(any[domain.ImageMetaInformation], eqTo(imageId))).thenAnswer((i: InvocationOnMock) =>
+      i.getArgument[domain.ImageMetaInformation](0))
+    when(validationService.validate(any[domain.ImageMetaInformation], any[Option[domain.ImageMetaInformation]]))
+      .thenAnswer((i: InvocationOnMock) => Success(i.getArgument[domain.ImageMetaInformation](0)))
+    when(indexService.indexDocument(any[domain.ImageMetaInformation]))
+      .thenAnswer((i: InvocationOnMock) => Success(i.getArgument[domain.ImageMetaInformation](0)))
+
+    writeService.deleteImageLanguageVersion(imageId, "nn")
+
+    verify(imageRepository, times(1)).update(expectedImage, imageId)
+  }
+
+  test("That deleting last language version deletes entire image") {
+    reset(imageRepository)
+    reset(imageStorage)
+    reset(indexService)
+
+    val imageId = 6666.toLong
+    val image = multiLangImage.copy(
+      id = Some(imageId),
+      titles = List(domain.ImageTitle("english", "en")),
+      captions = List(domain.ImageCaption("english", "en")),
+      tags = Seq(domain.ImageTag(Seq("eng", "elsk"), "en")),
+      alttexts = Seq(domain.ImageAltText("english", "en"))
+    )
+
+    when(imageRepository.withId(imageId)).thenReturn(Some(image))
+    when(imageRepository.delete(eqTo(imageId))(any[DBSession])).thenReturn(1)
+    when(imageStorage.deleteObject(any[String])).thenReturn(Success(()))
+    when(indexService.deleteDocument(any[Long])).thenReturn(Success(true))
+
+    writeService.deleteImageLanguageVersion(imageId, "en")
+
+    verify(imageStorage, times(1)).deleteObject(image.imageUrl)
     verify(indexService, times(1)).deleteDocument(imageId)
     verify(imageRepository, times(1)).delete(eqTo(imageId))(any[DBSession])
   }

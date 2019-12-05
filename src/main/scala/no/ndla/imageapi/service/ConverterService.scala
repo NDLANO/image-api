@@ -201,6 +201,15 @@ trait ConverterService {
       domain.ImageCaption(caption, language)
     }
 
+    def withoutLanguage(domainMetaInformation: domain.ImageMetaInformation,
+                        languageToRemove: String): domain.ImageMetaInformation =
+      domainMetaInformation.copy(
+        titles = domainMetaInformation.titles.filterNot(_.language == languageToRemove),
+        alttexts = domainMetaInformation.alttexts.filterNot(_.language == languageToRemove),
+        tags = domainMetaInformation.tags.filterNot(_.language == languageToRemove),
+        captions = domainMetaInformation.captions.filterNot(_.language == languageToRemove),
+      )
+
     def getSupportedLanguages(domainImageMetaInformation: domain.ImageMetaInformation): Seq[String] = {
       findSupportedLanguages(
         domainImageMetaInformation.titles,

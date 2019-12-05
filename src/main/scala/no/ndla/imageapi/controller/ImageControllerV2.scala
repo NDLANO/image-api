@@ -88,6 +88,7 @@ trait ImageControllerV2 {
       "page-size",
       s"The number of search hits to display for each page. Defaults to $DefaultPageSize and max is $MaxPageSize.")
     private val imageId = Param[String]("image_id", "Image_id of the image that needs to be fetched.")
+    private val pathLanguage = Param[String]("language", "The ISO 639-1 language code describing language.")
     private val externalId = Param[String]("external_id", "External node id of the image that needs to be fetched.")
     private val metadata = Param[NewImageMetaInformationV2](
       "metadata",
@@ -368,6 +369,32 @@ trait ImageControllerV2 {
       writeService.deleteImageAndFiles(imageId) match {
         case Failure(ex) => errorHandler(ex)
         case Success(_)  => Ok()
+      }
+
+    }
+
+    delete(
+      "/:image_id/language/:language",
+      operation(
+        apiOperation[ImageMetaInformationV2]("deleteLanguage")
+          summary "Delete language version of image metadata."
+          description "Delete language version of image metadata."
+          parameters (asHeaderParam(correlationId),
+          asPathParam(imageId),
+          asPathParam(pathLanguage))
+          authorizations "oauth2"
+          responseMessages (response400, response403, response500))
+    ) {
+      authUser.assertHasId()
+      authRole.assertHasRole(RoleWithWriteAccess)
+
+      val imageId = long(this.imageId.paramName)
+      val language = params(this.language.paramName)
+
+      writeService.deleteImageLanguageVersion(imageId, language) match {
+        case Failure(ex)          => errorHandler(ex)
+        case Success(Some(image)) => Ok(image)
+        case Success(None)        => Ok()
       }
 
     }
