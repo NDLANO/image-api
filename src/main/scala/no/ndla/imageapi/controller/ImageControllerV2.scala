@@ -30,7 +30,7 @@ import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
 import org.scalatra.util.NotNothing
-import org.scalatra.{NotFound, Ok}
+import org.scalatra.{NoContent, NotFound, Ok}
 
 import scala.util.{Failure, Success}
 
@@ -394,7 +394,7 @@ trait ImageControllerV2 {
       writeService.deleteImageLanguageVersion(imageId, language) match {
         case Failure(ex)          => errorHandler(ex)
         case Success(Some(image)) => Ok(image)
-        case Success(None)        => Ok()
+        case Success(None)        => NoContent()
       }
     }
 
