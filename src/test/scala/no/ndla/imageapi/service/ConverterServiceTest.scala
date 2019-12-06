@@ -195,4 +195,15 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     result.get.supportedLanguages should be(Seq("unknown", "nn", "en"))
   }
 
+  test("that withoutLanguage removes correct language") {
+    val result1 = converterService.withoutLanguage(MultiLangImage, "en")
+    converterService.getSupportedLanguages(result1) should be(Seq("unknown", "nn"))
+    val result2 = converterService.withoutLanguage(MultiLangImage, "nn")
+    converterService.getSupportedLanguages(result2) should be(Seq("unknown", "en"))
+    val result3 = converterService.withoutLanguage(MultiLangImage, "unknown")
+    converterService.getSupportedLanguages(result3) should be(Seq("nn", "en"))
+    val result4 = converterService.withoutLanguage(converterService.withoutLanguage(MultiLangImage, "unknown"), "en")
+    converterService.getSupportedLanguages(result4) should be(Seq("nn"))
+  }
+
 }

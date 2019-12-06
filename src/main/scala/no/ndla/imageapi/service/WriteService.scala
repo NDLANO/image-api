@@ -9,6 +9,7 @@ import no.ndla.imageapi.model.{
   ElasticIndexingException,
   ImageNotFoundException,
   ImageStorageException,
+  Language,
   ValidationException,
   domain
 }
@@ -31,6 +32,23 @@ trait WriteService {
   val writeService: WriteService
 
   class WriteService extends LazyLogging {
+
+    def deleteImageLanguageVersion(imageId: Long, language: String): Try[Option[ImageMetaInformationV2]] =
+      imageRepository.withId(imageId) match {
+        case Some(existing) if converterService.getSupportedLanguages(existing).contains(language) =>
+          val newImage = converterService.withoutLanguage(existing, language)
+
+          // If last language version delete entire image
+          if (converterService.getSupportedLanguages(newImage).isEmpty)
+            deleteImageAndFiles(imageId).map(_ => None)
+          else
+            updateImage(imageId, newImage, Some(existing), None).map(Some(_))
+
+        case Some(_) =>
+          Failure(new ImageNotFoundException(s"Image with id $imageId does not exist in language '$language'."))
+        case None =>
+          Failure(new ImageNotFoundException(s"Image with id $imageId was not found, and could not be deleted."))
+      }
 
     def deleteImageAndFiles(imageId: Long) = {
       imageRepository.withId(imageId) match {
@@ -117,19 +135,28 @@ trait WriteService {
       (toKeep ++ updated).filterNot(_.tags.isEmpty)
     }
 
+    private def updateImage(imageId: Long,
+                            image: domain.ImageMetaInformation,
+                            oldImage: Option[domain.ImageMetaInformation],
+                            language: Option[String]) = {
+      validationService
+        .validate(image, oldImage)
+        .map(imageMeta => imageRepository.update(imageMeta, imageId))
+        .flatMap(indexService.indexDocument)
+        .map(updatedImage =>
+          converterService
+            .asApiImageMetaInformationWithDomainUrlV2(updatedImage, Some(language.getOrElse(Language.DefaultLanguage)))
+            .get)
+    }
+
     def updateImage(imageId: Long, image: UpdateImageMetaInformation): Try[ImageMetaInformationV2] = {
       val oldImage = imageRepository.withId(imageId)
-      val updateImage = oldImage match {
+      val imageToUpdateWith = oldImage match {
         case None           => Failure(new ImageNotFoundException(s"Image with id $imageId found"))
         case Some(existing) => Success(mergeImages(existing, image))
       }
 
-      updateImage
-        .flatMap(validationService.validate(_, oldImage))
-        .map(imageMeta => imageRepository.update(imageMeta, imageId))
-        .flatMap(indexService.indexDocument)
-        .map(updatedImage =>
-          converterService.asApiImageMetaInformationWithDomainUrlV2(updatedImage, Some(image.language)).get)
+      imageToUpdateWith.flatMap(newImage => updateImage(imageId, newImage, oldImage, Some(image.language)))
     }
 
     private[service] def mergeLanguageFields[A <: LanguageField[String]](existing: Seq[A], updated: Seq[A]): Seq[A] = {
