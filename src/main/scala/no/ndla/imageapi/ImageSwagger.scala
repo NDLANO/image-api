@@ -19,6 +19,17 @@ class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with N
 
 object ImagesApiInfo {
 
+  val contactInfo = ContactInfo(
+    "NDLA",
+    "ndla.no",
+    ImageApiProperties.ContactEmail
+  )
+
+  val licenseInfo = LicenseInfo(
+    "GPL v3.0",
+    "http://www.gnu.org/licenses/gpl-3.0.en.html"
+  )
+
   val apiInfo = ApiInfo(
     "Image API",
     "Searching and fetching all images used in the NDLA platform.\n\n" +
@@ -27,9 +38,8 @@ object ImagesApiInfo {
       "The API can resize and crop transitions on the returned images to enable use in special contexts, e.g. " +
       "low bandwidth scenarios",
     "https://om.ndla.no/tos",
-    ImageApiProperties.ContactEmail,
-    "GPL v3.0",
-    "http://www.gnu.org/licenses/gpl-3.0.en.html"
+    contactInfo,
+    licenseInfo
   )
 }
 

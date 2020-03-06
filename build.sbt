@@ -1,17 +1,17 @@
 import java.util.Properties
 
-val Scalaversion = "2.12.10"
-val Scalatraversion = "2.6.5"
-val ScalaLoggingVersion = "3.9.0"
-val ScalaTestVersion = "3.0.5"
+val Scalaversion = "2.13.1"
+val Scalatraversion = "2.7.0"
+val ScalaLoggingVersion = "3.9.2"
+val ScalaTestVersion = "3.1.1"
 val Log4JVersion = "2.11.1"
-val Jettyversion = "9.4.18.v20190429"
+val Jettyversion = "9.4.27.v20200227"
 val AwsSdkversion = "1.11.658"
-val MockitoVersion = "2.23.0"
+val MockitoVersion = "1.11.4"
 val Elastic4sVersion = "6.7.4"
 val JacksonVersion = "2.10.2"
 val ElasticsearchVersion = "6.8.6"
-val Json4SVersion = "3.5.4"
+val Json4SVersion = "3.6.7"
 val FlywayVersion = "5.2.0"
 val PostgresVersion = "42.2.5"
 val HikariConnectionPoolVersion = "3.2.0"
@@ -34,8 +34,8 @@ lazy val image_api = (project in file("."))
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8", "-unchecked", "-deprecation", "-feature"),
     libraryDependencies ++= Seq(
-      "ndla" %% "network" % "0.42",
-      "ndla" %% "mapping" % "0.10",
+      "ndla" %% "network" % "0.43",
+      "ndla" %% "mapping" % "0.13",
       "joda-time" % "joda-time" % "2.10",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
@@ -49,14 +49,15 @@ lazy val image_api = (project in file("."))
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "4.0.1" % "container;provided;test",
       "org.json4s" %% "json4s-native" % Json4SVersion,
-      "org.scalikejdbc" %% "scalikejdbc" % "3.3.1",
+      "org.scalikejdbc" %% "scalikejdbc" % "3.4.0",
       "org.postgresql" % "postgresql" % PostgresVersion,
       "com.zaxxer" % "HikariCP" % HikariConnectionPoolVersion,
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
       "com.amazonaws" % "aws-java-sdk-cloudwatch" % AwsSdkversion,
-      "org.scalaj" %% "scalaj-http" % "2.4.1",
+      "org.scalaj" %% "scalaj-http" % "2.4.2",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
-      "org.mockito" % "mockito-core" % MockitoVersion % "test",
+      "org.mockito" %% "mockito-scala" % MockitoVersion % "test",
+      "org.mockito" %% "mockito-scala-scalatest" % MockitoVersion % "test",
       "org.flywaydb" % "flyway-core" % "5.2.0",
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % ElasticsearchVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,

@@ -9,7 +9,6 @@
 package no.ndla.imageapi
 
 import com.amazonaws.services.s3.AmazonS3
-import com.sksamuel.elastic4s.http.HttpClient
 import com.zaxxer.hikari.HikariDataSource
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.controller.{HealthController, ImageControllerV2, InternController, RawController}
@@ -18,7 +17,7 @@ import no.ndla.imageapi.repository._
 import no.ndla.imageapi.service._
 import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
 import no.ndla.network.NdlaClient
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.scalatest.MockitoSugar
 
 trait TestEnvironment
     extends Elastic4sClient

@@ -149,7 +149,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
 
     val result = importService.toDomainImage(meta, image)
 
-    result.tags should be(Seq(zhTags, nbMerged))
+    result.tags.sortBy(_.language) should be(Seq(nbMerged, zhTags))
   }
 
 }

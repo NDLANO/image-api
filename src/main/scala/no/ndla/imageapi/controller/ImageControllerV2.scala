@@ -335,16 +335,17 @@ trait ImageControllerV2 {
         .getOrElse(throw new ValidationException(
           errors = Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
 
-      val file =
-        fileParams.getOrElse(this.file.paramName,
-                             throw new ValidationException(
-                               errors = Seq(ValidationMessage("file", "The request must contain an image file"))))
-
-      writeService
-        .storeNewImage(imageMeta, file)
-        .map(img => converterService.asApiImageMetaInformationWithApplicationUrlV2(img, Some(imageMeta.language))) match {
-        case Success(meta) => meta
-        case Failure(e)    => errorHandler(e)
+      fileParams.get(this.file.paramName) match {
+        case Some(file) =>
+          writeService
+            .storeNewImage(imageMeta, file)
+            .map(img => converterService.asApiImageMetaInformationWithApplicationUrlV2(img, Some(imageMeta.language))) match {
+            case Success(meta) => meta
+            case Failure(e)    => errorHandler(e)
+          }
+        case None =>
+          errorHandler(
+            new ValidationException(errors = Seq(ValidationMessage("file", "The request must contain an image file"))))
       }
     }
 

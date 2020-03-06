@@ -48,7 +48,7 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
   override val indexService = new IndexService
   override val searchService = new SearchService
 
-  val getStartAtAndNumResults: PrivateMethod[(Int, Int)] = PrivateMethod[(Int, Int)]('getStartAtAndNumResults)
+  val getStartAtAndNumResults: PrivateMethod[(Int, Int)] = PrivateMethod[(Int, Int)](Symbol("getStartAtAndNumResults"))
 
   val largeImage = Image("large-full-url", 10000, "jpg")
   val smallImage = Image("small-full-url", 100, "jpg")

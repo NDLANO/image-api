@@ -174,7 +174,7 @@ trait WriteService {
     private[service] def uploadImage(file: FileItem): Try[Image] = {
       val extension = getFileExtension(file.name).getOrElse("")
       val contentType = file.getContentType.getOrElse("")
-      val fileName = Stream.continually(randomFileName(extension)).dropWhile(imageStorage.objectExists).head
+      val fileName = LazyList.continually(randomFileName(extension)).dropWhile(imageStorage.objectExists).head
 
       imageStorage
         .uploadFromStream(new ByteArrayInputStream(file.get), fileName, contentType, file.size)

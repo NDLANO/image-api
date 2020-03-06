@@ -30,13 +30,10 @@ class SearchableLanguageListSerializer
         case JObject(items) => {
           SearchableLanguageList(items.map {
             case JField(name, JArray(fieldItems)) =>
-              LanguageValue(name,
-                            fieldItems
-                              .map {
-                                case JString(value) => value
-                                case x              => throw new MappingException(s"Cannot convert $x to SearchableLanguageList")
-                              }
-                              .to[Seq])
+              LanguageValue(name, fieldItems.map {
+                case JString(value) => value
+                case x              => throw new MappingException(s"Cannot convert $x to SearchableLanguageList")
+              }.toSeq)
           })
         }
       }, {

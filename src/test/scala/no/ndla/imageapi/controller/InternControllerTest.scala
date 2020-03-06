@@ -143,7 +143,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
       status should equal(500)
       body should equal("Failed to find indexes")
     }
-    verify(indexService, never()).deleteIndexWithName(any[Option[String]])
+    verify(indexService, never).deleteIndexWithName(any[Option[String]])
   }
 
   test(
