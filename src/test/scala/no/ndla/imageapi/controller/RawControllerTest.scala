@@ -41,7 +41,7 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   }
 
   test("That GET /image.jpg returns 404 if image was not found") {
-    when(imageStorage.get(any[String])).thenReturn(Failure(mock[ImageNotFoundException]))
+    when(imageStorage.get(any[String])).thenReturn(Failure(mock[ImageNotFoundException](withSettings.lenient())))
     get(s"/$imageName") {
       status should equal(404)
     }
@@ -102,7 +102,7 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   }
 
   test("That GET /id/1 returns 404 if image was not found") {
-    when(imageStorage.get(any[String])).thenReturn(Failure(mock[ImageNotFoundException]))
+    when(imageStorage.get(any[String])).thenReturn(Failure(mock[ImageNotFoundException](withSettings.lenient())))
 
     get(s"/id/$id") {
       status should equal(404)

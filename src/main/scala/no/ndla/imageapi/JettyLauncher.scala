@@ -21,7 +21,7 @@ import scala.io.Source
 
 object JettyLauncher extends LazyLogging {
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
     logger.info(Source.fromInputStream(getClass.getResourceAsStream("/log-license.txt")).mkString)
 
     logger.info("Starting DB Migration")

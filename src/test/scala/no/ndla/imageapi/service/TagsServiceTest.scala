@@ -65,11 +65,12 @@ class TagsServiceTest extends UnitSuite with TestEnvironment {
          ]
        }]}"""
     val expectedResult = List(
-      ImageTag(List("folkevise"), "nn"),
+      ImageTag(List("folk song"), "en"),
       ImageTag(List("folkevise"), "nb"),
-      ImageTag(List("folk song"), "unknown"),
-      ImageTag(List("folk song"), "en")
+      ImageTag(List("folkevise"), "nn"),
+      ImageTag(List("folk song"), "unknown")
     )
-    service.streamToImageTags(new ByteArrayInputStream(jsonString.getBytes())) should equal(expectedResult)
+    val result = service.streamToImageTags(new ByteArrayInputStream(jsonString.getBytes()))
+    result.sortBy(_.language) should equal(expectedResult)
   }
 }

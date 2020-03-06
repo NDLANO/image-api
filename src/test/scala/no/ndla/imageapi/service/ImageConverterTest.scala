@@ -142,8 +142,8 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
     }
     for {
       ratio <- Seq(0.1, 0.2, 0.81, 1, 1.1, 1.5, 2, 5, 10)
-      width <- Stream.range(10, 1000, 10)
-      height <- Stream.range(10, 1000, 10)
+      width <- LazyList.range(10, 1000, 10)
+      height <- LazyList.range(10, 1000, 10)
     } yield testRatio(ratio, width, height)
   }
 

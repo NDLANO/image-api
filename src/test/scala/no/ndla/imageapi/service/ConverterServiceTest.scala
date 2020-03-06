@@ -79,16 +79,6 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     ApplicationUrl.set(request)
   }
 
-  def setApplicationUrl(): Unit = {
-    val request = mock[HttpServletRequest]
-    when(request.getServerPort).thenReturn(80)
-    when(request.getScheme).thenReturn("http")
-    when(request.getServerName).thenReturn("image-api")
-    when(request.getServletPath).thenReturn("/v2/images")
-
-    ApplicationUrl.set(request)
-  }
-
   override def afterEach: Unit = {
     ApplicationUrl.clear()
   }
@@ -107,16 +97,12 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links with applicationUrl") {
-    setApplicationUrl()
-
     val apiImage = converterService.asApiImageMetaInformationWithApplicationUrlV2(DefaultImageMetaInformation, None)
     apiImage.get.metaUrl should equal(s"${ImageApiProperties.Domain}/v2/images/1")
     apiImage.get.imageUrl should equal(s"${ImageApiProperties.Domain}/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns links with domain urls") {
-    setApplicationUrl()
-
     val apiImage = converterService.asApiImageMetaInformationWithDomainUrlV2(DefaultImageMetaInformation, None)
     apiImage.get.metaUrl should equal("http://api-gateway.ndla-local/image-api/v2/images/1")
     apiImage.get.imageUrl should equal("http://api-gateway.ndla-local/image-api/raw/123.png")
@@ -124,7 +110,6 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   test(
     "That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links even if language is not supported") {
-    setApplicationUrl()
     val apiImage = converterService.asApiImageMetaInformationWithApplicationUrlV2(DefaultImageMetaInformation,
                                                                                   Some("RandomLangauge"))
 
@@ -133,8 +118,6 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns links even if language is not supported") {
-    setApplicationUrl()
-
     val apiImage =
       converterService.asApiImageMetaInformationWithDomainUrlV2(DefaultImageMetaInformation, Some("RandomLangauge"))
     apiImage.get.metaUrl should equal("http://api-gateway.ndla-local/image-api/v2/images/1")
@@ -142,7 +125,6 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That asApiImageMetaInformationWithApplicationUrlV2 returns with agreement copyright features") {
-    setApplicationUrl()
     val from = DateTime.now().minusDays(5).toDate()
     val to = DateTime.now().plusDays(10).toDate()
     val agreementCopyright = api.Copyright(

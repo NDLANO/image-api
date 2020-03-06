@@ -127,7 +127,7 @@ trait ImageRepository {
     private def escapeSQLWildcards(str: String): String = str.replaceAllLiterally("%", "\\%")
 
     def getImageFromFilePath(filePath: String)(implicit session: DBSession = ReadOnlyAutoSession) = {
-      val wildcardMatch = '%' + escapeSQLWildcards(filePath.dropWhile(_ == '/'))
+      val wildcardMatch = s"%${escapeSQLWildcards(filePath.dropWhile(_ == '/'))}"
       val im = ImageMetaInformation.syntax("im")
       sql"""
             select ${im.result.*}

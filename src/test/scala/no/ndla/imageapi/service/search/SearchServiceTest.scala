@@ -19,7 +19,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   test("That createEmptyIndexIfNoIndexesExist never creates empty index if an index already exists") {
     when(indexService.findAllIndexes(any[String])).thenReturn(Success(Seq("index1")))
     searchService.createEmptyIndexIfNoIndexesExist()
-    verify(indexBuilderService, never()).createEmptyIndex
+    verify(indexBuilderService, never).createEmptyIndex
   }
 
   test("That createEmptyIndexIfNoIndexesExist creates empty index if no indexes already exists") {
