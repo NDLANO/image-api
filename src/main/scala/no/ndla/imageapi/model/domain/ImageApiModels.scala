@@ -11,7 +11,7 @@ package no.ndla.imageapi.model.domain
 import java.util.Date
 
 import no.ndla.imageapi.ImageApiProperties
-import org.json4s.FieldSerializer
+import org.json4s.{DefaultFormats, FieldSerializer, Formats}
 import org.json4s.FieldSerializer._
 import org.json4s.native.Serialization._
 import scalikejdbc._
@@ -54,18 +54,21 @@ case class ImageMetaInformation(
 )
 
 object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
-  implicit val formats = org.json4s.DefaultFormats
   override val tableName = "imagemetadata"
   override val schemaName = Some(ImageApiProperties.MetaSchema)
-  val JSonSerializer = FieldSerializer[ImageMetaInformation](ignore("id"))
+  val jsonEncoder: Formats = DefaultFormats
+  val repositorySerializer = jsonEncoder + FieldSerializer[ImageMetaInformation](ignore("id"))
 
-  def apply(im: SyntaxProvider[ImageMetaInformation])(rs: WrappedResultSet): ImageMetaInformation =
-    apply(im.resultName)(rs)
+  def fromResultSet(im: SyntaxProvider[ImageMetaInformation])(rs: WrappedResultSet): ImageMetaInformation =
+    fromResultSet(im.resultName)(rs)
 
-  def apply(im: ResultName[ImageMetaInformation])(rs: WrappedResultSet): ImageMetaInformation = {
-    val meta = read[ImageMetaInformation](rs.string(im.c("metadata")))
+  def fromResultSet(im: ResultName[ImageMetaInformation])(rs: WrappedResultSet): ImageMetaInformation = {
+    implicit val formats = this.jsonEncoder
+    val id = rs.long(im.c("id"))
+    val jsonString = rs.string(im.c("metadata"))
+    val meta = read[ImageMetaInformation](jsonString)
     ImageMetaInformation(
-      Some(rs.long(im.c("id"))),
+      Some(id),
       meta.titles,
       meta.alttexts,
       meta.imageUrl,
