@@ -12,6 +12,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.integration.DataSource
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.service.ConverterService
+import org.json4s.Formats
 import org.json4s.native.Serialization.write
 import org.postgresql.util.PGobject
 import scalikejdbc._
@@ -21,9 +22,9 @@ trait ImageRepository {
   val imageRepository: ImageRepository
 
   class ImageRepository extends LazyLogging {
-    implicit val formats = org.json4s.DefaultFormats + ImageMetaInformation.JSonSerializer
+    implicit val formats: Formats = ImageMetaInformation.repositorySerializer
 
-    def imageCount(implicit session: DBSession = ReadOnlyAutoSession) =
+    def imageCount(implicit session: DBSession = ReadOnlyAutoSession): Long =
       sql"select count(*) from ${ImageMetaInformation.table}"
         .map(rs => rs.long("count"))
         .single()
@@ -39,7 +40,7 @@ trait ImageRepository {
     def getRandomImage()(implicit session: DBSession = ReadOnlyAutoSession): Option[ImageMetaInformation] = {
       val im = ImageMetaInformation.syntax("im")
       sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where metadata is not null order by random() limit 1"
-        .map(ImageMetaInformation(im))
+        .map(ImageMetaInformation.fromResultSet(im))
         .single()
         .apply()
     }
@@ -110,7 +111,7 @@ trait ImageRepository {
         implicit session: DBSession = ReadOnlyAutoSession): Option[ImageMetaInformation] = {
       val im = ImageMetaInformation.syntax("im")
       sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause"
-        .map(ImageMetaInformation(im))
+        .map(ImageMetaInformation.fromResultSet(im))
         .single()
         .apply()
     }
@@ -119,7 +120,7 @@ trait ImageRepository {
         implicit session: DBSession = ReadOnlyAutoSession): List[ImageMetaInformation] = {
       val im = ImageMetaInformation.syntax("im")
       sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause"
-        .map(ImageMetaInformation(im))
+        .map(ImageMetaInformation.fromResultSet(im))
         .list
         .apply()
     }
@@ -135,10 +136,25 @@ trait ImageRepository {
             where metadata->>'imageUrl' like $wildcardMatch
             limit 1;
         """
-        .map(ImageMetaInformation(im))
+        .map(ImageMetaInformation.fromResultSet(im))
         .single
         .apply()
 
+    }
+
+    def getByPage(pageSize: Int, offset: Int)(
+        implicit session: DBSession = ReadOnlyAutoSession): Seq[ImageMetaInformation] = {
+      val im = ImageMetaInformation.syntax("im")
+      sql"""
+           select ${im.result.*}
+           from ${ImageMetaInformation.as(im)}
+           where metadata is not null
+           offset $offset
+           limit $pageSize
+      """
+        .map(ImageMetaInformation.fromResultSet(im))
+        .list
+        .apply()
     }
 
   }

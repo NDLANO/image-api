@@ -17,6 +17,8 @@ import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService}
 import no.ndla.imageapi.service.{ConverterService, ImportService, ReadService}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, GatewayTimeout, InternalServerError, NotFound, Ok}
+import no.ndla.imageapi.model.ImageNotFoundException
+import no.ndla.imageapi.model.domain.ImageMetaInformation
 
 import scala.util.{Failure, Success}
 
@@ -27,12 +29,12 @@ trait InternController {
     with ConverterService
     with IndexBuilderService
     with IndexService
-    with User =>
+    with User
+    with ImageRepository =>
   val internController: InternController
 
   class InternController extends NdlaController {
-
-    protected implicit override val jsonFormats: Formats = DefaultFormats
+    protected implicit override val jsonFormats: Formats = ImageMetaInformation.jsonEncoder
 
     post("/index") {
       indexBuilderService.indexDocuments match {
@@ -114,6 +116,20 @@ trait InternController {
           logger.warn(errMsg, ex)
           InternalServerError(body = errMsg)
         }
+      }
+    }
+
+    get("/dump/image/") {
+      val pageNo = intOrDefault("page", 1)
+      val pageSize = intOrDefault("page-size", 250)
+      readService.getMetaImageDomainDump(pageNo, pageSize)
+    }
+
+    get("/dump/image/:id") {
+      val id = long("id")
+      imageRepository.withId(id) match {
+        case Some(image) => Ok(image)
+        case None        => errorHandler(new ImageNotFoundException(s"Could not find image with id: '$id'"))
       }
     }
   }

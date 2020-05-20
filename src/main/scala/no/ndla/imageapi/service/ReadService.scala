@@ -5,6 +5,7 @@ import io.lemonlabs.uri.dsl._
 import io.lemonlabs.uri.UrlPath
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.api.ImageMetaInformationV2
+import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.IndexService
@@ -62,6 +63,13 @@ trait ReadService {
       if (isIdUrl) handleIdPathParts(pathParts)
       else if (isRawControllerUrl) handleRawPathParts(pathParts)
       else Failure(new InvalidUrlException("Could not extract id or path from url."))
+    }
+
+    def getMetaImageDomainDump(pageNo: Int, pageSize: Int): api.ImageMetaDomainDump = {
+      val (safePageNo, safePageSize) = (math.max(pageNo, 1), math.max(pageSize, 0))
+      val results = imageRepository.getByPage(safePageSize, (safePageNo - 1) * safePageSize)
+
+      api.ImageMetaDomainDump(imageRepository.imageCount, pageNo, pageSize, results)
     }
   }
 
