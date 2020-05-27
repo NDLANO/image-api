@@ -132,6 +132,11 @@ trait InternController {
         case None        => errorHandler(new ImageNotFoundException(s"Could not find image with id: '$id'"))
       }
     }
+
+    post("/dump/image/") {
+      val domainMeta = extract[ImageMetaInformation](request.body)
+      Ok(imageRepository.insert(domainMeta))
+    }
   }
 
 }
