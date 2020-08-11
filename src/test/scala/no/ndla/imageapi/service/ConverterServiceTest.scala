@@ -69,7 +69,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     updated
   )
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     val request = mock[HttpServletRequest]
     when(request.getServerPort).thenReturn(80)
     when(request.getScheme).thenReturn("http")
@@ -79,7 +79,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     ApplicationUrl.set(request)
   }
 
-  override def afterEach: Unit = {
+  override def afterEach(): Unit = {
     ApplicationUrl.clear()
   }
 

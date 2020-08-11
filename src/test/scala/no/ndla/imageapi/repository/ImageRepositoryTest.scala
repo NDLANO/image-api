@@ -16,7 +16,7 @@ class ImageRepositoryTest extends IntegrationSuite with TestEnvironment {
 
   def emptyTestDatabase =
     DB autoCommit (implicit session => {
-      sql"delete from imageapitest.imagemetadata;".execute.apply()(session)
+      sql"delete from imageapitest.imagemetadata;".execute().apply()(session)
     })
 
   override def beforeEach(): Unit =

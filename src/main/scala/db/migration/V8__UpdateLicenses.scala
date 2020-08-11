@@ -80,7 +80,7 @@ class V8__UpdateLicenses extends BaseJavaMigration {
     dataObject.setType("jsonb")
     dataObject.setValue(imagemetadata)
 
-    sql"update imagemetadata set metadata = ${dataObject} where id = $id".update().apply
+    sql"update imagemetadata set metadata = ${dataObject} where id = $id".update().apply()
   }
 
 }

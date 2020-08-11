@@ -64,7 +64,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
     updated
   )
 
-  override def beforeEach = {
+  override def beforeEach() = {
     reset(imageRepository, importService, indexService, indexBuilderService)
   }
 

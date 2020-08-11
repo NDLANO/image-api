@@ -1,19 +1,19 @@
 import java.util.Properties
 
-val Scalaversion = "2.13.1"
+val Scalaversion = "2.13.3"
 val Scalatraversion = "2.7.0"
 val ScalaLoggingVersion = "3.9.2"
-val ScalaTestVersion = "3.1.1"
-val Log4JVersion = "2.11.1"
-val Jettyversion = "9.4.27.v20200227"
+val ScalaTestVersion = "3.2.1"
+val Log4JVersion = "2.13.3"
+val Jettyversion = "9.4.31.v20200723"
 val AwsSdkversion = "1.11.658"
-val MockitoVersion = "1.11.4"
-val Elastic4sVersion = "6.7.4"
-val JacksonVersion = "2.10.2"
-val ElasticsearchVersion = "6.8.6"
+val MockitoVersion = "1.14.8"
+val Elastic4sVersion = "6.7.8"
+val JacksonVersion = "2.11.2"
+val ElasticsearchVersion = "6.8.11"
 val Json4SVersion = "3.6.7"
 val FlywayVersion = "5.2.0"
-val PostgresVersion = "42.2.5"
+val PostgresVersion = "42.2.14"
 val HikariConnectionPoolVersion = "3.2.0"
 val TestContainersVersion = "1.12.2"
 
@@ -25,6 +25,14 @@ appProperties := {
   prop
 }
 
+// Sometimes we override transitive dependencies because of vulnerabilities, we put these here
+val vulnerabilityOverrides = Seq(
+  "com.google.guava" % "guava" % "28.1-jre",
+  "commons-codec" % "commons-codec" % "1.14",
+  "org.yaml" % "snakeyaml" % "1.26",
+  "org.apache.httpcomponents" % "httpclient" % "4.5.10"
+)
+
 lazy val image_api = (project in file("."))
   .settings(
     name := "image-api",
@@ -34,8 +42,8 @@ lazy val image_api = (project in file("."))
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8", "-unchecked", "-deprecation", "-feature"),
     libraryDependencies ++= Seq(
-      "ndla" %% "network" % "0.43",
-      "ndla" %% "mapping" % "0.14",
+      "ndla" %% "network" % "0.44",
+      "ndla" %% "mapping" % "0.15",
       "joda-time" % "joda-time" % "2.10",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
@@ -49,7 +57,7 @@ lazy val image_api = (project in file("."))
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "4.0.1" % "container;provided;test",
       "org.json4s" %% "json4s-native" % Json4SVersion,
-      "org.scalikejdbc" %% "scalikejdbc" % "3.4.0",
+      "org.scalikejdbc" %% "scalikejdbc" % "3.5.0",
       "org.postgresql" % "postgresql" % PostgresVersion,
       "com.zaxxer" % "HikariCP" % HikariConnectionPoolVersion,
       "com.amazonaws" % "aws-java-sdk-s3" % AwsSdkversion,
@@ -63,12 +71,8 @@ lazy val image_api = (project in file("."))
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.22",
-      "com.google.guava" % "guava" % "28.1-jre", // Overridden because vulnerability in request interceptor
-      "org.apache.httpcomponents" % "httpclient" % "4.5.10", // Overridden because vulnerability in request interceptor
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
-      "com.fasterxml.jackson.core" % "jackson-databind" % JacksonVersion, // Overriding jackson-databind used in dependencies because of https://app.snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-72884
       "org.jsoup" % "jsoup" % "1.11.3",
-      "log4j" % "log4j" % "1.2.16",
       "net.bull.javamelody" % "javamelody-core" % "1.74.0",
       "org.jrobin" % "jrobin" % "1.5.9", // This is needed for javamelody graphing
       "org.imgscalr" % "imgscalr-lib" % "4.2",
@@ -79,7 +83,7 @@ lazy val image_api = (project in file("."))
       "com.twelvemonkeys.imageio" % "imageio-core" % "3.4.1",
       "com.twelvemonkeys.imageio" % "imageio-jpeg" % "3.4.1",
       "commons-io" % "commons-io" % "2.6"
-    )
+    ) ++ vulnerabilityOverrides
   )
   .enablePlugins(DockerPlugin)
   .enablePlugins(JettyPlugin)

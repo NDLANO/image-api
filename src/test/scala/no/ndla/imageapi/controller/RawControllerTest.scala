@@ -25,7 +25,7 @@ class RawControllerTest extends UnitSuite with ScalatraSuite with TestEnvironmen
   val id = 1
   val idGif = 1
 
-  override def beforeEach = {
+  override def beforeEach() = {
     when(imageRepository.withId(id)).thenReturn(Some(TestData.bjorn))
     when(imageStorage.get(any[String])).thenReturn(Success(NdlaLogoImage))
   }
