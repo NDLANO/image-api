@@ -22,7 +22,7 @@ import scalaj.http.HttpRequest
 class ImportServiceTest extends UnitSuite with TestEnvironment {
   override val importService = new ImportService
 
-  override def beforeEach = {
+  override def beforeEach() = {
     reset(imageRepository, tagsService, migrationApiClient, imageStorage, indexBuilderService)
   }
 

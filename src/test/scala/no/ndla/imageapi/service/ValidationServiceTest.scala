@@ -30,7 +30,7 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
     updated()
   )
 
-  override def beforeEach = {
+  override def beforeEach() = {
     reset(fileMock)
   }
 

@@ -14,7 +14,7 @@ class ImageConverterTest extends UnitSuite with TestEnvironment {
   val (imageWidth, imageHeight) = (1000, 1000)
   val image: BufferedImage = mock[BufferedImage]
 
-  override def beforeEach = {
+  override def beforeEach() = {
     when(image.getWidth).thenReturn(imageWidth)
     when(image.getHeight).thenReturn(imageHeight)
   }

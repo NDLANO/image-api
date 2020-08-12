@@ -56,7 +56,8 @@ trait ImageRepository {
       dataObject.setType("jsonb")
       dataObject.setValue(write(imageMeta))
 
-      val imageId = sql"insert into imagemetadata(metadata) values (${dataObject})".updateAndReturnGeneratedKey.apply
+      val imageId =
+        sql"insert into imagemetadata(metadata) values (${dataObject})".updateAndReturnGeneratedKey().apply()
       imageMeta.copy(id = Some(imageId))
     }
 
@@ -69,7 +70,9 @@ trait ImageRepository {
 
       DB localTx { implicit session =>
         val imageId =
-          sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})".updateAndReturnGeneratedKey.apply
+          sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})"
+            .updateAndReturnGeneratedKey()
+            .apply()
         imageMetaInformation.copy(id = Some(imageId))
       }
     }
@@ -81,13 +84,13 @@ trait ImageRepository {
       dataObject.setValue(json)
 
       DB localTx { implicit session =>
-        sql"update imagemetadata set metadata = ${dataObject} where id = ${id}".update.apply
+        sql"update imagemetadata set metadata = ${dataObject} where id = ${id}".update().apply()
         imageMetaInformation.copy(id = Some(id))
       }
     }
 
     def delete(imageId: Long)(implicit session: DBSession = AutoSession) = {
-      sql"delete from imagemetadata where id = ${imageId}".update.apply
+      sql"delete from imagemetadata where id = ${imageId}".update().apply()
     }
 
     def minMaxId: (Long, Long) = {
@@ -121,11 +124,11 @@ trait ImageRepository {
       val im = ImageMetaInformation.syntax("im")
       sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause"
         .map(ImageMetaInformation.fromResultSet(im))
-        .list
+        .list()
         .apply()
     }
 
-    private def escapeSQLWildcards(str: String): String = str.replaceAllLiterally("%", "\\%")
+    private def escapeSQLWildcards(str: String): String = str.replace("%", "\\%")
 
     def getImageFromFilePath(filePath: String)(implicit session: DBSession = ReadOnlyAutoSession) = {
       val wildcardMatch = s"%${escapeSQLWildcards(filePath.dropWhile(_ == '/'))}"
@@ -137,7 +140,7 @@ trait ImageRepository {
             limit 1;
         """
         .map(ImageMetaInformation.fromResultSet(im))
-        .single
+        .single()
         .apply()
 
     }
@@ -153,7 +156,7 @@ trait ImageRepository {
            limit $pageSize
       """
         .map(ImageMetaInformation.fromResultSet(im))
-        .list
+        .list()
         .apply()
     }
 

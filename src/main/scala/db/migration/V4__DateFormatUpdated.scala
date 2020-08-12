@@ -55,7 +55,7 @@ class V4__DateFormatUpdated extends BaseJavaMigration with LazyLogging {
     dataObject.setType("jsonb")
     dataObject.setValue(imageMeta.document)
 
-    sql"update imagemetadata set metadata = $dataObject where id = ${imageMeta.id}".update().apply
+    sql"update imagemetadata set metadata = $dataObject where id = ${imageMeta.id}".update().apply()
   }
 
 }

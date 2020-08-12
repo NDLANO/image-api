@@ -194,9 +194,9 @@ trait ImageControllerV2 {
       "/",
       operation(
         apiOperation[SearchResult]("getImages")
-          summary "Find images."
-          description "Find images in the ndla.no database."
-          parameters (
+          .summary("Find images.")
+          .description("Find images in the ndla.no database.")
+          .parameters(
             asHeaderParam(correlationId),
             asQueryParam(query),
             asQueryParam(minSize),
@@ -207,8 +207,8 @@ trait ImageControllerV2 {
             asQueryParam(pageNo),
             asQueryParam(pageSize),
             asQueryParam(scrollId)
-        )
-          responseMessages response500
+          )
+          .responseMessages(response500)
       )
     ) {
       val scrollId = paramOrNone(this.scrollId.paramName)
@@ -231,14 +231,14 @@ trait ImageControllerV2 {
       "/search/",
       operation(
         apiOperation[List[SearchResult]]("getImagesPost")
-          summary "Find images."
-          description "Search for images in the ndla.no database."
-          parameters (
+          .summary("Find images.")
+          .description("Search for images in the ndla.no database.")
+          .parameters(
             asHeaderParam(correlationId),
             bodyParam[SearchParams],
             asQueryParam(scrollId)
-        )
-          responseMessages (response400, response500)
+          )
+          .responseMessages(response400, response500)
       )
     ) {
       val searchParams = extract[SearchParams](request.body)
@@ -261,14 +261,14 @@ trait ImageControllerV2 {
       "/:image_id",
       operation(
         apiOperation[ImageMetaInformationV2]("findByImageId")
-          summary "Fetch information for image."
-          description "Shows info of the image with submitted id."
-          parameters (
+          .summary("Fetch information for image.")
+          .description("Shows info of the image with submitted id.")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(imageId),
             asQueryParam(language)
-        )
-          responseMessages (response404, response500)
+          )
+          .responseMessages(response404, response500)
       )
     ) {
       val imageId = long(this.imageId.paramName)
@@ -285,14 +285,14 @@ trait ImageControllerV2 {
       "/external_id/:external_id",
       operation(
         apiOperation[ImageMetaInformationV2]("findImageByExternalId")
-          summary "Fetch information for image by external id."
-          description "Shows info of the image with submitted external id."
-          parameters (
+          .summary("Fetch information for image by external id.")
+          .description("Shows info of the image with submitted external id.")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(externalId),
             asQueryParam(language)
-        )
-          responseMessages (response404, response500)
+          )
+          .responseMessages(response404, response500)
       )
     ) {
       val externalId = params(this.externalId.paramName)
@@ -308,17 +308,17 @@ trait ImageControllerV2 {
       "/",
       operation(
         apiOperation[ImageMetaInformationV2]("newImage")
-          summary "Upload a new image with meta information."
-          description "Upload a new image file with meta data."
-          consumes "multipart/form-data"
-          parameters (
+          .summary("Upload a new image with meta information.")
+          .description("Upload a new image file with meta data.")
+          .consumes("multipart/form-data")
+          .parameters(
             asHeaderParam(correlationId),
             asObjectFormParam(metadata),
             formParam(metadata.paramName, models("NewImageMetaInformationV2")),
             asFileParam(file)
-        )
-          authorizations "oauth2"
-          responseMessages (response400, response403, response413, response500)
+          )
+          .authorizations("oauth2")
+          .responseMessages(response400, response403, response413, response500)
       )
     ) {
       authUser.assertHasId()
@@ -353,14 +353,14 @@ trait ImageControllerV2 {
       "/:image_id",
       operation(
         apiOperation[Unit]("deleteImage")
-          summary "Deletes the specified images meta data and file"
-          description "Deletes the specified images meta data and file"
-          parameters (
+          .summary("Deletes the specified images meta data and file")
+          .description("Deletes the specified images meta data and file")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(imageId)
-        )
-          authorizations "oauth2"
-          responseMessages (response400, response403, response413, response500)
+          )
+          .authorizations("oauth2")
+          .responseMessages(response400, response403, response413, response500)
       )
     ) {
       authUser.assertHasId()
@@ -378,13 +378,15 @@ trait ImageControllerV2 {
       "/:image_id/language/:language",
       operation(
         apiOperation[ImageMetaInformationV2]("deleteLanguage")
-          summary "Delete language version of image metadata."
-          description "Delete language version of image metadata."
-          parameters (asHeaderParam(correlationId),
-          asPathParam(imageId),
-          asPathParam(pathLanguage))
-          authorizations "oauth2"
-          responseMessages (response400, response403, response500))
+          .summary("Delete language version of image metadata.")
+          .description("Delete language version of image metadata.")
+          .parameters(
+            asHeaderParam(correlationId),
+            asPathParam(imageId),
+            asPathParam(pathLanguage)
+          )
+          .authorizations("oauth2")
+          .responseMessages(response400, response403, response500))
     ) {
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
@@ -403,16 +405,16 @@ trait ImageControllerV2 {
       "/:image_id",
       operation(
         apiOperation[ImageMetaInformationV2]("newImage")
-          summary "Update an existing image with meta information."
-          description "Updates an existing image with meta data."
-          consumes "form-data"
-          parameters (
+          .summary("Update an existing image with meta information.")
+          .description("Updates an existing image with meta data.")
+          .consumes("form-data")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(imageId),
             bodyParam[UpdateImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
-        )
-          authorizations "oauth2"
-          responseMessages (response400, response403, response500)
+          )
+          .authorizations("oauth2")
+          .responseMessages(response400, response403, response500)
       )
     ) {
       authUser.assertHasId()

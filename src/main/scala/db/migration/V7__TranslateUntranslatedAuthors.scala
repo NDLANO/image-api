@@ -68,7 +68,7 @@ class V7__TranslateUntranslatedAuthors extends BaseJavaMigration with LazyLoggin
     dataObject.setType("jsonb")
     dataObject.setValue(write(imagemetadata))
 
-    sql"update imagemetadata set metadata = ${dataObject} where id = ${imagemetadata.id}".update().apply
+    sql"update imagemetadata set metadata = ${dataObject} where id = ${imagemetadata.id}".update().apply()
   }
 
 }

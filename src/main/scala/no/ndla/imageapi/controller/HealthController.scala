@@ -28,7 +28,7 @@ trait HealthController {
     }
 
     after() {
-      ApplicationUrl.clear
+      ApplicationUrl.clear()
     }
 
     def getApiResponse(url: String): HttpResponse[String] = {

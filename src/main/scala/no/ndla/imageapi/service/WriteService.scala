@@ -177,7 +177,7 @@ trait WriteService {
       val fileName = LazyList.continually(randomFileName(extension)).dropWhile(imageStorage.objectExists).head
 
       imageStorage
-        .uploadFromStream(new ByteArrayInputStream(file.get), fileName, contentType, file.size)
+        .uploadFromStream(new ByteArrayInputStream(file.get()), fileName, contentType, file.size)
         .map(filePath => {
           Image(filePath, file.size, contentType)
         })

@@ -58,12 +58,12 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     List(),
     List(),
     "ndla124",
-    updated
+    updated()
   )
 
-  override def beforeEach = {
+  override def beforeEach() = {
     when(fileMock1.getContentType).thenReturn(Some("image/jpeg"))
-    when(fileMock1.get).thenReturn(Array[Byte](-1, -40, -1))
+    when(fileMock1.get()).thenReturn(Array[Byte](-1, -40, -1))
     when(fileMock1.size).thenReturn(1024)
     when(fileMock1.name).thenReturn("file.jpg")
 
