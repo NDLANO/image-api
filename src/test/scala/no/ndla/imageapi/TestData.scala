@@ -204,13 +204,20 @@ object TestData {
 
   val testdata = List(elg, bjorn, jerv, mink, rein)
 
-  case class DiskImage(filename: String) extends ImageStream {
-    override def contentType: String = s"image/$format"
+  case class DiskImage(filename: String, overriddenContentType: Option[String] = None) extends ImageStream {
+    override def contentType: String = overriddenContentType match {
+      case Some(ct) => ct
+      case None     => s"image/$format"
+    }
+
     override def stream: InputStream = getClass.getResourceAsStream(s"/$filename")
     override def fileName: String = filename
 
     override lazy val sourceImage: BufferedImage = ImageIO.read(stream)
     lazy val rawBytes = scala.io.Source.fromInputStream(stream).mkString
+
+    override def copyWithNewContentType(contentType: String): ImageStream =
+      this.copy(overriddenContentType = Some(contentType))
   }
 
   val NdlaLogoImage = DiskImage("ndla_logo.jpg")

@@ -1,13 +1,16 @@
 package no.ndla.imageapi.controller
 
 import javax.servlet.http.HttpServletRequest
-import no.ndla.imageapi.model.api.Error
+import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2}
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.{ImageConverter, ImageStorageService}
 import org.scalatra.swagger.{Parameter, ResponseMessage, Swagger, SwaggerSupport}
 import io.lemonlabs.uri.Uri
+import no.ndla.imageapi.ComponentRegistry.readService
+import no.ndla.imageapi.ImageApiProperties.ValidMimeTypes
 import org.json4s.{DefaultFormats, Formats}
+import org.scalatra.Ok
 
 import scala.util.{Failure, Success, Try}
 
@@ -54,14 +57,18 @@ trait RawController {
         apiOperation("getImageFile")
           .summary("Fetch an image with options to resize and crop")
           .description("Fetches a image with options to resize and crop")
-          .produces("application/octet-stream")
+          .produces(ValidMimeTypes :+ "application/octet-stream": _*)
           .parameters(
             List[Parameter](pathParam[String]("image_name").description("The name of the image"))
               ++ getImageParams: _*
           )
           .responseMessages(response404, response500))
     ) {
-      getRawImage(params("image_name"))
+      val filePath = params("image_name")
+      getRawImage(filePath) match {
+        case Failure(ex)  => errorHandler(ex)
+        case Success(img) => Ok(img)
+      }
     }
 
     get(
@@ -70,7 +77,7 @@ trait RawController {
         apiOperation("getImageFileById")
           .summary("Fetch an image with options to resize and crop")
           .description("Fetches a image with options to resize and crop")
-          .produces("application/octet-stream")
+          .produces(ValidMimeTypes :+ "application/octet-stream": _*)
           .parameters(
             List[Parameter](pathParam[String]("image_id").description("The ID of the image"))
               ++ getImageParams: _*
@@ -84,17 +91,20 @@ trait RawController {
             .toStringRaw
             .dropWhile(_ == '/') // Strip heading '/'
 
-          getRawImage(imageName)
+          getRawImage(imageName) match {
+            case Failure(ex)  => errorHandler(ex)
+            case Success(img) => Ok(img.copyWithNewContentType(imageMeta.contentType))
+          }
         case None => None
       }
     }
 
-    private def getRawImage(imageName: String): ImageStream = {
+    private def getRawImage(imageName: String): Try[ImageStream] = {
       val dynamicCropOrResize = if (canDoDynamicCrop) dynamicCrop _ else resize _
       imageStorage.get(imageName) match {
-        case Success(img) if List("gif", "svg").contains(img.format.toLowerCase) => img
-        case Success(img)                                                        => crop(img).flatMap(dynamicCropOrResize).get
-        case Failure(e)                                                          => throw e
+        case Success(img) if List("gif", "svg").contains(img.format.toLowerCase) => Success(img)
+        case Success(img)                                                        => crop(img).flatMap(dynamicCropOrResize)
+        case Failure(e)                                                          => Failure(e)
       }
     }
 

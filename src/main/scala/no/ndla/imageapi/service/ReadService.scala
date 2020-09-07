@@ -44,16 +44,18 @@ trait ReadService {
 
     private def handleRawPathParts(pathParts: List[String]): Try[ImageMetaInformation] =
       pathParts.lift(2) match {
-        case Some(path) if path.size > 0 =>
-          val encodedPath = urlEncodePath(path)
-          imageRepository.getImageFromFilePath(encodedPath) match {
-            case Some(image) => Success(image)
-            case None =>
-              Failure(
-                new ImageNotFoundException(s"Extracted path '$encodedPath', but no image with that path was found"))
-          }
-        case _ => Failure(new InvalidUrlException("Could not extract path from url."))
+        case Some(path) if path.size > 0 => getImageFromFilePath(path)
+        case _                           => Failure(new InvalidUrlException("Could not extract path from url."))
       }
+
+    def getImageFromFilePath(path: String) = {
+      val encodedPath = urlEncodePath(path)
+      imageRepository.getImageFromFilePath(encodedPath) match {
+        case Some(image) => Success(image)
+        case None =>
+          Failure(new ImageNotFoundException(s"Extracted path '$encodedPath', but no image with that path was found"))
+      }
+    }
 
     def getDomainImageMetaFromUrl(url: String): Try[ImageMetaInformation] = {
       val pathParts = url.path.parts.toList

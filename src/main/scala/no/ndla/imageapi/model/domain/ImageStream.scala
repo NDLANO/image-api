@@ -9,4 +9,5 @@ trait ImageStream {
   def fileName: String
   def format: String = fileName.substring(fileName.lastIndexOf(".") + 1)
   val sourceImage: BufferedImage
+  def copyWithNewContentType(contentType: String): ImageStream
 }

@@ -28,7 +28,8 @@ trait ImageStorageService {
   val imageStorage: AmazonImageStorageService
 
   class AmazonImageStorageService extends LazyLogging {
-    case class NdlaImage(s3Object: S3Object, fileName: String) extends ImageStream {
+    case class NdlaImage(s3Object: S3Object, fileName: String, overriddenContentType: Option[String] = None)
+        extends ImageStream {
       lazy val imageContent = {
         val content = IOUtils.toByteArray(s3Object.getObjectContent)
         s3Object.getObjectContent.close()
@@ -36,7 +37,14 @@ trait ImageStorageService {
       }
 
       override val sourceImage: BufferedImage = ImageIO.read(stream)
-      override def contentType: String = s3Object.getObjectMetadata.getContentType
+
+      override def contentType: String = overriddenContentType match {
+        case Some(ct) => ct
+        case None     => s3Object.getObjectMetadata.getContentType
+      }
+
+      override def copyWithNewContentType(contentType: String) = this.copy(overriddenContentType = Some(contentType))
+
       override def stream: InputStream = new ByteArrayInputStream(imageContent)
     }
 
