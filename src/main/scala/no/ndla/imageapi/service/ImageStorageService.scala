@@ -24,12 +24,11 @@ import scalaj.http.HttpRequest
 import scala.util.{Failure, Success, Try}
 
 trait ImageStorageService {
-  this: AmazonClient =>
+  this: AmazonClient with ReadService =>
   val imageStorage: AmazonImageStorageService
 
   class AmazonImageStorageService extends LazyLogging {
-    case class NdlaImage(s3Object: S3Object, fileName: String, overriddenContentType: Option[String] = None)
-        extends ImageStream {
+    case class NdlaImage(s3Object: S3Object, fileName: String) extends ImageStream {
       lazy val imageContent = {
         val content = IOUtils.toByteArray(s3Object.getObjectContent)
         s3Object.getObjectContent.close()
@@ -38,12 +37,17 @@ trait ImageStorageService {
 
       override val sourceImage: BufferedImage = ImageIO.read(stream)
 
-      override def contentType: String = overriddenContentType match {
-        case Some(ct) => ct
-        case None     => s3Object.getObjectMetadata.getContentType
+      override def contentType: String = {
+        val s3ContentType = s3Object.getObjectMetadata.getContentType
+        if (s3ContentType == "binary/octet-stream") {
+          readService.getImageFromFilePath(fileName) match {
+            case Failure(ex) =>
+              logger.warn(s"Couldn't get meta for $fileName so using s3 content-type of '$s3ContentType'", ex)
+              s3ContentType
+            case Success(meta) => meta.contentType
+          }
+        } else s3ContentType
       }
-
-      override def copyWithNewContentType(contentType: String) = this.copy(overriddenContentType = Some(contentType))
 
       override def stream: InputStream = new ByteArrayInputStream(imageContent)
     }

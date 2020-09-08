@@ -9,7 +9,6 @@
 package no.ndla.imageapi.controller
 
 import javax.servlet.http.HttpServletRequest
-
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.{CorrelationIdHeader, CorrelationIdKey}
 import no.ndla.imageapi.model.api.{Error, ValidationError}

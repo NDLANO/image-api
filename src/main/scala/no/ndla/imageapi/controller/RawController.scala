@@ -1,16 +1,15 @@
 package no.ndla.imageapi.controller
 
+import io.lemonlabs.uri.Uri
 import javax.servlet.http.HttpServletRequest
-import no.ndla.imageapi.model.api.{Error, ImageMetaInformationV2}
+import no.ndla.imageapi.ImageApiProperties.ValidMimeTypes
+import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.{ImageConverter, ImageStorageService}
-import org.scalatra.swagger.{Parameter, ResponseMessage, Swagger, SwaggerSupport}
-import io.lemonlabs.uri.Uri
-import no.ndla.imageapi.ComponentRegistry.readService
-import no.ndla.imageapi.ImageApiProperties.ValidMimeTypes
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.Ok
+import org.scalatra.swagger.{Parameter, ResponseMessage, Swagger, SwaggerSupport}
 
 import scala.util.{Failure, Success, Try}
 
@@ -93,7 +92,7 @@ trait RawController {
 
           getRawImage(imageName) match {
             case Failure(ex)  => errorHandler(ex)
-            case Success(img) => Ok(img.copyWithNewContentType(imageMeta.contentType))
+            case Success(img) => Ok(img)
           }
         case None => None
       }
