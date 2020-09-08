@@ -14,7 +14,7 @@ import java.io.{ByteArrayInputStream, InputStream}
 import com.amazonaws.services.s3.model._
 import com.typesafe.scalalogging.LazyLogging
 import javax.imageio.ImageIO
-import no.ndla.imageapi.ImageApiProperties.StorageName
+import no.ndla.imageapi.ImageApiProperties.{StorageName, ValidMimeTypes}
 import no.ndla.imageapi.integration.AmazonClient
 import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.model.domain.{Image, ImageStream}
@@ -24,7 +24,7 @@ import scalaj.http.HttpRequest
 import scala.util.{Failure, Success, Try}
 
 trait ImageStorageService {
-  this: AmazonClient =>
+  this: AmazonClient with ReadService =>
   val imageStorage: AmazonImageStorageService
 
   class AmazonImageStorageService extends LazyLogging {
@@ -36,7 +36,29 @@ trait ImageStorageService {
       }
 
       override val sourceImage: BufferedImage = ImageIO.read(stream)
-      override def contentType: String = s3Object.getObjectMetadata.getContentType
+
+      override def contentType: String = {
+        val s3ContentType = s3Object.getObjectMetadata.getContentType
+        if (s3ContentType == "binary/octet-stream") {
+          readService.getImageFromFilePath(fileName) match {
+            case Failure(ex) =>
+              logger.warn(s"Couldn't get meta for $fileName so using s3 content-type of '$s3ContentType'", ex)
+              s3ContentType
+            case Success(meta)
+                if meta.contentType != "" && meta.contentType != "binary/octet-stream" && ValidMimeTypes.contains(
+                  meta.contentType) =>
+              updateContentType(s3Object.getKey, meta.contentType) match {
+                case Failure(ex) =>
+                  logger.error(s"Could not update content-type s3-metadata of $fileName to ${meta.contentType}", ex)
+                case Success(_) =>
+                  logger.info(s"Sucessfully updated content-type s3-metadata of $fileName to ${meta.contentType}")
+              }
+              meta.contentType
+            case _ => s3ContentType
+          }
+        } else s3ContentType
+      }
+
       override def stream: InputStream = new ByteArrayInputStream(imageContent)
     }
 
@@ -57,6 +79,18 @@ trait ImageStorageService {
       metadata.setContentLength(size)
 
       Try(amazonClient.putObject(new PutObjectRequest(StorageName, storageKey, stream, metadata))).map(_ => storageKey)
+    }
+
+    def updateContentType(storageKey: String, contentType: String): Try[Unit] = {
+      Try {
+        val meta = amazonClient.getObjectMetadata(StorageName, storageKey)
+        meta.setContentType(contentType)
+
+        val copyRequest = new CopyObjectRequest(StorageName, storageKey, StorageName, storageKey)
+          .withNewObjectMetadata(meta)
+
+        amazonClient.copyObject(copyRequest)
+      }
     }
 
     def objectExists(storageKey: String): Boolean = {

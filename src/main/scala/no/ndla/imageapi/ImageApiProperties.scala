@@ -37,6 +37,20 @@ object ImageApiProperties extends LazyLogging {
 
   val DefaultLanguage = "nb"
 
+  val ValidFileExtensions = Seq(".jpg", ".png", ".jpeg", ".bmp", ".gif", ".svg")
+
+  val ValidMimeTypes = Seq(
+    "image/bmp",
+    "image/gif",
+    "image/jpeg",
+    "image/x-citrix-jpeg",
+    "image/pjpeg",
+    "image/png",
+    "image/x-citrix-png",
+    "image/x-png",
+    "image/svg+xml"
+  )
+
   val oldCreatorTypes = List("opphavsmann",
                              "fotograf",
                              "kunstner",

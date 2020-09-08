@@ -1,6 +1,7 @@
 package no.ndla.imageapi.service
 
 import no.ndla.imageapi.ImageApiProperties
+import no.ndla.imageapi.ImageApiProperties.{ValidFileExtensions, ValidMimeTypes}
 import no.ndla.imageapi.integration.DraftApiClient
 import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
@@ -19,29 +20,19 @@ trait ValidationService {
   class ValidationService {
 
     def validateImageFile(imageFile: FileItem): Option[ValidationMessage] = {
-      val validFileExtensions = Seq(".jpg", ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg")
-      if (!hasValidFileExtension(imageFile.name.toLowerCase, validFileExtensions))
+      if (!hasValidFileExtension(imageFile.name.toLowerCase, ValidFileExtensions))
         return Some(
           ValidationMessage(
             "file",
-            s"The file ${imageFile.name} does not have a known file extension. Must be one of ${validFileExtensions
+            s"The file ${imageFile.name} does not have a known file extension. Must be one of ${ValidFileExtensions
               .mkString(",")}"))
 
-      val validMimeTypes = Seq("image/bmp",
-                               "image/gif",
-                               "image/jpeg",
-                               "image/x-citrix-jpeg",
-                               "image/pjpeg",
-                               "image/png",
-                               "image/x-citrix-png",
-                               "image/x-png",
-                               "image/svg+xml")
       val actualMimeType = imageFile.contentType.getOrElse("")
 
-      if (!validMimeTypes.contains(actualMimeType))
+      if (!ValidMimeTypes.contains(actualMimeType))
         return Some(ValidationMessage(
           "file",
-          s"The file ${imageFile.name} is not a valid image file. Only valid type is '${validMimeTypes.mkString(",")}', but was '$actualMimeType'"))
+          s"The file ${imageFile.name} is not a valid image file. Only valid type is '${ValidMimeTypes.mkString(",")}', but was '$actualMimeType'"))
 
       None
     }

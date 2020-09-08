@@ -206,6 +206,7 @@ object TestData {
 
   case class DiskImage(filename: String) extends ImageStream {
     override def contentType: String = s"image/$format"
+
     override def stream: InputStream = getClass.getResourceAsStream(s"/$filename")
     override def fileName: String = filename
 
