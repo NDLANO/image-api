@@ -17,8 +17,7 @@ import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.ImageApiProperties.{ElasticSearchIndexMaxResultWindow, ElasticSearchScrollKeepAlive}
 import no.ndla.imageapi.integration.Elastic4sClient
 import no.ndla.imageapi.model.api.{Error, ImageMetaSummary}
-import no.ndla.imageapi.model.domain.SearchResult
-import no.ndla.imageapi.model.domain.Sort
+import no.ndla.imageapi.model.domain.{SearchResult, SearchSettings, Sort}
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
 import no.ndla.imageapi.model.{Language, NdlaSearchException, ResultWindowTooLargeException}
 import org.elasticsearch.ElasticsearchException
@@ -131,59 +130,41 @@ trait SearchService {
       }
     }
 
-    def matchingQuery(query: String,
-                      minimumSize: Option[Int],
-                      language: Option[String],
-                      license: Option[String],
-                      sort: Sort.Value,
-                      page: Option[Int],
-                      pageSize: Option[Int],
-                      includeCopyrighted: Boolean): Try[SearchResult] = {
-      val fullSearch = boolQuery()
-        .must(
-          boolQuery()
-            .should(
-              languageSpecificSearch("titles", language, query, 2),
-              languageSpecificSearch("alttexts", language, query, 1),
-              languageSpecificSearch("captions", language, query, 2),
-              languageSpecificSearch("tags", language, query, 2),
-              simpleStringQuery(query).field("contributors", 1),
-              idsQuery(query)
-            )
-        )
+    def matchingQuery(settings: SearchSettings): Try[SearchResult] = {
 
-      executeSearch(fullSearch, minimumSize, license, language, sort: Sort.Value, page, pageSize, includeCopyrighted)
+      val fullSearch = settings.query match {
+        case Some(query) =>
+          boolQuery()
+            .must(
+              boolQuery()
+                .should(
+                  languageSpecificSearch("titles", settings.language, query, 2),
+                  languageSpecificSearch("alttexts", settings.language, query, 1),
+                  languageSpecificSearch("captions", settings.language, query, 2),
+                  languageSpecificSearch("tags", settings.language, query, 2),
+                  simpleStringQuery(query).field("contributors", 1),
+                  idsQuery(query)
+                )
+            )
+        case None => boolQuery()
+      }
+
+      executeSearch(fullSearch, settings)
     }
 
-    def all(minimumSize: Option[Int],
-            license: Option[String],
-            language: Option[String],
-            sort: Sort.Value,
-            page: Option[Int],
-            pageSize: Option[Int],
-            includeCopyrighted: Boolean): Try[SearchResult] =
-      executeSearch(boolQuery(), minimumSize, license, language, sort, page, pageSize, includeCopyrighted)
+    def executeSearch(queryBuilder: BoolQuery, settings: SearchSettings): Try[SearchResult] = {
 
-    def executeSearch(queryBuilder: BoolQuery,
-                      minimumSize: Option[Int],
-                      license: Option[String],
-                      language: Option[String],
-                      sort: Sort.Value,
-                      page: Option[Int],
-                      pageSize: Option[Int],
-                      includeCopyrighted: Boolean): Try[SearchResult] = {
-
-      val licenseFilter = license match {
-        case None      => if (!includeCopyrighted) Some(noCopyright) else None
+      val licenseFilter = settings.license match {
+        case None      => if (!settings.includeCopyrighted) Some(noCopyright) else None
         case Some(lic) => Some(termQuery("license", lic))
       }
 
-      val sizeFilter = minimumSize match {
+      val sizeFilter = settings.minimumSize match {
         case Some(size) => Some(rangeQuery("imageSize").gte(size))
         case _          => None
       }
 
-      val (languageFilter, searchLanguage) = language match {
+      val (languageFilter, searchLanguage) = settings.language match {
         case None | Some(Language.AllLanguages) =>
           (None, "*")
         case Some(lang) =>
@@ -193,8 +174,8 @@ trait SearchService {
       val filters = List(languageFilter, licenseFilter, sizeFilter)
       val filteredSearch = queryBuilder.filter(filters.flatten)
 
-      val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-      val requestedResultWindow = page.getOrElse(1) * numResults
+      val (startAt, numResults) = getStartAtAndNumResults(settings.page, settings.pageSize)
+      val requestedResultWindow = settings.page.getOrElse(1) * numResults
       if (requestedResultWindow > ElasticSearchIndexMaxResultWindow) {
         logger.info(
           s"Max supported results are $ElasticSearchIndexMaxResultWindow, user requested $requestedResultWindow")
@@ -206,11 +187,13 @@ trait SearchService {
             .from(startAt)
             .highlighting(highlight("*"))
             .query(filteredSearch)
-            .sortBy(getSortDefinition(sort, searchLanguage))
+            .sortBy(getSortDefinition(settings.sort, searchLanguage))
 
         // Only add scroll param if it is first page
         val searchWithScroll =
-          if (startAt != 0) { searchToExecute } else { searchToExecute.scroll(ElasticSearchScrollKeepAlive) }
+          if (startAt == 0 && settings.shouldScroll) {
+            searchToExecute.scroll(ElasticSearchScrollKeepAlive)
+          } else { searchToExecute }
 
         e4sClient
           .execute(searchWithScroll) match {
@@ -218,10 +201,10 @@ trait SearchService {
             Success(
               SearchResult(
                 response.result.totalHits,
-                Some(page.getOrElse(1)),
+                Some(settings.page.getOrElse(1)),
                 numResults,
                 if (searchLanguage == "*") Language.AllLanguages else searchLanguage,
-                getHits(response.result, language),
+                getHits(response.result, settings.language),
                 response.result.scrollId
               ))
           case Failure(ex) => errorHandler(ex)

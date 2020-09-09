@@ -88,14 +88,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     val expectedBody = """{"totalCount":0,"page":1,"pageSize":10,"language":"nb","results":[]}"""
     val domainSearchResult = domain.SearchResult(0, Some(1), 10, "nb", List(), None)
     val apiSearchResult = SearchResult(0, Some(1), 10, "nb", List())
-    when(
-      searchService.all(Option(any[Int]),
-                        Option(any[String]),
-                        Option(any[String]),
-                        any[Sort.Value],
-                        Option(any[Int]),
-                        Option(any[Int]),
-                        any[Boolean])).thenReturn(Success(domainSearchResult))
+    when(searchService.matchingQuery(any[SearchSettings])).thenReturn(Success(domainSearchResult))
     when(searchConverterService.asApiSearchResult(domainSearchResult)).thenReturn(apiSearchResult)
     get("/") {
       status should equal(200)
@@ -119,15 +112,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"]}]}"""
     val domainSearchResult = domain.SearchResult(1, Some(1), 10, "nb", List(imageSummary), None)
     val apiSearchResult = api.SearchResult(1, Some(1), 10, "nb", List(imageSummary))
-    when(
-      searchService.all(Option(any[Int]),
-                        Option(any[String]),
-                        Option(any[String]),
-                        any[Sort.Value],
-                        Option(any[Int]),
-                        Option(any[Int]),
-                        any[Boolean]))
-      .thenReturn(Success(domainSearchResult))
+    when(searchService.matchingQuery(any[SearchSettings])).thenReturn(Success(domainSearchResult))
     when(searchConverterService.asApiSearchResult(domainSearchResult)).thenReturn(apiSearchResult)
     get("/") {
       status should equal(200)
@@ -300,17 +285,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       Seq.empty,
       Some(scrollId)
     )
-    when(
-      searchService.all(
-        any[Option[Int]],
-        any[Option[String]],
-        any[Option[String]],
-        any[Sort.Value],
-        any[Option[Int]],
-        any[Option[Int]],
-        any[Boolean]
-      ))
-      .thenReturn(Success(searchResponse))
+    when(searchService.matchingQuery(any[SearchSettings])).thenReturn(Success(searchResponse))
 
     get(s"/") {
       status should be(200)
@@ -338,25 +313,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       status should be(200)
     }
 
-    verify(searchService, times(0)).all(
-      any[Option[Int]],
-      any[Option[String]],
-      any[Option[String]],
-      any[Sort.Value],
-      any[Option[Int]],
-      any[Option[Int]],
-      any[Boolean]
-    )
-    verify(searchService, times(0)).matchingQuery(
-      any[String],
-      any[Option[Int]],
-      any[Option[String]],
-      any[Option[String]],
-      any[Sort.Value],
-      any[Option[Int]],
-      any[Option[Int]],
-      any[Boolean]
-    )
+    verify(searchService, times(0)).matchingQuery(any[SearchSettings])
     verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
   }
 
@@ -379,25 +336,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       status should be(200)
     }
 
-    verify(searchService, times(0)).all(
-      any[Option[Int]],
-      any[Option[String]],
-      any[Option[String]],
-      any[Sort.Value],
-      any[Option[Int]],
-      any[Option[Int]],
-      any[Boolean]
-    )
-    verify(searchService, times(0)).matchingQuery(
-      any[String],
-      any[Option[Int]],
-      any[Option[String]],
-      any[Option[String]],
-      any[Sort.Value],
-      any[Option[Int]],
-      any[Option[Int]],
-      any[Boolean]
-    )
+    verify(searchService, times(0)).matchingQuery(any[SearchSettings])
     verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
   }
 
