@@ -20,7 +20,7 @@ import no.ndla.imageapi.model.api.{
   UpdateImageMetaInformation,
   ValidationError
 }
-import no.ndla.imageapi.model.domain.Sort
+import no.ndla.imageapi.model.domain.{SearchSettings, Sort}
 import no.ndla.imageapi.model.{Language, ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{SearchConverterService, SearchService}
@@ -99,7 +99,9 @@ trait ImageControllerV2 {
     private val scrollId = Param[Option[String]](
       "search-context",
       s"""A search context retrieved from the response header of a previous search.
-         |If search-context is specified, all other query parameters, except '${this.language.paramName}' is ignored.
+         |To get the initial one from a search supply search-context equal any of the following ${InitialScrollContextKeywords
+           .mkString("[", ",", "]")}.
+         |If search-context is specified, all other query parameters, except '${this.language.paramName}' are ignored
          |For the rest of the parameters the original search of the search-context is used.
          |The search context may change between scrolls. Always use the most recent one (The context if unused dies after $ElasticSearchScrollKeepAlive).
          |Used to enable scrolling past $ElasticSearchIndexMaxResultWindow results.
@@ -151,38 +153,45 @@ trait ImageControllerV2 {
         case None => orFunction
       }
 
-    private def search(minimumSize: Option[Int],
-                       query: Option[String],
-                       language: Option[String],
-                       license: Option[String],
-                       sort: Option[Sort.Value],
-                       pageSize: Option[Int],
-                       page: Option[Int],
-                       includeCopyrighted: Boolean) = {
-      val result = query match {
+    private def search(
+        minimumSize: Option[Int],
+        query: Option[String],
+        language: Option[String],
+        license: Option[String],
+        sort: Option[Sort.Value],
+        pageSize: Option[Int],
+        page: Option[Int],
+        includeCopyrighted: Boolean,
+        shouldScroll: Boolean
+    ) = {
+      val settings = query match {
         case Some(searchString) =>
-          searchService.matchingQuery(
-            query = searchString.trim,
+          SearchSettings(
+            query = Some(searchString.trim),
             minimumSize = minimumSize,
             language = language,
             license = license,
-            sort.getOrElse(Sort.ByRelevanceDesc),
-            page,
-            pageSize,
-            includeCopyrighted
+            sort = sort.getOrElse(Sort.ByRelevanceDesc),
+            page = page,
+            pageSize = pageSize,
+            includeCopyrighted = includeCopyrighted,
+            shouldScroll = shouldScroll
           )
         case None =>
-          searchService.all(
+          SearchSettings(
+            query = None,
             minimumSize = minimumSize,
             license = license,
             language = language,
             sort = sort.getOrElse(Sort.ByTitleAsc),
-            page,
-            pageSize,
-            includeCopyrighted
+            page = page,
+            pageSize = pageSize,
+            includeCopyrighted = includeCopyrighted,
+            shouldScroll = shouldScroll
           )
       }
-      result match {
+
+      searchService.matchingQuery(settings) match {
         case Success(searchResult) =>
           val responseHeader = searchResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
           Ok(searchConverterService.asApiSearchResult(searchResult), headers = responseHeader)
@@ -222,8 +231,9 @@ trait ImageControllerV2 {
         val page = intOrNone(this.pageNo.paramName)
         val sort = Sort.valueOf(paramOrDefault(this.sort.paramName, ""))
         val includeCopyrighted = booleanOrDefault(this.includeCopyrighted.paramName, default = false)
+        val shouldScroll = paramOrNone(this.scrollId.paramName).exists(InitialScrollContextKeywords.contains)
 
-        search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
+        search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted, shouldScroll)
       }
     }
 
@@ -252,8 +262,9 @@ trait ImageControllerV2 {
         val page = searchParams.page
         val sort = Sort.valueOf(searchParams.sort)
         val includeCopyrighted = searchParams.includeCopyrighted.getOrElse(false)
+        val shouldScroll = searchParams.scrollId.exists(InitialScrollContextKeywords.contains)
 
-        search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted)
+        search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted, shouldScroll)
       }
     }
 
