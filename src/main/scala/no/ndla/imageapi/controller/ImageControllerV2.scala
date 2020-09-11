@@ -100,9 +100,9 @@ trait ImageControllerV2 {
       "search-context",
       s"""A unique string obtained from a search you want to keep scrolling in. To obtain one from a search, provide one of the following values: ${InitialScrollContextKeywords
            .mkString("[", ",", "]")}.
-         |When scrolling the parameters from the initial search is used, except in the case of '${this.language.paramName}'.
-         |The value may change between scrolls. Always use the one in the latest scroll result (The context if unused dies after $ElasticSearchScrollKeepAlive).
-         |If you are not scrolling past $ElasticSearchIndexMaxResultWindow hits, you can ignore this and use '${this.pageNo.paramName}' and '${this.pageSize.paramName}' instead.
+         |When scrolling, the parameters from the initial search is used, except in the case of '${this.language.paramName}'.
+         |This value may change between scrolls. Always use the one in the latest scroll result (The context, if unused, dies after $ElasticSearchScrollKeepAlive).
+         |If you are not paginating past $ElasticSearchIndexMaxResultWindow hits, you can ignore this and use '${this.pageNo.paramName}' and '${this.pageSize.paramName}' instead.
          |""".stripMargin
     )
 
