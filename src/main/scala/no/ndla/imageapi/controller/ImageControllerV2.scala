@@ -98,14 +98,12 @@ trait ImageControllerV2 {
 
     private val scrollId = Param[Option[String]](
       "search-context",
-      s"""A search context retrieved from the response header of a previous search.
-         |To get the initial one from a search supply search-context equal any of the following ${InitialScrollContextKeywords
+      s"""A unique string obtained from a search you want to keep scrolling in. To obtain one from a search, provide one of the following values: ${InitialScrollContextKeywords
            .mkString("[", ",", "]")}.
-         |If search-context is specified, all other query parameters, except '${this.language.paramName}' are ignored
-         |For the rest of the parameters the original search of the search-context is used.
-         |The search context may change between scrolls. Always use the most recent one (The context if unused dies after $ElasticSearchScrollKeepAlive).
-         |Used to enable scrolling past $ElasticSearchIndexMaxResultWindow results.
-      """.stripMargin
+         |When scrolling the parameters from the initial search is used, except in the case of '${this.language.paramName}'.
+         |The value may change between scrolls. Always use the one in the latest scroll result (The context if unused dies after $ElasticSearchScrollKeepAlive).
+         |If you are not scrolling past $ElasticSearchIndexMaxResultWindow hits, you can ignore this and use '${this.pageNo.paramName}' and '${this.pageSize.paramName}' instead.
+         |""".stripMargin
     )
 
     private def asQueryParam[T: Manifest: NotNothing](param: Param[T]) =
