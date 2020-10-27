@@ -5,12 +5,12 @@ val Scalatraversion = "2.7.0"
 val ScalaLoggingVersion = "3.9.2"
 val ScalaTestVersion = "3.2.1"
 val Log4JVersion = "2.13.3"
-val Jettyversion = "9.4.31.v20200723"
+val Jettyversion = "9.4.33.v20201020"
 val AwsSdkversion = "1.11.658"
 val MockitoVersion = "1.14.8"
 val Elastic4sVersion = "6.7.8"
 val JacksonVersion = "2.11.2"
-val ElasticsearchVersion = "6.8.11"
+val ElasticsearchVersion = "6.8.13"
 val Json4SVersion = "3.6.7"
 val FlywayVersion = "5.2.0"
 val PostgresVersion = "42.2.14"
@@ -27,10 +27,10 @@ appProperties := {
 
 // Sometimes we override transitive dependencies because of vulnerabilities, we put these here
 val vulnerabilityOverrides = Seq(
-  "com.google.guava" % "guava" % "28.1-jre",
+  "com.google.guava" % "guava" % "30.0-jre",
   "commons-codec" % "commons-codec" % "1.14",
   "org.yaml" % "snakeyaml" % "1.26",
-  "org.apache.httpcomponents" % "httpclient" % "4.5.10"
+  "org.apache.httpcomponents" % "httpclient" % "4.5.13"
 )
 
 lazy val image_api = (project in file("."))
