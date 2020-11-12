@@ -17,31 +17,26 @@ import no.ndla.imageapi.model.domain._
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.{CC_BY_NC_SA, PublicDomain}
 import no.ndla.network.ApplicationUrl
+import no.ndla.scalatestsuite.IntegrationSuite
 import org.joda.time.{DateTime, DateTimeZone}
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
-import org.scalatest.Outcome
-import org.testcontainers.elasticsearch.ElasticsearchContainer
+import org.scalatest.{Outcome, PrivateMethodTester}
 
-import scala.util.{Success, Try}
+import scala.util.Success
 
-class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
-
-  val container = Try {
-    val esVersion = "6.3.2"
-    val c = new ElasticsearchContainer(s"docker.elastic.co/elasticsearch/elasticsearch:$esVersion")
-    c.start()
-    c
-  }
+class ImageSearchServiceTest
+    extends IntegrationSuite(EnableElasticsearchContainer = true)
+    with UnitSuite
+    with TestEnvironment
+    with PrivateMethodTester {
 
   // Skip tests if no docker environment available
   override def withFixture(test: NoArgTest): Outcome = {
-    assume(container.isSuccess)
+    assume(elasticSearchContainer.isSuccess)
     super.withFixture(test)
   }
 
-  val host = container.map(c => s"http://${c.getHttpHostAddress}")
-  override val e4sClient: NdlaE4sClient = Elastic4sClientFactory.getClient(host.getOrElse("http://localhost:9200"))
+  override val e4sClient: NdlaE4sClient =
+    Elastic4sClientFactory.getClient(elasticSearchHost.getOrElse("http://localhost:9200"))
 
   override val searchConverterService = new SearchConverterService
   override val converterService = new ConverterService
@@ -165,30 +160,29 @@ class ImageSearchServiceTest extends UnitSuite with TestEnvironment {
     shouldScroll = false
   )
 
-  override def beforeAll(): Unit = if (container.isSuccess) {
-    indexService.createIndexWithName(ImageApiProperties.SearchIndex)
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    if (elasticSearchContainer.isSuccess) {
+      indexService.createIndexWithName(ImageApiProperties.SearchIndex)
 
-    when(draftApiClient.getAgreementCopyright(any[Long])).thenReturn(None)
+      when(draftApiClient.getAgreementCopyright(any[Long])).thenReturn(None)
 
-    when(draftApiClient.getAgreementCopyright(1)).thenReturn(Some(agreement1Copyright))
+      when(draftApiClient.getAgreementCopyright(1)).thenReturn(Some(agreement1Copyright))
 
-    indexService.indexDocument(image1)
-    indexService.indexDocument(image2)
-    indexService.indexDocument(image3)
-    indexService.indexDocument(image4)
-    indexService.indexDocument(image5)
+      indexService.indexDocument(image1)
+      indexService.indexDocument(image2)
+      indexService.indexDocument(image3)
+      indexService.indexDocument(image4)
+      indexService.indexDocument(image5)
 
-    val servletRequest = mock[HttpServletRequest]
-    when(servletRequest.getHeader(any[String])).thenReturn("http")
-    when(servletRequest.getServerName).thenReturn("localhost")
-    when(servletRequest.getServletPath).thenReturn("/image-api/v2/images/")
-    ApplicationUrl.set(servletRequest)
+      val servletRequest = mock[HttpServletRequest]
+      when(servletRequest.getHeader(any[String])).thenReturn("http")
+      when(servletRequest.getServerName).thenReturn("localhost")
+      when(servletRequest.getServletPath).thenReturn("/image-api/v2/images/")
+      ApplicationUrl.set(servletRequest)
 
-    blockUntil(() => searchService.countDocuments() == 5)
-  }
-
-  override def afterAll(): Unit = if (container.isSuccess) {
-    indexService.deleteIndexWithName(Some(ImageApiProperties.SearchIndex))
+      blockUntil(() => searchService.countDocuments() == 5)
+    }
   }
 
   test("That getStartAtAndNumResults returns default values for None-input") {

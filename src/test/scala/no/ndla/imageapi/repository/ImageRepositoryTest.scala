@@ -3,43 +3,54 @@ package no.ndla.imageapi.repository
 import java.net.Socket
 
 import no.ndla.imageapi.model.domain.ImageTitle
-import no.ndla.imageapi.{DBMigrator, ImageApiProperties, IntegrationSuite, TestData, TestEnvironment}
+import no.ndla.imageapi.{DBMigrator, ImageApiProperties, TestData, TestEnvironment, UnitSuite}
+import no.ndla.scalatestsuite.IntegrationSuite
 import scalikejdbc.{ConnectionPool, DB, DataSourceConnectionPool}
 
 import scala.util.{Success, Try}
 import scalikejdbc._
 
-class ImageRepositoryTest extends IntegrationSuite with TestEnvironment {
+class ImageRepositoryTest extends IntegrationSuite(EnablePostgresContainer = true) with UnitSuite with TestEnvironment {
+  override val dataSource = testDataSource.get
+  var repository: ImageRepository = _
 
-  val repository = new ImageRepository
-  def databaseIsAvailable: Boolean = Try(repository.imageCount).isSuccess
+  this.setDatabaseEnvironment()
 
-  def emptyTestDatabase =
-    DB autoCommit (implicit session => {
-      sql"delete from imageapitest.imagemetadata;".execute().apply()(session)
-    })
-
-  override def beforeEach(): Unit =
-    if (databaseIsAvailable) {
-      emptyTestDatabase
-    }
-
-  override def beforeAll(): Unit =
-    Try {
-      val datasource = testDataSource.get
-      if (serverIsListening) {
-        ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
-        DBMigrator.migrate(datasource)
-      }
-    }
-
-  def serverIsListening: Boolean =
-    Try(new Socket(ImageApiProperties.MetaServer, ImageApiProperties.MetaPort)) match {
+  def serverIsListening: Boolean = {
+    val server = ImageApiProperties.MetaServer
+    val port = ImageApiProperties.MetaPort
+    Try(new Socket(server, port)) match {
       case Success(c) =>
         c.close()
         true
       case _ => false
     }
+  }
+
+  def databaseIsAvailable: Boolean = {
+    val res = Try(repository.imageCount)
+    res.isSuccess
+  }
+
+  def emptyTestDatabase =
+    DB autoCommit (implicit session => {
+      sql"delete from imagemetadata;".execute().apply()(session)
+    })
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    Try {
+      ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
+      if (serverIsListening) {
+        DBMigrator.migrate(dataSource)
+      }
+    }
+  }
+
+  override def beforeEach(): Unit = {
+    repository = new ImageRepository
+    if (databaseIsAvailable) { emptyTestDatabase }
+  }
 
   test("That inserting and retrieving images works as expected") {
     assume(databaseIsAvailable)
