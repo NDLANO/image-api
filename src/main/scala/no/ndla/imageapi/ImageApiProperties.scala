@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
 import scala.util.Properties._
 
 object ImageApiProperties extends LazyLogging {
-  val IsKubernetes: Boolean = envOrNone("NDLA_IS_KUBERNETES").isDefined
+  val IsKubernetes: Boolean = propOrNone("NDLA_IS_KUBERNETES").isDefined
 
   val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
   val ApplicationName = "image-api"
@@ -92,12 +92,12 @@ object ImageApiProperties extends LazyLogging {
   val (redDBSource, cmDBSource) = ("red", "cm")
   val ImageImportSource = redDBSource
 
-  val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
-  val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
-  val MetaResource = prop(PropertyKeys.MetaResourceKey)
-  val MetaServer = prop(PropertyKeys.MetaServerKey)
-  val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
-  val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
+  def MetaUserName = prop(PropertyKeys.MetaUserNameKey)
+  def MetaPassword = prop(PropertyKeys.MetaPasswordKey)
+  def MetaResource = prop(PropertyKeys.MetaResourceKey)
+  def MetaServer = prop(PropertyKeys.MetaServerKey)
+  def MetaPort = prop(PropertyKeys.MetaPortKey).toInt
+  def MetaSchema = prop(PropertyKeys.MetaSchemaKey)
 
   val StorageName: String = propOrElse("IMAGE_FILE_S3_BUCKET", s"$Environment.images.ndla")
 
@@ -141,7 +141,7 @@ object ImageApiProperties extends LazyLogging {
   }
 
   def propOrElse(key: String, default: => String): String = {
-    envOrNone(key) match {
+    propOrNone(key) match {
       case Some(prop)            => prop
       case None if !IsKubernetes => secrets.get(key).flatten.getOrElse(default)
       case _                     => default

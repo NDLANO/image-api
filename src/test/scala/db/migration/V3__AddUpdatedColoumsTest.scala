@@ -12,11 +12,11 @@ import org.mockito.Mockito._
 
 class V3__AddUpdatedColoumsTest extends UnitSuite {
 
-  val migration = new V3_Test
-
-  class V3_Test extends V3__AddUpdatedColoums {
+  class V3__MockedMigration extends V3__AddUpdatedColoums {
     override val timeService = mock[TimeService]
   }
+
+  val migration = new V3__MockedMigration
 
   test("add updatedBy and updated on image object") {
     val before =

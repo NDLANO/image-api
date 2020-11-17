@@ -12,11 +12,11 @@ import org.mockito.Mockito.when
 
 class V4__DateFormatUpdatedTest extends UnitSuite {
 
-  val migration = new V4_Test
-
-  class V4_Test extends V4__DateFormatUpdated {
+  class V4__MockedMigration extends V4__DateFormatUpdated {
     override val timeService = mock[TimeService2]
   }
+
+  val migration = new V4__MockedMigration
 
   test("fix broken updated date string from V3") {
     val before =
