@@ -1,15 +1,15 @@
 import java.util.Properties
 
 val Scalaversion = "2.13.3"
-val Scalatraversion = "2.7.0"
+val Scalatraversion = "2.7.1"
 val ScalaLoggingVersion = "3.9.2"
 val ScalaTestVersion = "3.2.1"
 val Log4JVersion = "2.13.3"
-val Jettyversion = "9.4.33.v20201020"
+val Jettyversion = "9.4.35.v20201120"
 val AwsSdkversion = "1.11.658"
 val MockitoVersion = "1.14.8"
 val Elastic4sVersion = "6.7.8"
-val JacksonVersion = "2.11.2"
+val JacksonVersion = "2.12.1"
 val ElasticsearchVersion = "6.8.13"
 val Json4SVersion = "3.6.7"
 val FlywayVersion = "7.1.1"
@@ -30,7 +30,10 @@ val vulnerabilityOverrides = Seq(
   "com.google.guava" % "guava" % "30.0-jre",
   "commons-codec" % "commons-codec" % "1.14",
   "org.yaml" % "snakeyaml" % "1.26",
-  "org.apache.httpcomponents" % "httpclient" % "4.5.13"
+  "org.apache.httpcomponents" % "httpclient" % "4.5.13",
+  "com.fasterxml.jackson.core" % "jackson-core" % JacksonVersion,
+  "com.fasterxml.jackson.core" % "jackson-databind" % JacksonVersion,
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % JacksonVersion
 )
 
 lazy val image_api = (project in file("."))
