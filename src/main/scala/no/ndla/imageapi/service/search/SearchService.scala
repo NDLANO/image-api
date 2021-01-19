@@ -20,6 +20,7 @@ import no.ndla.imageapi.model.api.{Error, ImageMetaSummary}
 import no.ndla.imageapi.model.domain.{SearchResult, SearchSettings, Sort}
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
 import no.ndla.imageapi.model.{Language, NdlaSearchException, ResultWindowTooLargeException}
+import no.ndla.mapping.ISO639
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.Formats
@@ -30,7 +31,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 trait SearchService {
-  this: Elastic4sClient with IndexBuilderService with IndexService with SearchConverterService =>
+  this: Elastic4sClient with ImageIndexService with SearchConverterService =>
   val searchService: SearchService
 
   class SearchService extends LazyLogging {
@@ -54,9 +55,10 @@ trait SearchService {
         })
 
     def createEmptyIndexIfNoIndexesExist(): Unit = {
-      val noIndexesExist = indexService.findAllIndexes(ImageApiProperties.SearchIndex).map(_.isEmpty).getOrElse(true)
+      val noIndexesExist =
+        imageIndexService.findAllIndexes(ImageApiProperties.SearchIndex).map(_.isEmpty).getOrElse(true)
       if (noIndexesExist) {
-        indexBuilderService.createEmptyIndex match {
+        imageIndexService.createIndexWithGeneratedName match {
           case Success(_) =>
             logger.info("Created empty index")
             scheduleIndexDocuments()
@@ -94,20 +96,22 @@ trait SearchService {
       sort match {
         case Sort.ByTitleAsc =>
           language match {
-            case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.ASC).missing("_last")
-            case _   => fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").order(SortOrder.ASC).missing("_last")
+            case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.Asc).missing("_last")
+            case _ =>
+              fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").sortOrder(SortOrder.Asc).missing("_last")
           }
         case Sort.ByTitleDesc =>
           language match {
-            case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.DESC).missing("_last")
-            case _   => fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").order(SortOrder.DESC).missing("_last")
+            case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.Desc).missing("_last")
+            case _ =>
+              fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").sortOrder(SortOrder.Desc).missing("_last")
           }
-        case Sort.ByRelevanceAsc    => fieldSort("_score").order(SortOrder.ASC)
-        case Sort.ByRelevanceDesc   => fieldSort("_score").order(SortOrder.DESC)
-        case Sort.ByLastUpdatedAsc  => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
-        case Sort.ByLastUpdatedDesc => fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
-        case Sort.ByIdAsc           => fieldSort("id").order(SortOrder.ASC).missing("_last")
-        case Sort.ByIdDesc          => fieldSort("id").order(SortOrder.DESC).missing("_last")
+        case Sort.ByRelevanceAsc    => fieldSort("_score").sortOrder(SortOrder.Asc)
+        case Sort.ByRelevanceDesc   => fieldSort("_score").sortOrder(SortOrder.Desc)
+        case Sort.ByLastUpdatedAsc  => fieldSort("lastUpdated").sortOrder(SortOrder.Asc).missing("_last")
+        case Sort.ByLastUpdatedDesc => fieldSort("lastUpdated").sortOrder(SortOrder.Desc).missing("_last")
+        case Sort.ByIdAsc           => fieldSort("id").sortOrder(SortOrder.Asc).missing("_last")
+        case Sort.ByIdDesc          => fieldSort("id").sortOrder(SortOrder.Desc).missing("_last")
       }
     }
 
@@ -116,32 +120,22 @@ trait SearchService {
       searchConverterService.asImageMetaSummary(read[SearchableImage](hit), language)
     }
 
-    private def languageSpecificSearch(searchField: String,
-                                       language: Option[String],
-                                       query: String,
-                                       boost: Float): Query = {
-      language match {
-        case None | Some(Language.AllLanguages) =>
-          val searchQuery = simpleStringQuery(query).field(s"$searchField.*", 1)
-          nestedQuery(searchField, searchQuery).scoreMode(ScoreMode.Avg).boost(boost)
-        case Some(lang) =>
-          val searchQuery = simpleStringQuery(query).field(s"$searchField.$lang", 1)
-          nestedQuery(searchField, searchQuery).scoreMode(ScoreMode.Avg).boost(boost)
-      }
-    }
-
     def matchingQuery(settings: SearchSettings): Try[SearchResult] = {
-
       val fullSearch = settings.query match {
         case Some(query) =>
+          val language = settings.language match {
+            case Some(lang) if ISO639.languagePriority.contains(lang) => lang
+            case _                                                    => "*"
+          }
+
           boolQuery()
             .must(
               boolQuery()
                 .should(
-                  languageSpecificSearch("titles", settings.language, query, 2),
-                  languageSpecificSearch("alttexts", settings.language, query, 1),
-                  languageSpecificSearch("captions", settings.language, query, 2),
-                  languageSpecificSearch("tags", settings.language, query, 2),
+                  simpleStringQuery(query).field(s"titles.$language", 2),
+                  simpleStringQuery(query).field(s"alttexts.$language", 1),
+                  simpleStringQuery(query).field(s"caption.$language", 2),
+                  simpleStringQuery(query).field(s"tags.$language", 2),
                   simpleStringQuery(query).field("contributors", 1),
                   idsQuery(query)
                 )
@@ -168,7 +162,7 @@ trait SearchService {
         case None | Some(Language.AllLanguages) =>
           (None, "*")
         case Some(lang) =>
-          (Some(nestedQuery("titles", existsQuery(s"titles.$lang")).scoreMode(ScoreMode.Avg)), lang)
+          (Some(existsQuery(s"titles.$lang")), lang)
       }
 
       val filters = List(languageFilter, licenseFilter, sizeFilter)
@@ -259,7 +253,7 @@ trait SearchService {
 
     private def scheduleIndexDocuments(): Unit = {
       val f = Future {
-        indexBuilderService.indexDocuments
+        imageIndexService.indexDocuments
       }
 
       f.failed.foreach(t => logger.warn("Unable to create index: " + t.getMessage, t))

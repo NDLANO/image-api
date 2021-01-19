@@ -2,7 +2,6 @@ package no.ndla.imageapi.service
 
 import java.io.ByteArrayInputStream
 import java.lang.Math.max
-
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.{
@@ -16,7 +15,7 @@ import no.ndla.imageapi.model.{
 import no.ndla.imageapi.model.api.{ImageMetaInformationV2, NewImageMetaInformationV2, UpdateImageMetaInformation}
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, LanguageField}
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.IndexService
+import no.ndla.imageapi.service.search.ImageIndexService
 import org.scalatra.servlet.FileItem
 
 import scala.util.{Failure, Random, Success, Try}
@@ -25,7 +24,7 @@ trait WriteService {
   this: ConverterService
     with ValidationService
     with ImageRepository
-    with IndexService
+    with ImageIndexService
     with ImageStorageService
     with Clock
     with User =>
@@ -55,7 +54,7 @@ trait WriteService {
         case Some(toDelete) =>
           val metaDeleted = imageRepository.delete(imageId)
           val fileDeleted = imageStorage.deleteObject(toDelete.imageUrl)
-          val indexDeleted = indexService.deleteDocument(imageId)
+          val indexDeleted = imageIndexService.deleteDocument(imageId)
 
           if (metaDeleted < 1) {
             Failure(new ImageNotFoundException(s"Image with id $imageId was not found, and could not be deleted."))
@@ -63,10 +62,8 @@ trait WriteService {
             Failure(new ImageStorageException("Something went wrong when deleting image file from storage."))
           } else {
             indexDeleted match {
-              case Success(true) => Success(imageId)
-              case Failure(ex)   => Failure(ex)
-              case Success(false) =>
-                Failure(new ElasticIndexingException(s"Something went wrong when deleting search index of $imageId"))
+              case Success(deleteId) => Success(deleteId)
+              case Failure(ex)       => Failure(ex)
             }
           }
         case None =>
@@ -100,7 +97,7 @@ trait WriteService {
           return Failure(e)
       }
 
-      indexService.indexDocument(imageMeta) match {
+      imageIndexService.indexDocument(imageMeta) match {
         case Success(_) => Success(imageMeta)
         case Failure(e) =>
           imageStorage.deleteObject(domainImage.imageUrl)
@@ -142,7 +139,7 @@ trait WriteService {
       validationService
         .validate(image, oldImage)
         .map(imageMeta => imageRepository.update(imageMeta, imageId))
-        .flatMap(indexService.indexDocument)
+        .flatMap(imageIndexService.indexDocument)
         .map(updatedImage =>
           converterService
             .asApiImageMetaInformationWithDomainUrlV2(updatedImage, Some(language.getOrElse(Language.DefaultLanguage)))

@@ -13,12 +13,12 @@ import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.ImageStorageException
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService}
 import no.ndla.imageapi.service.{ConverterService, ImportService, ReadService}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, GatewayTimeout, InternalServerError, NotFound, Ok}
 import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.model.domain.ImageMetaInformation
+import no.ndla.imageapi.service.search.ImageIndexService
 
 import scala.util.{Failure, Success}
 
@@ -27,8 +27,7 @@ trait InternController {
     with ReadService
     with ImportService
     with ConverterService
-    with IndexBuilderService
-    with IndexService
+    with ImageIndexService
     with User
     with ImageRepository =>
   val internController: InternController
@@ -37,7 +36,7 @@ trait InternController {
     protected implicit override val jsonFormats: Formats = ImageMetaInformation.jsonEncoder
 
     post("/index") {
-      indexBuilderService.indexDocuments match {
+      imageIndexService.indexDocuments match {
         case Success(reindexResult) => {
           val result =
             s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms."
@@ -53,12 +52,12 @@ trait InternController {
 
     delete("/index") {
       def pluralIndex(n: Int) = if (n == 1) "1 index" else s"$n indexes"
-      val deleteResults = indexService.findAllIndexes(ImageApiProperties.SearchIndex) match {
+      val deleteResults = imageIndexService.findAllIndexes(ImageApiProperties.SearchIndex) match {
         case Failure(f) => halt(status = 500, body = f.getMessage)
         case Success(indexes) =>
           indexes.map(index => {
             logger.info(s"Deleting index $index")
-            indexService.deleteIndexWithName(Option(index))
+            imageIndexService.deleteIndexWithName(Option(index))
           })
       }
       val (errors, successes) = deleteResults.partition(_.isFailure)

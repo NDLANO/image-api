@@ -8,8 +8,8 @@ import no.ndla.imageapi.model.api.ImageMetaInformationV2
 import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.IndexService
 import no.ndla.imageapi.model.{ImageNotFoundException, InvalidUrlException, ValidationException}
+import no.ndla.imageapi.service.search.ImageIndexService
 
 import scala.util.{Failure, Success, Try}
 
@@ -17,7 +17,7 @@ trait ReadService {
   this: ConverterService
     with ValidationService
     with ImageRepository
-    with IndexService
+    with ImageIndexService
     with ImageStorageService
     with Clock
     with User =>

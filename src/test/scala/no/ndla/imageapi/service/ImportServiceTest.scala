@@ -23,7 +23,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
   override val importService = new ImportService
 
   override def beforeEach() = {
-    reset(imageRepository, tagsService, migrationApiClient, imageStorage, indexBuilderService)
+    reset(imageRepository, tagsService, migrationApiClient, imageStorage, imageIndexService)
   }
 
   test("import should fail if call to migration-api fails") {
@@ -65,13 +65,13 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
     when(tagsService.forImage("1234")).thenReturn(Success(List.empty))
     when(imageRepository.withExternalId("1234")).thenReturn(None)
     when(imageRepository.insertWithExternalId(any[ImageMetaInformation], any[String])).thenReturn(TestData.elg)
-    when(indexBuilderService.indexDocument(any[domain.ImageMetaInformation])).thenReturn(Success(TestData.elg))
+    when(imageIndexService.indexDocument(any[domain.ImageMetaInformation])).thenReturn(Success(TestData.elg))
 
     val Success(result) = importService.importImage("1234")
     result should equal(TestData.elg)
 
     verify(imageRepository, times(1)).insertWithExternalId(any[domain.ImageMetaInformation], any[String])
-    verify(indexBuilderService, times(1)).indexDocument(any[domain.ImageMetaInformation])
+    verify(imageIndexService, times(1)).indexDocument(any[domain.ImageMetaInformation])
   }
 
   test("uploadRawImage should return a domain.Image where the filename is url-encoded") {

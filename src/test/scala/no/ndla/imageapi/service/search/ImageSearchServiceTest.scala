@@ -40,7 +40,7 @@ class ImageSearchServiceTest
 
   override val searchConverterService = new SearchConverterService
   override val converterService = new ConverterService
-  override val indexService = new IndexService
+  override val imageIndexService = new ImageIndexService
   override val searchService = new SearchService
 
   val getStartAtAndNumResults: PrivateMethod[(Int, Int)] = PrivateMethod[(Int, Int)](Symbol("getStartAtAndNumResults"))
@@ -163,17 +163,18 @@ class ImageSearchServiceTest
   override def beforeAll(): Unit = {
     super.beforeAll()
     if (elasticSearchContainer.isSuccess) {
-      indexService.createIndexWithName(ImageApiProperties.SearchIndex)
+      val indexName = imageIndexService.createIndexWithGeneratedName
+      val alias = imageIndexService.updateAliasTarget(None, indexName.get)
 
       when(draftApiClient.getAgreementCopyright(any[Long])).thenReturn(None)
 
       when(draftApiClient.getAgreementCopyright(1)).thenReturn(Some(agreement1Copyright))
 
-      indexService.indexDocument(image1)
-      indexService.indexDocument(image2)
-      indexService.indexDocument(image3)
-      indexService.indexDocument(image4)
-      indexService.indexDocument(image5)
+      imageIndexService.indexDocument(image1)
+      imageIndexService.indexDocument(image2)
+      imageIndexService.indexDocument(image3)
+      imageIndexService.indexDocument(image4)
+      imageIndexService.indexDocument(image5)
 
       val servletRequest = mock[HttpServletRequest]
       when(servletRequest.getHeader(any[String])).thenReturn("http")
@@ -262,7 +263,8 @@ class ImageSearchServiceTest
   }
 
   test("That search matches title and alttext ordered by relevance") {
-    val Success(searchResult) = searchService.matchingQuery(searchSettings.copy(query = Some("bil")))
+    val res = searchService.matchingQuery(searchSettings.copy(query = Some("bil")))
+    val Success(searchResult) = res
     searchResult.totalCount should be(2)
     searchResult.results.size should be(2)
     searchResult.results.head.id should be("1")

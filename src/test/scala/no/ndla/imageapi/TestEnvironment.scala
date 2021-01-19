@@ -15,7 +15,7 @@ import no.ndla.imageapi.controller.{HealthController, ImageControllerV2, InternC
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository._
 import no.ndla.imageapi.service._
-import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
+import no.ndla.imageapi.service.search.{ImageIndexService, IndexService, SearchConverterService, SearchService}
 import no.ndla.network.NdlaClient
 import org.mockito.scalatest.MockitoSugar
 
@@ -32,7 +32,7 @@ trait TestEnvironment
     with WriteService
     with AmazonClient
     with ImageStorageService
-    with IndexBuilderService
+    with ImageIndexService
     with ImportService
     with MigrationApiClient
     with DraftApiClient
@@ -50,9 +50,8 @@ trait TestEnvironment
   val amazonClient = mock[AmazonS3]
 
   val dataSource = mock[HikariDataSource]
-  val indexService = mock[IndexService]
+  val imageIndexService = mock[ImageIndexService]
   val searchService = mock[SearchService]
-  val indexBuilderService = mock[IndexBuilderService]
   val imageRepository = mock[ImageRepository]
   val readService = mock[ReadService]
   val writeService = mock[WriteService]

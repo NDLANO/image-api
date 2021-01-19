@@ -16,13 +16,14 @@ import no.ndla.imageapi.controller._
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service._
-import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
+import no.ndla.imageapi.service.search.{ImageIndexService, IndexService, SearchConverterService, SearchService}
 import no.ndla.network.NdlaClient
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 object ComponentRegistry
     extends Elastic4sClient
     with IndexService
+    with ImageIndexService
     with SearchService
     with SearchConverterService
     with DataSource
@@ -31,7 +32,6 @@ object ComponentRegistry
     with WriteService
     with AmazonClient
     with ImageStorageService
-    with IndexBuilderService
     with NdlaClient
     with MigrationApiClient
     with DraftApiClient
@@ -62,9 +62,8 @@ object ComponentRegistry
       .withRegion(currentRegion.getOrElse(Regions.EU_CENTRAL_1))
       .build()
 
-  lazy val indexService = new IndexService
+  lazy val imageIndexService = new ImageIndexService
   lazy val searchService = new SearchService
-  lazy val indexBuilderService = new IndexBuilderService
   lazy val imageRepository = new ImageRepository
   lazy val readService = new ReadService
   lazy val writeService = new WriteService
