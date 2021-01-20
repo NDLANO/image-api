@@ -82,33 +82,7 @@ trait SearchService {
       }
     }
 
-    def getSortDefinition(sort: Sort.Value, language: String): FieldSort = {
-      val sortLanguage = language match {
-        case Language.NoLanguage | Language.AllLanguages => "*"
-        case _                                           => language
-      }
-
-      sort match {
-        case Sort.ByTitleAsc =>
-          language match {
-            case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.Asc).missing("_last")
-            case _ =>
-              fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").sortOrder(SortOrder.Asc).missing("_last")
-          }
-        case Sort.ByTitleDesc =>
-          language match {
-            case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.Desc).missing("_last")
-            case _ =>
-              fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").sortOrder(SortOrder.Desc).missing("_last")
-          }
-        case Sort.ByRelevanceAsc    => fieldSort("_score").sortOrder(SortOrder.Asc)
-        case Sort.ByRelevanceDesc   => fieldSort("_score").sortOrder(SortOrder.Desc)
-        case Sort.ByLastUpdatedAsc  => fieldSort("lastUpdated").sortOrder(SortOrder.Asc).missing("_last")
-        case Sort.ByLastUpdatedDesc => fieldSort("lastUpdated").sortOrder(SortOrder.Desc).missing("_last")
-        case Sort.ByIdAsc           => fieldSort("id").sortOrder(SortOrder.Asc).missing("_last")
-        case Sort.ByIdDesc          => fieldSort("id").sortOrder(SortOrder.Desc).missing("_last")
-      }
-    }
+    def getSortDefinition(sort: Sort.Value, language: String): FieldSort
 
     def countDocuments(): Long = {
       val response = e4sClient.execute {

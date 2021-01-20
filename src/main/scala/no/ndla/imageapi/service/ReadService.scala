@@ -14,7 +14,7 @@ import io.lemonlabs.uri.UrlPath
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.api.ImageMetaInformationV2
 import no.ndla.imageapi.model.api
-import no.ndla.imageapi.model.domain.ImageMetaInformation
+import no.ndla.imageapi.model.domain.{ImageMetaInformation, Sort}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.model.{ImageNotFoundException, InvalidUrlException, ValidationException}
 import no.ndla.imageapi.service.search.{ImageIndexService, SearchConverterService, TagSearchService}
@@ -35,12 +35,17 @@ trait ReadService {
 
   class ReadService extends LazyLogging {
 
-    def getAllTags(input: String, pageSize: Int, page: Int, language: String): Try[api.TagsSearchResult] = {
+    def getAllTags(input: String,
+                   pageSize: Int,
+                   page: Int,
+                   language: String,
+                   sort: Sort.Value): Try[api.TagsSearchResult] = {
       val result = tagSearchService.matchingQuery(
         query = input,
         searchLanguage = language,
         page = page,
-        pageSize = pageSize
+        pageSize = pageSize,
+        sort = sort
       )
 
       result.map(searchConverterService.tagSearchResultAsApiResult)

@@ -10,6 +10,7 @@ package no.ndla.imageapi.service.search
 import no.ndla.imageapi.{ImageApiProperties, TestData, TestEnvironment, UnitSuite}
 import no.ndla.imageapi.integration.Elastic4sClientFactory
 import no.ndla.imageapi.model.domain
+import no.ndla.imageapi.model.domain.Sort
 import no.ndla.scalatestsuite.IntegrationSuite
 import org.scalatest.Outcome
 
@@ -109,14 +110,14 @@ class TagSearchServiceTest
   }
 
   test("That searching for tags returns sensible results") {
-    val Success(result) = tagSearchService.matchingQuery("test", "nb", 1, 100)
+    val Success(result) = tagSearchService.matchingQuery("test", "nb", 1, 100, Sort.ByRelevanceDesc)
 
     result.totalCount should be(3)
     result.results should be(Seq("test", "testemer", "testing"))
   }
 
   test("That only prefixes are matched") {
-    val Success(result) = tagSearchService.matchingQuery("kylling", "nb", 1, 100)
+    val Success(result) = tagSearchService.matchingQuery("kylling", "nb", 1, 100, Sort.ByRelevanceDesc)
 
     result.totalCount should be(1)
     result.results should be(Seq("kyllingfilet"))

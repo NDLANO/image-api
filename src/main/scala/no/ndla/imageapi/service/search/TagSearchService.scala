@@ -9,13 +9,13 @@ package no.ndla.imageapi.service.search
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.searches.queries.BoolQuery
-import com.sksamuel.elastic4s.searches.sort.SortOrder
+import com.sksamuel.elastic4s.searches.sort.{FieldSort, SortOrder}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.ImageApiProperties.{ElasticSearchIndexMaxResultWindow, ElasticSearchScrollKeepAlive}
 import no.ndla.imageapi.integration.Elastic4sClient
 import no.ndla.imageapi.model.api.Error
-import no.ndla.imageapi.model.domain.SearchResult
+import no.ndla.imageapi.model.domain.{SearchResult, Sort}
 import no.ndla.imageapi.model.search.SearchableTag
 import no.ndla.imageapi.model.{Language, ResultWindowTooLargeException}
 import org.json4s._
@@ -41,13 +41,35 @@ trait TagSearchService {
       searchableTag.tag
     }
 
+    override def getSortDefinition(sort: Sort.Value, language: String): FieldSort = {
+      val sortLanguage = language match {
+        case Language.NoLanguage | Language.AllLanguages => "*"
+        case _                                           => language
+      }
+
+      sort match {
+        case Sort.ByRelevanceAsc  => fieldSort("_score").sortOrder(SortOrder.Asc)
+        case Sort.ByRelevanceDesc => fieldSort("_score").sortOrder(SortOrder.Desc)
+        case Sort.ByTitleAsc      => fieldSort(s"tag.raw").sortOrder(SortOrder.Asc).missing("_last")
+        case Sort.ByTitleDesc     => fieldSort(s"tag.raw").sortOrder(SortOrder.Desc).missing("_last")
+        case _                    => fieldSort(s"tag.raw").sortOrder(SortOrder.Desc).missing("_last")
+      }
+    }
+
     def all(
         language: String,
         page: Int,
-        pageSize: Int
-    ): Try[SearchResult[String]] = executeSearch(language, page, pageSize, boolQuery())
+        pageSize: Int,
+        sort: Sort.Value
+    ): Try[SearchResult[String]] = executeSearch(language, page, pageSize, sort, boolQuery())
 
-    def matchingQuery(query: String, searchLanguage: String, page: Int, pageSize: Int): Try[SearchResult[String]] = {
+    def matchingQuery(
+        query: String,
+        searchLanguage: String,
+        page: Int,
+        pageSize: Int,
+        sort: Sort.Value
+    ): Try[SearchResult[String]] = {
 
       val language = if (searchLanguage == Language.AllLanguages) "*" else searchLanguage
 
@@ -59,22 +81,23 @@ trait TagSearchService {
           )
         )
 
-      executeSearch(language, page, pageSize, fullQuery)
+      executeSearch(language, page, pageSize, sort, fullQuery)
     }
 
     def executeSearch(
         language: String,
         page: Int,
         pageSize: Int,
+        sort: Sort.Value,
         queryBuilder: BoolQuery,
     ): Try[SearchResult[String]] = {
 
-      val languageFilter =
-        if (language == "all" || language == "*") None
-        else
-          Some(
-            termQuery("language", language)
-          )
+      val (languageFilter, searchLanguage) = language match {
+        case "*" | Language.AllLanguages =>
+          (None, "*")
+        case lang =>
+          (Some(termQuery("language", lang)), lang)
+      }
 
       val filters = List(languageFilter)
       val filteredSearch = queryBuilder.filter(filters.flatten)
@@ -90,7 +113,7 @@ trait TagSearchService {
           .size(numResults)
           .from(startAt)
           .query(filteredSearch)
-          .sortBy(fieldSort("_score").sortOrder(SortOrder.Desc))
+          .sortBy(getSortDefinition(sort, searchLanguage))
 
         val searchWithScroll =
           if (startAt != 0) { searchToExecute } else { searchToExecute.scroll(ElasticSearchScrollKeepAlive) }

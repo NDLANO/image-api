@@ -448,7 +448,8 @@ trait ImageControllerV2 {
             asQueryParam(query),
             asQueryParam(pageSize),
             asQueryParam(pageNo),
-            asQueryParam(language)
+            asQueryParam(language),
+            asQueryParam(sort)
           )
           .responseMessages(response500)
           .authorizations("oauth2")
@@ -465,7 +466,9 @@ trait ImageControllerV2 {
       }
       val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
 
-      readService.getAllTags(query, pageSize, pageNo, language) match {
+      val sort = Sort.valueOf(paramOrDefault(this.sort.paramName, "")).getOrElse(Sort.ByRelevanceDesc)
+
+      readService.getAllTags(query, pageSize, pageNo, language, sort) match {
         case Failure(ex)     => errorHandler(ex)
         case Success(result) => Ok(result)
       }

@@ -12,13 +12,14 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.sksamuel.elastic4s.searches.ScoreMode
 import com.sksamuel.elastic4s.searches.queries.{BoolQuery, Query}
+import com.sksamuel.elastic4s.searches.sort.{FieldSort, SortOrder}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.ImageApiProperties.{ElasticSearchIndexMaxResultWindow, ElasticSearchScrollKeepAlive}
 import no.ndla.imageapi.integration.Elastic4sClient
 import no.ndla.imageapi.model.{Language, ResultWindowTooLargeException}
 import no.ndla.imageapi.model.api.{Error, ImageMetaSummary}
-import no.ndla.imageapi.model.domain.{SearchResult, SearchSettings}
+import no.ndla.imageapi.model.domain.{SearchResult, SearchSettings, Sort}
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
 import no.ndla.mapping.ISO639
 import org.json4s.native.Serialization.read
@@ -38,6 +39,34 @@ trait ImageSearchService {
     def hitToApiModel(hit: String, language: Option[String]): ImageMetaSummary = {
       implicit val formats: Formats = SearchableLanguageFormats.JSonFormats
       searchConverterService.asImageMetaSummary(read[SearchableImage](hit), language)
+    }
+
+    override def getSortDefinition(sort: Sort.Value, language: String): FieldSort = {
+      val sortLanguage = language match {
+        case Language.NoLanguage | Language.AllLanguages => "*"
+        case _                                           => language
+      }
+
+      sort match {
+        case Sort.ByTitleAsc =>
+          sortLanguage match {
+            case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.Asc).missing("_last")
+            case _ =>
+              fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").sortOrder(SortOrder.Asc).missing("_last")
+          }
+        case Sort.ByTitleDesc =>
+          sortLanguage match {
+            case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.Desc).missing("_last")
+            case _ =>
+              fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").sortOrder(SortOrder.Desc).missing("_last")
+          }
+        case Sort.ByRelevanceAsc    => fieldSort("_score").sortOrder(SortOrder.Asc)
+        case Sort.ByRelevanceDesc   => fieldSort("_score").sortOrder(SortOrder.Desc)
+        case Sort.ByLastUpdatedAsc  => fieldSort("lastUpdated").sortOrder(SortOrder.Asc).missing("_last")
+        case Sort.ByLastUpdatedDesc => fieldSort("lastUpdated").sortOrder(SortOrder.Desc).missing("_last")
+        case Sort.ByIdAsc           => fieldSort("id").sortOrder(SortOrder.Asc).missing("_last")
+        case Sort.ByIdDesc          => fieldSort("id").sortOrder(SortOrder.Desc).missing("_last")
+      }
     }
 
     def matchingQuery(settings: SearchSettings): Try[SearchResult[ImageMetaSummary]] = {
