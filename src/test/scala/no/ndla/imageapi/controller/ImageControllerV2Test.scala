@@ -9,9 +9,13 @@
 package no.ndla.imageapi.controller
 
 import java.util.Date
-
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
-import no.ndla.imageapi.model.api.{NewImageMetaInformationV2, SearchResult, UpdateImageMetaInformation}
+import no.ndla.imageapi.model.api.{
+  ImageMetaSummary,
+  NewImageMetaInformationV2,
+  SearchResult,
+  UpdateImageMetaInformation
+}
 import no.ndla.imageapi.model.domain.{Sort, _}
 import no.ndla.imageapi.model.{ImageNotFoundException, api, domain}
 import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
@@ -86,9 +90,9 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
   test("That GET / returns body and 200") {
     val expectedBody = """{"totalCount":0,"page":1,"pageSize":10,"language":"nb","results":[]}"""
-    val domainSearchResult = domain.SearchResult(0, Some(1), 10, "nb", List(), None)
+    val domainSearchResult = domain.SearchResult[ImageMetaSummary](0, Some(1), 10, "nb", List(), None)
     val apiSearchResult = SearchResult(0, Some(1), 10, "nb", List())
-    when(searchService.matchingQuery(any[SearchSettings])).thenReturn(Success(domainSearchResult))
+    when(imageSearchService.matchingQuery(any[SearchSettings])).thenReturn(Success(domainSearchResult))
     when(searchConverterService.asApiSearchResult(domainSearchResult)).thenReturn(apiSearchResult)
     get("/") {
       status should equal(200)
@@ -112,7 +116,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"]}]}"""
     val domainSearchResult = domain.SearchResult(1, Some(1), 10, "nb", List(imageSummary), None)
     val apiSearchResult = api.SearchResult(1, Some(1), 10, "nb", List(imageSummary))
-    when(searchService.matchingQuery(any[SearchSettings])).thenReturn(Success(domainSearchResult))
+    when(imageSearchService.matchingQuery(any[SearchSettings])).thenReturn(Success(domainSearchResult))
     when(searchConverterService.asApiSearchResult(domainSearchResult)).thenReturn(apiSearchResult)
     get("/") {
       status should equal(200)
@@ -277,7 +281,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   test("That scrollId is in header, and not in body") {
     val scrollId =
       "DnF1ZXJ5VGhlbkZldGNoCgAAAAAAAAC1Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAthYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALcWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC4Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuRYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALsWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC9Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuhYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAAL4WLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC8Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFE="
-    val searchResponse = domain.SearchResult(
+    val searchResponse = domain.SearchResult[ImageMetaSummary](
       0,
       Some(1),
       10,
@@ -285,7 +289,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       Seq.empty,
       Some(scrollId)
     )
-    when(searchService.matchingQuery(any[SearchSettings])).thenReturn(Success(searchResponse))
+    when(imageSearchService.matchingQuery(any[SearchSettings])).thenReturn(Success(searchResponse))
 
     get(s"/") {
       status should be(200)
@@ -295,10 +299,10 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
   }
 
   test("That scrolling uses scroll and not searches normally") {
-    reset(searchService)
+    reset(imageSearchService)
     val scrollId =
       "DnF1ZXJ5VGhlbkZldGNoCgAAAAAAAAC1Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAthYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALcWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC4Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuRYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALsWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC9Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuhYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAAL4WLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC8Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFE="
-    val searchResponse = domain.SearchResult(
+    val searchResponse = domain.SearchResult[ImageMetaSummary](
       0,
       Some(1),
       10,
@@ -307,21 +311,21 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       Some(scrollId)
     )
 
-    when(searchService.scroll(anyString, anyString)).thenReturn(Success(searchResponse))
+    when(imageSearchService.scroll(anyString, anyString)).thenReturn(Success(searchResponse))
 
     get(s"/?search-context=$scrollId") {
       status should be(200)
     }
 
-    verify(searchService, times(0)).matchingQuery(any[SearchSettings])
-    verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
+    verify(imageSearchService, times(0)).matchingQuery(any[SearchSettings])
+    verify(imageSearchService, times(1)).scroll(eqTo(scrollId), any[String])
   }
 
   test("That scrolling with POST uses scroll and not searches normally") {
-    reset(searchService)
+    reset(imageSearchService)
     val scrollId =
       "DnF1ZXJ5VGhlbkZldGNoCgAAAAAAAAC1Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAthYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALcWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC4Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuRYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALsWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC9Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuhYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAAL4WLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC8Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFE="
-    val searchResponse = domain.SearchResult(
+    val searchResponse = domain.SearchResult[ImageMetaSummary](
       0,
       Some(1),
       10,
@@ -330,14 +334,14 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       Some(scrollId)
     )
 
-    when(searchService.scroll(anyString, anyString)).thenReturn(Success(searchResponse))
+    when(imageSearchService.scroll(anyString, anyString)).thenReturn(Success(searchResponse))
 
     post(s"/search/", body = s"""{"scrollId":"$scrollId"}""") {
       status should be(200)
     }
 
-    verify(searchService, times(0)).matchingQuery(any[SearchSettings])
-    verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
+    verify(imageSearchService, times(0)).matchingQuery(any[SearchSettings])
+    verify(imageSearchService, times(1)).scroll(eqTo(scrollId), any[String])
   }
 
 }

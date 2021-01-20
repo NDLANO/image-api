@@ -23,7 +23,7 @@ import no.ndla.imageapi.model.api.{
 import no.ndla.imageapi.model.domain.{SearchSettings, Sort}
 import no.ndla.imageapi.model.{Language, ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.{SearchConverterService, SearchService}
+import no.ndla.imageapi.service.search.{ImageSearchService, SearchConverterService, SearchService}
 import no.ndla.imageapi.service.{ConverterService, ReadService, WriteService}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
@@ -36,7 +36,7 @@ import scala.util.{Failure, Success}
 
 trait ImageControllerV2 {
   this: ImageRepository
-    with SearchService
+    with ImageSearchService
     with ConverterService
     with ReadService
     with WriteService
@@ -142,7 +142,7 @@ trait ImageControllerV2 {
     private def scrollSearchOr(scrollId: Option[String], language: String)(orFunction: => Any): Any =
       scrollId match {
         case Some(scroll) =>
-          searchService.scroll(scroll, language) match {
+          imageSearchService.scroll(scroll, language) match {
             case Success(scrollResult) =>
               val responseHeader = scrollResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
               Ok(searchConverterService.asApiSearchResult(scrollResult), headers = responseHeader)
@@ -189,7 +189,7 @@ trait ImageControllerV2 {
           )
       }
 
-      searchService.matchingQuery(settings) match {
+      imageSearchService.matchingQuery(settings) match {
         case Success(searchResult) =>
           val responseHeader = searchResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
           Ok(searchConverterService.asApiSearchResult(searchResult), headers = responseHeader)
