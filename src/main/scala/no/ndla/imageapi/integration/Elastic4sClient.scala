@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2018 NDLA
  *
  * See LICENSE

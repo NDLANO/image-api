@@ -1,6 +1,6 @@
 /*
  * Part of NDLA image-api.
- * Copyright (C) 2020 NDLA
+ * Copyright (C) 2021 NDLA
  *
  * See LICENSE
  */
@@ -14,15 +14,13 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.ImageApiProperties.{ElasticSearchIndexMaxResultWindow, ElasticSearchScrollKeepAlive}
 import no.ndla.imageapi.integration.Elastic4sClient
-import no.ndla.imageapi.model.{Language, ResultWindowTooLargeException}
+import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.model.domain.SearchResult
 import no.ndla.imageapi.model.search.SearchableTag
-import no.ndla.imageapi.model.api.Error
+import no.ndla.imageapi.model.{Language, ResultWindowTooLargeException}
 import org.json4s._
 import org.json4s.native.Serialization.read
 
-import java.util.concurrent.Executors
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
 import scala.util.{Failure, Success, Try}
 
 trait TagSearchService {
