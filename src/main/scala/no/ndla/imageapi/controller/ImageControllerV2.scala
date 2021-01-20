@@ -8,6 +8,7 @@
 
 package no.ndla.imageapi.controller
 
+import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.ImageApiProperties._
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.integration.DraftApiClient
@@ -17,6 +18,7 @@ import no.ndla.imageapi.model.api.{
   NewImageMetaInformationV2,
   SearchParams,
   SearchResult,
+  TagsSearchResult,
   UpdateImageMetaInformation,
   ValidationError
 }
@@ -433,6 +435,41 @@ trait ImageControllerV2 {
         case Success(imageMeta) => imageMeta
         case Failure(e)         => errorHandler(e)
       }
+    }
+
+    get(
+      "/tag-search/",
+      operation(
+        apiOperation[TagsSearchResult]("getTagsSearchable")
+          .summary("Retrieves a list of all previously used tags in images")
+          .description("Retrieves a list of all previously used tags in images")
+          .parameters(
+            asHeaderParam(correlationId),
+            asQueryParam(query),
+            asQueryParam(pageSize),
+            asQueryParam(pageNo),
+            asQueryParam(language)
+          )
+          .responseMessages(response500)
+          .authorizations("oauth2")
+      )
+    ) {
+      val query = paramOrDefault(this.query.paramName, "")
+      val pageSize = intOrDefault(this.pageSize.paramName, ImageApiProperties.DefaultPageSize) match {
+        case tooSmall if tooSmall < 1 => ImageApiProperties.DefaultPageSize
+        case x                        => x
+      }
+      val pageNo = intOrDefault(this.pageNo.paramName, 1) match {
+        case tooSmall if tooSmall < 1 => 1
+        case x                        => x
+      }
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+
+      readService.getAllTags(query, pageSize, pageNo, language) match {
+        case Failure(ex)     => errorHandler(ex)
+        case Success(result) => Ok(result)
+      }
+
     }
 
   }

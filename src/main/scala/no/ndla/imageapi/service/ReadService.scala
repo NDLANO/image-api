@@ -9,7 +9,7 @@ import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.domain.ImageMetaInformation
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.model.{ImageNotFoundException, InvalidUrlException, ValidationException}
-import no.ndla.imageapi.service.search.ImageIndexService
+import no.ndla.imageapi.service.search.{ImageIndexService, SearchConverterService, TagSearchService}
 
 import scala.util.{Failure, Success, Try}
 
@@ -19,11 +19,24 @@ trait ReadService {
     with ImageRepository
     with ImageIndexService
     with ImageStorageService
+    with TagSearchService
+    with SearchConverterService
     with Clock
     with User =>
   val readService: ReadService
 
   class ReadService extends LazyLogging {
+
+    def getAllTags(input: String, pageSize: Int, page: Int, language: String): Try[api.TagsSearchResult] = {
+      val result = tagSearchService.matchingQuery(
+        query = input,
+        searchLanguage = language,
+        page = page,
+        pageSize = pageSize
+      )
+
+      result.map(searchConverterService.tagSearchResultAsApiResult)
+    }
 
     def withId(imageId: Long, language: Option[String]): Option[ImageMetaInformationV2] =
       imageRepository

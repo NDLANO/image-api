@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import no.ndla.imageapi.model.Language
 import no.ndla.imageapi.model.api.{ImageAltText, ImageMetaSummary, ImageTitle}
-import no.ndla.imageapi.model.domain.ImageMetaInformation
+import no.ndla.imageapi.model.domain.{ImageMetaInformation, SearchResult}
 import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.domain
 import no.ndla.imageapi.model.search.{
@@ -137,6 +137,14 @@ trait SearchConverterService {
         searchResult.results
       )
 
+    def tagSearchResultAsApiResult(searchResult: SearchResult[String]): api.TagsSearchResult =
+      api.TagsSearchResult(
+        searchResult.totalCount,
+        searchResult.page.getOrElse(1),
+        searchResult.pageSize,
+        searchResult.language,
+        searchResult.results
+      )
   }
 
 }

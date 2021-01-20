@@ -18,8 +18,11 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, GatewayTimeout, InternalServerError, NotFound, Ok}
 import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.model.domain.ImageMetaInformation
-import no.ndla.imageapi.service.search.ImageIndexService
+import no.ndla.imageapi.service.search.{ImageIndexService, TagIndexService}
 
+import java.util.concurrent.{Executors, TimeUnit}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 trait InternController {
@@ -28,6 +31,7 @@ trait InternController {
     with ImportService
     with ConverterService
     with ImageIndexService
+    with TagIndexService
     with User
     with ImageRepository =>
   val internController: InternController
@@ -36,17 +40,26 @@ trait InternController {
     protected implicit override val jsonFormats: Formats = ImageMetaInformation.jsonEncoder
 
     post("/index") {
-      imageIndexService.indexDocuments match {
-        case Success(reindexResult) => {
+      implicit val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(2))
+
+      val indexResults = for {
+        imageIndex <- Future { imageIndexService.indexDocuments }
+        tagIndex <- Future { tagIndexService.indexDocuments }
+      } yield (imageIndex, tagIndex)
+
+      Await.result(indexResults, Duration(60, TimeUnit.MINUTES)) match {
+        case (Success(imageIndex), Success(tagIndex)) =>
+          val indexTime = math.max(tagIndex.millisUsed, imageIndex.millisUsed)
           val result =
-            s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms."
+            s"Completed indexing of ${imageIndex.totalIndexed} images in $indexTime ms."
           logger.info(result)
           Ok(result)
-        }
-        case Failure(f) => {
-          logger.warn(f.getMessage, f)
-          InternalServerError(f.getMessage)
-        }
+        case (Failure(imageFail), _) =>
+          logger.warn(imageFail.getMessage, imageFail)
+          InternalServerError(imageFail.getMessage)
+        case (_, Failure(tagFail)) =>
+          logger.warn(tagFail.getMessage, tagFail)
+          InternalServerError(tagFail.getMessage)
       }
     }
 
