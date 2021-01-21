@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -15,14 +15,25 @@ import no.ndla.imageapi.controller.{HealthController, ImageControllerV2, InternC
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository._
 import no.ndla.imageapi.service._
-import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
+import no.ndla.imageapi.service.search.{
+  ImageIndexService,
+  ImageSearchService,
+  IndexService,
+  SearchConverterService,
+  SearchService,
+  TagIndexService,
+  TagSearchService
+}
 import no.ndla.network.NdlaClient
 import org.mockito.scalatest.MockitoSugar
 
 trait TestEnvironment
     extends Elastic4sClient
     with IndexService
+    with TagIndexService
     with SearchService
+    with ImageSearchService
+    with TagSearchService
     with SearchConverterService
     with DataSource
     with ConverterService
@@ -32,7 +43,7 @@ trait TestEnvironment
     with WriteService
     with AmazonClient
     with ImageStorageService
-    with IndexBuilderService
+    with ImageIndexService
     with ImportService
     with MigrationApiClient
     with DraftApiClient
@@ -50,9 +61,12 @@ trait TestEnvironment
   val amazonClient = mock[AmazonS3]
 
   val dataSource = mock[HikariDataSource]
-  val indexService = mock[IndexService]
-  val searchService = mock[SearchService]
-  val indexBuilderService = mock[IndexBuilderService]
+  val imageIndexService = mock[ImageIndexService]
+  val imageSearchService = mock[ImageSearchService]
+
+  val tagIndexService = mock[TagIndexService]
+  val tagSearchService = mock[TagSearchService]
+
   val imageRepository = mock[ImageRepository]
   val readService = mock[ReadService]
   val writeService = mock[WriteService]

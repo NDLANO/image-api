@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -13,13 +13,16 @@ import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.ImageStorageException
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService}
 import no.ndla.imageapi.service.{ConverterService, ImportService, ReadService}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, GatewayTimeout, InternalServerError, NotFound, Ok}
 import no.ndla.imageapi.model.ImageNotFoundException
 import no.ndla.imageapi.model.domain.ImageMetaInformation
+import no.ndla.imageapi.service.search.{ImageIndexService, TagIndexService}
 
+import java.util.concurrent.{Executors, TimeUnit}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 trait InternController {
@@ -27,8 +30,8 @@ trait InternController {
     with ReadService
     with ImportService
     with ConverterService
-    with IndexBuilderService
-    with IndexService
+    with ImageIndexService
+    with TagIndexService
     with User
     with ImageRepository =>
   val internController: InternController
@@ -37,28 +40,37 @@ trait InternController {
     protected implicit override val jsonFormats: Formats = ImageMetaInformation.jsonEncoder
 
     post("/index") {
-      indexBuilderService.indexDocuments match {
-        case Success(reindexResult) => {
+      implicit val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(2))
+
+      val indexResults = for {
+        imageIndex <- Future { imageIndexService.indexDocuments }
+        tagIndex <- Future { tagIndexService.indexDocuments }
+      } yield (imageIndex, tagIndex)
+
+      Await.result(indexResults, Duration(60, TimeUnit.MINUTES)) match {
+        case (Success(imageIndex), Success(tagIndex)) =>
+          val indexTime = math.max(tagIndex.millisUsed, imageIndex.millisUsed)
           val result =
-            s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms."
+            s"Completed indexing of ${imageIndex.totalIndexed} images in $indexTime ms."
           logger.info(result)
           Ok(result)
-        }
-        case Failure(f) => {
-          logger.warn(f.getMessage, f)
-          InternalServerError(f.getMessage)
-        }
+        case (Failure(imageFail), _) =>
+          logger.warn(imageFail.getMessage, imageFail)
+          InternalServerError(imageFail.getMessage)
+        case (_, Failure(tagFail)) =>
+          logger.warn(tagFail.getMessage, tagFail)
+          InternalServerError(tagFail.getMessage)
       }
     }
 
     delete("/index") {
       def pluralIndex(n: Int) = if (n == 1) "1 index" else s"$n indexes"
-      val deleteResults = indexService.findAllIndexes(ImageApiProperties.SearchIndex) match {
+      val deleteResults = imageIndexService.findAllIndexes(ImageApiProperties.SearchIndex) match {
         case Failure(f) => halt(status = 500, body = f.getMessage)
         case Success(indexes) =>
           indexes.map(index => {
             logger.info(s"Deleting index $index")
-            indexService.deleteIndexWithName(Option(index))
+            imageIndexService.deleteIndexWithName(Option(index))
           })
       }
       val (errors, successes) = deleteResults.partition(_.isFailure)

@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -16,14 +16,26 @@ import no.ndla.imageapi.controller._
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service._
-import no.ndla.imageapi.service.search.{IndexBuilderService, IndexService, SearchConverterService, SearchService}
+import no.ndla.imageapi.service.search.{
+  ImageIndexService,
+  ImageSearchService,
+  IndexService,
+  SearchConverterService,
+  SearchService,
+  TagIndexService,
+  TagSearchService
+}
 import no.ndla.network.NdlaClient
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 object ComponentRegistry
     extends Elastic4sClient
     with IndexService
+    with TagIndexService
+    with ImageIndexService
     with SearchService
+    with ImageSearchService
+    with TagSearchService
     with SearchConverterService
     with DataSource
     with ImageRepository
@@ -31,7 +43,6 @@ object ComponentRegistry
     with WriteService
     with AmazonClient
     with ImageStorageService
-    with IndexBuilderService
     with NdlaClient
     with MigrationApiClient
     with DraftApiClient
@@ -62,9 +73,10 @@ object ComponentRegistry
       .withRegion(currentRegion.getOrElse(Regions.EU_CENTRAL_1))
       .build()
 
-  lazy val indexService = new IndexService
-  lazy val searchService = new SearchService
-  lazy val indexBuilderService = new IndexBuilderService
+  lazy val imageIndexService = new ImageIndexService
+  lazy val imageSearchService = new ImageSearchService
+  lazy val tagIndexService = new TagIndexService
+  lazy val tagSearchService = new TagSearchService
   lazy val imageRepository = new ImageRepository
   lazy val readService = new ReadService
   lazy val writeService = new WriteService

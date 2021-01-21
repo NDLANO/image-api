@@ -1,3 +1,11 @@
+/*
+ * Part of NDLA image-api.
+ * Copyright (C) 2021 NDLA
+ *
+ * See LICENSE
+ *
+ */
+
 package no.ndla.imageapi.service
 
 import com.typesafe.scalalogging.LazyLogging
@@ -6,10 +14,10 @@ import io.lemonlabs.uri.UrlPath
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.api.ImageMetaInformationV2
 import no.ndla.imageapi.model.api
-import no.ndla.imageapi.model.domain.ImageMetaInformation
+import no.ndla.imageapi.model.domain.{ImageMetaInformation, Sort}
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.IndexService
 import no.ndla.imageapi.model.{ImageNotFoundException, InvalidUrlException, ValidationException}
+import no.ndla.imageapi.service.search.{ImageIndexService, SearchConverterService, TagSearchService}
 
 import scala.util.{Failure, Success, Try}
 
@@ -17,13 +25,31 @@ trait ReadService {
   this: ConverterService
     with ValidationService
     with ImageRepository
-    with IndexService
+    with ImageIndexService
     with ImageStorageService
+    with TagSearchService
+    with SearchConverterService
     with Clock
     with User =>
   val readService: ReadService
 
   class ReadService extends LazyLogging {
+
+    def getAllTags(input: String,
+                   pageSize: Int,
+                   page: Int,
+                   language: String,
+                   sort: Sort.Value): Try[api.TagsSearchResult] = {
+      val result = tagSearchService.matchingQuery(
+        query = input,
+        searchLanguage = language,
+        page = page,
+        pageSize = pageSize,
+        sort = sort
+      )
+
+      result.map(searchConverterService.tagSearchResultAsApiResult)
+    }
 
     def withId(imageId: Long, language: Option[String]): Option[ImageMetaInformationV2] =
       imageRepository

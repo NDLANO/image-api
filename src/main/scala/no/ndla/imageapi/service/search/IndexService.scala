@@ -1,89 +1,128 @@
 /*
- * Part of NDLA image_api.
- * Copyright (C) 2016 NDLA
+ * Part of NDLA image-api.
+ * Copyright (C) 2021 NDLA
  *
  * See LICENSE
  */
 
 package no.ndla.imageapi.service.search
 
-import java.text.SimpleDateFormat
-import java.util.{Calendar, UUID}
-
-import com.sksamuel.elastic4s.alias.AliasAction
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.RequestSuccess
-import com.sksamuel.elastic4s.mappings.{MappingDefinition, NestedField}
+import com.sksamuel.elastic4s.indexes.IndexRequest
+import com.sksamuel.elastic4s.mappings.{FieldDefinition, MappingDefinition}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.integration.Elastic4sClient
-import no.ndla.imageapi.model.Language._
-import no.ndla.imageapi.model.{ElasticIndexingException, domain}
-import no.ndla.imageapi.model.search.SearchableLanguageFormats
-import org.json4s.native.Serialization.write
+import no.ndla.imageapi.model.Language.languageAnalyzers
+import no.ndla.imageapi.model.domain.ReindexResult
+import no.ndla.imageapi.repository.{ImageRepository, Repository}
 
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import scala.util.{Failure, Success, Try}
 
 trait IndexService {
-  this: SearchConverterService with Elastic4sClient =>
-  val indexService: IndexService
+  this: Elastic4sClient with ImageRepository =>
 
-  class IndexService extends LazyLogging {
+  trait IndexService[D, T <: AnyRef] extends LazyLogging {
+    val documentType: String
+    val searchIndex: String
+    val repository: Repository[D]
 
-    def deleteDocument(audioId: Long) =
-      e4sClient
-        .execute {
-          delete(audioId.toString).from(ImageApiProperties.SearchIndex / ImageApiProperties.SearchDocument)
-        }
-        .map(_.isSuccess)
+    def getMapping: MappingDefinition
+    def createIndexRequests(domainModel: D, indexName: String): Seq[IndexRequest]
 
-    implicit val formats = SearchableLanguageFormats.JSonFormats
+    private def createIndexIfNotExists(): Try[_] = getAliasTarget.flatMap {
+      case Some(index) => Success(index)
+      case None        => createIndexWithGeneratedName.flatMap(newIndex => updateAliasTarget(None, newIndex))
+    }
 
-    def indexDocument(imageMetaInformation: domain.ImageMetaInformation): Try[domain.ImageMetaInformation] = {
-      val source = write(searchConverterService.asSearchableImage(imageMetaInformation))
+    def indexDocument(imported: D): Try[D] = {
+      for {
+        _ <- createIndexIfNotExists()
+        requests = createIndexRequests(imported, searchIndex)
+        _ <- executeRequests(requests)
+      } yield imported
+    }
 
-      val response = e4sClient.execute {
-        indexInto(ImageApiProperties.SearchIndex / ImageApiProperties.SearchDocument)
-          .doc(source)
-          .id(imageMetaInformation.id.get.toString)
-      }
+    def indexDocuments: Try[ReindexResult] = {
+      synchronized {
+        val start = System.currentTimeMillis()
+        createIndexWithGeneratedName.flatMap(indexName => {
+          val operations = for {
+            numIndexed <- sendToElastic(indexName)
+            aliasTarget <- getAliasTarget
+            _ <- updateAliasTarget(aliasTarget, indexName)
+            _ <- deleteIndexWithName(aliasTarget)
+          } yield numIndexed
 
-      response match {
-        case Success(_)  => Success(imageMetaInformation)
-        case Failure(ex) => Failure(ex)
+          operations match {
+            case Failure(f) => {
+              deleteIndexWithName(Some(indexName))
+              Failure(f)
+            }
+            case Success(totalIndexed) => {
+              Success(ReindexResult(totalIndexed, System.currentTimeMillis() - start))
+            }
+          }
+        })
       }
     }
 
-    def indexDocuments(imageMetaList: List[domain.ImageMetaInformation], indexName: String): Try[Int] = {
-      if (imageMetaList.isEmpty) {
+    def sendToElastic(indexName: String): Try[Int] = {
+      var numIndexed = 0
+      getRanges.map(ranges => {
+        ranges.foreach(range => {
+          val numberInBulk = indexDocuments(repository.documentsWithIdBetween(range._1, range._2), indexName)
+          numberInBulk match {
+            case Success(num) => numIndexed += num
+            case Failure(f)   => return Failure(f)
+          }
+        })
+        numIndexed
+      })
+    }
+
+    def getRanges: Try[List[(Long, Long)]] = {
+      Try {
+        val (minId, maxId) = repository.minMaxId
+        Seq
+          .range(minId, maxId + 1)
+          .grouped(ImageApiProperties.IndexBulkSize)
+          .map(group => (group.head, group.last))
+          .toList
+      }
+    }
+
+    def indexDocuments(contents: Seq[D], indexName: String): Try[Int] = {
+      if (contents.isEmpty) {
         Success(0)
       } else {
-        val response = e4sClient.execute {
-          bulk(imageMetaList.map(imageMeta => {
-            val source = write(searchConverterService.asSearchableImage(imageMeta))
-            indexInto(indexName / ImageApiProperties.SearchDocument).doc(source).id(imageMeta.id.get.toString)
-          }))
-        }
+        val requests = contents.flatMap(content => {
+          createIndexRequests(content, indexName)
+        })
 
-        response match {
-          case Success(RequestSuccess(_, _, _, result)) if !result.errors =>
-            logger.info(s"Indexed ${imageMetaList.size} documents")
-            Success(imageMetaList.size)
-          case Success(RequestSuccess(_, _, _, result)) =>
-            val failed = result.items.collect {
-              case item if item.error.isDefined => s"'${item.id}: ${item.error.get.reason}'"
-            }
-
-            logger.error(s"Failed to index ${failed.length} items: ${failed.mkString(", ")}")
-            Failure(ElasticIndexingException(s"Failed to index ${failed.size}/${imageMetaList.size} images"))
+        executeRequests(requests) match {
+          case Success((numSuccessful, numFailures)) =>
+            logger.info(s"Indexed $numSuccessful documents ($searchIndex). No of failed items: $numFailures")
+            Success(contents.size)
           case Failure(ex) => Failure(ex)
         }
       }
     }
 
-    def createIndexWithGeneratedName(): Try[String] = {
-      createIndexWithName(ImageApiProperties.SearchIndex + "_" + getTimestamp + "_" + UUID.randomUUID().toString)
+    def deleteDocument(contentId: Long): Try[Long] = {
+      for {
+        _ <- createIndexIfNotExists()
+        _ <- {
+          e4sClient.execute(
+            delete(s"$contentId").from(searchIndex / documentType)
+          )
+        }
+      } yield contentId
     }
+
+    def createIndexWithGeneratedName: Try[String] = createIndexWithName(searchIndex + "_" + getTimestamp)
 
     def createIndexWithName(indexName: String): Try[String] = {
       if (indexWithNameExists(indexName).getOrElse(false)) {
@@ -91,7 +130,7 @@ trait IndexService {
       } else {
         val response = e4sClient.execute {
           createIndex(indexName)
-            .mappings(buildMapping)
+            .mappings(getMapping)
             .indexSetting("max_result_window", ImageApiProperties.ElasticSearchIndexMaxResultWindow)
         }
 
@@ -116,81 +155,31 @@ trait IndexService {
       }
     }
 
+    def getAliasTarget: Try[Option[String]] = {
+      val response = e4sClient.execute {
+        getAliases(Nil, List(searchIndex))
+      }
+
+      response match {
+        case Success(results) =>
+          Success(results.result.mappings.headOption.map((t) => t._1.name))
+        case Failure(ex) => Failure(ex)
+      }
+    }
+
     def updateAliasTarget(oldIndexName: Option[String], newIndexName: String): Try[Any] = {
       if (!indexWithNameExists(newIndexName).getOrElse(false)) {
         Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
       } else {
-        val actions = oldIndexName match {
-          case None =>
-            List[AliasAction](addAlias(ImageApiProperties.SearchIndex).on(newIndexName))
+        oldIndexName match {
+          case None => e4sClient.execute(addAlias(searchIndex).on(newIndexName))
           case Some(oldIndex) =>
-            List[AliasAction](removeAlias(ImageApiProperties.SearchIndex).on(oldIndex),
-                              addAlias(ImageApiProperties.SearchIndex).on(newIndexName))
-        }
-
-        e4sClient.execute(aliases(actions)) match {
-          case Success(_) =>
-            logger.info("Alias target updated successfully, deleting other indexes.")
-            cleanupIndexes()
-          case Failure(ex) =>
-            logger.error("Could not update alias target.")
-            Failure(ex)
-        }
-      }
-    }
-
-    /**
-      * Deletes every index that is not in use by this indexService.
-      * Only indexes starting with indexName are deleted.
-      *
-      * @param indexName Start of index names that is deleted if not aliased.
-      * @return Name of aliasTarget.
-      */
-    def cleanupIndexes(indexName: String = ImageApiProperties.SearchIndex): Try[String] = {
-      e4sClient.execute(getAliases()) match {
-        case Success(s) =>
-          val indexes = s.result.mappings.filter {
-            case (index, _) => index.name.startsWith(indexName)
-          }
-
-          val unreferencedIndexes = indexes.collect {
-            case (index, aliasesForIndex) if aliasesForIndex.isEmpty => index.name
-          }
-
-          val indexesWithAlias = indexes.collect {
-            case (index, aliasesForIndex) if aliasesForIndex.nonEmpty => index.name
-          }
-
-          val (aliasTarget, aliasIndexesToDelete) = indexesWithAlias match {
-            case head :: tail =>
-              (head, tail)
-            case _ =>
-              logger.warn("No alias found, when attempting to clean up indexes.")
-              ("", List.empty)
-          }
-
-          val toDelete = unreferencedIndexes ++ aliasIndexesToDelete
-
-          if (toDelete.isEmpty) {
-            logger.info("No indexes to be deleted.")
-            Success(aliasTarget)
-          } else {
             e4sClient.execute {
-              deleteIndex(toDelete)
-            } match {
-              case Success(_) =>
-                logger.info(s"Successfully deleted unreferenced and redundant indexes.")
-                Success(aliasTarget)
-              case Failure(ex) =>
-                logger.error("Could not delete unreferenced and redundant indexes.")
-                Failure(ex)
+              removeAlias(searchIndex).on(oldIndex)
+              addAlias(searchIndex).on(newIndexName)
             }
-          }
-        case Failure(ex) =>
-          logger.warn("Could not fetch aliases after updating alias.")
-          Failure(ex)
+        }
       }
-
     }
 
     def deleteIndexWithName(optIndexName: Option[String]): Try[_] = {
@@ -206,17 +195,7 @@ trait IndexService {
           }
         }
       }
-    }
 
-    def aliasTarget: Try[Option[String]] = {
-      val response = e4sClient.execute {
-        getAliases(Nil, List(ImageApiProperties.SearchIndex))
-      }
-
-      response match {
-        case Success(results) => Success(results.result.mappings.headOption.map(t => t._1.name))
-        case Failure(ex)      => Failure(ex)
-      }
     }
 
     def indexWithNameExists(indexName: String): Try[Boolean] = {
@@ -231,39 +210,46 @@ trait IndexService {
       }
     }
 
-    def buildMapping: MappingDefinition = {
-      mapping(ImageApiProperties.SearchDocument).fields(
-        intField("id"),
-        keywordField("license"),
-        intField("imageSize"),
-        textField("previewUrl"),
-        dateField("lastUpdated"),
-        keywordField("defaultTitle"),
-        languageSupportedField("titles", keepRaw = true),
-        languageSupportedField("alttexts", keepRaw = false),
-        languageSupportedField("captions", keepRaw = false),
-        languageSupportedField("tags", keepRaw = false)
-      )
+    /**
+      * Executes elasticsearch requests in bulk.
+      * Returns success (without executing anything) if supplied with an empty list.
+      *
+      * @param requests a list of elasticsearch [[IndexRequest]]'s
+      * @return A Try suggesting if the request was successful or not with a tuple containing number of successful requests and number of failed requests (in that order)
+      */
+    private def executeRequests(requests: Seq[IndexRequest]): Try[(Long, Long)] = {
+      requests match {
+        case Nil         => Success((0, 0))
+        case head :: Nil => e4sClient.execute(head).map(r => if (r.isSuccess) (1, 0) else (0, 1))
+        case reqs        => e4sClient.execute(bulk(reqs)).map(r => (r.result.successes.size, r.result.failures.size))
+      }
     }
 
-    private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
-      val languageSupportedField = NestedField(fieldName).fields(
-        keepRaw match {
-          case true =>
-            languageAnalyzers.map(langAnalyzer =>
-              textField(langAnalyzer.lang).fielddata(true).analyzer(langAnalyzer.analyzer).fields(keywordField("raw")))
-          case false =>
-            languageAnalyzers.map(langAnalyzer =>
-              textField(langAnalyzer.lang).fielddata(true).analyzer(langAnalyzer.analyzer))
-        }
-      )
+    def getTimestamp: String = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
 
-      languageSupportedField
+    /**
+      * Returns Sequence of FieldDefinitions for a given field.
+      *
+      * @param fieldName Name of field in mapping.
+      * @param keepRaw   Whether to add a keywordField named raw.
+      *                  Usually used for sorting, aggregations or scripts.
+      * @return Sequence of FieldDefinitions for a field.
+      */
+    protected def generateLanguageSupportedFieldList(fieldName: String,
+                                                     keepRaw: Boolean = false): Seq[FieldDefinition] = {
+      keepRaw match {
+        case true =>
+          languageAnalyzers.map(
+            langAnalyzer =>
+              textField(s"$fieldName.${langAnalyzer.lang}")
+                .fielddata(false)
+                .analyzer(langAnalyzer.analyzer)
+                .fields(keywordField("raw")))
+        case false =>
+          languageAnalyzers.map(langAnalyzer =>
+            textField(s"$fieldName.${langAnalyzer.lang}").fielddata(false).analyzer(langAnalyzer.analyzer))
+      }
     }
 
-    private def getTimestamp: String = {
-      new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
-    }
   }
-
 }

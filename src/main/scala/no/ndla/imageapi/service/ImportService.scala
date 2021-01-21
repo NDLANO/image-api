@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -8,7 +8,7 @@
 
 package no.ndla.imageapi.service
 
-import io.lemonlabs.uri.{Uri, Url, UrlPath}
+import io.lemonlabs.uri.{Url, UrlPath}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.{
   ImageImportSource,
@@ -25,9 +25,9 @@ import no.ndla.imageapi.ImageApiProperties.{
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain.{ImageMetaInformation, ImageTag}
-import no.ndla.imageapi.model.{ImportException, Language, ImageStorageException, domain}
+import no.ndla.imageapi.model.{ImageStorageException, ImportException, Language, domain}
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.IndexBuilderService
+import no.ndla.imageapi.service.search.ImageIndexService
 import no.ndla.mapping.License.getLicense
 import no.ndla.mapping.LicenseDefinition
 
@@ -38,7 +38,7 @@ trait ImportService {
   this: ImageStorageService
     with ImageRepository
     with MigrationApiClient
-    with IndexBuilderService
+    with ImageIndexService
     with ConverterService
     with TagsService
     with Clock
@@ -55,7 +55,7 @@ trait ImportService {
         importMeta <- migrationApiClient.getMetaDataForImage(externalImageId)
         rawImageMeta <- uploadRawImage(importMeta.mainImage)
         importedImage <- persistMetadata(toDomainImage(importMeta, rawImageMeta), importMeta.mainImage.nid)
-        _ <- indexBuilderService.indexDocument(importedImage)
+        _ <- imageIndexService.indexDocument(importedImage)
       } yield importedImage
 
       importedImage match {

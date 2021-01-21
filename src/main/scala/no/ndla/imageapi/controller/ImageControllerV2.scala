@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -8,6 +8,7 @@
 
 package no.ndla.imageapi.controller
 
+import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.ImageApiProperties._
 import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.integration.DraftApiClient
@@ -17,13 +18,14 @@ import no.ndla.imageapi.model.api.{
   NewImageMetaInformationV2,
   SearchParams,
   SearchResult,
+  TagsSearchResult,
   UpdateImageMetaInformation,
   ValidationError
 }
 import no.ndla.imageapi.model.domain.{SearchSettings, Sort}
 import no.ndla.imageapi.model.{Language, ValidationException, ValidationMessage}
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.{SearchConverterService, SearchService}
+import no.ndla.imageapi.service.search.{ImageSearchService, SearchConverterService, SearchService}
 import no.ndla.imageapi.service.{ConverterService, ReadService, WriteService}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
@@ -36,7 +38,7 @@ import scala.util.{Failure, Success}
 
 trait ImageControllerV2 {
   this: ImageRepository
-    with SearchService
+    with ImageSearchService
     with ConverterService
     with ReadService
     with WriteService
@@ -142,7 +144,7 @@ trait ImageControllerV2 {
     private def scrollSearchOr(scrollId: Option[String], language: String)(orFunction: => Any): Any =
       scrollId match {
         case Some(scroll) =>
-          searchService.scroll(scroll, language) match {
+          imageSearchService.scroll(scroll, language) match {
             case Success(scrollResult) =>
               val responseHeader = scrollResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
               Ok(searchConverterService.asApiSearchResult(scrollResult), headers = responseHeader)
@@ -189,7 +191,7 @@ trait ImageControllerV2 {
           )
       }
 
-      searchService.matchingQuery(settings) match {
+      imageSearchService.matchingQuery(settings) match {
         case Success(searchResult) =>
           val responseHeader = searchResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
           Ok(searchConverterService.asApiSearchResult(searchResult), headers = responseHeader)
@@ -433,6 +435,44 @@ trait ImageControllerV2 {
         case Success(imageMeta) => imageMeta
         case Failure(e)         => errorHandler(e)
       }
+    }
+
+    get(
+      "/tag-search/",
+      operation(
+        apiOperation[TagsSearchResult]("getTagsSearchable")
+          .summary("Retrieves a list of all previously used tags in images")
+          .description("Retrieves a list of all previously used tags in images")
+          .parameters(
+            asHeaderParam(correlationId),
+            asQueryParam(query),
+            asQueryParam(pageSize),
+            asQueryParam(pageNo),
+            asQueryParam(language),
+            asQueryParam(sort)
+          )
+          .responseMessages(response500)
+          .authorizations("oauth2")
+      )
+    ) {
+      val query = paramOrDefault(this.query.paramName, "")
+      val pageSize = intOrDefault(this.pageSize.paramName, ImageApiProperties.DefaultPageSize) match {
+        case tooSmall if tooSmall < 1 => ImageApiProperties.DefaultPageSize
+        case x                        => x
+      }
+      val pageNo = intOrDefault(this.pageNo.paramName, 1) match {
+        case tooSmall if tooSmall < 1 => 1
+        case x                        => x
+      }
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+
+      val sort = Sort.valueOf(paramOrDefault(this.sort.paramName, "")).getOrElse(Sort.ByRelevanceDesc)
+
+      readService.getAllTags(query, pageSize, pageNo, language, sort) match {
+        case Failure(ex)     => errorHandler(ex)
+        case Success(result) => Ok(result)
+      }
+
     }
 
   }

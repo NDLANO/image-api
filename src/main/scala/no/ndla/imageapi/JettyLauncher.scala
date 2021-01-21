@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -35,7 +35,7 @@ object JettyLauncher extends LazyLogging {
     val servletContext = new ServletContextHandler
     servletContext.setContextPath("/")
 
-    ComponentRegistry.searchService.createEmptyIndexIfNoIndexesExist()
+    ComponentRegistry.imageSearchService.createEmptyIndexIfNoIndexesExist()
 
     servletContext.addEventListener(new ScalatraListener)
     servletContext.addServlet(classOf[DefaultServlet], "/")

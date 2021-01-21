@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -13,10 +13,16 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import no.ndla.imageapi.model.Language
 import no.ndla.imageapi.model.api.{ImageAltText, ImageMetaSummary, ImageTitle}
-import no.ndla.imageapi.model.domain.ImageMetaInformation
+import no.ndla.imageapi.model.domain.{ImageMetaInformation, SearchResult}
 import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.domain
-import no.ndla.imageapi.model.search.{LanguageValue, SearchableImage, SearchableLanguageList, SearchableLanguageValues}
+import no.ndla.imageapi.model.search.{
+  LanguageValue,
+  SearchableImage,
+  SearchableLanguageList,
+  SearchableLanguageValues,
+  SearchableTag
+}
 import no.ndla.imageapi.service.ConverterService
 import no.ndla.mapping.ISO639
 import no.ndla.network.ApplicationUrl
@@ -26,6 +32,16 @@ trait SearchConverterService {
   val searchConverterService: SearchConverterService
 
   class SearchConverterService extends LazyLogging {
+
+    def asSearchableTags(domainModel: ImageMetaInformation): Seq[SearchableTag] =
+      domainModel.tags.flatMap(
+        tags =>
+          tags.tags.map(
+            tag =>
+              SearchableTag(
+                tag = tag,
+                language = tags.language
+            )))
 
     def asSearchableImage(image: ImageMetaInformation): SearchableImage = {
       val imageWithAgreement = converterService.withAgreementCopyright(image)
@@ -112,7 +128,7 @@ trait SearchConverterService {
       }
     }
 
-    def asApiSearchResult(searchResult: domain.SearchResult): api.SearchResult =
+    def asApiSearchResult(searchResult: domain.SearchResult[ImageMetaSummary]): api.SearchResult =
       api.SearchResult(
         searchResult.totalCount,
         searchResult.page,
@@ -121,6 +137,14 @@ trait SearchConverterService {
         searchResult.results
       )
 
+    def tagSearchResultAsApiResult(searchResult: SearchResult[String]): api.TagsSearchResult =
+      api.TagsSearchResult(
+        searchResult.totalCount,
+        searchResult.page.getOrElse(1),
+        searchResult.pageSize,
+        searchResult.language,
+        searchResult.results
+      )
   }
 
 }

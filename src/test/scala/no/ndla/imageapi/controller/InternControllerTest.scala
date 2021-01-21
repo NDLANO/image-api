@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -65,7 +65,7 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   )
 
   override def beforeEach() = {
-    reset(imageRepository, importService, indexService, indexBuilderService)
+    reset(imageRepository, importService, imageIndexService)
   }
 
   test("That GET /extern/abc returns 404") {
@@ -117,51 +117,51 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
   }
 
   test("That DELETE /index removes all indexes") {
-    when(indexService.findAllIndexes(any[String])).thenReturn(Success(List("index1", "index2", "index3")))
-    doReturn(Success(""), Nil: _*).when(indexService).deleteIndexWithName(Some("index1"))
-    doReturn(Success(""), Nil: _*).when(indexService).deleteIndexWithName(Some("index2"))
-    doReturn(Success(""), Nil: _*).when(indexService).deleteIndexWithName(Some("index3"))
+    when(imageIndexService.findAllIndexes(any[String])).thenReturn(Success(List("index1", "index2", "index3")))
+    doReturn(Success(""), Nil: _*).when(imageIndexService).deleteIndexWithName(Some("index1"))
+    doReturn(Success(""), Nil: _*).when(imageIndexService).deleteIndexWithName(Some("index2"))
+    doReturn(Success(""), Nil: _*).when(imageIndexService).deleteIndexWithName(Some("index3"))
     delete("/index") {
       status should equal(200)
       body should equal("Deleted 3 indexes")
     }
-    verify(indexService).findAllIndexes(ImageApiProperties.SearchIndex)
-    verify(indexService).deleteIndexWithName(Some("index1"))
-    verify(indexService).deleteIndexWithName(Some("index2"))
-    verify(indexService).deleteIndexWithName(Some("index3"))
-    verifyNoMoreInteractions(indexService)
+    verify(imageIndexService).findAllIndexes(ImageApiProperties.SearchIndex)
+    verify(imageIndexService).deleteIndexWithName(Some("index1"))
+    verify(imageIndexService).deleteIndexWithName(Some("index2"))
+    verify(imageIndexService).deleteIndexWithName(Some("index3"))
+    verifyNoMoreInteractions(imageIndexService)
   }
 
   test("That DELETE /index fails if at least one index isn't found, and no indexes are deleted") {
     doReturn(Failure(new RuntimeException("Failed to find indexes")), Nil: _*)
-      .when(indexService)
+      .when(imageIndexService)
       .findAllIndexes(ImageApiProperties.SearchIndex)
-    doReturn(Success(""), Nil: _*).when(indexService).deleteIndexWithName(Some("index1"))
-    doReturn(Success(""), Nil: _*).when(indexService).deleteIndexWithName(Some("index2"))
-    doReturn(Success(""), Nil: _*).when(indexService).deleteIndexWithName(Some("index3"))
+    doReturn(Success(""), Nil: _*).when(imageIndexService).deleteIndexWithName(Some("index1"))
+    doReturn(Success(""), Nil: _*).when(imageIndexService).deleteIndexWithName(Some("index2"))
+    doReturn(Success(""), Nil: _*).when(imageIndexService).deleteIndexWithName(Some("index3"))
     delete("/index") {
       status should equal(500)
       body should equal("Failed to find indexes")
     }
-    verify(indexService, never).deleteIndexWithName(any[Option[String]])
+    verify(imageIndexService, never).deleteIndexWithName(any[Option[String]])
   }
 
   test(
     "That DELETE /index fails if at least one index couldn't be deleted, but the other indexes are deleted regardless") {
-    when(indexService.findAllIndexes(any[String])).thenReturn(Success(List("index1", "index2", "index3")))
-    doReturn(Success(""), Nil: _*).when(indexService).deleteIndexWithName(Some("index1"))
+    when(imageIndexService.findAllIndexes(any[String])).thenReturn(Success(List("index1", "index2", "index3")))
+    doReturn(Success(""), Nil: _*).when(imageIndexService).deleteIndexWithName(Some("index1"))
     doReturn(Failure(new RuntimeException("No index with name 'index2' exists")), Nil: _*)
-      .when(indexService)
+      .when(imageIndexService)
       .deleteIndexWithName(Some("index2"))
-    doReturn(Success(""), Nil: _*).when(indexService).deleteIndexWithName(Some("index3"))
+    doReturn(Success(""), Nil: _*).when(imageIndexService).deleteIndexWithName(Some("index3"))
     delete("/index") {
       status should equal(500)
       body should equal(
         "Failed to delete 1 index: No index with name 'index2' exists. 2 indexes were deleted successfully.")
     }
-    verify(indexService).deleteIndexWithName(Some("index1"))
-    verify(indexService).deleteIndexWithName(Some("index2"))
-    verify(indexService).deleteIndexWithName(Some("index3"))
+    verify(imageIndexService).deleteIndexWithName(Some("index1"))
+    verify(imageIndexService).deleteIndexWithName(Some("index2"))
+    verify(imageIndexService).deleteIndexWithName(Some("index3"))
   }
 
 }

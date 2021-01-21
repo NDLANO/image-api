@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -8,13 +8,9 @@
 
 package no.ndla.imageapi.integration
 
-import java.io.ByteArrayInputStream
-
 import com.amazonaws.AmazonServiceException
-import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, PutObjectRequest, S3Object}
+import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, S3Object}
 import no.ndla.imageapi.{ImageApiProperties, TestData, TestEnvironment, UnitSuite}
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
 
 class ImageStorageServiceTest extends UnitSuite with TestEnvironment {
 

@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -73,7 +73,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(applicationUrl.getServletPath).thenReturn("/image-api/v2/images/")
     ApplicationUrl.set(applicationUrl)
 
-    reset(imageRepository, indexService, imageStorage)
+    reset(imageRepository, imageIndexService, imageStorage)
     when(imageRepository.insert(any[ImageMetaInformation])(any[DBSession]))
       .thenReturn(domainImageMeta.copy(id = Some(1)))
   }
@@ -125,7 +125,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
     writeService.storeNewImage(newImageMeta, fileMock1).isFailure should be(true)
     verify(imageRepository, times(0)).insert(any[ImageMetaInformation])(any[DBSession])
-    verify(indexService, times(0)).indexDocument(any[ImageMetaInformation])
+    verify(imageIndexService, times(0)).indexDocument(any[ImageMetaInformation])
     verify(imageStorage, times(1)).deleteObject(any[String])
   }
 
@@ -137,7 +137,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(imageRepository.insert(any[ImageMetaInformation])(any[DBSession])).thenThrow(new RuntimeException)
 
     writeService.storeNewImage(newImageMeta, fileMock1).isFailure should be(true)
-    verify(indexService, times(0)).indexDocument(any[ImageMetaInformation])
+    verify(imageIndexService, times(0)).indexDocument(any[ImageMetaInformation])
     verify(imageStorage, times(1)).deleteObject(any[String])
   }
 
@@ -146,7 +146,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(validationService.validate(any[ImageMetaInformation], eqTo(None))).thenReturn(Success(domainImageMeta))
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long]))
       .thenReturn(Success(newFileName))
-    when(indexService.indexDocument(any[ImageMetaInformation])).thenReturn(Failure(new RuntimeException))
+    when(imageIndexService.indexDocument(any[ImageMetaInformation])).thenReturn(Failure(new RuntimeException))
 
     writeService.storeNewImage(newImageMeta, fileMock1).isFailure should be(true)
     verify(imageRepository, times(1)).insert(any[ImageMetaInformation])(any[DBSession])
@@ -159,14 +159,14 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(validationService.validate(any[ImageMetaInformation], eqTo(None))).thenReturn(Success(domainImageMeta))
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long]))
       .thenReturn(Success(newFileName))
-    when(indexService.indexDocument(any[ImageMetaInformation])).thenReturn(Success(afterInsert))
+    when(imageIndexService.indexDocument(any[ImageMetaInformation])).thenReturn(Success(afterInsert))
 
     val result = writeService.storeNewImage(newImageMeta, fileMock1)
     result.isSuccess should be(true)
     result should equal(Success(afterInsert))
 
     verify(imageRepository, times(1)).insert(any[ImageMetaInformation])(any[DBSession])
-    verify(indexService, times(1)).indexDocument(any[ImageMetaInformation])
+    verify(imageIndexService, times(1)).indexDocument(any[ImageMetaInformation])
   }
 
   test("getFileExtension returns the extension") {
@@ -336,26 +336,27 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   test("that deleting image deletes database entry, s3 object, and indexed document") {
     reset(imageRepository)
     reset(imageStorage)
-    reset(indexService)
+    reset(imageIndexService)
 
     val imageId = 4444.toLong
 
     when(imageRepository.withId(imageId)).thenReturn(Some(domainImageMeta))
     when(imageRepository.delete(eqTo(imageId))(any[DBSession])).thenReturn(1)
     when(imageStorage.deleteObject(any[String])).thenReturn(Success(()))
-    when(indexService.deleteDocument(any[Long])).thenReturn(Success(true))
+    when(imageIndexService.deleteDocument(any[Long])).thenAnswer((i: InvocationOnMock) =>
+      Success(i.getArgument[Long](0)))
 
     writeService.deleteImageAndFiles(imageId)
 
     verify(imageStorage, times(1)).deleteObject(domainImageMeta.imageUrl)
-    verify(indexService, times(1)).deleteDocument(imageId)
+    verify(imageIndexService, times(1)).deleteDocument(imageId)
     verify(imageRepository, times(1)).delete(eqTo(imageId))(any[DBSession])
   }
 
   test("That deleting language version deletes language") {
     reset(imageRepository)
     reset(imageStorage)
-    reset(indexService)
+    reset(imageIndexService)
 
     val imageId = 5555.toLong
     val image = multiLangImage.copy(id = Some(imageId))
@@ -367,7 +368,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       i.getArgument[domain.ImageMetaInformation](0))
     when(validationService.validate(any[domain.ImageMetaInformation], any[Option[domain.ImageMetaInformation]]))
       .thenAnswer((i: InvocationOnMock) => Success(i.getArgument[domain.ImageMetaInformation](0)))
-    when(indexService.indexDocument(any[domain.ImageMetaInformation]))
+    when(imageIndexService.indexDocument(any[domain.ImageMetaInformation]))
       .thenAnswer((i: InvocationOnMock) => Success(i.getArgument[domain.ImageMetaInformation](0)))
 
     writeService.deleteImageLanguageVersion(imageId, "nn")
@@ -378,7 +379,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   test("That deleting last language version deletes entire image") {
     reset(imageRepository)
     reset(imageStorage)
-    reset(indexService)
+    reset(imageIndexService)
 
     val imageId = 6666.toLong
     val image = multiLangImage.copy(
@@ -392,12 +393,13 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(imageRepository.withId(imageId)).thenReturn(Some(image))
     when(imageRepository.delete(eqTo(imageId))(any[DBSession])).thenReturn(1)
     when(imageStorage.deleteObject(any[String])).thenReturn(Success(()))
-    when(indexService.deleteDocument(any[Long])).thenReturn(Success(true))
+    when(imageIndexService.deleteDocument(any[Long])).thenAnswer((i: InvocationOnMock) =>
+      Success(i.getArgument[Long](0)))
 
     writeService.deleteImageLanguageVersion(imageId, "en")
 
     verify(imageStorage, times(1)).deleteObject(image.imageUrl)
-    verify(indexService, times(1)).deleteDocument(imageId)
+    verify(imageIndexService, times(1)).deleteDocument(imageId)
     verify(imageRepository, times(1)).delete(eqTo(imageId))(any[DBSession])
   }
 }

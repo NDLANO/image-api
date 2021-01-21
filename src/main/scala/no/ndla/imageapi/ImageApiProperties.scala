@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -103,6 +103,9 @@ object ImageApiProperties extends LazyLogging {
 
   val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "images")
   val SearchDocument = "image"
+  val TagSearchIndex = propOrElse("TAG_SEARCH_INDEX_NAME", "tags")
+  val TagSearchDocument = "tag"
+
   val DefaultPageSize: Int = 10
   val MaxPageSize: Int = 10000
   val IndexBulkSize = 1000

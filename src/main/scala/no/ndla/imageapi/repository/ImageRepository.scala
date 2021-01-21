@@ -1,5 +1,5 @@
 /*
- * Part of NDLA image_api.
+ * Part of NDLA image-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -21,7 +21,7 @@ trait ImageRepository {
   this: DataSource with ConverterService =>
   val imageRepository: ImageRepository
 
-  class ImageRepository extends LazyLogging {
+  class ImageRepository extends LazyLogging with Repository[ImageMetaInformation] {
     implicit val formats: Formats = ImageMetaInformation.repositorySerializer
 
     def imageCount(implicit session: DBSession = ReadOnlyAutoSession): Long =
@@ -107,7 +107,7 @@ trait ImageRepository {
       }
     }
 
-    def imagesWithIdBetween(min: Long, max: Long): List[ImageMetaInformation] =
+    def documentsWithIdBetween(min: Long, max: Long): List[ImageMetaInformation] =
       imageMetaInformationsWhere(sqls"im.id between $min and $max")
 
     private def imageMetaInformationWhere(whereClause: SQLSyntax)(
@@ -142,7 +142,18 @@ trait ImageRepository {
         .map(ImageMetaInformation.fromResultSet(im))
         .single()
         .apply()
+    }
 
+    override def minMaxId(implicit session: DBSession = AutoSession): (Long, Long) = {
+      sql"select coalesce(MIN(id),0) as mi, coalesce(MAX(id),0) as ma from ${ImageMetaInformation.table}"
+        .map(rs => {
+          (rs.long("mi"), rs.long("ma"))
+        })
+        .single()
+        .apply() match {
+        case Some(minmax) => minmax
+        case None         => (0L, 0L)
+      }
     }
 
     def getByPage(pageSize: Int, offset: Int)(

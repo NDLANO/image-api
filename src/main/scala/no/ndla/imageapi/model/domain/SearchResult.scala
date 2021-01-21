@@ -6,13 +6,12 @@
  */
 
 package no.ndla.imageapi.model.domain
-import no.ndla.imageapi.model.api.ImageMetaSummary
 
-case class SearchResult(
+case class SearchResult[T](
     totalCount: Long,
     page: Option[Int],
     pageSize: Int,
     language: String,
-    results: Seq[ImageMetaSummary],
+    results: Seq[T],
     scrollId: Option[String]
 )
