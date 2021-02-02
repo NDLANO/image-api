@@ -54,7 +54,7 @@ trait ReadService {
     def withId(imageId: Long, language: Option[String]): Option[ImageMetaInformationV2] =
       imageRepository
         .withId(imageId)
-        .flatMap(image => converterService.asApiImageMetaInformationWithApplicationUrlV2(image, language))
+        .map(image => converterService.asApiImageMetaInformationWithApplicationUrlV2(image, language))
 
     private def handleIdPathParts(pathParts: List[String]): Try[ImageMetaInformation] =
       Try(pathParts(3).toLong) match {

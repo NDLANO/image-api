@@ -1,23 +1,24 @@
+/*
+ * Part of NDLA image-api.
+ * Copyright (C) 2021 NDLA
+ *
+ * See LICENSE
+ *
+ */
+
 package no.ndla.imageapi.service
+
+import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.auth.User
+import no.ndla.imageapi.model.api.{ImageMetaInformationV2, NewImageMetaInformationV2, UpdateImageMetaInformation}
+import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, LanguageField}
+import no.ndla.imageapi.model._
+import no.ndla.imageapi.repository.ImageRepository
+import no.ndla.imageapi.service.search.{ImageIndexService, TagIndexService}
+import org.scalatra.servlet.FileItem
 
 import java.io.ByteArrayInputStream
 import java.lang.Math.max
-import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.auth.User
-import no.ndla.imageapi.model.{
-  ElasticIndexingException,
-  ImageNotFoundException,
-  ImageStorageException,
-  Language,
-  ValidationException,
-  domain
-}
-import no.ndla.imageapi.model.api.{ImageMetaInformationV2, NewImageMetaInformationV2, UpdateImageMetaInformation}
-import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, LanguageField}
-import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.ImageIndexService
-import org.scalatra.servlet.FileItem
-
 import scala.util.{Failure, Random, Success, Try}
 
 trait WriteService {
@@ -26,6 +27,7 @@ trait WriteService {
     with ImageRepository
     with ImageIndexService
     with ImageStorageService
+    with TagIndexService
     with Clock
     with User =>
   val writeService: WriteService
@@ -54,7 +56,7 @@ trait WriteService {
         case Some(toDelete) =>
           val metaDeleted = imageRepository.delete(imageId)
           val fileDeleted = imageStorage.deleteObject(toDelete.imageUrl)
-          val indexDeleted = imageIndexService.deleteDocument(imageId)
+          val indexDeleted = imageIndexService.deleteDocument(imageId).flatMap(tagIndexService.deleteDocument)
 
           if (metaDeleted < 1) {
             Failure(new ImageNotFoundException(s"Image with id $imageId was not found, and could not be deleted."))
@@ -98,11 +100,21 @@ trait WriteService {
       }
 
       imageIndexService.indexDocument(imageMeta) match {
-        case Success(_) => Success(imageMeta)
+        case Success(_) =>
         case Failure(e) =>
           imageStorage.deleteObject(domainImage.imageUrl)
           imageRepository.delete(imageMeta.id.get)
-          Failure(e)
+          return Failure(e)
+      }
+
+      tagIndexService.indexDocument(imageMeta) match {
+        case Success(_) => Success(imageMeta)
+        case Failure(e) =>
+          imageStorage.deleteObject(domainImage.imageUrl)
+          imageIndexService.deleteDocument(imageMeta.id.get)
+          tagIndexService.deleteDocument(imageMeta.id.get)
+          imageRepository.delete(imageMeta.id.get)
+          return Failure(e)
       }
     }
 
@@ -136,14 +148,16 @@ trait WriteService {
                             image: domain.ImageMetaInformation,
                             oldImage: Option[domain.ImageMetaInformation],
                             language: Option[String]) = {
-      validationService
-        .validate(image, oldImage)
-        .map(imageMeta => imageRepository.update(imageMeta, imageId))
-        .flatMap(imageIndexService.indexDocument)
-        .map(updatedImage =>
-          converterService
-            .asApiImageMetaInformationWithDomainUrlV2(updatedImage, Some(language.getOrElse(Language.DefaultLanguage)))
-            .get)
+      for {
+        validated <- validationService.validate(image, oldImage)
+        updated = imageRepository.update(validated, imageId)
+        indexed <- imageIndexService.indexDocument(updated)
+        indexedByTags <- tagIndexService.indexDocument(indexed)
+      } yield
+        converterService.asApiImageMetaInformationWithDomainUrlV2(
+          indexedByTags,
+          Some(language.getOrElse(Language.DefaultLanguage))
+        )
     }
 
     def updateImage(imageId: Long, image: UpdateImageMetaInformation): Try[ImageMetaInformationV2] = {

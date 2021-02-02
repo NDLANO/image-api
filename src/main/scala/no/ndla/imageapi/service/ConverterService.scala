@@ -51,14 +51,14 @@ trait ConverterService {
     }
 
     def asApiImageMetaInformationWithApplicationUrlV2(domainImageMetaInformation: domain.ImageMetaInformation,
-                                                      language: Option[String]): Option[api.ImageMetaInformationV2] = {
+                                                      language: Option[String]): api.ImageMetaInformationV2 = {
       val baseUrl = ApplicationUrl.get
       val rawPath = baseUrl.replace("/v2/images/", "/raw")
       asImageMetaInformationV2(domainImageMetaInformation, language, ApplicationUrl.get, Some(rawPath))
     }
 
     def asApiImageMetaInformationWithDomainUrlV2(domainImageMetaInformation: domain.ImageMetaInformation,
-                                                 language: Option[String]): Option[api.ImageMetaInformationV2] = {
+                                                 language: Option[String]): api.ImageMetaInformationV2 = {
       asImageMetaInformationV2(domainImageMetaInformation,
                                language,
                                ImageApiProperties.ImageApiUrlBase,
@@ -68,7 +68,7 @@ trait ConverterService {
     private[service] def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation,
                                                   language: Option[String],
                                                   baseUrl: String,
-                                                  rawBaseUrl: Option[String]): Option[api.ImageMetaInformationV2] = {
+                                                  rawBaseUrl: Option[String]): api.ImageMetaInformationV2 = {
       val title = findByLanguageOrBestEffort(imageMeta.titles, language)
         .map(asApiImageTitle)
         .getOrElse(api.ImageTitle("", DefaultLanguage))
@@ -84,20 +84,19 @@ trait ConverterService {
 
       val apiUrl = asApiUrl(imageMeta.imageUrl, rawBaseUrl)
 
-      Some(
-        api.ImageMetaInformationV2(
-          imageMeta.id.get.toString,
-          baseUrl + imageMeta.id.get,
-          title,
-          alttext,
-          asApiUrl(imageMeta.imageUrl, rawBaseUrl),
-          imageMeta.size,
-          imageMeta.contentType,
-          withAgreementCopyright(asApiCopyright(imageMeta.copyright)),
-          tags,
-          caption,
-          getSupportedLanguages(imageMeta)
-        ))
+      api.ImageMetaInformationV2(
+        imageMeta.id.get.toString,
+        baseUrl + imageMeta.id.get,
+        title,
+        alttext,
+        asApiUrl(imageMeta.imageUrl, rawBaseUrl),
+        imageMeta.size,
+        imageMeta.contentType,
+        withAgreementCopyright(asApiCopyright(imageMeta.copyright)),
+        tags,
+        caption,
+        getSupportedLanguages(imageMeta)
+      )
     }
 
     def withAgreementCopyright(image: domain.ImageMetaInformation): domain.ImageMetaInformation = {

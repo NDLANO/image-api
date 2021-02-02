@@ -66,6 +66,7 @@ class ImportServiceTest extends UnitSuite with TestEnvironment {
     when(imageRepository.withExternalId("1234")).thenReturn(None)
     when(imageRepository.insertWithExternalId(any[ImageMetaInformation], any[String])).thenReturn(TestData.elg)
     when(imageIndexService.indexDocument(any[domain.ImageMetaInformation])).thenReturn(Success(TestData.elg))
+    when(tagIndexService.indexDocument(any[domain.ImageMetaInformation])).thenReturn(Success(TestData.elg))
 
     val Success(result) = importService.importImage("1234")
     result should equal(TestData.elg)

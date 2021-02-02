@@ -86,26 +86,26 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   test("That asApiImageMetaInformationWithDomainUrl returns links with domain urls") {
     {
       val apiImage = converterService.asApiImageMetaInformationWithDomainUrlV2(DefaultImageMetaInformation, Some("nb"))
-      apiImage.get.metaUrl should equal(s"${ImageApiProperties.ImageApiUrlBase}1")
-      apiImage.get.imageUrl should equal(s"${ImageApiProperties.RawImageUrlBase}/123.png")
+      apiImage.metaUrl should equal(s"${ImageApiProperties.ImageApiUrlBase}1")
+      apiImage.imageUrl should equal(s"${ImageApiProperties.RawImageUrlBase}/123.png")
     }
     {
       val apiImage = converterService.asApiImageMetaInformationWithDomainUrlV2(WantingImageMetaInformation, Some("nb"))
-      apiImage.get.metaUrl should equal(s"${ImageApiProperties.ImageApiUrlBase}1")
-      apiImage.get.imageUrl should equal(s"${ImageApiProperties.RawImageUrlBase}/123.png")
+      apiImage.metaUrl should equal(s"${ImageApiProperties.ImageApiUrlBase}1")
+      apiImage.imageUrl should equal(s"${ImageApiProperties.RawImageUrlBase}/123.png")
     }
   }
 
   test("That asApiImageMetaInformationWithApplicationUrlAndSingleLanguage returns links with applicationUrl") {
     val apiImage = converterService.asApiImageMetaInformationWithApplicationUrlV2(DefaultImageMetaInformation, None)
-    apiImage.get.metaUrl should equal(s"${ImageApiProperties.Domain}/v2/images/1")
-    apiImage.get.imageUrl should equal(s"${ImageApiProperties.Domain}/raw/123.png")
+    apiImage.metaUrl should equal(s"${ImageApiProperties.Domain}/v2/images/1")
+    apiImage.imageUrl should equal(s"${ImageApiProperties.Domain}/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns links with domain urls") {
     val apiImage = converterService.asApiImageMetaInformationWithDomainUrlV2(DefaultImageMetaInformation, None)
-    apiImage.get.metaUrl should equal("http://api-gateway.ndla-local/image-api/v2/images/1")
-    apiImage.get.imageUrl should equal("http://api-gateway.ndla-local/image-api/raw/123.png")
+    apiImage.metaUrl should equal("http://api-gateway.ndla-local/image-api/v2/images/1")
+    apiImage.imageUrl should equal("http://api-gateway.ndla-local/image-api/raw/123.png")
   }
 
   test(
@@ -113,15 +113,15 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     val apiImage = converterService.asApiImageMetaInformationWithApplicationUrlV2(DefaultImageMetaInformation,
                                                                                   Some("RandomLangauge"))
 
-    apiImage.get.metaUrl should equal(s"${ImageApiProperties.Domain}/v2/images/1")
-    apiImage.get.imageUrl should equal(s"${ImageApiProperties.Domain}/raw/123.png")
+    apiImage.metaUrl should equal(s"${ImageApiProperties.Domain}/v2/images/1")
+    apiImage.imageUrl should equal(s"${ImageApiProperties.Domain}/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithDomainUrlAndSingleLanguage returns links even if language is not supported") {
     val apiImage =
       converterService.asApiImageMetaInformationWithDomainUrlV2(DefaultImageMetaInformation, Some("RandomLangauge"))
-    apiImage.get.metaUrl should equal("http://api-gateway.ndla-local/image-api/v2/images/1")
-    apiImage.get.imageUrl should equal("http://api-gateway.ndla-local/image-api/raw/123.png")
+    apiImage.metaUrl should equal("http://api-gateway.ndla-local/image-api/v2/images/1")
+    apiImage.imageUrl should equal("http://api-gateway.ndla-local/image-api/raw/123.png")
   }
 
   test("That asApiImageMetaInformationWithApplicationUrlV2 returns with agreement copyright features") {
@@ -148,33 +148,33 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
       None
     )
 
-    apiImage.get.copyright.creators.size should equal(0)
-    apiImage.get.copyright.processors.head.name should equal("Kaptein Snabelfant")
-    apiImage.get.copyright.rightsholders.head.name should equal("Mads LakseService")
-    apiImage.get.copyright.rightsholders.size should equal(1)
-    apiImage.get.copyright.license.license should equal("gnu")
-    apiImage.get.copyright.validFrom.get should equal(from)
-    apiImage.get.copyright.validTo.get should equal(to)
+    apiImage.copyright.creators.size should equal(0)
+    apiImage.copyright.processors.head.name should equal("Kaptein Snabelfant")
+    apiImage.copyright.rightsholders.head.name should equal("Mads LakseService")
+    apiImage.copyright.rightsholders.size should equal(1)
+    apiImage.copyright.license.license should equal("gnu")
+    apiImage.copyright.validFrom.get should equal(from)
+    apiImage.copyright.validTo.get should equal(to)
   }
 
   test("that asImageMetaInformationV2 properly") {
     val result1 = converterService.asImageMetaInformationV2(MultiLangImage, Some("nb"), "", None)
-    result1.get.id should be("2")
-    result1.get.title.language should be("unknown")
+    result1.id should be("2")
+    result1.title.language should be("unknown")
 
     val result2 = converterService.asImageMetaInformationV2(MultiLangImage, Some("en"), "", None)
-    result2.get.id should be("2")
-    result2.get.title.language should be("en")
+    result2.id should be("2")
+    result2.title.language should be("en")
 
     val result3 = converterService.asImageMetaInformationV2(MultiLangImage, Some("nn"), "", None)
-    result3.get.id should be("2")
-    result3.get.title.language should be("nn")
+    result3.id should be("2")
+    result3.title.language should be("nn")
 
   }
 
   test("that asImageMetaInformationV2 returns sorted supportedLanguages") {
     val result = converterService.asImageMetaInformationV2(MultiLangImage, Some("nb"), "", None)
-    result.get.supportedLanguages should be(Seq("unknown", "nn", "en"))
+    result.supportedLanguages should be(Seq("unknown", "nn", "en"))
   }
 
   test("that withoutLanguage removes correct language") {

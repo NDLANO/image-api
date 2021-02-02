@@ -27,7 +27,7 @@ import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain.{ImageMetaInformation, ImageTag}
 import no.ndla.imageapi.model.{ImageStorageException, ImportException, Language, domain}
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.ImageIndexService
+import no.ndla.imageapi.service.search.{ImageIndexService, TagIndexService}
 import no.ndla.mapping.License.getLicense
 import no.ndla.mapping.LicenseDefinition
 
@@ -39,6 +39,7 @@ trait ImportService {
     with ImageRepository
     with MigrationApiClient
     with ImageIndexService
+    with TagIndexService
     with ConverterService
     with TagsService
     with Clock
@@ -56,6 +57,7 @@ trait ImportService {
         rawImageMeta <- uploadRawImage(importMeta.mainImage)
         importedImage <- persistMetadata(toDomainImage(importMeta, rawImageMeta), importMeta.mainImage.nid)
         _ <- imageIndexService.indexDocument(importedImage)
+        _ <- tagIndexService.indexDocument(importedImage)
       } yield importedImage
 
       importedImage match {
