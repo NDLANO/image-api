@@ -1,23 +1,24 @@
+/*
+ * Part of NDLA image-api.
+ * Copyright (C) 2021 NDLA
+ *
+ * See LICENSE
+ *
+ */
+
 package no.ndla.imageapi.service
 
-import java.io.ByteArrayInputStream
-import java.lang.Math.max
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.auth.User
-import no.ndla.imageapi.model.{
-  ElasticIndexingException,
-  ImageNotFoundException,
-  ImageStorageException,
-  Language,
-  ValidationException,
-  domain
-}
 import no.ndla.imageapi.model.api.{ImageMetaInformationV2, NewImageMetaInformationV2, UpdateImageMetaInformation}
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, LanguageField}
+import no.ndla.imageapi.model._
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{ImageIndexService, TagIndexService}
 import org.scalatra.servlet.FileItem
 
+import java.io.ByteArrayInputStream
+import java.lang.Math.max
 import scala.util.{Failure, Random, Success, Try}
 
 trait WriteService {
@@ -98,8 +99,8 @@ trait WriteService {
           return Failure(e)
       }
 
-      val indexed = imageIndexService.indexDocument(imageMeta) match {
-        case Success(_) => Success(imageMeta)
+      imageIndexService.indexDocument(imageMeta) match {
+        case Success(_) =>
         case Failure(e) =>
           imageStorage.deleteObject(domainImage.imageUrl)
           imageRepository.delete(imageMeta.id.get)
