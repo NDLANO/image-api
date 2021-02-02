@@ -36,6 +36,7 @@ object JettyLauncher extends LazyLogging {
     servletContext.setContextPath("/")
 
     ComponentRegistry.imageSearchService.createEmptyIndexIfNoIndexesExist()
+    ComponentRegistry.tagSearchService.createEmptyIndexIfNoIndexesExist()
 
     servletContext.addEventListener(new ScalatraListener)
     servletContext.addServlet(classOf[DefaultServlet], "/")

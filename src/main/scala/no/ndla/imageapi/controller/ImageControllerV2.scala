@@ -335,28 +335,23 @@ trait ImageControllerV2 {
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
 
+      val imageMetaFromParam = params.get(this.metadata.paramName)
       val imageMetaFromFile = fileParams
         .get(this.metadata.paramName)
         .map(f => scala.io.Source.fromInputStream(f.getInputStream).mkString)
-      val imageMetaFromParam = params.get(this.metadata.paramName)
 
-      val imageMeta = imageMetaFromParam
-        .orElse(imageMetaFromFile)
-        .map(extract[NewImageMetaInformationV2])
-        .getOrElse(throw new ValidationException(
-          errors = Seq(ValidationMessage("metadata", "The request must contain image metadata"))))
-
-      fileParams.get(this.file.paramName) match {
-        case Some(file) =>
-          writeService
-            .storeNewImage(imageMeta, file)
-            .map(img => converterService.asApiImageMetaInformationWithApplicationUrlV2(img, Some(imageMeta.language))) match {
-            case Success(meta) => meta
-            case Failure(e)    => errorHandler(e)
+      imageMetaFromParam.orElse(imageMetaFromFile).map(extract[NewImageMetaInformationV2]) match {
+        case None => errorHandler(ValidationException("metadata", "The request must contain image metadata"))
+        case Some(imageMeta) =>
+          fileParams.get(this.file.paramName) match {
+            case None => errorHandler(ValidationException("file", "The request must contain an image file"))
+            case Some(file) =>
+              writeService.storeNewImage(imageMeta, file) match {
+                case Failure(ex) => errorHandler(ex)
+                case Success(storedImage) =>
+                  converterService.asApiImageMetaInformationWithApplicationUrlV2(storedImage, Some(imageMeta.language))
+              }
           }
-        case None =>
-          errorHandler(
-            new ValidationException(errors = Seq(ValidationMessage("file", "The request must contain an image file"))))
       }
     }
 

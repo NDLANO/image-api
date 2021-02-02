@@ -16,8 +16,12 @@ class AccessDeniedException(message: String) extends RuntimeException(message)
 
 class ImportException(message: String) extends RuntimeException(message)
 
-class ValidationException(message: String = "Validation error", val errors: Seq[ValidationMessage])
+case class ValidationException(message: String = "Validation error", val errors: Seq[ValidationMessage])
     extends RuntimeException(message)
+
+object ValidationException {
+  def apply(path: String, msg: String) = new ValidationException(errors = Seq(ValidationMessage(path, msg)))
+}
 
 case class InvalidUrlException(message: String) extends RuntimeException(message)
 

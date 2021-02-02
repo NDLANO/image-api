@@ -15,7 +15,7 @@ import no.ndla.imageapi.model.{
 import no.ndla.imageapi.model.api.{ImageMetaInformationV2, NewImageMetaInformationV2, UpdateImageMetaInformation}
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, LanguageField}
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.search.ImageIndexService
+import no.ndla.imageapi.service.search.{ImageIndexService, TagIndexService}
 import org.scalatra.servlet.FileItem
 
 import scala.util.{Failure, Random, Success, Try}
@@ -26,6 +26,7 @@ trait WriteService {
     with ImageRepository
     with ImageIndexService
     with ImageStorageService
+    with TagIndexService
     with Clock
     with User =>
   val writeService: WriteService
@@ -97,12 +98,21 @@ trait WriteService {
           return Failure(e)
       }
 
-      imageIndexService.indexDocument(imageMeta) match {
+      val indexed = imageIndexService.indexDocument(imageMeta) match {
         case Success(_) => Success(imageMeta)
         case Failure(e) =>
           imageStorage.deleteObject(domainImage.imageUrl)
           imageRepository.delete(imageMeta.id.get)
-          Failure(e)
+          return Failure(e)
+      }
+
+      tagIndexService.indexDocument(imageMeta) match {
+        case Success(_) => Success(imageMeta)
+        case Failure(e) =>
+          imageStorage.deleteObject(domainImage.imageUrl)
+          imageIndexService.deleteDocument(imageMeta.id.get)
+          imageRepository.delete(imageMeta.id.get)
+          return Failure(e)
       }
     }
 
@@ -136,14 +146,16 @@ trait WriteService {
                             image: domain.ImageMetaInformation,
                             oldImage: Option[domain.ImageMetaInformation],
                             language: Option[String]) = {
-      validationService
-        .validate(image, oldImage)
-        .map(imageMeta => imageRepository.update(imageMeta, imageId))
-        .flatMap(imageIndexService.indexDocument)
-        .map(updatedImage =>
-          converterService
-            .asApiImageMetaInformationWithDomainUrlV2(updatedImage, Some(language.getOrElse(Language.DefaultLanguage)))
-            .get)
+      for {
+        validated <- validationService.validate(image, oldImage)
+        updated = imageRepository.update(validated, imageId)
+        indexed <- imageIndexService.indexDocument(updated)
+        indexedByTags <- tagIndexService.indexDocument(indexed)
+      } yield
+        converterService.asApiImageMetaInformationWithDomainUrlV2(
+          indexedByTags,
+          Some(language.getOrElse(Language.DefaultLanguage))
+        )
     }
 
     def updateImage(imageId: Long, image: UpdateImageMetaInformation): Try[ImageMetaInformationV2] = {
