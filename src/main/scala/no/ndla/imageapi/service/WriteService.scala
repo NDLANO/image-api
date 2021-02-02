@@ -56,7 +56,7 @@ trait WriteService {
         case Some(toDelete) =>
           val metaDeleted = imageRepository.delete(imageId)
           val fileDeleted = imageStorage.deleteObject(toDelete.imageUrl)
-          val indexDeleted = imageIndexService.deleteDocument(imageId)
+          val indexDeleted = imageIndexService.deleteDocument(imageId).flatMap(tagIndexService.deleteDocument)
 
           if (metaDeleted < 1) {
             Failure(new ImageNotFoundException(s"Image with id $imageId was not found, and could not be deleted."))
@@ -112,6 +112,7 @@ trait WriteService {
         case Failure(e) =>
           imageStorage.deleteObject(domainImage.imageUrl)
           imageIndexService.deleteDocument(imageMeta.id.get)
+          tagIndexService.deleteDocument(imageMeta.id.get)
           imageRepository.delete(imageMeta.id.get)
           return Failure(e)
       }

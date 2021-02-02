@@ -354,6 +354,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     reset(imageRepository)
     reset(imageStorage)
     reset(imageIndexService)
+    reset(tagIndexService)
 
     val imageId = 4444.toLong
 
@@ -362,11 +363,13 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(imageStorage.deleteObject(any[String])).thenReturn(Success(()))
     when(imageIndexService.deleteDocument(any[Long])).thenAnswer((i: InvocationOnMock) =>
       Success(i.getArgument[Long](0)))
+    when(tagIndexService.deleteDocument(any[Long])).thenAnswer((i: InvocationOnMock) => Success(i.getArgument[Long](0)))
 
     writeService.deleteImageAndFiles(imageId)
 
     verify(imageStorage, times(1)).deleteObject(domainImageMeta.imageUrl)
     verify(imageIndexService, times(1)).deleteDocument(imageId)
+    verify(tagIndexService, times(1)).deleteDocument(imageId)
     verify(imageRepository, times(1)).delete(eqTo(imageId))(any[DBSession])
   }
 
@@ -374,6 +377,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     reset(imageRepository)
     reset(imageStorage)
     reset(imageIndexService)
+    reset(tagIndexService)
 
     val imageId = 5555.toLong
     val image = multiLangImage.copy(id = Some(imageId))
@@ -387,6 +391,8 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       .thenAnswer((i: InvocationOnMock) => Success(i.getArgument[domain.ImageMetaInformation](0)))
     when(imageIndexService.indexDocument(any[domain.ImageMetaInformation]))
       .thenAnswer((i: InvocationOnMock) => Success(i.getArgument[domain.ImageMetaInformation](0)))
+    when(tagIndexService.indexDocument(any[domain.ImageMetaInformation]))
+      .thenAnswer((i: InvocationOnMock) => Success(i.getArgument[domain.ImageMetaInformation](0)))
 
     writeService.deleteImageLanguageVersion(imageId, "nn")
 
@@ -397,6 +403,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     reset(imageRepository)
     reset(imageStorage)
     reset(imageIndexService)
+    reset(tagIndexService)
 
     val imageId = 6666.toLong
     val image = multiLangImage.copy(
@@ -412,11 +419,13 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(imageStorage.deleteObject(any[String])).thenReturn(Success(()))
     when(imageIndexService.deleteDocument(any[Long])).thenAnswer((i: InvocationOnMock) =>
       Success(i.getArgument[Long](0)))
+    when(tagIndexService.deleteDocument(any[Long])).thenAnswer((i: InvocationOnMock) => Success(i.getArgument[Long](0)))
 
     writeService.deleteImageLanguageVersion(imageId, "en")
 
     verify(imageStorage, times(1)).deleteObject(image.imageUrl)
     verify(imageIndexService, times(1)).deleteDocument(imageId)
+    verify(tagIndexService, times(1)).deleteDocument(imageId)
     verify(imageRepository, times(1)).delete(eqTo(imageId))(any[DBSession])
   }
 }
