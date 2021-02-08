@@ -294,7 +294,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     get(s"/") {
       status should be(200)
       body.contains(scrollId) should be(false)
-      header("search-context") should be(scrollId)
+      response.getHeader("search-context") should be(scrollId)
     }
   }
 
@@ -342,6 +342,32 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
     verify(imageSearchService, times(0)).matchingQuery(any[SearchSettings])
     verify(imageSearchService, times(1)).scroll(eqTo(scrollId), any[String])
+  }
+
+  test("that initial search-context doesn't scroll") {
+    reset(imageSearchService)
+
+    val expectedSettings = TestData.searchSettings.copy(
+      shouldScroll = true,
+      sort = Sort.ByTitleAsc
+    )
+
+    val result = domain.SearchResult[api.ImageMetaSummary](
+      totalCount = 0,
+      page = None,
+      pageSize = 10,
+      language = "all",
+      results = Seq.empty,
+      scrollId = Some("heiheihei")
+    )
+    when(imageSearchService.matchingQuery(any[SearchSettings])).thenReturn(Success(result))
+
+    get("/?search-context=initial") {
+      status should be(200)
+      verify(imageSearchService, times(1)).matchingQuery(expectedSettings)
+      verify(imageSearchService, times(0)).scroll(any[String], any[String])
+    }
+
   }
 
 }

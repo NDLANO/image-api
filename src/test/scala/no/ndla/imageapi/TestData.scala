@@ -238,4 +238,16 @@ object TestData {
     Some("http://www.scanpix.no"),
     List.empty
   )
+
+  val searchSettings = SearchSettings(
+    query = None,
+    minimumSize = None,
+    language = None,
+    license = None,
+    sort = Sort.ByIdAsc,
+    page = None,
+    pageSize = None,
+    includeCopyrighted = false,
+    shouldScroll = false
+  )
 }
