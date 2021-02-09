@@ -14,6 +14,7 @@ import no.ndla.imageapi.ImageApiProperties.{DefaultPageSize, MaxPageSize}
 import no.ndla.imageapi.integration.{Elastic4sClientFactory, NdlaE4sClient}
 import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.domain._
+import no.ndla.imageapi.TestData.searchSettings
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.{CC_BY_NC_SA, PublicDomain}
 import no.ndla.network.ApplicationUrl
@@ -146,18 +147,6 @@ class ImageSearchServiceTest
     Seq(),
     "ndla124",
     updated
-  )
-
-  val searchSettings = SearchSettings(
-    query = None,
-    minimumSize = None,
-    language = None,
-    license = None,
-    sort = Sort.ByIdAsc,
-    page = None,
-    pageSize = None,
-    includeCopyrighted = false,
-    shouldScroll = false
   )
 
   override def beforeAll(): Unit = {

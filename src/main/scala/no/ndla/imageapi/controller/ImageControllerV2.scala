@@ -143,14 +143,14 @@ trait ImageControllerV2 {
       */
     private def scrollSearchOr(scrollId: Option[String], language: String)(orFunction: => Any): Any =
       scrollId match {
-        case Some(scroll) =>
+        case Some(scroll) if !InitialScrollContextKeywords.contains(scroll) =>
           imageSearchService.scroll(scroll, language) match {
             case Success(scrollResult) =>
               val responseHeader = scrollResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
               Ok(searchConverterService.asApiSearchResult(scrollResult), headers = responseHeader)
             case Failure(ex) => errorHandler(ex)
           }
-        case None => orFunction
+        case _ => orFunction
       }
 
     private def search(
