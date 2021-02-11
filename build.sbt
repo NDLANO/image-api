@@ -15,7 +15,6 @@ val Json4SVersion = "3.6.7"
 val FlywayVersion = "7.1.1"
 val PostgresVersion = "42.2.14"
 val HikariConnectionPoolVersion = "3.4.5"
-val TestContainersVersion = "1.12.2"
 
 val appProperties = settingKey[Properties]("The application properties")
 
@@ -47,7 +46,7 @@ lazy val image_api = (project in file("."))
     libraryDependencies ++= Seq(
       "ndla" %% "network" % "0.44",
       "ndla" %% "mapping" % "0.15",
-      "ndla" %% "scalatestsuite" % "0.1" % "test",
+      "ndla" %% "scalatestsuite" % "0.3" % "test",
       "joda-time" % "joda-time" % "2.10",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
@@ -81,8 +80,6 @@ lazy val image_api = (project in file("."))
       "org.jrobin" % "jrobin" % "1.5.9", // This is needed for javamelody graphing
       "org.imgscalr" % "imgscalr-lib" % "4.2",
       "io.lemonlabs" %% "scala-uri" % "1.5.1",
-      "org.testcontainers" % "elasticsearch" % TestContainersVersion % "test",
-      "org.testcontainers" % "testcontainers" % TestContainersVersion % "test",
       // These are not strictly needed, for most cases, but offers better handling of loading images with encoding issues
       "com.twelvemonkeys.imageio" % "imageio-core" % "3.4.1",
       "com.twelvemonkeys.imageio" % "imageio-jpeg" % "3.4.1",
