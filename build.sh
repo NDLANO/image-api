@@ -9,5 +9,5 @@ then
     VERSION="SNAPSHOT"
 fi
 
-sbt -Ddocker.tag=$VERSION docker
+sbt -Ddocker.tag=$VERSION "set test in Test := {}" docker
 echo "BUILT $PROJECT:$VERSION"
