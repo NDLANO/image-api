@@ -89,7 +89,7 @@ class TagSearchServiceTest
     val groupedByLanguage = allTagsToIndex.groupBy(_.language)
     val tagsDistinctByLanguage = groupedByLanguage.values.flatMap(x => x.flatMap(_.tags).toSet)
 
-    blockUntil(() => tagSearchService.countDocuments == tagsDistinctByLanguage.size)
+    blockUntil(() => tagSearchService.countDocuments() == tagsDistinctByLanguage.size)
   }
 
   def blockUntil(predicate: () => Boolean): Unit = {
