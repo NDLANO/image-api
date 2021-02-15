@@ -136,8 +136,8 @@ trait WriteService {
           mergeLanguageFields(existing.captions,
                               toMerge.caption.toSeq.map(c => converterService.toDomainCaption(c, toMerge.language))),
         updated = now,
-        updatedBy = userId
-      )
+        updatedBy = userId,
+      ) // TODO add update on EditorNote og ModelReleased
     }
 
     private def mergeTags(existing: Seq[domain.ImageTag], updated: Seq[domain.ImageTag]): Seq[domain.ImageTag] = {
