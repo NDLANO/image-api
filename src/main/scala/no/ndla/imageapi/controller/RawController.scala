@@ -83,7 +83,8 @@ trait RawController {
           )
           .responseMessages(response404, response500))
     ) {
-      imageRepository.withId(long("image_id")) match {
+      val imageId = long("image_id")
+      imageRepository.withId(imageId) match {
         case Some(imageMeta) =>
           val imageName = Uri
             .parse(imageMeta.imageUrl)
@@ -94,7 +95,7 @@ trait RawController {
             case Failure(ex)  => errorHandler(ex)
             case Success(img) => Ok(img)
           }
-        case None => None
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Image with id $imageId not found"))
       }
     }
 
