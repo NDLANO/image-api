@@ -23,12 +23,12 @@ import no.ndla.imageapi.model.api.{
   ValidationError
 }
 import no.ndla.imageapi.model.domain.{SearchSettings, Sort}
-import no.ndla.imageapi.model.{Language, ValidationException, ValidationMessage}
+import no.ndla.imageapi.model.{Language, ValidationException}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{ImageSearchService, SearchConverterService, SearchService}
 import no.ndla.imageapi.service.{ConverterService, ReadService, WriteService}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.servlet.{FileItem, FileUploadSupport, MultipartConfig}
+import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
 import org.scalatra.util.NotNothing
@@ -60,6 +60,7 @@ trait ImageControllerV2 {
     registerModel[ValidationError]()
     registerModel[Error]()
     registerModel[NewImageMetaInformationV2]()
+    registerModel[UpdateImageMetaInformation]()
 
     val response403 = ResponseMessage(403, "Access Denied", Some("Error"))
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
@@ -422,15 +423,17 @@ trait ImageControllerV2 {
           .parameters(
             asHeaderParam(correlationId),
             asPathParam(imageId),
-            bodyParam[UpdateImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
+            bodyParam[UpdateImageMetaInformation]("metadata")
+              .description("The metadata for the image file to submit."),
+            asObjectFormParam(metadata),
+            formParam(updateMetadata.paramName, models("UpdateImageMetaInformation"))
+              .description("metadata used when also updating imagefile"),
+            asFileParam(file)
           )
           .authorizations("oauth2")
           .responseMessages(response400, response403, response500)
       )
     ) {
-      authUser.assertHasId()
-      authRole.assertHasRole(RoleWithWriteAccess)
-
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
 
