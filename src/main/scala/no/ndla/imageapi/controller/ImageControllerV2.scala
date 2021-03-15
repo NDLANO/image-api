@@ -28,7 +28,7 @@ import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{ImageSearchService, SearchConverterService, SearchService}
 import no.ndla.imageapi.service.{ConverterService, ReadService, WriteService}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
+import org.scalatra.servlet.{FileItem, FileUploadSupport, MultipartConfig}
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
 import org.scalatra.util.NotNothing
@@ -93,6 +93,11 @@ trait ImageControllerV2 {
     private val pathLanguage = Param[String]("language", "The ISO 639-1 language code describing language.")
     private val externalId = Param[String]("external_id", "External node id of the image that needs to be fetched.")
     private val metadata = Param[NewImageMetaInformationV2](
+      "metadata",
+      """The metadata for the image file to submit.""".stripMargin
+    )
+
+    private val updateMetadata = Param[UpdateImageMetaInformation](
       "metadata",
       """The metadata for the image file to submit.""".stripMargin
     )
@@ -425,10 +430,28 @@ trait ImageControllerV2 {
     ) {
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
+
+      authUser.assertHasId()
+      authRole.assertHasRole(RoleWithWriteAccess)
+
       val imageId = long(this.imageId.paramName)
-      writeService.updateImage(imageId, extract[UpdateImageMetaInformation](request.body)) match {
-        case Success(imageMeta) => imageMeta
-        case Failure(e)         => errorHandler(e)
+      val imageMetaFromParam = params.get(this.updateMetadata.paramName)
+
+      lazy val imageMetaFromFile =
+        fileParams
+          .get(this.updateMetadata.paramName)
+          .map(f => scala.io.Source.fromInputStream(f.getInputStream).mkString)
+
+      val metaToUse = imageMetaFromParam.orElse(imageMetaFromFile).getOrElse(request.body)
+
+      tryExtract[UpdateImageMetaInformation](metaToUse) match {
+        case Failure(ex) => errorHandler(ex)
+        case Success(metaInfo) =>
+          val fileItem = fileParams.get(this.file.paramName)
+          writeService.updateImage(imageId, metaInfo, fileItem) match {
+            case Success(imageMeta) => Ok(imageMeta)
+            case Failure(e)         => errorHandler(e)
+          }
       }
     }
 

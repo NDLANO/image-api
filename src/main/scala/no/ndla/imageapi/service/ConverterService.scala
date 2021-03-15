@@ -150,20 +150,28 @@ trait ConverterService {
       base.withPath(basePath).toString
     }
 
+    def withNewImage(imageMeta: domain.ImageMetaInformation, image: domain.Image) = {
+      imageMeta.copy(
+        imageUrl = Uri.parse(image.fileName).toString,
+        size = image.size,
+        contentType = image.contentType
+      )
+    }
+
     def asDomainImageMetaInformationV2(imageMeta: api.NewImageMetaInformationV2,
                                        image: domain.Image): domain.ImageMetaInformation = {
       domain.ImageMetaInformation(
-        None,
-        Seq(asDomainTitle(imageMeta.title, imageMeta.language)),
-        Seq(asDomainAltText(imageMeta.alttext, imageMeta.language)),
-        Uri.parse(image.fileName).toString,
-        image.size,
-        image.contentType,
-        toDomainCopyright(imageMeta.copyright),
-        if (imageMeta.tags.nonEmpty) Seq(toDomainTag(imageMeta.tags, imageMeta.language)) else Seq.empty,
-        Seq(domain.ImageCaption(imageMeta.caption, imageMeta.language)),
-        authUser.userOrClientid(),
-        clock.now()
+        id = None,
+        titles = Seq(asDomainTitle(imageMeta.title, imageMeta.language)),
+        alttexts = Seq(asDomainAltText(imageMeta.alttext, imageMeta.language)),
+        imageUrl = Uri.parse(image.fileName).toString,
+        size = image.size,
+        contentType = image.contentType,
+        copyright = toDomainCopyright(imageMeta.copyright),
+        tags = if (imageMeta.tags.nonEmpty) Seq(toDomainTag(imageMeta.tags, imageMeta.language)) else Seq.empty,
+        captions = Seq(domain.ImageCaption(imageMeta.caption, imageMeta.language)),
+        updatedBy = authUser.userOrClientid(),
+        updated = clock.now()
       )
     }
 

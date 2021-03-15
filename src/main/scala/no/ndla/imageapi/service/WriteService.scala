@@ -160,14 +160,35 @@ trait WriteService {
         )
     }
 
-    def updateImage(imageId: Long, image: UpdateImageMetaInformation): Try[ImageMetaInformationV2] = {
-      val oldImage = imageRepository.withId(imageId)
-      val imageToUpdateWith = oldImage match {
-        case None           => Failure(new ImageNotFoundException(s"Image with id $imageId found"))
-        case Some(existing) => Success(mergeImages(existing, image))
-      }
+    private def overwriteImage(newFile: FileItem, oldImage: ImageMetaInformation): Try[ImageMetaInformation] = {
+      uploadImage(newFile).map(uploaded => converterService.withNewImage(oldImage, uploaded))
+    }
 
-      imageToUpdateWith.flatMap(newImage => updateImage(imageId, newImage, oldImage, Some(image.language)))
+    def updateImage(imageId: Long,
+                    updateMeta: UpdateImageMetaInformation,
+                    newFile: Option[FileItem]): Try[ImageMetaInformationV2] = {
+      imageRepository.withId(imageId) match {
+        case None => Failure(new ImageNotFoundException(s"Image with id $imageId found"))
+        case Some(oldImage) =>
+          val maybeOverwrittenImage = newFile match {
+            case Some(file) =>
+              validationService.validateImageFile(file) match {
+                case Some(validationMessage) => Failure(new ValidationException(errors = Seq(validationMessage)))
+                case _                       => overwriteImage(file, oldImage)
+              }
+            case _ => Success(oldImage)
+          }
+
+          maybeOverwrittenImage.flatMap(moi => {
+            val newImage = mergeImages(moi, updateMeta)
+            updateImage(
+              imageId,
+              newImage,
+              Some(oldImage),
+              Some(updateMeta.language)
+            )
+          })
+      }
     }
 
     private[service] def mergeLanguageFields[A <: LanguageField[String]](existing: Seq[A], updated: Seq[A]): Seq[A] = {
@@ -182,16 +203,19 @@ trait WriteService {
       }
     }
 
-    private[service] def uploadImage(file: FileItem): Try[Image] = {
-      val extension = getFileExtension(file.name).getOrElse("")
+    private def uploadImageWithName(file: FileItem, fileName: String): Try[Image] = {
       val contentType = file.getContentType.getOrElse("")
-      val fileName = LazyList.continually(randomFileName(extension)).dropWhile(imageStorage.objectExists).head
-
       imageStorage
         .uploadFromStream(new ByteArrayInputStream(file.get()), fileName, contentType, file.size)
         .map(filePath => {
           Image(filePath, file.size, contentType)
         })
+    }
+
+    private[service] def uploadImage(file: FileItem): Try[Image] = {
+      val extension = getFileExtension(file.name).getOrElse("")
+      val fileName = LazyList.continually(randomFileName(extension)).dropWhile(imageStorage.objectExists).head
+      uploadImageWithName(file, fileName)
     }
 
     private[service] def randomFileName(extension: String, length: Int = 12): String = {

@@ -148,8 +148,12 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     }
   }
 
+  def tryExtract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): Try[T] = {
+    Try(read[T](json))
+  }
+
   def extract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): T = {
-    Try(read[T](json)) match {
+    tryExtract[T](json) match {
       case Success(data) => data
       case Failure(e) =>
         logger.error(e.getMessage, e)
