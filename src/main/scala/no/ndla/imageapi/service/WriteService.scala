@@ -161,7 +161,10 @@ trait WriteService {
     }
 
     private def overwriteImage(newFile: FileItem, oldImage: ImageMetaInformation): Try[ImageMetaInformation] = {
-      uploadImage(newFile).map(uploaded => converterService.withNewImage(oldImage, uploaded))
+      for {
+        uploaded <- uploadImage(newFile)
+        _ <- imageStorage.cloneObject(uploaded.fileName, oldImage.imageUrl) // Overwrite old image with new one to make sure direct-urls are updated
+      } yield converterService.withNewImage(oldImage, uploaded)
     }
 
     def updateImage(imageId: Long,

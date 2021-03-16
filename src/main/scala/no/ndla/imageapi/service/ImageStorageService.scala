@@ -93,6 +93,10 @@ trait ImageStorageService {
       }
     }
 
+    def cloneObject(existingKey: String, newKey: String): Try[Unit] = {
+      Try(amazonClient.copyObject(StorageName, existingKey, StorageName, newKey))
+    }
+
     def objectExists(storageKey: String): Boolean = {
       Try(amazonClient.doesObjectExist(StorageName, storageKey)).getOrElse(false)
     }
