@@ -12,7 +12,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.lemonlabs.uri.dsl._
 import io.lemonlabs.uri.UrlPath
 import no.ndla.imageapi.auth.User
-import no.ndla.imageapi.model.api.ImageMetaInformationV2
+import no.ndla.imageapi.model.api.{ImageMetaInformationV2, ImageMetaInformationV3}
 import no.ndla.imageapi.model.api
 import no.ndla.imageapi.model.domain.{ImageMetaInformation, Sort}
 import no.ndla.imageapi.repository.ImageRepository
@@ -51,7 +51,7 @@ trait ReadService {
       result.map(searchConverterService.tagSearchResultAsApiResult)
     }
 
-    def withId(imageId: Long, language: Option[String]): Option[ImageMetaInformationV2] =
+    def withId(imageId: Long, language: Option[String]): Option[ImageMetaInformationV3] =
       imageRepository
         .withId(imageId)
         .map(image => converterService.asApiImageMetaInformationWithApplicationUrlV2(image, language))

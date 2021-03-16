@@ -29,8 +29,8 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
 
   val BySa = getLicense(CC_BY.toString).get
 
-  val DefaultApiImageMetaInformation = api.ImageMetaInformationV2(
-    "1",
+  val DefaultApiImageMetaInformation = api.ImageMetaInformationV3(
+    1,
     s"${ImageApiProperties.ImageApiUrlBase}1",
     ImageTitle("", "nb"),
     ImageAltText("", "nb"),

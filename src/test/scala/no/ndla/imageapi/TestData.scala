@@ -51,8 +51,8 @@ object TestData {
     updated()
   )
 
-  val apiElg = api.ImageMetaInformationV2(
-    "1",
+  val apiElg = api.ImageMetaInformationV3(
+    1,
     "Elg.jpg",
     api.ImageTitle("Elg i busk", "nb"),
     api.ImageAltText("Elg i busk", "nb"),

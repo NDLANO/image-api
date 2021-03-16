@@ -32,7 +32,7 @@ object ImageApiProperties extends LazyLogging {
   val HealthControllerPath = "/health"
   val ImageApiBasePath = "/image-api"
   val ApiDocsPath = s"$ImageApiBasePath/api-docs"
-  val ImageControllerPath = s"$ImageApiBasePath/v2/images"
+  val ImageControllerPath = s"$ImageApiBasePath/v3/images"
   val RawControllerPath = s"$ImageApiBasePath/raw"
 
   val DefaultLanguage = "nb"

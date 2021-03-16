@@ -10,7 +10,12 @@ package no.ndla.imageapi.service
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.auth.User
-import no.ndla.imageapi.model.api.{ImageMetaInformationV2, NewImageMetaInformationV2, UpdateImageMetaInformation}
+import no.ndla.imageapi.model.api.{
+  ImageMetaInformationV2,
+  ImageMetaInformationV3,
+  NewImageMetaInformationV2,
+  UpdateImageMetaInformation
+}
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, LanguageField}
 import no.ndla.imageapi.model._
 import no.ndla.imageapi.repository.ImageRepository
@@ -34,7 +39,7 @@ trait WriteService {
 
   class WriteService extends LazyLogging {
 
-    def deleteImageLanguageVersion(imageId: Long, language: String): Try[Option[ImageMetaInformationV2]] =
+    def deleteImageLanguageVersion(imageId: Long, language: String): Try[Option[ImageMetaInformationV3]] =
       imageRepository.withId(imageId) match {
         case Some(existing) if converterService.getSupportedLanguages(existing).contains(language) =>
           val newImage = converterService.withoutLanguage(existing, language)
@@ -147,7 +152,7 @@ trait WriteService {
     private def updateImage(imageId: Long,
                             image: domain.ImageMetaInformation,
                             oldImage: Option[domain.ImageMetaInformation],
-                            language: Option[String]) = {
+                            language: Option[String]): Try[ImageMetaInformationV3] = {
       for {
         validated <- validationService.validate(image, oldImage)
         updated = imageRepository.update(validated, imageId)
@@ -160,7 +165,7 @@ trait WriteService {
         )
     }
 
-    def updateImage(imageId: Long, image: UpdateImageMetaInformation): Try[ImageMetaInformationV2] = {
+    def updateImage(imageId: Long, image: UpdateImageMetaInformation): Try[ImageMetaInformationV3] = {
       val oldImage = imageRepository.withId(imageId)
       val imageToUpdateWith = oldImage match {
         case None           => Failure(new ImageNotFoundException(s"Image with id $imageId found"))

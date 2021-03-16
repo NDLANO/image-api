@@ -51,14 +51,16 @@ trait ConverterService {
     }
 
     def asApiImageMetaInformationWithApplicationUrlV2(domainImageMetaInformation: domain.ImageMetaInformation,
-                                                      language: Option[String]): api.ImageMetaInformationV2 = {
+                                                      language: Option[String]): api.ImageMetaInformationV3 = {
       val baseUrl = ApplicationUrl.get
-      val rawPath = baseUrl.replace("/v2/images/", "/raw")
+      val rawPath = baseUrl
+        .replace("/v3/images/", "/raw")
+        .replace("/v2/images/", "/raw")
       asImageMetaInformationV2(domainImageMetaInformation, language, ApplicationUrl.get, Some(rawPath))
     }
 
     def asApiImageMetaInformationWithDomainUrlV2(domainImageMetaInformation: domain.ImageMetaInformation,
-                                                 language: Option[String]): api.ImageMetaInformationV2 = {
+                                                 language: Option[String]): api.ImageMetaInformationV3 = {
       asImageMetaInformationV2(domainImageMetaInformation,
                                language,
                                ImageApiProperties.ImageApiUrlBase,
@@ -68,7 +70,7 @@ trait ConverterService {
     private[service] def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation,
                                                   language: Option[String],
                                                   baseUrl: String,
-                                                  rawBaseUrl: Option[String]): api.ImageMetaInformationV2 = {
+                                                  rawBaseUrl: Option[String]): api.ImageMetaInformationV3 = {
       val title = findByLanguageOrBestEffort(imageMeta.titles, language)
         .map(asApiImageTitle)
         .getOrElse(api.ImageTitle("", DefaultLanguage))
@@ -84,8 +86,8 @@ trait ConverterService {
 
       val apiUrl = asApiUrl(imageMeta.imageUrl, rawBaseUrl)
 
-      api.ImageMetaInformationV2(
-        imageMeta.id.get.toString,
+      api.ImageMetaInformationV3(
+        imageMeta.id.get,
         baseUrl + imageMeta.id.get,
         title,
         alttext,

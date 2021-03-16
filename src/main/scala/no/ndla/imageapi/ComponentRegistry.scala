@@ -51,6 +51,7 @@ object ComponentRegistry
     with ValidationService
     with TagsService
     with ImageControllerV2
+    with ImageControllerV3
     with RawController
     with InternController
     with HealthController
@@ -87,6 +88,7 @@ object ComponentRegistry
   lazy val migrationApiClient = new MigrationApiClient
   lazy val draftApiClient = new DraftApiClient
   lazy val imageControllerV2 = new ImageControllerV2
+  lazy val imageControllerV3 = new ImageControllerV3
   lazy val rawController = new RawController
   lazy val internController = new InternController
   lazy val healthController = new HealthController
