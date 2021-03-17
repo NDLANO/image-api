@@ -257,7 +257,8 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
   test("That PATCH /<id> returns 200 when everything went well") {
     reset(writeService)
-    when(writeService.updateImage(any[Long], any[UpdateImageMetaInformation])).thenReturn(Try(TestData.apiElg))
+    when(writeService.updateImage(any[Long], any[UpdateImageMetaInformation], any[Option[FileItem]]))
+      .thenReturn(Try(TestData.apiElg))
     patch("/1", sampleUpdateImageMeta, headers = Map("Authorization" -> authHeaderWithWriteRole)) {
       status should equal(200)
     }
@@ -265,7 +266,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
   test("That PATCH /<id> returns 404 when image doesn't exist") {
     reset(writeService)
-    when(writeService.updateImage(any[Long], any[UpdateImageMetaInformation]))
+    when(writeService.updateImage(any[Long], any[UpdateImageMetaInformation], any[Option[FileItem]]))
       .thenThrow(new ImageNotFoundException(s"Image with id 1 not found"))
     patch("/1", sampleUpdateImageMeta, headers = Map("Authorization" -> authHeaderWithWriteRole)) {
       status should equal(404)

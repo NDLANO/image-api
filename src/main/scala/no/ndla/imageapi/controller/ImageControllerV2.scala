@@ -23,7 +23,7 @@ import no.ndla.imageapi.model.api.{
   ValidationError
 }
 import no.ndla.imageapi.model.domain.{SearchSettings, Sort}
-import no.ndla.imageapi.model.{Language, ValidationException, ValidationMessage}
+import no.ndla.imageapi.model.{Language, ValidationException}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{ImageSearchService, SearchConverterService, SearchService}
 import no.ndla.imageapi.service.{ConverterService, ReadService, WriteService}
@@ -60,6 +60,7 @@ trait ImageControllerV2 {
     registerModel[ValidationError]()
     registerModel[Error]()
     registerModel[NewImageMetaInformationV2]()
+    registerModel[UpdateImageMetaInformation]()
 
     val response403 = ResponseMessage(403, "Access Denied", Some("Error"))
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
@@ -93,6 +94,11 @@ trait ImageControllerV2 {
     private val pathLanguage = Param[String]("language", "The ISO 639-1 language code describing language.")
     private val externalId = Param[String]("external_id", "External node id of the image that needs to be fetched.")
     private val metadata = Param[NewImageMetaInformationV2](
+      "metadata",
+      """The metadata for the image file to submit.""".stripMargin
+    )
+
+    private val updateMetadata = Param[UpdateImageMetaInformation](
       "metadata",
       """The metadata for the image file to submit.""".stripMargin
     )
@@ -417,7 +423,12 @@ trait ImageControllerV2 {
           .parameters(
             asHeaderParam(correlationId),
             asPathParam(imageId),
-            bodyParam[UpdateImageMetaInformation]("metadata").description("The metadata for the image file to submit."),
+            bodyParam[UpdateImageMetaInformation]("metadata")
+              .description("The metadata for the image file to submit."),
+            asObjectFormParam(metadata),
+            formParam(updateMetadata.paramName, models("UpdateImageMetaInformation"))
+              .description("metadata used when also updating imagefile"),
+            asFileParam(file)
           )
           .authorizations("oauth2")
           .responseMessages(response400, response403, response500)
@@ -425,10 +436,25 @@ trait ImageControllerV2 {
     ) {
       authUser.assertHasId()
       authRole.assertHasRole(RoleWithWriteAccess)
+
       val imageId = long(this.imageId.paramName)
-      writeService.updateImage(imageId, extract[UpdateImageMetaInformation](request.body)) match {
-        case Success(imageMeta) => imageMeta
-        case Failure(e)         => errorHandler(e)
+      val imageMetaFromParam = params.get(this.updateMetadata.paramName)
+
+      lazy val imageMetaFromFile =
+        fileParams
+          .get(this.updateMetadata.paramName)
+          .map(f => scala.io.Source.fromInputStream(f.getInputStream).mkString)
+
+      val metaToUse = imageMetaFromParam.orElse(imageMetaFromFile).getOrElse(request.body)
+
+      tryExtract[UpdateImageMetaInformation](metaToUse) match {
+        case Failure(ex) => errorHandler(ex)
+        case Success(metaInfo) =>
+          val fileItem = fileParams.get(this.file.paramName)
+          writeService.updateImage(imageId, metaInfo, fileItem) match {
+            case Success(imageMeta) => Ok(imageMeta)
+            case Failure(e)         => errorHandler(e)
+          }
       }
     }
 

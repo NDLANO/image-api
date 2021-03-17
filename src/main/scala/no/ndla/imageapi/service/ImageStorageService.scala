@@ -51,7 +51,7 @@ trait ImageStorageService {
                 case Failure(ex) =>
                   logger.error(s"Could not update content-type s3-metadata of $fileName to ${meta.contentType}", ex)
                 case Success(_) =>
-                  logger.info(s"Sucessfully updated content-type s3-metadata of $fileName to ${meta.contentType}")
+                  logger.info(s"Successfully updated content-type s3-metadata of $fileName to ${meta.contentType}")
               }
               meta.contentType
             case _ => s3ContentType
@@ -66,7 +66,7 @@ trait ImageStorageService {
       Try(amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))).map(s3Object =>
         NdlaImage(s3Object, imageKey)) match {
         case Success(e) => Success(e)
-        case Failure(e) => Failure(new ImageNotFoundException(s"Image $imageKey does not exist"))
+        case Failure(_) => Failure(new ImageNotFoundException(s"Image $imageKey does not exist"))
       }
     }
 
@@ -91,6 +91,10 @@ trait ImageStorageService {
 
         amazonClient.copyObject(copyRequest)
       }
+    }
+
+    def cloneObject(existingKey: String, newKey: String): Try[Unit] = {
+      Try(amazonClient.copyObject(StorageName, existingKey, StorageName, newKey))
     }
 
     def objectExists(storageKey: String): Boolean = {
