@@ -4,13 +4,13 @@ import java.awt.image.BufferedImage
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.lang.Math.{abs, max, min}
 import javax.imageio.ImageIO
-
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import org.imgscalr.Scalr
 import org.imgscalr.Scalr.Mode
 
+import java.awt.{Color, Transparency}
 import scala.util.{Success, Try}
 
 trait ImageConverter {
@@ -35,20 +35,40 @@ trait ImageConverter {
     private def normalise(coord: Int): Double = coord.toDouble / MaxValue.toDouble
   }
 
+  /** This method adds a white background to a [[BufferedImage]], useful for removing transparent pixels
+    *  for image types that doesn't support transparency */
+  def fillTransparentPixels(image: BufferedImage): BufferedImage = {
+    val width = image.getWidth();
+    val height = image.getHeight();
+    val newImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    val g = newImage.createGraphics();
+    g.setColor(Color.WHITE);
+    g.fillRect(0, 0, width, height);
+    g.drawRenderedImage(image, null);
+    g.dispose();
+    return newImage;
+  }
+
   class ImageConverter extends LazyLogging {
     private[service] def toImageStream(bufferedImage: BufferedImage, originalImage: ImageStream): ImageStream = {
       val outputStream = new ByteArrayOutputStream()
       val imageOutputStream = ImageIO.createImageOutputStream(outputStream)
       val writerIter = ImageIO.getImageWritersByMIMEType(originalImage.contentType)
 
+      val onlyOpaqueTypes = Seq("image/jpeg", "image/jpg")
+      val shouldRemoveTransparency = onlyOpaqueTypes.contains(originalImage.contentType) &&
+        bufferedImage.getColorModel.getTransparency != Transparency.OPAQUE
+
+      val newImage = if (shouldRemoveTransparency) fillTransparentPixels(bufferedImage) else bufferedImage
+
       if (writerIter.hasNext) {
         val writer = writerIter.next
         writer.setOutput(imageOutputStream)
-        writer.write(bufferedImage)
+        writer.write(newImage)
       } else {
         logger.warn(
           s"Writer for content-type ${originalImage.contentType} not found, using ${originalImage.format} as format")
-        ImageIO.write(bufferedImage, originalImage.format, imageOutputStream)
+        ImageIO.write(newImage, originalImage.format, imageOutputStream)
       }
 
       new ImageStream {
