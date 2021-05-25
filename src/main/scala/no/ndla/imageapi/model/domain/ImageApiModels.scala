@@ -39,6 +39,8 @@ case class Copyright(license: String,
                      validTo: Option[Date])
 case class License(license: String, description: String, url: Option[String])
 case class Author(`type`: String, name: String)
+case class EditorNote(timeStamp: Date, updatedBy: String, note: String)
+
 case class ImageMetaInformation(
     id: Option[Long],
     titles: Seq[ImageTitle],
@@ -50,7 +52,11 @@ case class ImageMetaInformation(
     tags: Seq[ImageTag],
     captions: Seq[ImageCaption],
     updatedBy: String,
-    updated: Date
+    updated: Date,
+    created: Date,
+    createdBy: String,
+    modelReleased: String,
+    EditorNotes: Seq[EditorNote]
 )
 
 object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
@@ -78,7 +84,11 @@ object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
       meta.tags,
       meta.captions,
       meta.updatedBy,
-      meta.updated
+      meta.updated,
+      meta.created,
+      meta.createdBy,
+      meta.modelReleased,
+      meta.EditorNotes
     )
   }
 }
