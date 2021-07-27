@@ -89,8 +89,6 @@ object ImageApiProperties extends LazyLogging {
   val MaxImageFileSizeBytes = 1024 * 1024 * 40 // 40 MiB
 
   val MetaMaxConnections = 10
-  val (redDBSource, cmDBSource) = ("red", "cm")
-  val ImageImportSource = redDBSource
 
   def MetaUserName = prop(PropertyKeys.MetaUserNameKey)
   def MetaPassword = prop(PropertyKeys.MetaPasswordKey)
@@ -117,17 +115,7 @@ object ImageApiProperties extends LazyLogging {
   val InitialScrollContextKeywords = List("0", "initial", "start", "first")
 
   val DraftApiHost = propOrElse("DRAFT_API_HOST", "draft-api.ndla-local")
-  val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
-
-  val MigrationHost = prop("MIGRATION_HOST")
-  val MigrationUser = prop("MIGRATION_USER")
-  val MigrationPassword = prop("MIGRATION_PASSWORD")
-
-  val NdlaCmHost = propOrElse("NDLA_CM_HOST", "https://ndla.no/sites/default/files/images")
-
-  val NdlaRedUrl = propOrElse("NDLA_RED_URL", "https://red.ndla.no/sites/default/files/images")
-  val NdlaRedUsername = prop("NDLA_RED_USERNAME")
-  val NdlaRedPassword = prop("NDLA_RED_PASSWORD")
+  val TopicAPIUrl = propOrElse("TOPIC_API_URL", "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_")
 
   val Domain = Domains.get(Environment)
   val ImageApiUrlBase = Domain + ImageControllerPath + "/"

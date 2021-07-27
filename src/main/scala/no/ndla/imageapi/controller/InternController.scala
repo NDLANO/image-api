@@ -13,7 +13,7 @@ import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.ImageStorageException
 import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.repository.ImageRepository
-import no.ndla.imageapi.service.{ConverterService, ImportService, ReadService}
+import no.ndla.imageapi.service.{ConverterService, ReadService}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, GatewayTimeout, InternalServerError, NotFound, Ok}
 import no.ndla.imageapi.model.ImageNotFoundException
@@ -28,7 +28,6 @@ import scala.util.{Failure, Success}
 trait InternController {
   this: ImageRepository
     with ReadService
-    with ImportService
     with ConverterService
     with ImageIndexService
     with TagIndexService
@@ -104,30 +103,6 @@ trait InternController {
           }
         case None =>
           BadRequest(Error(Error.VALIDATION, s"Query param '$urlQueryParam' needs to be specified to return an image"))
-      }
-    }
-
-    post("/import/:image_id") {
-      authUser.assertHasId()
-      val start = System.currentTimeMillis
-      val imageId = params("image_id")
-
-      importService.importImage(imageId) match {
-        case Success(imageMeta) => {
-          Ok(converterService.asApiImageMetaInformationWithDomainUrlV2(imageMeta, None))
-        }
-        case Failure(s: ImageStorageException) => {
-          val errMsg =
-            s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${s.getMessage}\n"
-          logger.warn(errMsg, s)
-          GatewayTimeout(body = Error(Error.GATEWAY_TIMEOUT, errMsg))
-        }
-        case Failure(ex: Throwable) => {
-          val errMsg =
-            s"Import of node with external_id $imageId failed after ${System.currentTimeMillis - start} ms with error: ${ex.getMessage}\n"
-          logger.warn(errMsg, ex)
-          InternalServerError(body = errMsg)
-        }
       }
     }
 
