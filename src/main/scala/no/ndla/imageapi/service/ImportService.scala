@@ -10,7 +10,20 @@ package no.ndla.imageapi.service
 
 import io.lemonlabs.uri.{Url, UrlPath}
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, NdlaCmHost, NdlaRedPassword, NdlaRedUrl, NdlaRedUsername, creatorTypes, oldCreatorTypes, oldProcessorTypes, oldRightsholderTypes, processorTypes, redDBSource, rightsholderTypes}
+import no.ndla.imageapi.ImageApiProperties.{
+  ImageImportSource,
+  NdlaCmHost,
+  NdlaRedPassword,
+  NdlaRedUrl,
+  NdlaRedUsername,
+  creatorTypes,
+  oldCreatorTypes,
+  oldProcessorTypes,
+  oldRightsholderTypes,
+  processorTypes,
+  redDBSource,
+  rightsholderTypes
+}
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain.{ImageMetaInformation, ImageTag}
