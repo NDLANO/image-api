@@ -123,6 +123,9 @@ object ImageApiProperties extends LazyLogging {
   val MigrationUser = prop("MIGRATION_USER")
   val MigrationPassword = prop("MIGRATION_PASSWORD")
 
+  val NdlaCmHost = propOrElse("NDLA_CM_HOST", "https://ndla.no/sites/default/files/images")
+
+  val NdlaRedUrl = propOrElse("NDLA_RED_URL", "https://red.ndla.no/sites/default/files/images")
   val NdlaRedUsername = prop("NDLA_RED_USERNAME")
   val NdlaRedPassword = prop("NDLA_RED_PASSWORD")
 

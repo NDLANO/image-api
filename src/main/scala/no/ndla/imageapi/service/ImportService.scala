@@ -10,18 +10,7 @@ package no.ndla.imageapi.service
 
 import io.lemonlabs.uri.{Url, UrlPath}
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.imageapi.ImageApiProperties.{
-  ImageImportSource,
-  NdlaRedPassword,
-  NdlaRedUsername,
-  creatorTypes,
-  oldCreatorTypes,
-  oldProcessorTypes,
-  oldRightsholderTypes,
-  processorTypes,
-  redDBSource,
-  rightsholderTypes
-}
+import no.ndla.imageapi.ImageApiProperties.{ImageImportSource, NdlaCmHost, NdlaRedPassword, NdlaRedUrl, NdlaRedUsername, creatorTypes, oldCreatorTypes, oldProcessorTypes, oldRightsholderTypes, processorTypes, redDBSource, rightsholderTypes}
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.integration._
 import no.ndla.imageapi.model.domain.{ImageMetaInformation, ImageTag}
@@ -47,8 +36,8 @@ trait ImportService {
   val importService: ImportService
 
   class ImportService extends LazyLogging {
-    val redHost = s"https://red.ndla.no/sites/default/files/images"
-    val cmHost = s"https://ndla.no/sites/default/files/images"
+    val redHost: String = NdlaRedUrl
+    val cmHost: String = NdlaCmHost
 
     def importImage(externalImageId: String): Try[domain.ImageMetaInformation] = {
       val start = System.currentTimeMillis()
