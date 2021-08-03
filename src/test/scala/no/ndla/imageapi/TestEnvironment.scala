@@ -44,8 +44,6 @@ trait TestEnvironment
     with AmazonClient
     with ImageStorageService
     with ImageIndexService
-    with ImportService
-    with MigrationApiClient
     with DraftApiClient
     with NdlaClient
     with InternController
@@ -72,9 +70,7 @@ trait TestEnvironment
   val writeService = mock[WriteService]
   val imageStorage = mock[AmazonImageStorageService]
 
-  val importService = mock[ImportService]
   val ndlaClient = mock[NdlaClient]
-  val migrationApiClient = mock[MigrationApiClient]
   val draftApiClient = mock[DraftApiClient]
   val rawController = mock[RawController]
   val internController = mock[InternController]

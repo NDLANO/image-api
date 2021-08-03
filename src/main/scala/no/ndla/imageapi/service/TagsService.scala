@@ -12,7 +12,6 @@ import java.io.InputStream
 import java.net.URL
 
 import no.ndla.imageapi.model.domain.ImageTag
-import no.ndla.imageapi.ImageApiProperties.TopicAPIUrl
 import no.ndla.imageapi.model.Language
 import no.ndla.mapping.ISO639.get6391CodeFor6392Code
 import org.json4s.native.Serialization.read
@@ -27,10 +26,6 @@ trait TagsService {
   class TagsService {
 
     val pattern = new Regex("http:\\/\\/psi\\..*\\/#(.+)")
-
-    def forImage(nid: String): Try[List[ImageTag]] = {
-      Try(new URL(TopicAPIUrl + nid).openStream).map(streamToImageTags)
-    }
 
     def streamToImageTags(stream: InputStream) = {
       implicit val formats = org.json4s.DefaultFormats

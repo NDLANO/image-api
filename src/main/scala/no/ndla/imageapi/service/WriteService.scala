@@ -9,6 +9,7 @@
 package no.ndla.imageapi.service
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.api.{ImageMetaInformationV2, NewImageMetaInformationV2, UpdateImageMetaInformation}
 import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, LanguageField}
@@ -156,7 +157,7 @@ trait WriteService {
       } yield
         converterService.asApiImageMetaInformationWithDomainUrlV2(
           indexedByTags,
-          Some(language.getOrElse(Language.DefaultLanguage))
+          Some(language.getOrElse(DefaultLanguage))
         )
     }
 

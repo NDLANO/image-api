@@ -12,13 +12,12 @@ import no.ndla.imageapi.model.domain.LanguageField
 import no.ndla.mapping.ISO639
 
 object Language {
-  val DefaultLanguage = "nb"
   val UnknownLanguage = "unknown"
   val AllLanguages = "all"
   val NoLanguage = ""
 
   val languageAnalyzers = Seq(
-    LanguageAnalyzer(DefaultLanguage, NorwegianLanguageAnalyzer),
+    LanguageAnalyzer("nb", NorwegianLanguageAnalyzer),
     LanguageAnalyzer("nn", NorwegianLanguageAnalyzer),
     LanguageAnalyzer("en", EnglishLanguageAnalyzer),
     LanguageAnalyzer("fr", FrenchLanguageAnalyzer),
