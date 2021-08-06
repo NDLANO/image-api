@@ -20,8 +20,8 @@ class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with N
 object ImagesApiInfo {
 
   val contactInfo = ContactInfo(
-    "NDLA",
-    "ndla.no",
+    ImageApiProperties.ContactName,
+    ImageApiProperties.ContactUrl,
     ImageApiProperties.ContactEmail
   )
 
@@ -37,7 +37,7 @@ object ImagesApiInfo {
       "also searched and returned in the results. Examples of meta-data are title, alt-text, language and license.\n" +
       "The API can resize and crop transitions on the returned images to enable use in special contexts, e.g. " +
       "low bandwidth scenarios",
-    "https://om.ndla.no/tos",
+    ImageApiProperties.TermsUrl,
     contactInfo,
     licenseInfo
   )

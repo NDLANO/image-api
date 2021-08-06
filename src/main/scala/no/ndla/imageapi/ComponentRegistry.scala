@@ -44,9 +44,7 @@ object ComponentRegistry
     with AmazonClient
     with ImageStorageService
     with NdlaClient
-    with MigrationApiClient
     with DraftApiClient
-    with ImportService
     with ConverterService
     with ValidationService
     with TagsService
@@ -82,9 +80,7 @@ object ComponentRegistry
   lazy val writeService = new WriteService
   lazy val validationService = new ValidationService
   lazy val imageStorage = new AmazonImageStorageService
-  lazy val importService = new ImportService
   lazy val ndlaClient = new NdlaClient
-  lazy val migrationApiClient = new MigrationApiClient
   lazy val draftApiClient = new DraftApiClient
   lazy val imageControllerV2 = new ImageControllerV2
   lazy val rawController = new RawController
