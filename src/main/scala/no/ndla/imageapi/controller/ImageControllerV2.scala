@@ -22,7 +22,7 @@ import no.ndla.imageapi.model.api.{
   UpdateImageMetaInformation,
   ValidationError
 }
-import no.ndla.imageapi.model.domain.{SearchSettings, Sort}
+import no.ndla.imageapi.model.domain.{ImageMetaInformation, SearchSettings, Sort}
 import no.ndla.imageapi.model.{Language, ValidationException}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{ImageSearchService, SearchConverterService, SearchService}
@@ -54,7 +54,7 @@ trait ImageControllerV2 {
       with FileUploadSupport {
     // Swagger-stuff
     protected val applicationDescription = "Services for accessing images from NDLA"
-    protected implicit override val jsonFormats: Formats = DefaultFormats
+    protected implicit override val jsonFormats: Formats = ImageMetaInformation.jsonEncoder
 
     // Additional models used in error responses
     registerModel[ValidationError]()

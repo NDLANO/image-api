@@ -38,7 +38,11 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     List(),
     List(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val WantingImageMetaInformation = ImageMetaInformation(
@@ -52,7 +56,11 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     List(),
     List(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val MultiLangImage = ImageMetaInformation(
@@ -66,7 +74,11 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     List(),
     List(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   override def beforeEach(): Unit = {

@@ -80,7 +80,7 @@ trait WriteService {
         case _                       =>
       }
 
-      val domainImage = uploadImage(file).map(uploadedImage =>
+      val domainImage = uploadImage(file).flatMap(uploadedImage =>
         converterService.asDomainImageMetaInformationV2(newImage, uploadedImage)) match {
         case Failure(e)     => return Failure(e)
         case Success(image) => image

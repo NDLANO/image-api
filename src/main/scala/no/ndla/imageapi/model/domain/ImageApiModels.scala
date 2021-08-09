@@ -9,12 +9,15 @@
 package no.ndla.imageapi.model.domain
 
 import java.util.Date
-
 import no.ndla.imageapi.ImageApiProperties
+import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import org.json4s.{DefaultFormats, FieldSerializer, Formats}
 import org.json4s.FieldSerializer._
+import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
+
+import scala.util.{Failure, Success, Try}
 
 case class ImageTitle(title: String, language: String) extends LanguageField[String] {
   override def value: String = title
@@ -41,6 +44,26 @@ case class License(license: String, description: String, url: Option[String])
 case class Author(`type`: String, name: String)
 case class EditorNote(timeStamp: Date, updatedBy: String, note: String)
 
+object ModelReleasedStatus extends Enumeration {
+  val YES = Value("yes")
+  val NO = Value("no")
+  val NOT_APPLICABLE = Value("not-applicable")
+
+  def valueOfOrError(s: String): Try[this.Value] =
+    valueOf(s) match {
+      case Some(st) => Success(st)
+      case None =>
+        val validStatuses = values.map(_.toString).mkString(", ")
+        Failure(
+          new ValidationException(
+            errors = Seq(
+              ValidationMessage("modelReleased",
+                                s"'$s' is not a valid model released status. Must be one of $validStatuses"))))
+    }
+
+  def valueOf(s: String): Option[this.Value] = values.find(_.toString == s)
+}
+
 case class ImageMetaInformation(
     id: Option[Long],
     titles: Seq[ImageTitle],
@@ -55,14 +78,14 @@ case class ImageMetaInformation(
     updated: Date,
     created: Date,
     createdBy: String,
-    modelReleased: String,
-    EditorNotes: Seq[EditorNote]
+    modelReleased: ModelReleasedStatus.Value,
+    editorNotes: Seq[EditorNote]
 )
 
 object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
   override val tableName = "imagemetadata"
   override val schemaName = Some(ImageApiProperties.MetaSchema)
-  val jsonEncoder: Formats = DefaultFormats
+  val jsonEncoder: Formats = DefaultFormats + new EnumNameSerializer(ModelReleasedStatus)
   val repositorySerializer = jsonEncoder + FieldSerializer[ImageMetaInformation](ignore("id"))
 
   def fromResultSet(im: SyntaxProvider[ImageMetaInformation])(rs: WrappedResultSet): ImageMetaInformation =
@@ -88,7 +111,7 @@ object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
       meta.created,
       meta.createdBy,
       meta.modelReleased,
-      meta.EditorNotes
+      meta.editorNotes
     )
   }
 }

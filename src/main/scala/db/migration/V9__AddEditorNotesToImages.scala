@@ -7,10 +7,12 @@
 
 package db.migration
 
-import java.util.Date
+import no.ndla.imageapi.model.domain.ModelReleasedStatus
 
+import java.util.Date
 import org.flywaydb.core.api.migration.{BaseJavaMigration, Context}
-import org.json4s.DefaultFormats
+import org.json4s.JsonAST.{JField, JString}
+import org.json4s.{DefaultFormats, JArray, JObject}
 import org.json4s.native.JsonMethods.{compact, parse, render}
 import org.postgresql.util.PGobject
 import scalikejdbc.{DB, DBSession, _}
@@ -25,7 +27,9 @@ class V9__AddEditorNotesToImages extends BaseJavaMigration {
     db.autoClose(false)
 
     db.withinTx { implicit session =>
-      imagesToUpdate.map(convertImageUpdate).foreach(update) // TODO fix this, either as in V3 or V8?
+      imagesToUpdate.map {
+        case (id, document) => update(convertImageUpdate(document), id)
+      }
     }
   }
 
@@ -38,39 +42,27 @@ class V9__AddEditorNotesToImages extends BaseJavaMigration {
       .apply()
   }
 
-  def convertImageUpdate(imageMeta: V3__DBImageMetaInformation): V3__DBImageMetaInformation = {
-    val oldDocument = parse(imageMeta.document)
+  def convertImageUpdate(imageMeta: String): String = {
+    val oldDocument = parse(imageMeta)
     val updatedByString = (oldDocument \ "updatedBy").extract[String]
     val updatedString = (oldDocument \ "updated").extract[String]
 
-    val updatedJson = parse(
-      s"""{"createdBy": "$updatedByString",
-         | "created": "$updatedString",
-         |  modelReleased:"not model released",
-         |  EditorNotes:[]
-         |  }""".stripMargin) // TODO se over den siste, og om datoen er rett som streng
+    val mergeObject = JObject(
+      JField("createdBy", JString(updatedByString)),
+      JField("created", JString(updatedString)),
+      JField("modelReleased", JString(ModelReleasedStatus.NO.toString)),
+      JField("editorNotes", JArray(List.empty))
+    )
 
-    val mergedDoc = oldDocument.merge(updatedJson)
-    imageMeta.copy(document = compact(render(mergedDoc)))
+    val mergedDoc = oldDocument.merge(mergeObject)
+    compact(render(mergedDoc))
   }
 
-  def update(imageMeta: V3__DBImageMetaInformation)(implicit session: DBSession) = {
+  def update(imagemetadata: String, id: Long)(implicit session: DBSession) = {
     val dataObject = new PGobject()
     dataObject.setType("jsonb")
-    dataObject.setValue(imageMeta.document)
+    dataObject.setValue(imagemetadata)
 
-    sql"update imagemetadata set metadata = $dataObject where id = ${imageMeta.id}".update().apply()
+    sql"update imagemetadata set metadata = ${dataObject} where id = $id".update().apply()
   }
-
-/*
-  TODO: Delete
-  val oldDocument = parse(imageMeta.document)                            // Parser json-strengen i databasen til et json4s objekt
-  val updatedByString = (oldDocument \ "updatedBy").extract[String]      // Henter ut verdien "updatedBy" fra json4s objektet og extracter det som String
-  val updatedJson = parse(s"""{"createdBy": "$updatedByString"}""")      // Lager et nytt json4s objekt fra strengen med verdiene vi putter inn
-  val mergedDoc = oldDocument.merge(updatedJson)                         // Slår sammen json4s objektene (om felter finnes i begge så "vinner" de i updatedJson
-  imageMeta.copy(document = compact(render(mergedDoc)))                  // Lag et nytt objekt av samme type som imageMeta med samme verdier med unntak av document
-*/// Editor Notes = Liste med {timestamp, user, note}
-
 }
-
-case class V9__EditorNote(note: String, user: String, timestamp: Date)

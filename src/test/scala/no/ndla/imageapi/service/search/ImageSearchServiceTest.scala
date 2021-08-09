@@ -88,7 +88,11 @@ class ImageSearchServiceTest
     List(ImageTag(List("fugl"), "nb")),
     List(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val image2 = ImageMetaInformation(
@@ -102,7 +106,11 @@ class ImageSearchServiceTest
     List(ImageTag(List("fugl"), "nb")),
     List(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val image3 = ImageMetaInformation(
@@ -116,7 +124,11 @@ class ImageSearchServiceTest
     List(ImageTag(List("and"), "nb")),
     List(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val image4 = ImageMetaInformation(
@@ -130,7 +142,11 @@ class ImageSearchServiceTest
     Seq(),
     Seq(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val image5 = ImageMetaInformation(
@@ -146,7 +162,11 @@ class ImageSearchServiceTest
     Seq(),
     Seq(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   override def beforeAll(): Unit = {

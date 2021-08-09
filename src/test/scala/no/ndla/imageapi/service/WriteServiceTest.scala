@@ -10,12 +10,11 @@ package no.ndla.imageapi.service
 
 import java.io.InputStream
 import java.util.Date
-
 import javax.servlet.http.HttpServletRequest
 import no.ndla.imageapi.model.ValidationException
 import no.ndla.imageapi.model.api._
 import no.ndla.imageapi.model.domain
-import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation}
+import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, ModelReleasedStatus}
 import no.ndla.imageapi.{TestData, TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
 import org.joda.time.{DateTime, DateTimeZone}
@@ -39,13 +38,14 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     Copyright(License("by", "", None), "", Seq.empty, Seq.empty, Seq.empty, None, None, None),
     Seq.empty,
     "",
-    "en"
+    "en",
+    Some(ModelReleasedStatus.YES.toString)
   )
 
   def updated() = (new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC)).toDate
 
   val domainImageMeta =
-    converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg"))
+    converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg")).get
 
   val multiLangImage = domain.ImageMetaInformation(
     Some(2),
@@ -58,7 +58,11 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     List(),
     List(),
     "ndla124",
-    updated()
+    updated(),
+    updated(),
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   override def beforeEach() = {
@@ -200,7 +204,8 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   test("converter to domain should set updatedBy from authUser and updated date") {
     when(authUser.userOrClientid()).thenReturn("ndla54321")
     when(clock.now()).thenReturn(updated())
-    val domain = converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg"))
+    val domain =
+      converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg")).get
     domain.updatedBy should equal("ndla54321")
     domain.updated should equal(updated())
   }
@@ -270,6 +275,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       Some("AltText"),
       None,
       None,
+      None,
       None
     )
 
@@ -292,6 +298,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       "nb",
       Some("Title"),
       Some("AltText"),
+      None,
       None,
       None,
       None
@@ -326,7 +333,8 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
                   None,
                   None)),
       Some(List("a", "b", "c")),
-      Some("Caption")
+      Some("Caption"),
+      None
     )
 
     val expectedResult = existing.copy(
