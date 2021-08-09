@@ -281,7 +281,8 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
     val expectedResult = existing.copy(
       titles = List(existing.titles.head, domain.ImageTitle("Title", "en")),
-      alttexts = List(existing.alttexts.head, domain.ImageAltText("AltText", "en"))
+      alttexts = List(existing.alttexts.head, domain.ImageAltText("AltText", "en")),
+      editorNotes = Seq(domain.EditorNote(date, user, "Image updated."))
     )
 
     when(authUser.userOrClientid()).thenReturn(user)
@@ -306,7 +307,8 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
     val expectedResult = existing.copy(
       titles = List(domain.ImageTitle("Title", "nb")),
-      alttexts = List(domain.ImageAltText("AltText", "nb"))
+      alttexts = List(domain.ImageAltText("AltText", "nb")),
+      editorNotes = Seq(domain.EditorNote(date, user, "Image updated."))
     )
 
     when(authUser.userOrClientid()).thenReturn(user)
@@ -334,7 +336,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
                   None)),
       Some(List("a", "b", "c")),
       Some("Caption"),
-      None
+      Some(ModelReleasedStatus.NO.toString)
     )
 
     val expectedResult = existing.copy(
@@ -349,7 +351,9 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
                                    None,
                                    None),
       tags = List(domain.ImageTag(List("a", "b", "c"), "nb")),
-      captions = List(domain.ImageCaption("Caption", "nb"))
+      captions = List(domain.ImageCaption("Caption", "nb")),
+      modelReleased = ModelReleasedStatus.NO,
+      editorNotes = Seq(domain.EditorNote(date, "ndla124", "Image updated."))
     )
 
     when(authUser.userOrClientid()).thenReturn(user)
