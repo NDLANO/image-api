@@ -20,6 +20,6 @@ case class UpdateImageMetaInformation(
     @(ApiModelProperty @field)(description = "Describes the copyright information for the image") copyright: Option[Copyright],
     @(ApiModelProperty @field)(description = "Searchable tags for the image") tags: Option[Seq[String]],
     @(ApiModelProperty @field)(description = "Caption for the image") caption: Option[String],
-    @(ApiModelProperty @field)(description = "Describes if the model has released use of the image") modelReleased: Option[String]
+    @(ApiModelProperty @field)(description = "Describes if the model has released use of the image", allowableValues = "yes,no,not-applicable") modelReleased: Option[String]
 )
 // format: on

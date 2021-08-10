@@ -21,5 +21,5 @@ case class NewImageMetaInformationV2(
     @(ApiModelProperty @field)(description = "Searchable tags for the image") tags: Seq[String],
     @(ApiModelProperty @field)(description = "Caption for the image") caption: String,
     @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in the caption") language: String,
-    @(ApiModelProperty @field)(description = "Describes if the model has released use of the image, allowed values are 'yes', 'no', and 'not-applicable', defaults to 'no'") modelReleased: Option[String]
+    @(ApiModelProperty @field)(description = "Describes if the model has released use of the image, allowed values are 'yes', 'no', and 'not-applicable', defaults to 'no'", allowableValues = "yes,no,not-applicable") modelReleased: Option[String]
 )
