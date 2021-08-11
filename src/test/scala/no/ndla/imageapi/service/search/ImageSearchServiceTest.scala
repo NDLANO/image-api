@@ -91,7 +91,7 @@ class ImageSearchServiceTest
     updated,
     updated,
     "ndla124",
-    ModelReleasedStatus.YES,
+    ModelReleasedStatus.NO,
     Seq.empty
   )
 
@@ -109,7 +109,7 @@ class ImageSearchServiceTest
     updated,
     updated,
     "ndla124",
-    ModelReleasedStatus.YES,
+    ModelReleasedStatus.NOT_APPLICABLE,
     Seq(EditorNote(new Date(), "someone", "Lillehjelper"))
   )
 
@@ -488,6 +488,50 @@ class ImageSearchServiceTest
       ))
 
     searchResult2.results.map(_.id) should be(Seq("2"))
+  }
+
+  test("That filtering for modelReleased works as expected") {
+    import ModelReleasedStatus._
+    val Success(searchResult1) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("all"),
+        modelReleased = Seq(NO)
+      ))
+
+    searchResult1.results.map(_.id) should be(Seq("1"))
+
+    val Success(searchResult2) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("all"),
+        modelReleased = Seq(NOT_APPLICABLE)
+      ))
+
+    searchResult2.results.map(_.id) should be(Seq("2"))
+
+    val Success(searchResult3) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("all"),
+        modelReleased = Seq(YES)
+      ))
+
+    searchResult3.results.map(_.id) should be(Seq("3", "4", "5"))
+
+    val Success(searchResult4) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("all"),
+        modelReleased = Seq.empty
+      ))
+
+    searchResult4.results.map(_.id) should be(Seq("1", "2", "3", "4", "5"))
+
+    val Success(searchResult5) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("all"),
+        modelReleased = Seq(NO, NOT_APPLICABLE)
+      ))
+
+    searchResult5.results.map(_.id) should be(Seq("1", "2"))
+
   }
 
   def blockUntil(predicate: () => Boolean): Unit = {

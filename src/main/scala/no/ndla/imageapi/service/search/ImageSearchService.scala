@@ -26,7 +26,9 @@ import no.ndla.mapping.ISO639
 import org.json4s.native.Serialization.read
 import org.json4s.Formats
 
+import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.util.{Failure, Success, Try}
+import scala.xml.NodeSeq
 
 trait ImageSearchService {
   this: Elastic4sClient with ImageIndexService with SearchService with SearchConverterService with Role =>
@@ -101,7 +103,7 @@ trait ImageSearchService {
     def executeSearch(queryBuilder: BoolQuery, settings: SearchSettings): Try[SearchResult[ImageMetaSummary]] = {
 
       val licenseFilter = settings.license match {
-        case None      => if (!settings.includeCopyrighted) Some(noCopyright) else None
+        case None      => Option.unless(settings.includeCopyrighted)(noCopyright)
         case Some(lic) => Some(termQuery("license", lic))
       }
 
@@ -111,13 +113,15 @@ trait ImageSearchService {
       }
 
       val (languageFilter, searchLanguage) = settings.language match {
-        case None | Some(Language.AllLanguages) =>
-          (None, "*")
-        case Some(lang) =>
-          (Some(existsQuery(s"titles.$lang")), lang)
+        case None | Some(Language.AllLanguages) => (None, "*")
+        case Some(lang)                         => (Some(existsQuery(s"titles.$lang")), lang)
       }
 
-      val filters = List(languageFilter, licenseFilter, sizeFilter)
+      val modelReleasedFilter = Option.when(settings.modelReleased.nonEmpty)(
+        boolQuery().should(settings.modelReleased.map(mrs => termQuery("modelReleased", mrs.toString)))
+      )
+
+      val filters = List(languageFilter, licenseFilter, sizeFilter, modelReleasedFilter)
       val filteredSearch = queryBuilder.filter(filters.flatten)
 
       val (startAt, numResults) = getStartAtAndNumResults(settings.page, settings.pageSize)

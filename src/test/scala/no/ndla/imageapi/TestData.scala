@@ -261,6 +261,7 @@ object TestData {
     page = None,
     pageSize = None,
     includeCopyrighted = false,
-    shouldScroll = false
+    shouldScroll = false,
+    modelReleased = Seq.empty
   )
 }
