@@ -459,6 +459,16 @@ class ImageSearchServiceTest
     scroll3.results.map(_.id) should be(List.empty)
   }
 
+  test("That title search works as expected, and doesn't crash in combination with language") {
+    val Success(searchResult1) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("nb"),
+        sort = Sort.ByTitleDesc
+      ))
+
+    searchResult1.results.map(_.id) should be(Seq("2", "3", "1"))
+  }
+
   def blockUntil(predicate: () => Boolean): Unit = {
     var backoff = 0
     var done = false

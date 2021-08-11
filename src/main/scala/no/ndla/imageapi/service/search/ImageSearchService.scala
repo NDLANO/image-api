@@ -52,13 +52,13 @@ trait ImageSearchService {
           sortLanguage match {
             case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.Asc).missing("_last")
             case _ =>
-              fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").sortOrder(SortOrder.Asc).missing("_last")
+              fieldSort(s"titles.$sortLanguage.raw").sortOrder(SortOrder.Asc).missing("_last")
           }
         case Sort.ByTitleDesc =>
           sortLanguage match {
             case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.Desc).missing("_last")
             case _ =>
-              fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").sortOrder(SortOrder.Desc).missing("_last")
+              fieldSort(s"titles.$sortLanguage.raw").sortOrder(SortOrder.Desc).missing("_last")
           }
         case Sort.ByRelevanceAsc    => fieldSort("_score").sortOrder(SortOrder.Asc)
         case Sort.ByRelevanceDesc   => fieldSort("_score").sortOrder(SortOrder.Desc)
