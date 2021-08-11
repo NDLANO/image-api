@@ -81,7 +81,7 @@ object TestData {
     updated(),
     "ndla123",
     ModelReleasedStatus.YES.toString,
-    Seq.empty
+    None
   )
 
   val bjorn = ImageMetaInformation(

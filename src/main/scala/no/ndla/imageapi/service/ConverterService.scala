@@ -10,7 +10,7 @@ package no.ndla.imageapi.service
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.auth.User
+import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.model.Language._
 import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
@@ -24,7 +24,7 @@ import no.ndla.mapping.License.getLicense
 import scala.util.{Failure, Success, Try}
 
 trait ConverterService {
-  this: User with Clock with DraftApiClient =>
+  this: User with Role with Clock with DraftApiClient =>
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
@@ -92,12 +92,14 @@ trait ConverterService {
 
       val apiUrl = asApiUrl(imageMeta.imageUrl, rawBaseUrl)
 
+      val editorNotes = Option.when(authRole.userHasWriteRole())(asApiEditorNotes(imageMeta.editorNotes))
+
       api.ImageMetaInformationV2(
         imageMeta.id.get.toString,
         baseUrl + imageMeta.id.get,
         title,
         alttext,
-        asApiUrl(imageMeta.imageUrl, rawBaseUrl),
+        apiUrl,
         imageMeta.size,
         imageMeta.contentType,
         withAgreementCopyright(asApiCopyright(imageMeta.copyright)),
@@ -107,7 +109,7 @@ trait ConverterService {
         imageMeta.created,
         imageMeta.createdBy,
         imageMeta.modelReleased.toString,
-        asApiEditorNotes(imageMeta.editorNotes)
+        editorNotes
       )
     }
 

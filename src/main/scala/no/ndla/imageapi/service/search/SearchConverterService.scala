@@ -11,6 +11,7 @@ import io.lemonlabs.uri.Uri.parse
 import com.sksamuel.elastic4s.http.search.SearchHit
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
+import no.ndla.imageapi.auth.Role
 import no.ndla.imageapi.model.Language
 import no.ndla.imageapi.model.api.{ImageAltText, ImageMetaSummary, ImageTitle}
 import no.ndla.imageapi.model.domain.{ImageMetaInformation, SearchResult}
@@ -28,7 +29,7 @@ import no.ndla.mapping.ISO639
 import no.ndla.network.ApplicationUrl
 
 trait SearchConverterService {
-  this: ConverterService =>
+  this: ConverterService with Role =>
   val searchConverterService: SearchConverterService
 
   class SearchConverterService extends LazyLogging {
@@ -68,7 +69,9 @@ trait SearchConverterService {
         imageSize = imageWithAgreement.size,
         previewUrl = parse("/" + imageWithAgreement.imageUrl.dropWhile(_ == '/')).toString,
         lastUpdated = imageWithAgreement.updated,
-        defaultTitle = defaultTitle.map(t => t.title)
+        defaultTitle = defaultTitle.map(t => t.title),
+        modelReleased = Some(image.modelReleased.toString),
+        editorNotes = image.editorNotes.map(_.note)
       )
     }
 
@@ -90,6 +93,8 @@ trait SearchConverterService {
         searchableImage.tags.languageValues
       )
 
+      val editorNotes = Option.when(authRole.userHasWriteRole())(searchableImage.editorNotes)
+
       ImageMetaSummary(
         id = searchableImage.id.toString,
         title = title,
@@ -98,7 +103,9 @@ trait SearchConverterService {
         previewUrl = apiToRawRegex.replaceFirstIn(ApplicationUrl.get, "/raw") + searchableImage.previewUrl,
         metaUrl = ApplicationUrl.get + searchableImage.id,
         license = searchableImage.license,
-        supportedLanguages = supportedLanguages
+        supportedLanguages = supportedLanguages,
+        modelRelease = searchableImage.modelReleased,
+        editorNotes = editorNotes
       )
     }
 

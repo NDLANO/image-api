@@ -41,6 +41,8 @@ trait ImageIndexService {
           textField("previewUrl"),
           dateField("lastUpdated"),
           keywordField("defaultTitle"),
+          keywordField("modelReleased"),
+          textField("editorNotes"),
         ) ++
           generateLanguageSupportedFieldList("titles", keepRaw = true) ++
           generateLanguageSupportedFieldList("alttexts", keepRaw = false) ++

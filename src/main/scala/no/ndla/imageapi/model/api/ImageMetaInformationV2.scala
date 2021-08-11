@@ -24,5 +24,5 @@ case class ImageMetaInformationV2(
     @(ApiModelProperty @field)(description = "Describes when the image was created") created: Date,
     @(ApiModelProperty @field)(description = "Describes who created the image") createdBy: String,
     @(ApiModelProperty @field)(description = "Describes if the model has released use of the image", allowableValues = "yes,no,not-applicable") modelRelease: String,
-    @(ApiModelProperty @field)(description = "Describes the changes made to the image") editorNotes: Seq[EditorNote]
+    @(ApiModelProperty @field)(description = "Describes the changes made to the image, only visible to editors") editorNotes: Option[Seq[EditorNote]]
 )

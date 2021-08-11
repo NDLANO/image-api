@@ -110,7 +110,7 @@ class ImageSearchServiceTest
     updated,
     "ndla124",
     ModelReleasedStatus.YES,
-    Seq.empty
+    Seq(EditorNote(new Date(), "someone", "Lillehjelper"))
   )
 
   val image3 = ImageMetaInformation(
@@ -189,6 +189,7 @@ class ImageSearchServiceTest
       when(servletRequest.getHeader(any[String])).thenReturn("http")
       when(servletRequest.getServerName).thenReturn("localhost")
       when(servletRequest.getServletPath).thenReturn("/image-api/v2/images/")
+      when(authRole.userHasWriteRole()).thenReturn(false)
       ApplicationUrl.set(servletRequest)
 
       blockUntil(() => imageSearchService.countDocuments() == 5)
@@ -467,6 +468,26 @@ class ImageSearchServiceTest
       ))
 
     searchResult1.results.map(_.id) should be(Seq("2", "3", "1"))
+  }
+
+  test("That searching for notes only works for editors") {
+    when(authRole.userHasWriteRole()).thenReturn(false)
+    val Success(searchResult1) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        query = Some("lillehjelper"),
+        language = Some("all"),
+      ))
+
+    searchResult1.results.map(_.id) should be(Seq())
+
+    when(authRole.userHasWriteRole()).thenReturn(true)
+    val Success(searchResult2) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        query = Some("lillehjelper"),
+        language = Some("all"),
+      ))
+
+    searchResult2.results.map(_.id) should be(Seq("2"))
   }
 
   def blockUntil(predicate: () => Boolean): Unit = {

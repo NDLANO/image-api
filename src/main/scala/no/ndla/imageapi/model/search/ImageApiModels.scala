@@ -17,14 +17,18 @@ case class SearchableLanguageValues(languageValues: Seq[LanguageValue[String]])
 
 case class SearchableLanguageList(languageValues: Seq[LanguageValue[Seq[String]]])
 
-case class SearchableImage(id: Long,
-                           titles: SearchableLanguageValues,
-                           alttexts: SearchableLanguageValues,
-                           captions: SearchableLanguageValues,
-                           tags: SearchableLanguageList,
-                           contributors: Seq[String],
-                           license: String,
-                           imageSize: Long,
-                           previewUrl: String,
-                           lastUpdated: Date,
-                           defaultTitle: Option[String])
+case class SearchableImage(
+    id: Long,
+    titles: SearchableLanguageValues,
+    alttexts: SearchableLanguageValues,
+    captions: SearchableLanguageValues,
+    tags: SearchableLanguageList,
+    contributors: Seq[String],
+    license: String,
+    imageSize: Long,
+    previewUrl: String,
+    lastUpdated: Date,
+    defaultTitle: Option[String],
+    modelReleased: Option[String],
+    editorNotes: Seq[String]
+)

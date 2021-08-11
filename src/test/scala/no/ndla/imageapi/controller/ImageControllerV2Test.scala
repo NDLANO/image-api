@@ -43,6 +43,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
   implicit val swagger: ImageSwagger = new ImageSwagger
   override val converterService = new ConverterService
+  override val authRole = new AuthRole
   lazy val controller = new ImageControllerV2
   addServlet(controller, "/*")
 
@@ -110,10 +111,12 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       "http://image-api.ndla-local/image-api/raw/4",
       "http://image-api.ndla-local/image-api/v2/images/4",
       "by-sa",
-      Seq("nb")
+      Seq("nb"),
+      Some("yes"),
+      None
     )
     val expectedBody =
-      """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"]}]}"""
+      """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"],"modelRelease":"yes"}]}"""
     val domainSearchResult = domain.SearchResult(1, Some(1), 10, "nb", List(imageSummary), None)
     val apiSearchResult = api.SearchResult(1, Some(1), 10, "nb", List(imageSummary))
     when(imageSearchService.matchingQuery(any[SearchSettings])).thenReturn(Success(domainSearchResult))

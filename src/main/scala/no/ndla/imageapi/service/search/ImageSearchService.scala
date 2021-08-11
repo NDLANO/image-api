@@ -16,6 +16,7 @@ import com.sksamuel.elastic4s.searches.sort.{FieldSort, SortOrder}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.ImageApiProperties.{ElasticSearchIndexMaxResultWindow, ElasticSearchScrollKeepAlive}
+import no.ndla.imageapi.auth.Role
 import no.ndla.imageapi.integration.Elastic4sClient
 import no.ndla.imageapi.model.{Language, ResultWindowTooLargeException}
 import no.ndla.imageapi.model.api.{Error, ImageMetaSummary}
@@ -28,7 +29,7 @@ import org.json4s.Formats
 import scala.util.{Failure, Success, Try}
 
 trait ImageSearchService {
-  this: Elastic4sClient with ImageIndexService with SearchService with SearchConverterService =>
+  this: Elastic4sClient with ImageIndexService with SearchService with SearchConverterService with Role =>
   val imageSearchService: ImageSearchService
 
   class ImageSearchService extends LazyLogging with SearchService[ImageMetaSummary] {
@@ -71,27 +72,29 @@ trait ImageSearchService {
 
     def matchingQuery(settings: SearchSettings): Try[SearchResult[ImageMetaSummary]] = {
       val fullSearch = settings.query match {
+        case None => boolQuery()
         case Some(query) =>
           val language = settings.language match {
             case Some(lang) if ISO639.languagePriority.contains(lang) => lang
             case _                                                    => "*"
           }
 
-          boolQuery()
-            .must(
-              boolQuery()
-                .should(
-                  simpleStringQuery(query).field(s"titles.$language", 2),
-                  simpleStringQuery(query).field(s"alttexts.$language", 1),
-                  simpleStringQuery(query).field(s"caption.$language", 2),
-                  simpleStringQuery(query).field(s"tags.$language", 2),
-                  simpleStringQuery(query).field("contributors", 1),
-                  idsQuery(query)
-                )
-            )
-        case None => boolQuery()
-      }
+          val queries = Seq(
+            simpleStringQuery(query).field(s"titles.$language", 2),
+            simpleStringQuery(query).field(s"alttexts.$language", 1),
+            simpleStringQuery(query).field(s"caption.$language", 2),
+            simpleStringQuery(query).field(s"tags.$language", 2),
+            simpleStringQuery(query).field("contributors", 1),
+            idsQuery(query)
+          )
 
+          val maybeNoteQuery = Option.when(authRole.userHasWriteRole()) {
+            simpleStringQuery(query).field("editorNotes", 1)
+          }
+
+          val flattenedQueries = Seq(maybeNoteQuery, queries).flatten
+          boolQuery().must(boolQuery().should(flattenedQueries))
+      }
       executeSearch(fullSearch, settings)
     }
 
