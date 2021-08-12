@@ -9,5 +9,6 @@ case class SearchSettings(
     page: Option[Int],
     pageSize: Option[Int],
     includeCopyrighted: Boolean,
-    shouldScroll: Boolean
+    shouldScroll: Boolean,
+    modelReleased: Seq[ModelReleasedStatus.Value]
 )

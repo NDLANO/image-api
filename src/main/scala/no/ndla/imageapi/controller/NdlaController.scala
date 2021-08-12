@@ -135,6 +135,13 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     paramOrNone(paramName).getOrElse(default)
   }
 
+  def paramAsListOfString(paramName: String)(implicit request: HttpServletRequest): List[String] = {
+    params.get(paramName).filter(_.nonEmpty) match {
+      case None        => List.empty
+      case Some(param) => param.split(",").toList.map(_.trim)
+    }
+  }
+
   def intOrDefault(paramName: String, default: Int): Int = intOrNone(paramName).getOrElse(default)
 
   def doubleInRange(paramName: String, from: Int, to: Int)(implicit request: HttpServletRequest): Option[Double] = {

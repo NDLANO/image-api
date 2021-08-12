@@ -10,7 +10,7 @@ package no.ndla.imageapi.service
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
-import no.ndla.imageapi.auth.User
+import no.ndla.imageapi.auth.{Role, User}
 import no.ndla.imageapi.model.Language._
 import no.ndla.imageapi.model.{api, domain}
 import no.ndla.network.ApplicationUrl
@@ -18,10 +18,13 @@ import io.lemonlabs.uri.{Uri, Url, UrlPath}
 import io.lemonlabs.uri.dsl._
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import no.ndla.imageapi.integration.DraftApiClient
+import no.ndla.imageapi.model.domain.ModelReleasedStatus
 import no.ndla.mapping.License.getLicense
 
+import scala.util.{Failure, Success, Try}
+
 trait ConverterService {
-  this: User with Clock with DraftApiClient =>
+  this: User with Role with Clock with DraftApiClient =>
   val converterService: ConverterService
 
   class ConverterService extends LazyLogging {
@@ -66,6 +69,10 @@ trait ConverterService {
                                Some(ImageApiProperties.RawImageUrlBase))
     }
 
+    private def asApiEditorNotes(notes: Seq[domain.EditorNote]): Seq[api.EditorNote] = {
+      notes.map(n => api.EditorNote(n.timeStamp, n.updatedBy, n.note))
+    }
+
     private[service] def asImageMetaInformationV2(imageMeta: domain.ImageMetaInformation,
                                                   language: Option[String],
                                                   baseUrl: String,
@@ -85,18 +92,24 @@ trait ConverterService {
 
       val apiUrl = asApiUrl(imageMeta.imageUrl, rawBaseUrl)
 
+      val editorNotes = Option.when(authRole.userHasWriteRole())(asApiEditorNotes(imageMeta.editorNotes))
+
       api.ImageMetaInformationV2(
         imageMeta.id.get.toString,
         baseUrl + imageMeta.id.get,
         title,
         alttext,
-        asApiUrl(imageMeta.imageUrl, rawBaseUrl),
+        apiUrl,
         imageMeta.size,
         imageMeta.contentType,
         withAgreementCopyright(asApiCopyright(imageMeta.copyright)),
         tags,
         caption,
-        getSupportedLanguages(imageMeta)
+        getSupportedLanguages(imageMeta),
+        imageMeta.created,
+        imageMeta.createdBy,
+        imageMeta.modelReleased.toString,
+        editorNotes
       )
     }
 
@@ -160,20 +173,34 @@ trait ConverterService {
     }
 
     def asDomainImageMetaInformationV2(imageMeta: api.NewImageMetaInformationV2,
-                                       image: domain.Image): domain.ImageMetaInformation = {
-      domain.ImageMetaInformation(
-        id = None,
-        titles = Seq(asDomainTitle(imageMeta.title, imageMeta.language)),
-        alttexts = Seq(asDomainAltText(imageMeta.alttext, imageMeta.language)),
-        imageUrl = Uri.parse(image.fileName).toString,
-        size = image.size,
-        contentType = image.contentType,
-        copyright = toDomainCopyright(imageMeta.copyright),
-        tags = if (imageMeta.tags.nonEmpty) Seq(toDomainTag(imageMeta.tags, imageMeta.language)) else Seq.empty,
-        captions = Seq(domain.ImageCaption(imageMeta.caption, imageMeta.language)),
-        updatedBy = authUser.userOrClientid(),
-        updated = clock.now()
-      )
+                                       image: domain.Image): Try[domain.ImageMetaInformation] = {
+      val modelReleasedStatus = imageMeta.modelReleased match {
+        case Some(mrs) => ModelReleasedStatus.valueOfOrError(mrs)
+        case None      => Success(ModelReleasedStatus.NO)
+      }
+
+      modelReleasedStatus.map(modelStatus => {
+        val now = clock.now()
+        val user = authUser.userOrClientid()
+
+        domain.ImageMetaInformation(
+          id = None,
+          titles = Seq(asDomainTitle(imageMeta.title, imageMeta.language)),
+          alttexts = Seq(asDomainAltText(imageMeta.alttext, imageMeta.language)),
+          imageUrl = Uri.parse(image.fileName).toString,
+          size = image.size,
+          contentType = image.contentType,
+          copyright = toDomainCopyright(imageMeta.copyright),
+          tags = if (imageMeta.tags.nonEmpty) Seq(toDomainTag(imageMeta.tags, imageMeta.language)) else Seq.empty,
+          captions = Seq(domain.ImageCaption(imageMeta.caption, imageMeta.language)),
+          updatedBy = user,
+          createdBy = user,
+          created = now,
+          updated = now,
+          modelReleased = modelStatus,
+          editorNotes = Seq(domain.EditorNote(now, user, "Image created."))
+        )
+      })
     }
 
     def asDomainTitle(title: String, language: String): domain.ImageTitle = {

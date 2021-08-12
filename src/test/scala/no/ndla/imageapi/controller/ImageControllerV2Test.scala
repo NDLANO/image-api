@@ -43,6 +43,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
 
   implicit val swagger: ImageSwagger = new ImageSwagger
   override val converterService = new ConverterService
+  override val authRole = new AuthRole
   lazy val controller = new ImageControllerV2
   addServlet(controller, "/*")
 
@@ -110,10 +111,12 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       "http://image-api.ndla-local/image-api/raw/4",
       "http://image-api.ndla-local/image-api/v2/images/4",
       "by-sa",
-      Seq("nb")
+      Seq("nb"),
+      Some("yes"),
+      None
     )
     val expectedBody =
-      """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"]}]}"""
+      """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"],"modelRelease":"yes"}]}"""
     val domainSearchResult = domain.SearchResult(1, Some(1), 10, "nb", List(imageSummary), None)
     val apiSearchResult = api.SearchResult(1, Some(1), 10, "nb", List(imageSummary))
     when(imageSearchService.matchingQuery(any[SearchSettings])).thenReturn(Success(domainSearchResult))
@@ -135,7 +138,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     implicit val formats: DefaultFormats.type = DefaultFormats
     val testUrl = "http://test.test/1"
     val expectedBody =
-      s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"CC-BY-NC-SA-4.0","description":"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International","url":"https://creativecommons.org/licenses/by-nc-sa/4.0/"},"origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
+      s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"created":"2017-04-01T12:15:32Z","createdBy":"ndla124","modelRelease":"yes","alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"CC-BY-NC-SA-4.0","description":"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International","url":"https://creativecommons.org/licenses/by-nc-sa/4.0/"},"origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
     val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
     when(readService.withId(1, None)).thenReturn(Option(expectedObject))
 
@@ -150,7 +153,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     implicit val formats: DefaultFormats.type = DefaultFormats
     val testUrl = "http://test.test/1"
     val expectedBody =
-      s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"gnu","description":"gnuggert","url":"https://gnuli/"},"agreementId": 1,"origin":"http://www.scanpix.no","creators":[{"type":"Forfatter","name":"Knutulf Knagsen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
+      s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"created":"2017-04-01T12:15:32Z","createdBy":"ndla124","modelRelease":"yes","alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"gnu","description":"gnuggert","url":"https://gnuli/"},"agreementId": 1,"origin":"http://www.scanpix.no","creators":[{"type":"Forfatter","name":"Knutulf Knagsen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
     val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
 
     when(readService.withId(1, None)).thenReturn(Option(expectedObject))
@@ -166,7 +169,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     implicit val formats: DefaultFormats.type = DefaultFormats
     val testUrl = "http://test.test/1"
     val expectedBody =
-      s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"CC-BY-NC-SA-4.0","description":"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International","url":"https://creativecommons.org/licenses/by-nc-sa/4.0/"}, "agreementId":1, "origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
+      s"""{"id":"1","metaUrl":"$testUrl","title":{"title":"Elg i busk","language":"nb"},"created":"2017-04-01T12:15:32Z","createdBy":"ndla124","modelRelease":"yes","alttext":{"alttext":"Elg i busk","language":"nb"},"imageUrl":"$testUrl","size":2865539,"contentType":"image/jpeg","copyright":{"license":{"license":"CC-BY-NC-SA-4.0","description":"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International","url":"https://creativecommons.org/licenses/by-nc-sa/4.0/"}, "agreementId":1, "origin":"http://www.scanpix.no","creators":[{"type":"Fotograf","name":"Test Testesen"}],"processors":[{"type":"Redaksjonelt","name":"Kåre Knegg"}],"rightsholders":[{"type":"Leverandør","name":"Leverans Leveransensen"}]},"tags":{"tags":["rovdyr","elg"],"language":"nb"},"caption":{"caption":"Elg i busk","language":"nb"},"supportedLanguages":["nb"]}"""
     val expectedObject = JsonParser.parse(expectedBody).extract[api.ImageMetaInformationV2]
 
     when(readService.withId(1, None)).thenReturn(Option(expectedObject))
@@ -197,17 +200,23 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
     val tags: Seq[ImageTag] = Seq()
     val captions: Seq[ImageCaption] = Seq()
 
-    val sampleImageMeta = ImageMetaInformation(Some(1),
-                                               titles,
-                                               alttexts,
-                                               "http://some.url/img.jpg",
-                                               1024,
-                                               "image/jpeg",
-                                               copyright,
-                                               tags,
-                                               captions,
-                                               "updatedBy",
-                                               new Date())
+    val sampleImageMeta = ImageMetaInformation(
+      Some(1),
+      titles,
+      alttexts,
+      "http://some.url/img.jpg",
+      1024,
+      "image/jpeg",
+      copyright,
+      tags,
+      captions,
+      "updatedBy",
+      new Date(),
+      new Date(),
+      "createdBy",
+      ModelReleasedStatus.YES,
+      Seq.empty
+    )
 
     when(writeService.storeNewImage(any[NewImageMetaInformationV2], any[FileItem])).thenReturn(Success(sampleImageMeta))
 

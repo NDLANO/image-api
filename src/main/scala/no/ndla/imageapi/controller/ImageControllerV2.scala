@@ -22,7 +22,7 @@ import no.ndla.imageapi.model.api.{
   UpdateImageMetaInformation,
   ValidationError
 }
-import no.ndla.imageapi.model.domain.{SearchSettings, Sort}
+import no.ndla.imageapi.model.domain.{ImageMetaInformation, ModelReleasedStatus, SearchSettings, Sort}
 import no.ndla.imageapi.model.{Language, ValidationException}
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{ImageSearchService, SearchConverterService, SearchService}
@@ -54,7 +54,7 @@ trait ImageControllerV2 {
       with FileUploadSupport {
     // Swagger-stuff
     protected val applicationDescription = "Services for accessing images from NDLA"
-    protected implicit override val jsonFormats: Formats = DefaultFormats
+    protected implicit override val jsonFormats: Formats = ImageMetaInformation.jsonEncoder
 
     // Additional models used in error responses
     registerModel[ValidationError]()
@@ -114,6 +114,12 @@ trait ImageControllerV2 {
          |""".stripMargin
     )
 
+    private val modelReleased = Param[Option[Seq[String]]](
+      "model-released",
+      s"Filter whether the image(s) should be model-released or not. Multiple values can be specified in a comma separated list. Possible values include: ${ModelReleasedStatus.values
+        .mkString(",")}"
+    )
+
     private def asQueryParam[T: Manifest: NotNothing](param: Param[T]) =
       queryParam[T](param.paramName).description(param.description)
     private def asHeaderParam[T: Manifest: NotNothing](param: Param[T]) =
@@ -168,7 +174,8 @@ trait ImageControllerV2 {
         pageSize: Option[Int],
         page: Option[Int],
         includeCopyrighted: Boolean,
-        shouldScroll: Boolean
+        shouldScroll: Boolean,
+        modelReleasedStatus: Seq[ModelReleasedStatus.Value]
     ) = {
       val settings = query match {
         case Some(searchString) =>
@@ -181,7 +188,8 @@ trait ImageControllerV2 {
             page = page,
             pageSize = pageSize,
             includeCopyrighted = includeCopyrighted,
-            shouldScroll = shouldScroll
+            shouldScroll = shouldScroll,
+            modelReleased = modelReleasedStatus
           )
         case None =>
           SearchSettings(
@@ -193,7 +201,8 @@ trait ImageControllerV2 {
             page = page,
             pageSize = pageSize,
             includeCopyrighted = includeCopyrighted,
-            shouldScroll = shouldScroll
+            shouldScroll = shouldScroll,
+            modelReleased = modelReleasedStatus
           )
       }
 
@@ -221,7 +230,8 @@ trait ImageControllerV2 {
             asQueryParam(sort),
             asQueryParam(pageNo),
             asQueryParam(pageSize),
-            asQueryParam(scrollId)
+            asQueryParam(scrollId),
+            asQueryParam(modelReleased)
           )
           .responseMessages(response500)
       )
@@ -238,8 +248,21 @@ trait ImageControllerV2 {
         val sort = Sort.valueOf(paramOrDefault(this.sort.paramName, ""))
         val includeCopyrighted = booleanOrDefault(this.includeCopyrighted.paramName, default = false)
         val shouldScroll = paramOrNone(this.scrollId.paramName).exists(InitialScrollContextKeywords.contains)
+        val modelReleasedStatus =
+          paramAsListOfString(this.modelReleased.paramName).map(ModelReleasedStatus.valueOf).flatten
 
-        search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted, shouldScroll)
+        search(
+          minimumSize,
+          query,
+          language,
+          license,
+          sort,
+          pageSize,
+          page,
+          includeCopyrighted,
+          shouldScroll,
+          modelReleasedStatus
+        )
       }
     }
 
@@ -269,8 +292,21 @@ trait ImageControllerV2 {
         val sort = Sort.valueOf(searchParams.sort)
         val includeCopyrighted = searchParams.includeCopyrighted.getOrElse(false)
         val shouldScroll = searchParams.scrollId.exists(InitialScrollContextKeywords.contains)
+        val modelReleasedStatus =
+          searchParams.modelReleased.getOrElse(Seq.empty).map(ModelReleasedStatus.valueOf).flatten
 
-        search(minimumSize, query, language, license, sort, pageSize, page, includeCopyrighted, shouldScroll)
+        search(
+          minimumSize,
+          query,
+          language,
+          license,
+          sort,
+          pageSize,
+          page,
+          includeCopyrighted,
+          shouldScroll,
+          modelReleasedStatus
+        )
       }
     }
 

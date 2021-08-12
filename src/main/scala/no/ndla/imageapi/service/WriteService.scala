@@ -12,7 +12,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties.DefaultLanguage
 import no.ndla.imageapi.auth.User
 import no.ndla.imageapi.model.api.{ImageMetaInformationV2, NewImageMetaInformationV2, UpdateImageMetaInformation}
-import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, LanguageField}
+import no.ndla.imageapi.model.domain.{Image, ImageMetaInformation, LanguageField, ModelReleasedStatus}
 import no.ndla.imageapi.model._
 import no.ndla.imageapi.repository.ImageRepository
 import no.ndla.imageapi.service.search.{ImageIndexService, TagIndexService}
@@ -80,7 +80,7 @@ trait WriteService {
         case _                       =>
       }
 
-      val domainImage = uploadImage(file).map(uploadedImage =>
+      val domainImage = uploadImage(file).flatMap(uploadedImage =>
         converterService.asDomainImageMetaInformationV2(newImage, uploadedImage)) match {
         case Failure(e)     => return Failure(e)
         case Success(image) => image
@@ -124,6 +124,8 @@ trait WriteService {
       val now = clock.now()
       val userId = authUser.userOrClientid()
 
+      val newEditorNote = domain.EditorNote(now, userId, "Image updated.")
+
       existing.copy(
         titles = mergeLanguageFields(existing.titles,
                                      toMerge.title.toSeq.map(t => converterService.asDomainTitle(t, toMerge.language))),
@@ -136,7 +138,9 @@ trait WriteService {
           mergeLanguageFields(existing.captions,
                               toMerge.caption.toSeq.map(c => converterService.toDomainCaption(c, toMerge.language))),
         updated = now,
-        updatedBy = userId
+        updatedBy = userId,
+        modelReleased = toMerge.modelReleased.flatMap(ModelReleasedStatus.valueOf).getOrElse(existing.modelReleased),
+        editorNotes = existing.editorNotes :+ newEditorNote
       )
     }
 

@@ -88,7 +88,11 @@ class ImageSearchServiceTest
     List(ImageTag(List("fugl"), "nb")),
     List(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.NO,
+    Seq.empty
   )
 
   val image2 = ImageMetaInformation(
@@ -102,7 +106,11 @@ class ImageSearchServiceTest
     List(ImageTag(List("fugl"), "nb")),
     List(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.NOT_APPLICABLE,
+    Seq(EditorNote(new Date(), "someone", "Lillehjelper"))
   )
 
   val image3 = ImageMetaInformation(
@@ -116,7 +124,11 @@ class ImageSearchServiceTest
     List(ImageTag(List("and"), "nb")),
     List(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val image4 = ImageMetaInformation(
@@ -130,7 +142,11 @@ class ImageSearchServiceTest
     Seq(),
     Seq(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val image5 = ImageMetaInformation(
@@ -146,7 +162,11 @@ class ImageSearchServiceTest
     Seq(),
     Seq(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   override def beforeAll(): Unit = {
@@ -169,6 +189,7 @@ class ImageSearchServiceTest
       when(servletRequest.getHeader(any[String])).thenReturn("http")
       when(servletRequest.getServerName).thenReturn("localhost")
       when(servletRequest.getServletPath).thenReturn("/image-api/v2/images/")
+      when(authRole.userHasWriteRole()).thenReturn(false)
       ApplicationUrl.set(servletRequest)
 
       blockUntil(() => imageSearchService.countDocuments() == 5)
@@ -437,6 +458,80 @@ class ImageSearchServiceTest
     scroll1.results.map(_.id) should be(expectedIds(1))
     scroll2.results.map(_.id) should be(expectedIds(2))
     scroll3.results.map(_.id) should be(List.empty)
+  }
+
+  test("That title search works as expected, and doesn't crash in combination with language") {
+    val Success(searchResult1) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("nb"),
+        sort = Sort.ByTitleDesc
+      ))
+
+    searchResult1.results.map(_.id) should be(Seq("2", "3", "1"))
+  }
+
+  test("That searching for notes only works for editors") {
+    when(authRole.userHasWriteRole()).thenReturn(false)
+    val Success(searchResult1) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        query = Some("lillehjelper"),
+        language = Some("all"),
+      ))
+
+    searchResult1.results.map(_.id) should be(Seq())
+
+    when(authRole.userHasWriteRole()).thenReturn(true)
+    val Success(searchResult2) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        query = Some("lillehjelper"),
+        language = Some("all"),
+      ))
+
+    searchResult2.results.map(_.id) should be(Seq("2"))
+  }
+
+  test("That filtering for modelReleased works as expected") {
+    import ModelReleasedStatus._
+    val Success(searchResult1) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("all"),
+        modelReleased = Seq(NO)
+      ))
+
+    searchResult1.results.map(_.id) should be(Seq("1"))
+
+    val Success(searchResult2) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("all"),
+        modelReleased = Seq(NOT_APPLICABLE)
+      ))
+
+    searchResult2.results.map(_.id) should be(Seq("2"))
+
+    val Success(searchResult3) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("all"),
+        modelReleased = Seq(YES)
+      ))
+
+    searchResult3.results.map(_.id) should be(Seq("3", "4", "5"))
+
+    val Success(searchResult4) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("all"),
+        modelReleased = Seq.empty
+      ))
+
+    searchResult4.results.map(_.id) should be(Seq("1", "2", "3", "4", "5"))
+
+    val Success(searchResult5) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("all"),
+        modelReleased = Seq(NO, NOT_APPLICABLE)
+      ))
+
+    searchResult5.results.map(_.id) should be(Seq("1", "2"))
+
   }
 
   def blockUntil(predicate: () => Boolean): Unit = {

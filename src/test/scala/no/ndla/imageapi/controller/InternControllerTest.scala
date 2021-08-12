@@ -9,6 +9,7 @@
 package no.ndla.imageapi.controller
 
 import no.ndla.imageapi.model.api.{ImageAltText, ImageCaption, ImageTag, ImageTitle}
+import no.ndla.imageapi.model.domain.ModelReleasedStatus
 import no.ndla.imageapi.model.{ImageStorageException, api, domain}
 import no.ndla.imageapi.{ImageApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.{CC_BY, getLicense}
@@ -18,6 +19,7 @@ import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatra.test.scalatest.ScalatraSuite
 
+import java.util.Date
 import scala.util.{Failure, Success}
 
 class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnvironment {
@@ -47,7 +49,11 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
                   None),
     ImageTag(Seq.empty, "nb"),
     ImageCaption("", "nb"),
-    Seq()
+    Seq(),
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES.toString,
+    None
   )
 
   val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(
@@ -61,7 +67,11 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
     List(),
     List(),
     "ndla124",
-    updated
+    updated,
+    updated,
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   override def beforeEach() = {

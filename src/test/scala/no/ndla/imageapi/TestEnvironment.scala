@@ -85,5 +85,5 @@ trait TestEnvironment
 
   val clock = mock[SystemClock]
   val authUser = mock[AuthUser]
-  val authRole = new AuthRole
+  val authRole = mock[AuthRole]
 }

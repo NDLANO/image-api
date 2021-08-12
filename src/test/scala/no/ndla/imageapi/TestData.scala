@@ -24,6 +24,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 object TestData {
 
   def updated() = (new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC)).toDate
+  "2017"
 
   val ByNcSa = mapping.License.CC_BY_NC_SA.toString
 
@@ -47,7 +48,11 @@ object TestData {
     List(ImageTag(List("rovdyr", "elg"), "nb")),
     List(ImageCaption("Elg i busk", "nb")),
     "ndla124",
-    updated()
+    updated(),
+    updated(),
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val apiElg = api.ImageMetaInformationV2(
@@ -72,7 +77,11 @@ object TestData {
     ),
     api.ImageTag(List("rovdyr", "elg"), "nb"),
     api.ImageCaption("Elg i busk", "nb"),
-    List("nb")
+    List("nb"),
+    updated(),
+    "ndla123",
+    ModelReleasedStatus.YES.toString,
+    None
   )
 
   val bjorn = ImageMetaInformation(
@@ -93,7 +102,11 @@ object TestData {
     List(ImageTag(List("rovdyr", "bjørn"), "nb")),
     List(ImageCaption("Bjørn i busk", "nb")),
     "ndla124",
-    updated()
+    updated(),
+    updated(),
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val jerv = ImageMetaInformation(
@@ -114,7 +127,11 @@ object TestData {
     List(ImageTag(List("rovdyr", "jerv"), "nb")),
     List(ImageCaption("Jerv på stein", "nb")),
     "ndla124",
-    updated()
+    updated(),
+    updated(),
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val mink = ImageMetaInformation(
@@ -135,7 +152,11 @@ object TestData {
     List(ImageTag(List("rovdyr", "mink"), "nb")),
     List(ImageCaption("Overrasket mink", "nb")),
     "ndla124",
-    updated()
+    updated(),
+    updated(),
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val rein = ImageMetaInformation(
@@ -156,7 +177,11 @@ object TestData {
     List(ImageTag(List("rovdyr", "rein", "jakt"), "nb")),
     List(ImageCaption("Rein har fanget rødtopp", "nb")),
     "ndla124",
-    updated()
+    updated(),
+    updated(),
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val nonexisting = ImageMetaInformation(
@@ -177,7 +202,11 @@ object TestData {
     List(ImageTag(List("rovdyr", "krokodille"), "nb")),
     List(ImageCaption("Krokodille på krok", "nb")),
     "ndla124",
-    updated()
+    updated(),
+    updated(),
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val nonexistingWithoutThumb = ImageMetaInformation(
@@ -198,7 +227,11 @@ object TestData {
     List(ImageTag(List("bison"), "nb")),
     List(ImageCaption("Bison på sletten", "nb")),
     "ndla124",
-    updated()
+    updated(),
+    updated(),
+    "ndla124",
+    ModelReleasedStatus.YES,
+    Seq.empty
   )
 
   val testdata = List(elg, bjorn, jerv, mink, rein)
@@ -228,6 +261,7 @@ object TestData {
     page = None,
     pageSize = None,
     includeCopyrighted = false,
-    shouldScroll = false
+    shouldScroll = false,
+    modelReleased = Seq.empty
   )
 }
