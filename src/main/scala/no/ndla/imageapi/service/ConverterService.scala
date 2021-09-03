@@ -176,7 +176,7 @@ trait ConverterService {
                                        image: domain.Image): Try[domain.ImageMetaInformation] = {
       val modelReleasedStatus = imageMeta.modelReleased match {
         case Some(mrs) => ModelReleasedStatus.valueOfOrError(mrs)
-        case None      => Success(ModelReleasedStatus.NO)
+        case None      => Success(ModelReleasedStatus.NOT_SET)
       }
 
       modelReleasedStatus.map(modelStatus => {
