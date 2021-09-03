@@ -48,6 +48,7 @@ object ModelReleasedStatus extends Enumeration {
   val YES = Value("yes")
   val NO = Value("no")
   val NOT_APPLICABLE = Value("not-applicable")
+  val NOT_SET = Value("not-set")
 
   def valueOfOrError(s: String): Try[this.Value] =
     valueOf(s) match {
