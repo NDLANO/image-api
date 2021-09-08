@@ -165,10 +165,14 @@ trait ConverterService {
     }
 
     def withNewImage(imageMeta: domain.ImageMetaInformation, image: domain.Image) = {
+      val user = authUser.userOrClientid()
+      val now = clock.now()
+      val newNote = domain.EditorNote(now, user, "Updated image file.")
       imageMeta.copy(
         imageUrl = Uri.parse(image.fileName).toString,
         size = image.size,
-        contentType = image.contentType
+        contentType = image.contentType,
+        editorNotes = imageMeta.editorNotes :+ newNote
       )
     }
 
@@ -237,13 +241,19 @@ trait ConverterService {
     }
 
     def withoutLanguage(domainMetaInformation: domain.ImageMetaInformation,
-                        languageToRemove: String): domain.ImageMetaInformation =
+                        languageToRemove: String): domain.ImageMetaInformation = {
+      val now = clock.now()
+      val userId = authUser.userOrClientid()
       domainMetaInformation.copy(
         titles = domainMetaInformation.titles.filterNot(_.language == languageToRemove),
         alttexts = domainMetaInformation.alttexts.filterNot(_.language == languageToRemove),
         tags = domainMetaInformation.tags.filterNot(_.language == languageToRemove),
         captions = domainMetaInformation.captions.filterNot(_.language == languageToRemove),
+        editorNotes = domainMetaInformation.editorNotes :+ domain.EditorNote(now,
+                                                                             userId,
+                                                                             s"Deleted language '$languageToRemove'.")
       )
+    }
 
     def getSupportedLanguages(domainImageMetaInformation: domain.ImageMetaInformation): Seq[String] = {
       findSupportedLanguages(

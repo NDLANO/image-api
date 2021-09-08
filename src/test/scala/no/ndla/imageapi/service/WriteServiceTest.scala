@@ -282,7 +282,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     val expectedResult = existing.copy(
       titles = List(existing.titles.head, domain.ImageTitle("Title", "en")),
       alttexts = List(existing.alttexts.head, domain.ImageAltText("AltText", "en")),
-      editorNotes = Seq(domain.EditorNote(date, user, "Image updated."))
+      editorNotes = Seq(domain.EditorNote(date, user, "Added new language 'en'."))
     )
 
     when(authUser.userOrClientid()).thenReturn(user)
@@ -391,10 +391,19 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     reset(imageIndexService)
     reset(tagIndexService)
 
+    val date = new Date()
+    val user = "ndla124"
+
+    when(authUser.userOrClientid()).thenReturn(user)
+    when(clock.now()).thenReturn(date)
+
     val imageId = 5555.toLong
     val image = multiLangImage.copy(id = Some(imageId))
     val expectedImage =
-      image.copy(titles = List(domain.ImageTitle("english", "en"), domain.ImageTitle("norsk", "unknown")))
+      image.copy(
+        titles = List(domain.ImageTitle("english", "en"), domain.ImageTitle("norsk", "unknown")),
+        editorNotes = image.editorNotes :+ domain.EditorNote(date, user, "Deleted language 'nn'.")
+      )
 
     when(imageRepository.withId(imageId)).thenReturn(Some(image))
     when(imageRepository.update(any[domain.ImageMetaInformation], eqTo(imageId))).thenAnswer((i: InvocationOnMock) =>

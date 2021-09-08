@@ -124,7 +124,11 @@ trait WriteService {
       val now = clock.now()
       val userId = authUser.userOrClientid()
 
-      val newEditorNote = domain.EditorNote(now, userId, "Image updated.")
+      val existingLanguages = converterService.getSupportedLanguages(existing)
+      val isNewLanguage = !existingLanguages.contains(toMerge.language)
+      val newEditorNote =
+        if (isNewLanguage) domain.EditorNote(now, userId, s"Added new language '${toMerge.language}'.")
+        else domain.EditorNote(now, userId, "Image updated.")
 
       existing.copy(
         titles = mergeLanguageFields(existing.titles,

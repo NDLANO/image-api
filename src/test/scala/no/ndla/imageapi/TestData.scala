@@ -24,7 +24,6 @@ import org.joda.time.{DateTime, DateTimeZone}
 object TestData {
 
   def updated() = (new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC)).toDate
-  "2017"
 
   val ByNcSa = mapping.License.CC_BY_NC_SA.toString
 
