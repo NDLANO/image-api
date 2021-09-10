@@ -20,6 +20,7 @@ import org.scalatra.servlet.FileItem
 
 import java.io.ByteArrayInputStream
 import java.lang.Math.max
+import java.util.Date
 import scala.util.{Failure, Random, Success, Try}
 
 trait WriteService {
@@ -119,18 +120,22 @@ trait WriteService {
       }
     }
 
+    private def hasChangedMetadata(lhs: domain.ImageMetaInformation, rhs: domain.ImageMetaInformation): Boolean = {
+      val withoutMetas = (i: domain.ImageMetaInformation) =>
+        i.copy(
+          updated = new Date(0),
+          updatedBy = ""
+      )
+
+      withoutMetas(lhs) != withoutMetas(rhs)
+    }
+
     private[service] def mergeImages(existing: ImageMetaInformation,
                                      toMerge: UpdateImageMetaInformation): domain.ImageMetaInformation = {
       val now = clock.now()
       val userId = authUser.userOrClientid()
 
-      val existingLanguages = converterService.getSupportedLanguages(existing)
-      val isNewLanguage = !existingLanguages.contains(toMerge.language)
-      val newEditorNote =
-        if (isNewLanguage) domain.EditorNote(now, userId, s"Added new language '${toMerge.language}'.")
-        else domain.EditorNote(now, userId, "Image updated.")
-
-      existing.copy(
+      val newImageMeta = existing.copy(
         titles = mergeLanguageFields(existing.titles,
                                      toMerge.title.toSeq.map(t => converterService.asDomainTitle(t, toMerge.language))),
         alttexts =
@@ -144,8 +149,19 @@ trait WriteService {
         updated = now,
         updatedBy = userId,
         modelReleased = toMerge.modelReleased.flatMap(ModelReleasedStatus.valueOf).getOrElse(existing.modelReleased),
-        editorNotes = existing.editorNotes :+ newEditorNote
       )
+
+      val existingLanguages = converterService.getSupportedLanguages(existing)
+      val isNewLanguage = !existingLanguages.contains(toMerge.language)
+      val newEditorNotes = {
+        if (isNewLanguage)
+          existing.editorNotes :+ domain.EditorNote(now, userId, s"Added new language '${toMerge.language}'.")
+        else if (hasChangedMetadata(existing, newImageMeta))
+          existing.editorNotes :+ domain.EditorNote(now, userId, "Updated image data.")
+        else existing.editorNotes
+      }
+
+      newImageMeta.copy(editorNotes = newEditorNotes)
     }
 
     private def mergeTags(existing: Seq[domain.ImageTag], updated: Seq[domain.ImageTag]): Seq[domain.ImageTag] = {
