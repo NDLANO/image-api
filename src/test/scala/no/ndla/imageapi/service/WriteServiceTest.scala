@@ -308,7 +308,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     val expectedResult = existing.copy(
       titles = List(domain.ImageTitle("Title", "nb")),
       alttexts = List(domain.ImageAltText("AltText", "nb")),
-      editorNotes = Seq(domain.EditorNote(date, user, "Image updated."))
+      editorNotes = Seq(domain.EditorNote(date, user, "Updated image data."))
     )
 
     when(authUser.userOrClientid()).thenReturn(user)
@@ -353,7 +353,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       tags = List(domain.ImageTag(List("a", "b", "c"), "nb")),
       captions = List(domain.ImageCaption("Caption", "nb")),
       modelReleased = ModelReleasedStatus.NO,
-      editorNotes = Seq(domain.EditorNote(date, "ndla124", "Image updated."))
+      editorNotes = Seq(domain.EditorNote(date, "ndla124", "Updated image data."))
     )
 
     when(authUser.userOrClientid()).thenReturn(user)
