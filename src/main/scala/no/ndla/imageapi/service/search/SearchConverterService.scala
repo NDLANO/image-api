@@ -75,14 +75,14 @@ trait SearchConverterService {
       )
     }
 
-    def asImageMetaSummary(searchableImage: SearchableImage, language: Option[String]): ImageMetaSummary = {
+    def asImageMetaSummary(searchableImage: SearchableImage, language: String): ImageMetaSummary = {
       val apiToRawRegex = "/v\\d+/images/".r
       val title = Language
-        .findByLanguageOrBestEffort(searchableImage.titles.languageValues, language)
+        .findByLanguageOrBestEffort(searchableImage.titles.languageValues, Some(language))
         .map(res => ImageTitle(res.value, res.language))
         .getOrElse(ImageTitle("", DefaultLanguage))
       val altText = Language
-        .findByLanguageOrBestEffort(searchableImage.alttexts.languageValues, language)
+        .findByLanguageOrBestEffort(searchableImage.alttexts.languageValues, Some(language))
         .map(res => ImageAltText(res.value, res.language))
         .getOrElse(ImageAltText("", DefaultLanguage))
 
