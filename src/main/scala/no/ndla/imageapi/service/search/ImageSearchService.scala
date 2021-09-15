@@ -39,7 +39,7 @@ trait ImageSearchService {
     override val searchIndex = ImageApiProperties.SearchIndex
     override val indexService = imageIndexService
 
-    def hitToApiModel(hit: String, language: Option[String]): ImageMetaSummary = {
+    def hitToApiModel(hit: String, language: String): ImageMetaSummary = {
       implicit val formats: Formats = SearchableLanguageFormats.JSonFormats
       searchConverterService.asImageMetaSummary(read[SearchableImage](hit), language)
     }
@@ -113,8 +113,8 @@ trait ImageSearchService {
       }
 
       val (languageFilter, searchLanguage) = settings.language match {
-        case None | Some(Language.AllLanguages) => (None, "*")
-        case Some(lang)                         => (Some(existsQuery(s"titles.$lang")), lang)
+        case Some(lang) if Language.supportedLanguages.contains(lang) => (Some(existsQuery(s"titles.$lang")), lang)
+        case _                                                        => (None, "*")
       }
 
       val modelReleasedFilter = Option.when(settings.modelReleased.nonEmpty)(
@@ -154,7 +154,7 @@ trait ImageSearchService {
                 Some(settings.page.getOrElse(1)),
                 numResults,
                 if (searchLanguage == "*") Language.AllLanguages else searchLanguage,
-                getHits(response.result, settings.language),
+                getHits(response.result, searchLanguage),
                 response.result.scrollId
               ))
           case Failure(ex) => errorHandler(ex)

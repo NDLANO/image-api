@@ -30,7 +30,7 @@ trait SearchService {
     val searchIndex: String
     val indexService: IndexService[_, _]
 
-    def hitToApiModel(hit: String, language: Option[String]): T
+    def hitToApiModel(hit: String, language: String): T
 
     def scroll(scrollId: String, language: String): Try[SearchResult[T]] =
       e4sClient
@@ -38,7 +38,7 @@ trait SearchService {
           searchScroll(scrollId, ElasticSearchScrollKeepAlive)
         }
         .map(response => {
-          val hits = getHits(response.result, Some(language))
+          val hits = getHits(response.result, language)
           SearchResult(
             totalCount = response.result.totalHits,
             page = None,
@@ -65,14 +65,14 @@ trait SearchService {
       }
     }
 
-    def getHits(response: SearchResponse, language: Option[String]): Seq[T] = {
+    def getHits(response: SearchResponse, language: String): Seq[T] = {
       response.totalHits match {
         case count if count > 0 =>
           val resultArray = response.hits.hits.toList
           resultArray.map(result => {
             val matchedLanguage = language match {
-              case Some(Language.AllLanguages) | Some("*") | None =>
-                searchConverterService.getLanguageFromHit(result).orElse(language)
+              case Language.AllLanguages | "*" =>
+                searchConverterService.getLanguageFromHit(result).getOrElse(language)
               case _ => language
             }
 

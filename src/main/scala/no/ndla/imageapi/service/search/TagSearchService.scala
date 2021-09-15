@@ -36,17 +36,12 @@ trait TagSearchService {
     override val searchIndex: String = ImageApiProperties.TagSearchIndex
     override val indexService = tagIndexService
 
-    override def hitToApiModel(hit: String, language: Option[String]): String = {
+    override def hitToApiModel(hit: String, language: String): String = {
       val searchableTag = read[SearchableTag](hit)
       searchableTag.tag
     }
 
     override def getSortDefinition(sort: Sort.Value, language: String): FieldSort = {
-      val sortLanguage = language match {
-        case Language.NoLanguage | Language.AllLanguages => "*"
-        case _                                           => language
-      }
-
       sort match {
         case Sort.ByRelevanceAsc  => fieldSort("_score").sortOrder(SortOrder.Asc)
         case Sort.ByRelevanceDesc => fieldSort("_score").sortOrder(SortOrder.Desc)
@@ -93,10 +88,9 @@ trait TagSearchService {
     ): Try[SearchResult[String]] = {
 
       val (languageFilter, searchLanguage) = language match {
-        case "*" | Language.AllLanguages =>
-          (None, "*")
-        case lang =>
+        case lang if Language.supportedLanguages.contains(lang) =>
           (Some(termQuery("language", lang)), lang)
+        case _ => (None, "*")
       }
 
       val filters = List(languageFilter)
@@ -126,7 +120,7 @@ trait TagSearchService {
                 Some(page),
                 numResults,
                 if (language == "*") Language.AllLanguages else language,
-                getHits(response.result, Some(language)),
+                getHits(response.result, language),
                 response.result.scrollId
               ))
           case Failure(ex) =>
