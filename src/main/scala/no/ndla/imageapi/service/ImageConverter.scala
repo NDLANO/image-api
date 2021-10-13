@@ -81,13 +81,17 @@ trait ImageConverter {
 
     def resize(originalImage: ImageStream, targetWidth: Int, targetHeight: Int): Try[ImageStream] = {
       val sourceImage = originalImage.sourceImage
-      Try(Scalr.resize(sourceImage, min(targetWidth, sourceImage.getWidth), min(targetHeight, sourceImage.getHeight)))
+      val minWidth = min(targetWidth, sourceImage.getWidth)
+      val minHeight = min(targetHeight, sourceImage.getHeight)
+      val method = if (minWidth >= 600 && minWidth <= 1600) Scalr.Method.ULTRA_QUALITY else Scalr.Method.AUTOMATIC
+      Try(Scalr.resize(sourceImage, method, minWidth, minHeight))
         .map(resized => toImageStream(resized, originalImage))
     }
 
     private def resize(originalImage: ImageStream, mode: Mode, targetSize: Int): Try[ImageStream] = {
       val sourceImage = originalImage.sourceImage
-      Try(Scalr.resize(sourceImage, mode, targetSize)).map(resized => toImageStream(resized, originalImage))
+      val method = if (targetSize >= 600 && targetSize <= 1600) Scalr.Method.ULTRA_QUALITY else Scalr.Method.AUTOMATIC
+      Try(Scalr.resize(sourceImage, method, mode, targetSize)).map(resized => toImageStream(resized, originalImage))
     }
 
     def resizeWidth(originalImage: ImageStream, size: Int): Try[ImageStream] =
