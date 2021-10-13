@@ -92,6 +92,8 @@ object ImageApiProperties extends LazyLogging {
   val LicenseMappingCacheAgeInMs: Int = 1000 * 60 * 60 // 1 hour caching
 
   val MaxImageFileSizeBytes: Int = 1024 * 1024 * 40 // 40 MiB
+  val ImageScalingUltraMinSize: Int = 600
+  val ImageScalingUltraMaxSize: Int = 1440
 
   val MetaMaxConnections = 10
 
