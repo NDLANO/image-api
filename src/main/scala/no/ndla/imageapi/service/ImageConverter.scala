@@ -5,6 +5,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.lang.Math.{abs, max, min}
 import javax.imageio.ImageIO
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.model.domain.ImageStream
 import no.ndla.imageapi.model.{ValidationException, ValidationMessage}
 import org.imgscalr.Scalr
@@ -81,13 +82,23 @@ trait ImageConverter {
 
     def resize(originalImage: ImageStream, targetWidth: Int, targetHeight: Int): Try[ImageStream] = {
       val sourceImage = originalImage.sourceImage
-      Try(Scalr.resize(sourceImage, min(targetWidth, sourceImage.getWidth), min(targetHeight, sourceImage.getHeight)))
+      val minWidth = min(targetWidth, sourceImage.getWidth)
+      val minHeight = min(targetHeight, sourceImage.getHeight)
+      val method =
+        if (minWidth >= ImageApiProperties.ImageScalingUltraMinSize && minWidth <= ImageApiProperties.ImageScalingUltraMaxSize)
+          Scalr.Method.ULTRA_QUALITY
+        else Scalr.Method.AUTOMATIC
+      Try(Scalr.resize(sourceImage, method, minWidth, minHeight))
         .map(resized => toImageStream(resized, originalImage))
     }
 
     private def resize(originalImage: ImageStream, mode: Mode, targetSize: Int): Try[ImageStream] = {
       val sourceImage = originalImage.sourceImage
-      Try(Scalr.resize(sourceImage, mode, targetSize)).map(resized => toImageStream(resized, originalImage))
+      val method =
+        if (targetSize >= ImageApiProperties.ImageScalingUltraMinSize && targetSize <= ImageApiProperties.ImageScalingUltraMaxSize)
+          Scalr.Method.ULTRA_QUALITY
+        else Scalr.Method.AUTOMATIC
+      Try(Scalr.resize(sourceImage, method, mode, targetSize)).map(resized => toImageStream(resized, originalImage))
     }
 
     def resizeWidth(originalImage: ImageStream, size: Int): Try[ImageStream] =
