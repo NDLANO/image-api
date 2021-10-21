@@ -28,7 +28,6 @@ trait ImageRepository {
       sql"select count(*) from ${ImageMetaInformation.table}"
         .map(rs => rs.long("count"))
         .single()
-        .apply()
         .getOrElse(0)
 
     def withId(id: Long): Option[ImageMetaInformation] = {
@@ -42,7 +41,6 @@ trait ImageRepository {
       sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where metadata is not null order by random() limit 1"
         .map(ImageMetaInformation.fromResultSet(im))
         .single()
-        .apply()
     }
 
     def withExternalId(externalId: String): Option[ImageMetaInformation] = {
@@ -57,7 +55,7 @@ trait ImageRepository {
       dataObject.setValue(write(imageMeta))
 
       val imageId =
-        sql"insert into imagemetadata(metadata) values (${dataObject})".updateAndReturnGeneratedKey().apply()
+        sql"insert into imagemetadata(metadata) values (${dataObject})".updateAndReturnGeneratedKey()
       imageMeta.copy(id = Some(imageId))
     }
 
@@ -72,7 +70,6 @@ trait ImageRepository {
         val imageId =
           sql"insert into imagemetadata(external_id, metadata) values(${externalId}, ${dataObject})"
             .updateAndReturnGeneratedKey()
-            .apply()
         imageMetaInformation.copy(id = Some(imageId))
       }
     }
@@ -84,13 +81,13 @@ trait ImageRepository {
       dataObject.setValue(json)
 
       DB localTx { implicit session =>
-        sql"update imagemetadata set metadata = ${dataObject} where id = ${id}".update().apply()
+        sql"update imagemetadata set metadata = ${dataObject} where id = ${id}".update()
         imageMetaInformation.copy(id = Some(id))
       }
     }
 
     def delete(imageId: Long)(implicit session: DBSession = AutoSession) = {
-      sql"delete from imagemetadata where id = ${imageId}".update().apply()
+      sql"delete from imagemetadata where id = ${imageId}".update()
     }
 
     def minMaxId: (Long, Long) = {
@@ -99,8 +96,7 @@ trait ImageRepository {
           .map(rs => {
             (rs.long("mi"), rs.long("ma"))
           })
-          .single()
-          .apply() match {
+          .single() match {
           case Some(minmax) => minmax
           case None         => (0L, 0L)
         }
@@ -116,7 +112,6 @@ trait ImageRepository {
       sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause"
         .map(ImageMetaInformation.fromResultSet(im))
         .single()
-        .apply()
     }
 
     private def imageMetaInformationsWhere(whereClause: SQLSyntax)(
@@ -125,7 +120,6 @@ trait ImageRepository {
       sql"select ${im.result.*} from ${ImageMetaInformation.as(im)} where $whereClause"
         .map(ImageMetaInformation.fromResultSet(im))
         .list()
-        .apply()
     }
 
     private def escapeSQLWildcards(str: String): String = str.replace("%", "\\%")
@@ -141,7 +135,6 @@ trait ImageRepository {
         """
         .map(ImageMetaInformation.fromResultSet(im))
         .single()
-        .apply()
     }
 
     override def minMaxId(implicit session: DBSession = AutoSession): (Long, Long) = {
@@ -149,8 +142,7 @@ trait ImageRepository {
         .map(rs => {
           (rs.long("mi"), rs.long("ma"))
         })
-        .single()
-        .apply() match {
+        .single() match {
         case Some(minmax) => minmax
         case None         => (0L, 0L)
       }
@@ -168,7 +160,6 @@ trait ImageRepository {
       """
         .map(ImageMetaInformation.fromResultSet(im))
         .list()
-        .apply()
     }
 
   }

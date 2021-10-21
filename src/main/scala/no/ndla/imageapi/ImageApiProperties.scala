@@ -11,7 +11,6 @@ package no.ndla.imageapi
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.network.{AuthUser, Domains}
 import no.ndla.network.secrets.PropertyKeys
-import no.ndla.network.secrets.Secrets.readSecrets
 
 import scala.util.{Failure, Success}
 import scala.util.Properties._
@@ -126,24 +125,14 @@ object ImageApiProperties extends LazyLogging {
   val ImageApiUrlBase: String = Domain + ImageControllerPath + "/"
   val RawImageUrlBase: String = Domain + RawControllerPath
 
-  lazy val secrets: Map[String, Option[String]] = {
-    val SecretsFile = "image-api.secrets"
-    readSecrets(SecretsFile) match {
-      case Success(values) => values
-      case Failure(exception) =>
-        throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
-    }
-  }
-
   def prop(key: String): String = {
     propOrElse(key, throw new RuntimeException(s"Unable to load property $key"))
   }
 
   def propOrElse(key: String, default: => String): String = {
     propOrNone(key) match {
-      case Some(prop)            => prop
-      case None if !IsKubernetes => secrets.get(key).flatten.getOrElse(default)
-      case _                     => default
+      case Some(prop) => prop
+      case _          => default
     }
   }
 
