@@ -18,6 +18,7 @@ import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.model.domain.{SearchResult, Sort}
 import no.ndla.imageapi.model.search.SearchableTag
 import no.ndla.imageapi.model.{Language, ResultWindowTooLargeException}
+import no.ndla.language.model.LanguageTag
 import org.json4s._
 import org.json4s.native.Serialization.read
 
@@ -88,7 +89,7 @@ trait TagSearchService {
     ): Try[SearchResult[String]] = {
 
       val (languageFilter, searchLanguage) = language match {
-        case lang if Language.supportedLanguages.contains(lang) =>
+        case lang if Language.supportedLanguages.map(_.toString()).contains(lang) =>
           (Some(termQuery("language", lang)), lang)
         case _ => (None, "*")
       }

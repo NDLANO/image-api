@@ -57,13 +57,11 @@ trait IndexService {
           } yield numIndexed
 
           operations match {
-            case Failure(f) => {
+            case Failure(f) =>
               deleteIndexWithName(Some(indexName))
               Failure(f)
-            }
-            case Success(totalIndexed) => {
+            case Success(totalIndexed) =>
               Success(ReindexResult(totalIndexed, System.currentTimeMillis() - start))
-            }
           }
         })
       }
@@ -162,7 +160,7 @@ trait IndexService {
 
       response match {
         case Success(results) =>
-          Success(results.result.mappings.headOption.map((t) => t._1.name))
+          Success(results.result.mappings.headOption.map(t => t._1.name))
         case Failure(ex) => Failure(ex)
       }
     }
@@ -185,7 +183,7 @@ trait IndexService {
     def deleteIndexWithName(optIndexName: Option[String]): Try[_] = {
       optIndexName match {
         case None => Success(optIndexName)
-        case Some(indexName) => {
+        case Some(indexName) =>
           if (!indexWithNameExists(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))
           } else {
@@ -193,7 +191,6 @@ trait IndexService {
               deleteIndex(indexName)
             }
           }
-        }
       }
 
     }
@@ -237,17 +234,19 @@ trait IndexService {
       */
     protected def generateLanguageSupportedFieldList(fieldName: String,
                                                      keepRaw: Boolean = false): Seq[FieldDefinition] = {
-      keepRaw match {
-        case true =>
-          languageAnalyzers.map(
-            langAnalyzer =>
-              textField(s"$fieldName.${langAnalyzer.lang}")
-                .fielddata(false)
-                .analyzer(langAnalyzer.analyzer)
-                .fields(keywordField("raw")))
-        case false =>
-          languageAnalyzers.map(langAnalyzer =>
-            textField(s"$fieldName.${langAnalyzer.lang}").fielddata(false).analyzer(langAnalyzer.analyzer))
+      if (keepRaw) {
+        languageAnalyzers.map(
+          langAnalyzer =>
+            textField(s"$fieldName.${langAnalyzer.languageTag.toString()}")
+              .fielddata(false)
+              .analyzer(langAnalyzer.analyzer)
+              .fields(keywordField("raw")))
+      } else {
+        languageAnalyzers.map(
+          langAnalyzer =>
+            textField(s"$fieldName.${langAnalyzer.languageTag.toString()}")
+              .fielddata(false)
+              .analyzer(langAnalyzer.analyzer))
       }
     }
 

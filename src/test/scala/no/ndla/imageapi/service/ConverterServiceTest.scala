@@ -172,7 +172,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
   test("that asImageMetaInformationV2 properly") {
     val result1 = converterService.asImageMetaInformationV2(MultiLangImage, Some("nb"), "", None)
     result1.id should be("2")
-    result1.title.language should be("unknown")
+    result1.title.language should be("nn")
 
     val result2 = converterService.asImageMetaInformationV2(MultiLangImage, Some("en"), "", None)
     result2.id should be("2")
