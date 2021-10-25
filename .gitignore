@@ -10,3 +10,6 @@
 .metals/
 project/metals.sbt
 
+node_modules
+*.log
+typescript/build
