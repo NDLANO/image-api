@@ -16,7 +16,7 @@ import no.ndla.mapping.ISO639
 object Language {
   val UnknownLanguage: LanguageTag = LanguageTag("und") // Undefined
   val DefaultLang: LanguageTag = LanguageTag(DefaultLanguage)
-  val AllLanguages = "all"
+  val AllLanguages = "*"
   val NoLanguage = ""
 
   val languageAnalyzers = Seq(
@@ -61,15 +61,13 @@ object Language {
     LanguageAnalyzer(UnknownLanguage, StandardAnalyzer)
   )
 
-  val supportedLanguages: Seq[LanguageTag] = languageAnalyzers.map(_.languageTag)
-
   def findByLanguageOrBestEffort[P <: LanguageField[_]](sequence: Seq[P], language: Option[String]): Option[P] =
     language
       .flatMap(lang => sequence.find(_.language == lang))
       .orElse(
         sequence
           .sortBy(lf => {
-            supportedLanguages.map(_.toString()).reverse.indexOf(lf.language)
+            languageAnalyzers.map(_.languageTag.toString()).reverse.indexOf(lf.language)
           })
           .lastOption)
 
@@ -84,7 +82,7 @@ object Language {
   def findSupportedLanguages[_](fields: Seq[LanguageField[_]]*): Seq[String] = {
     val supportedLanguages = fields.flatMap(languageFields => languageFields.map(lf => lf.language)).distinct
     supportedLanguages.sortBy { lang =>
-      ISO639.languagePriority.indexOf(lang)
+      languageAnalyzers.map(la => la.languageTag).indexOf(LanguageTag(lang))
     }
   }
 }

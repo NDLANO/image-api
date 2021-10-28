@@ -65,7 +65,7 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   val MultiLangImage = ImageMetaInformation(
     Some(2),
-    List(ImageTitle("nynorsk", "nn"), ImageTitle("english", "en"), ImageTitle("norsk", "unknown")),
+    List(ImageTitle("nynorsk", "nn"), ImageTitle("english", "en"), ImageTitle("norsk", "und")),
     List(),
     full.fileName,
     full.size,
@@ -186,17 +186,17 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   test("that asImageMetaInformationV2 returns sorted supportedLanguages") {
     val result = converterService.asImageMetaInformationV2(MultiLangImage, Some("nb"), "", None)
-    result.supportedLanguages should be(Seq("unknown", "nn", "en"))
+    result.supportedLanguages should be(Seq("nn", "en", "und"))
   }
 
   test("that withoutLanguage removes correct language") {
     val result1 = converterService.withoutLanguage(MultiLangImage, "en")
-    converterService.getSupportedLanguages(result1) should be(Seq("unknown", "nn"))
+    converterService.getSupportedLanguages(result1) should be(Seq("nn", "und"))
     val result2 = converterService.withoutLanguage(MultiLangImage, "nn")
-    converterService.getSupportedLanguages(result2) should be(Seq("unknown", "en"))
-    val result3 = converterService.withoutLanguage(MultiLangImage, "unknown")
+    converterService.getSupportedLanguages(result2) should be(Seq("en", "und"))
+    val result3 = converterService.withoutLanguage(MultiLangImage, "und")
     converterService.getSupportedLanguages(result3) should be(Seq("nn", "en"))
-    val result4 = converterService.withoutLanguage(converterService.withoutLanguage(MultiLangImage, "unknown"), "en")
+    val result4 = converterService.withoutLanguage(converterService.withoutLanguage(MultiLangImage, "und"), "en")
     converterService.getSupportedLanguages(result4) should be(Seq("nn"))
   }
 

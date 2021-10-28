@@ -9,7 +9,8 @@ package no.ndla.imageapi.service.search
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.indexes.IndexRequest
-import com.sksamuel.elastic4s.mappings.MappingDefinition
+import com.sksamuel.elastic4s.mappings.dynamictemplate.DynamicTemplateRequest
+import com.sksamuel.elastic4s.mappings.{FieldDefinition, MappingDefinition}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.imageapi.ImageApiProperties
 import no.ndla.imageapi.model.domain.ImageMetaInformation
@@ -33,22 +34,23 @@ trait ImageIndexService {
     }
 
     def getMapping: MappingDefinition = {
-      mapping(documentType).fields(
-        List(
-          intField("id"),
-          keywordField("license"),
-          intField("imageSize"),
-          textField("previewUrl"),
-          dateField("lastUpdated"),
-          keywordField("defaultTitle"),
-          keywordField("modelReleased"),
-          textField("editorNotes"),
-        ) ++
-          generateLanguageSupportedFieldList("titles", keepRaw = true) ++
-          generateLanguageSupportedFieldList("alttexts", keepRaw = false) ++
-          generateLanguageSupportedFieldList("captions", keepRaw = false) ++
-          generateLanguageSupportedFieldList("tags", keepRaw = false)
+      val fields: Seq[FieldDefinition] = List(
+        intField("id"),
+        keywordField("license"),
+        intField("imageSize"),
+        textField("previewUrl"),
+        dateField("lastUpdated"),
+        keywordField("defaultTitle"),
+        keywordField("modelReleased"),
+        textField("editorNotes"),
       )
+
+      val dynamics: Seq[DynamicTemplateRequest] = generateLanguageSupportedDynamicTemplates("titles", keepRaw = true) ++
+        generateLanguageSupportedDynamicTemplates("alttexts", keepRaw = false) ++
+        generateLanguageSupportedDynamicTemplates("captions", keepRaw = false) ++
+        generateLanguageSupportedDynamicTemplates("tags", keepRaw = false)
+
+      mapping(documentType).fields(fields).dynamicTemplates(dynamics)
     }
   }
 

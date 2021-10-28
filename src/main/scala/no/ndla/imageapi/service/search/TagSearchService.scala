@@ -18,7 +18,7 @@ import no.ndla.imageapi.model.api.Error
 import no.ndla.imageapi.model.domain.{SearchResult, Sort}
 import no.ndla.imageapi.model.search.SearchableTag
 import no.ndla.imageapi.model.{Language, ResultWindowTooLargeException}
-import no.ndla.language.model.LanguageTag
+import no.ndla.language.model.{Iso639, LanguageTag}
 import org.json4s._
 import org.json4s.native.Serialization.read
 
@@ -67,8 +67,6 @@ trait TagSearchService {
         sort: Sort.Value
     ): Try[SearchResult[String]] = {
 
-      val language = if (searchLanguage == Language.AllLanguages) "*" else searchLanguage
-
       val fullQuery = boolQuery()
         .must(
           boolQuery().should(
@@ -77,7 +75,7 @@ trait TagSearchService {
           )
         )
 
-      executeSearch(language, page, pageSize, sort, fullQuery)
+      executeSearch(searchLanguage, page, pageSize, sort, fullQuery)
     }
 
     def executeSearch(
@@ -89,7 +87,7 @@ trait TagSearchService {
     ): Try[SearchResult[String]] = {
 
       val (languageFilter, searchLanguage) = language match {
-        case lang if Language.supportedLanguages.map(_.toString()).contains(lang) =>
+        case lang if Iso639.get(lang).isSuccess =>
           (Some(termQuery("language", lang)), lang)
         case _ => (None, "*")
       }
@@ -120,7 +118,7 @@ trait TagSearchService {
                 response.result.totalHits,
                 Some(page),
                 numResults,
-                if (language == "*") Language.AllLanguages else language,
+                language,
                 getHits(response.result, language),
                 response.result.scrollId
               ))
