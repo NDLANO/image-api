@@ -9,6 +9,7 @@
 .bloop/
 .metals/
 project/metals.sbt
+.bsp/
 
 node_modules
 *.log
