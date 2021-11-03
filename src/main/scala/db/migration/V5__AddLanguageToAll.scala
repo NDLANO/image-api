@@ -60,7 +60,6 @@ class V5__AddLanguageToAll extends BaseJavaMigration {
         )
       })
       .list()
-      .apply()
   }
 
   def update(imagemetadata: V5_ImageMetaInformation)(implicit session: DBSession): Int = {
@@ -68,7 +67,7 @@ class V5__AddLanguageToAll extends BaseJavaMigration {
     dataObject.setType("jsonb")
     dataObject.setValue(write(imagemetadata))
 
-    sql"update imagemetadata set metadata = $dataObject where id = ${imagemetadata.id}".update().apply()
+    sql"update imagemetadata set metadata = $dataObject where id = ${imagemetadata.id}".update()
   }
 
 }

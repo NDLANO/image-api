@@ -30,7 +30,7 @@ class V6__AddAgreementToImages extends BaseJavaMigration with LazyLogging {
   }
 
   def imagesToUpdate(implicit session: DBSession): List[(Long, String)] = {
-    sql"select id, metadata from imagemetadata".map(rs => { (rs.long("id"), rs.string("metadata")) }).list().apply()
+    sql"select id, metadata from imagemetadata".map(rs => { (rs.long("id"), rs.string("metadata")) }).list()
   }
 
   def toNewAuthorType(author: V5_Author): V5_Author = {
@@ -99,7 +99,7 @@ class V6__AddAgreementToImages extends BaseJavaMigration with LazyLogging {
     dataObject.setType("jsonb")
     dataObject.setValue(write(imagemetadata))
 
-    sql"update imagemetadata set metadata = ${dataObject} where id = ${imagemetadata.id}".update().apply()
+    sql"update imagemetadata set metadata = ${dataObject} where id = ${imagemetadata.id}".update()
   }
 
 }

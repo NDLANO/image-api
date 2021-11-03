@@ -33,7 +33,6 @@ class V7__TranslateUntranslatedAuthors extends BaseJavaMigration with LazyLoggin
         (rs.long("id"), rs.string("metadata"))
       })
       .list()
-      .apply()
   }
 
   def toNewAuthorType(author: V5_Author): V5_Author = {
@@ -68,7 +67,7 @@ class V7__TranslateUntranslatedAuthors extends BaseJavaMigration with LazyLoggin
     dataObject.setType("jsonb")
     dataObject.setValue(write(imagemetadata))
 
-    sql"update imagemetadata set metadata = ${dataObject} where id = ${imagemetadata.id}".update().apply()
+    sql"update imagemetadata set metadata = ${dataObject} where id = ${imagemetadata.id}".update()
   }
 
 }

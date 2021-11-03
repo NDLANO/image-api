@@ -36,7 +36,6 @@ class V2__RemoveFullFromImagePath extends BaseJavaMigration with LazyLogging {
     sql"select id, metadata from imagemetadata"
       .map(rs => V2_DBImageMetaInformation(rs.long("id"), rs.string("metadata")))
       .list()
-      .apply()
   }
 
   def convertImageUrl(imageMeta: V2_DBImageMetaInformation): V2_DBImageMetaInformation = {
@@ -54,7 +53,7 @@ class V2__RemoveFullFromImagePath extends BaseJavaMigration with LazyLogging {
     dataObject.setType("jsonb")
     dataObject.setValue(imageMeta.document)
 
-    sql"update imagemetadata set metadata = $dataObject where id = ${imageMeta.id}".update().apply()
+    sql"update imagemetadata set metadata = $dataObject where id = ${imageMeta.id}".update()
   }
 }
 

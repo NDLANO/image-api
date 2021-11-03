@@ -34,7 +34,7 @@ class ImageRepositoryTest extends IntegrationSuite(EnablePostgresContainer = tru
 
   def emptyTestDatabase =
     DB autoCommit (implicit session => {
-      sql"delete from imagemetadata;".execute().apply()(session)
+      sql"delete from imagemetadata;".execute()(session)
     })
 
   override def beforeAll(): Unit = {
