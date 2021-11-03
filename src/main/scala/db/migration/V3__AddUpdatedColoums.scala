@@ -37,7 +37,6 @@ class V3__AddUpdatedColoums extends BaseJavaMigration with LazyLogging {
     sql"select id, metadata from imagemetadata"
       .map(rs => V3__DBImageMetaInformation(rs.long("id"), rs.string("metadata")))
       .list()
-      .apply()
   }
 
   def convertImageUpdate(imageMeta: V3__DBImageMetaInformation): V3__DBImageMetaInformation = {
@@ -54,7 +53,7 @@ class V3__AddUpdatedColoums extends BaseJavaMigration with LazyLogging {
     dataObject.setType("jsonb")
     dataObject.setValue(imageMeta.document)
 
-    sql"update imagemetadata set metadata = $dataObject where id = ${imageMeta.id}".update().apply()
+    sql"update imagemetadata set metadata = $dataObject where id = ${imageMeta.id}".update()
   }
 
 }

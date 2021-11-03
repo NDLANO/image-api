@@ -9,4 +9,4 @@
 .bloop/
 .metals/
 project/metals.sbt
-
+.bsp/

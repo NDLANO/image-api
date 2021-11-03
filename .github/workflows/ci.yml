@@ -19,22 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Coursier cache
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/coursier
-          key: ${{ runner.OS }}-coursier-cache-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}
-          restore-keys: |
-            ${{ runner.OS }}-coursier-cache-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-
-            ${{ runner.OS }}-coursier-cache-${{ matrix.scala }}-
-            ${{ runner.OS }}-coursier-cache-
-      - name: Ivy cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.ivy2/cache
-            ~/.sbt/boot/
-          key: ivy-cache-${{ hashFiles('~/.ivy2/cache/*') }}-${{ hashFiles('~/.sbt/boot/*') }}
+      - uses: coursier/cache-action@v6
       - uses: olafurpg/setup-scala@v10
         with:
           java-version: adopt@1.11
@@ -48,7 +33,4 @@ jobs:
         run: echo $DOCKER_HUB_PASSWORD | docker login --username $DOCKER_HUB_USERNAME --password-stdin
       - name: "Unit tests"
         run: sbt test
-      - name: "Cache tricks"
-        run: |
-          find $HOME/.ivy2 -name "ivydata-*.properties" -delete
-          find $HOME/.sbt -name "*.lock" -delete
+        
