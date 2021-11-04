@@ -1,3 +1,10 @@
+/*
+ * Part of NDLA image-api
+ * Copyright (C) 2017 NDLA
+ *
+ * See LICENSE
+ */
+
 package no.ndla.imageapi.model.api
 
 import no.ndla.imageapi.ImageApiProperties
