@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 VERSION="$1"
 source ./build.properties
@@ -9,5 +10,5 @@ then
     VERSION="SNAPSHOT"
 fi
 
-sbt -Ddocker.tag=$VERSION "set test in Test := {}" docker
+sbt -Ddocker.tag=$VERSION "set Test / test := {}" docker
 echo "BUILT $PROJECT:$VERSION"

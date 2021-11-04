@@ -111,12 +111,13 @@ assembly / assemblyJarName := "image-api.jar"
 assembly / mainClass := Some("no.ndla.imageapi.JettyLauncher")
 assembly / assemblyMergeStrategy := {
   case "module-info.class"                                           => MergeStrategy.discard
+  case x if x.endsWith("/module-info.class")                         => MergeStrategy.discard
   case "mime.types"                                                  => MergeStrategy.filterDistinctLines
   case PathList("org", "joda", "convert", "ToString.class")          => MergeStrategy.first
   case PathList("org", "joda", "convert", "FromString.class")        => MergeStrategy.first
   case PathList("org", "joda", "time", "base", "BaseDateTime.class") => MergeStrategy.first
   case x =>
-    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    val oldStrategy = (assembly / assemblyMergeStrategy).value
     oldStrategy(x)
 }
 
