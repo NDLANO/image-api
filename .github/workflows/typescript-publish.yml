@@ -1,0 +1,36 @@
+name: Publish typescript types
+on:
+  push:
+    paths:
+      - 'typescript/index.ts'
+    branches:
+      - master
+      - typescript-generate
+env:
+  CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+  KNOWIT_EMAIL: ${{ secrets.KNOWIT_EMAIL }}
+jobs:
+  generate_typescript:
+    name: "Publish typescript types"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.16'
+      - name: "Setup git"
+        run: |
+          git config user.email "$KNOWIT_EMAIL"
+          git config user.name "github-actions"
+      - name: "Publish typescript types"
+        run: |
+          cd typescript/
+          yarn
+          yarn build
+          yarn publish --non-interactive --access public --patch
+          git push
+          git push --tags
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}

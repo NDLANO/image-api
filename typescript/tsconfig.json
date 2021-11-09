@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "target": "es5",
+    "esModuleInterop": true,
+    "outDir": "build",
+    "jsx": "react",
+    "isolatedModules": false,
+    "strict": true,
+    "moduleResolution": "node",
+    "declaration": true,
+    "noLib": false,
+    "noEmit": false,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "lib": [
+      "es2019",
+      "esnext.asynciterable",
+      "dom"
+    ],
+  }
+}

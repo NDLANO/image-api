@@ -87,6 +87,23 @@ lazy val image_api = (project in file("."))
       "commons-io" % "commons-io" % "2.6"
     ) ++ vulnerabilityOverrides
   )
+  .enablePlugins(ScalaTsiPlugin)
+  .settings(
+    // The classes that you want to generate typescript interfaces for
+    typescriptGenerationImports := Seq("no.ndla.imageapi.model.api._"),
+    typescriptExports := Seq(
+      "Image",
+      "ImageMetaInformationV2",
+      "ImageMetaSummary",
+      "NewImageMetaInformationV2",
+      "SearchParams",
+      "SearchResult",
+      "TagsSearchResult",
+      "UpdateImageMetaInformation",
+      "ValidationError",
+    ),
+    typescriptOutputFile := baseDirectory.value / "typescript" / "index.ts",
+  )
   .enablePlugins(DockerPlugin)
   .enablePlugins(JettyPlugin)
 
