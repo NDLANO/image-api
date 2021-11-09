@@ -49,7 +49,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
   val multiLangImage = domain.ImageMetaInformation(
     Some(2),
-    List(domain.ImageTitle("nynorsk", "nn"), domain.ImageTitle("english", "en"), domain.ImageTitle("norsk", "unknown")),
+    List(domain.ImageTitle("nynorsk", "nn"), domain.ImageTitle("english", "en"), domain.ImageTitle("norsk", "und")),
     List(),
     "yolo.jpeg",
     100,
@@ -213,7 +213,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   test("That mergeLanguageFields returns original list when updated is empty") {
     val existing = Seq(domain.ImageTitle("Tittel 1", "nb"),
                        domain.ImageTitle("Tittel 2", "nn"),
-                       domain.ImageTitle("Tittel 3", "unknown"))
+                       domain.ImageTitle("Tittel 3", "und"))
     writeService.mergeLanguageFields(existing, Seq()) should equal(existing)
   }
 
@@ -243,9 +243,9 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
   test("That mergeLanguageFields updates the title with unknown language specified") {
     val tittel1 = domain.ImageTitle("Tittel 1", "nb")
-    val tittel2 = domain.ImageTitle("Tittel 2", "unknown")
+    val tittel2 = domain.ImageTitle("Tittel 2", "und")
     val tittel3 = domain.ImageTitle("Tittel 3", "en")
-    val oppdatertTittel2 = domain.ImageTitle("Tittel 2 er oppdatert", "unknown")
+    val oppdatertTittel2 = domain.ImageTitle("Tittel 2 er oppdatert", "und")
 
     val existing = Seq(tittel1, tittel2, tittel3)
     val updated = Seq(oppdatertTittel2)
@@ -255,9 +255,9 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
 
   test("That mergeLanguageFields also updates the correct content") {
     val desc1 = domain.ImageAltText("Beskrivelse 1", "nb")
-    val desc2 = domain.ImageAltText("Beskrivelse 2", "unknown")
+    val desc2 = domain.ImageAltText("Beskrivelse 2", "und")
     val desc3 = domain.ImageAltText("Beskrivelse 3", "en")
-    val oppdatertDesc2 = domain.ImageAltText("Beskrivelse 2 er oppdatert", "unknown")
+    val oppdatertDesc2 = domain.ImageAltText("Beskrivelse 2 er oppdatert", "und")
 
     val existing = Seq(desc1, desc2, desc3)
     val updated = Seq(oppdatertDesc2)
@@ -401,7 +401,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     val image = multiLangImage.copy(id = Some(imageId))
     val expectedImage =
       image.copy(
-        titles = List(domain.ImageTitle("english", "en"), domain.ImageTitle("norsk", "unknown")),
+        titles = List(domain.ImageTitle("english", "en"), domain.ImageTitle("norsk", "und")),
         editorNotes = image.editorNotes :+ domain.EditorNote(date, user, "Deleted language 'nn'.")
       )
 

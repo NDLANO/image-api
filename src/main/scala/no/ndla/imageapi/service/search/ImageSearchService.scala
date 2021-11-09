@@ -22,6 +22,7 @@ import no.ndla.imageapi.model.{Language, ResultWindowTooLargeException}
 import no.ndla.imageapi.model.api.{Error, ImageMetaSummary}
 import no.ndla.imageapi.model.domain.{SearchResult, SearchSettings, Sort}
 import no.ndla.imageapi.model.search.{SearchableImage, SearchableLanguageFormats}
+import no.ndla.language.model.{Iso639, LanguageTag}
 import no.ndla.mapping.ISO639
 import org.json4s.native.Serialization.read
 import org.json4s.Formats
@@ -36,7 +37,7 @@ trait ImageSearchService {
 
   class ImageSearchService extends LazyLogging with SearchService[ImageMetaSummary] {
     private val noCopyright = boolQuery().not(termQuery("license", "copyrighted"))
-    override val searchIndex = ImageApiProperties.SearchIndex
+    override val searchIndex: String = ImageApiProperties.SearchIndex
     override val indexService = imageIndexService
 
     def hitToApiModel(hit: String, language: String): ImageMetaSummary = {
@@ -55,13 +56,13 @@ trait ImageSearchService {
           sortLanguage match {
             case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.Asc).missing("_last")
             case _ =>
-              fieldSort(s"titles.$sortLanguage.raw").sortOrder(SortOrder.Asc).missing("_last")
+              fieldSort(s"titles.$sortLanguage.raw").sortOrder(SortOrder.Asc).missing("_last").unmappedType("long")
           }
         case Sort.ByTitleDesc =>
           sortLanguage match {
             case "*" => fieldSort("defaultTitle").sortOrder(SortOrder.Desc).missing("_last")
             case _ =>
-              fieldSort(s"titles.$sortLanguage.raw").sortOrder(SortOrder.Desc).missing("_last")
+              fieldSort(s"titles.$sortLanguage.raw").sortOrder(SortOrder.Desc).missing("_last").unmappedType("long")
           }
         case Sort.ByRelevanceAsc    => fieldSort("_score").sortOrder(SortOrder.Asc)
         case Sort.ByRelevanceDesc   => fieldSort("_score").sortOrder(SortOrder.Desc)
@@ -77,8 +78,8 @@ trait ImageSearchService {
         case None => boolQuery()
         case Some(query) =>
           val language = settings.language match {
-            case Some(lang) if ISO639.languagePriority.contains(lang) => lang
-            case _                                                    => "*"
+            case Some(lang) if Iso639.get(lang).isSuccess => lang
+            case _                                        => "*"
           }
 
           val queries = Seq(
@@ -113,8 +114,9 @@ trait ImageSearchService {
       }
 
       val (languageFilter, searchLanguage) = settings.language match {
-        case Some(lang) if Language.supportedLanguages.contains(lang) => (Some(existsQuery(s"titles.$lang")), lang)
-        case _                                                        => (None, "*")
+        case Some(lang) if Iso639.get(lang).isSuccess =>
+          (Some(existsQuery(s"titles.$lang")), lang)
+        case _ => (None, "*")
       }
 
       val modelReleasedFilter = Option.when(settings.modelReleased.nonEmpty)(
@@ -153,7 +155,7 @@ trait ImageSearchService {
                 response.result.totalHits,
                 Some(settings.page.getOrElse(1)),
                 numResults,
-                if (searchLanguage == "*") Language.AllLanguages else searchLanguage,
+                searchLanguage,
                 getHits(response.result, searchLanguage),
                 response.result.scrollId
               ))

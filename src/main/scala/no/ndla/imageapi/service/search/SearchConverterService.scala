@@ -49,7 +49,7 @@ trait SearchConverterService {
 
       val defaultTitle = imageWithAgreement.titles
         .sortBy(title => {
-          val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
+          val languagePriority = Language.languageAnalyzers.map(la => la.languageTag.toString()).reverse
           languagePriority.indexOf(title.language)
         })
         .lastOption

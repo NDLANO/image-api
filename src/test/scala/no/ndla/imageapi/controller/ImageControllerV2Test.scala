@@ -366,7 +366,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       totalCount = 0,
       page = None,
       pageSize = 10,
-      language = "all",
+      language = "*",
       results = Seq.empty,
       scrollId = Some("heiheihei")
     )

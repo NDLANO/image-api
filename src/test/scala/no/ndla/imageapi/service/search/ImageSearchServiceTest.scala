@@ -133,7 +133,7 @@ class ImageSearchServiceTest
 
   val image4 = ImageMetaInformation(
     Some(4),
-    List(ImageTitle("Hulken er ute og lukter på blomstene", "unknown")),
+    List(ImageTitle("Hulken er ute og lukter på blomstene", "und")),
     Seq(),
     smallImage.fileName,
     smallImage.size,
@@ -151,10 +151,10 @@ class ImageSearchServiceTest
 
   val image5 = ImageMetaInformation(
     Some(5),
-    List(ImageTitle("Dette er et urelatert bilde", "unknown"),
+    List(ImageTitle("Dette er et urelatert bilde", "und"),
          ImageTitle("This is a unrelated photo", "en"),
          ImageTitle("Nynoreg", "nn")),
-    Seq(ImageAltText("urelatert alttext", "unknown"), ImageAltText("Nynoreg", "nn")),
+    Seq(ImageAltText("urelatert alttext", "und"), ImageAltText("Nynoreg", "nn")),
     smallImage.fileName,
     smallImage.size,
     smallImage.contentType,
@@ -325,7 +325,7 @@ class ImageSearchServiceTest
   }
 
   test("That search matches title with unknown language analyzed in Norwegian") {
-    val Success(searchResult) = imageSearchService.matchingQuery(searchSettings.copy(query = Some("blomst")))
+    val Success(searchResult) = imageSearchService.matchingQuery(searchSettings.copy(query = Some("blomstene")))
     searchResult.totalCount should be(1)
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("4")
@@ -383,25 +383,33 @@ class ImageSearchServiceTest
     val Success(searchResult1) = imageSearchService.matchingQuery(
       searchSettings.copy(
         query = Some("urelatert"),
-        language = Some("all")
+        language = Some("*")
       ))
     searchResult1.totalCount should be(1)
     searchResult1.results.size should be(1)
     searchResult1.results.head.id should be("5")
-    searchResult1.results.head.title.language should equal("unknown")
-    searchResult1.results.head.altText.language should equal("unknown")
+    searchResult1.results.head.title.language should equal("und")
+    searchResult1.results.head.altText.language should equal("und")
 
     val Success(searchResult2) = imageSearchService.matchingQuery(
       searchSettings.copy(
         query = Some("unrelated"),
-        language = Some("all"),
+        language = Some("*"),
         sort = Sort.ByTitleDesc
       ))
     searchResult2.totalCount should be(1)
     searchResult2.results.size should be(1)
     searchResult2.results.head.id should be("5")
     searchResult2.results.head.title.language should equal("en")
-    searchResult2.results.head.altText.language should equal("unknown")
+    searchResult2.results.head.altText.language should equal("nn")
+  }
+
+  test("Searching for unused languages should returned nothing") {
+    val Success(searchResult1) = imageSearchService.matchingQuery(
+      searchSettings.copy(
+        language = Some("ait") //Arikem
+      ))
+    searchResult1.totalCount should be(0)
   }
 
   test("That field should be returned in another language if match does not contain searchLanguage") {
@@ -414,7 +422,7 @@ class ImageSearchServiceTest
     searchResult.results.size should be(1)
     searchResult.results.head.id should be("5")
     searchResult.results.head.title.language should equal("en")
-    searchResult.results.head.altText.language should equal("unknown")
+    searchResult.results.head.altText.language should equal("nn")
 
     val Success(searchResult2) = imageSearchService.matchingQuery(
       searchSettings.copy(
@@ -437,7 +445,7 @@ class ImageSearchServiceTest
     result.totalCount should be(1)
     result.results.size should be(1)
 
-    result.results.head.supportedLanguages should be(Seq("unknown", "nn", "en"))
+    result.results.head.supportedLanguages should be(Seq("nn", "en", "und"))
   }
 
   test("That scrolling works as expected") {
@@ -450,9 +458,9 @@ class ImageSearchServiceTest
         shouldScroll = true
       ))
 
-    val Success(scroll1) = imageSearchService.scroll(initialSearch.scrollId.get, "all")
-    val Success(scroll2) = imageSearchService.scroll(scroll1.scrollId.get, "all")
-    val Success(scroll3) = imageSearchService.scroll(scroll2.scrollId.get, "all")
+    val Success(scroll1) = imageSearchService.scroll(initialSearch.scrollId.get, "*")
+    val Success(scroll2) = imageSearchService.scroll(scroll1.scrollId.get, "*")
+    val Success(scroll3) = imageSearchService.scroll(scroll2.scrollId.get, "*")
 
     initialSearch.results.map(_.id) should be(expectedIds.head)
     scroll1.results.map(_.id) should be(expectedIds(1))
@@ -475,7 +483,7 @@ class ImageSearchServiceTest
     val Success(searchResult1) = imageSearchService.matchingQuery(
       searchSettings.copy(
         query = Some("lillehjelper"),
-        language = Some("all"),
+        language = Some("*"),
       ))
 
     searchResult1.results.map(_.id) should be(Seq())
@@ -484,7 +492,7 @@ class ImageSearchServiceTest
     val Success(searchResult2) = imageSearchService.matchingQuery(
       searchSettings.copy(
         query = Some("lillehjelper"),
-        language = Some("all"),
+        language = Some("*"),
       ))
 
     searchResult2.results.map(_.id) should be(Seq("2"))
@@ -494,7 +502,7 @@ class ImageSearchServiceTest
     import ModelReleasedStatus._
     val Success(searchResult1) = imageSearchService.matchingQuery(
       searchSettings.copy(
-        language = Some("all"),
+        language = Some("*"),
         modelReleased = Seq(NO)
       ))
 
@@ -502,7 +510,7 @@ class ImageSearchServiceTest
 
     val Success(searchResult2) = imageSearchService.matchingQuery(
       searchSettings.copy(
-        language = Some("all"),
+        language = Some("*"),
         modelReleased = Seq(NOT_APPLICABLE)
       ))
 
@@ -510,7 +518,7 @@ class ImageSearchServiceTest
 
     val Success(searchResult3) = imageSearchService.matchingQuery(
       searchSettings.copy(
-        language = Some("all"),
+        language = Some("*"),
         modelReleased = Seq(YES)
       ))
 
@@ -518,7 +526,7 @@ class ImageSearchServiceTest
 
     val Success(searchResult4) = imageSearchService.matchingQuery(
       searchSettings.copy(
-        language = Some("all"),
+        language = Some("*"),
         modelReleased = Seq.empty
       ))
 
@@ -526,7 +534,7 @@ class ImageSearchServiceTest
 
     val Success(searchResult5) = imageSearchService.matchingQuery(
       searchSettings.copy(
-        language = Some("all"),
+        language = Some("*"),
         modelReleased = Seq(NO, NOT_APPLICABLE)
       ))
 

@@ -43,7 +43,7 @@ trait SearchService {
             totalCount = response.result.totalHits,
             page = None,
             pageSize = response.result.hits.hits.length,
-            language = if (language == "*") Language.AllLanguages else language,
+            language = language,
             results = hits,
             scrollId = response.result.scrollId
           )
@@ -71,7 +71,7 @@ trait SearchService {
           val resultArray = response.hits.hits.toList
           resultArray.map(result => {
             val matchedLanguage = language match {
-              case Language.AllLanguages | "*" =>
+              case Language.AllLanguages =>
                 searchConverterService.getLanguageFromHit(result).getOrElse(language)
               case _ => language
             }

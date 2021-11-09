@@ -1,3 +1,10 @@
+/*
+ * Part of NDLA image-api
+ * Copyright (C) 2017 NDLA
+ *
+ * See LICENSE
+ */
+
 package no.ndla.imageapi.service
 
 import no.ndla.imageapi.model.ValidationException
@@ -227,25 +234,25 @@ class ValidationServiceTest extends UnitSuite with TestEnvironment {
     result.isSuccess should be(false)
   }
 
-  test("validate returns error with unknown language if it does not already exist") {
-    val imageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("new image title", "unknown")))
+  test("validate returns error with invalid language if it does not already exist") {
+    val imageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("new image title", "xyz")))
     val result = validationService.validate(imageMeta, None)
     val exception = result.failed.get.asInstanceOf[ValidationException]
     exception.errors.length should be(1)
-    exception.errors.head.message.contains("Language 'unknown' is not a supported value.") should be(true)
+    exception.errors.head.message.contains("Language 'xyz' is not a supported value.") should be(true)
     result.isSuccess should be(false)
   }
 
   test("validate returns success with unknown language if it already exist") {
-    val imageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("new image title", "unknown")))
-    val oldImageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("old image title", "unknown")))
+    val imageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("new image title", "und")))
+    val oldImageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("old image title", "und")))
     val result = validationService.validate(imageMeta, Some(oldImageMeta))
     result.isSuccess should be(true)
   }
 
   test("validate returns success with unknown language if it already exist, also in another field") {
-    val imageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("new image title", "unknown")))
-    val oldImageMeta = sampleImageMeta.copy(alttexts = Seq(ImageAltText("new image alttext", "unknown")))
+    val imageMeta = sampleImageMeta.copy(titles = Seq(ImageTitle("new image title", "und")))
+    val oldImageMeta = sampleImageMeta.copy(alttexts = Seq(ImageAltText("new image alttext", "und")))
     val result = validationService.validate(imageMeta, Some(oldImageMeta))
     result.isSuccess should be(true)
   }

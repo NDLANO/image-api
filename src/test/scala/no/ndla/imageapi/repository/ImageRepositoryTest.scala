@@ -1,3 +1,10 @@
+/*
+ * Part of NDLA image-api
+ * Copyright (C) 2019 NDLA
+ *
+ * See LICENSE
+ */
+
 package no.ndla.imageapi.repository
 
 import java.net.Socket

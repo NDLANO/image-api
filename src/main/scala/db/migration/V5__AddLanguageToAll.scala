@@ -7,18 +7,18 @@
 
 package db.migration
 
-import java.util.Date
-
 import no.ndla.imageapi.model.Language
 import org.flywaydb.core.api.migration.{BaseJavaMigration, Context}
-import org.json4s.FieldSerializer
+import org.json4s.{FieldSerializer, Formats}
 import org.json4s.FieldSerializer.ignore
 import org.json4s.native.Serialization.{read, write}
 import org.postgresql.util.PGobject
 import scalikejdbc.{DB, DBSession, _}
 
+import java.util.Date
+
 class V5__AddLanguageToAll extends BaseJavaMigration {
-  implicit val formats = org.json4s.DefaultFormats + FieldSerializer[V5_ImageMetaInformation](ignore("id"))
+  implicit val formats: Formats = org.json4s.DefaultFormats + FieldSerializer[V5_ImageMetaInformation](ignore("id"))
 
   override def migrate(context: Context): Unit = {
     val db = DB(context.getConnection)
@@ -31,10 +31,13 @@ class V5__AddLanguageToAll extends BaseJavaMigration {
 
   def updateImageLanguage(audioMeta: V5_ImageMetaInformation): V5_ImageMetaInformation = {
     audioMeta.copy(
-      titles = audioMeta.titles.map(t => V5_ImageTitle(t.title, Some(Language.languageOrUnknown(t.language)))),
-      alttexts = audioMeta.alttexts.map(t => V5_ImageAltText(t.alttext, Some(Language.languageOrUnknown(t.language)))),
-      tags = audioMeta.tags.map(t => V5_ImageTag(t.tags, Some(Language.languageOrUnknown(t.language)))),
-      captions = audioMeta.captions.map(t => V5_ImageCaption(t.caption, Some(Language.languageOrUnknown(t.language))))
+      titles =
+        audioMeta.titles.map(t => V5_ImageTitle(t.title, Some(Language.languageOrUnknown(t.language).toString()))),
+      alttexts = audioMeta.alttexts.map(t =>
+        V5_ImageAltText(t.alttext, Some(Language.languageOrUnknown(t.language).toString()))),
+      tags = audioMeta.tags.map(t => V5_ImageTag(t.tags, Some(Language.languageOrUnknown(t.language).toString()))),
+      captions =
+        audioMeta.captions.map(t => V5_ImageCaption(t.caption, Some(Language.languageOrUnknown(t.language).toString())))
     )
   }
 
@@ -59,7 +62,7 @@ class V5__AddLanguageToAll extends BaseJavaMigration {
       .list()
   }
 
-  def update(imagemetadata: V5_ImageMetaInformation)(implicit session: DBSession) = {
+  def update(imagemetadata: V5_ImageMetaInformation)(implicit session: DBSession): Int = {
     val dataObject = new PGobject()
     dataObject.setType("jsonb")
     dataObject.setValue(write(imagemetadata))
