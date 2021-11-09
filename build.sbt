@@ -89,7 +89,7 @@ lazy val image_api = (project in file("."))
   .enablePlugins(ScalaTsiPlugin)
   .settings(
     // The classes that you want to generate typescript interfaces for
-    typescriptGenerationImports := Seq("no.ndla.imageapi.model.api._", "no.ndla.imageapi.model.api.TSTypes._"),
+    typescriptGenerationImports := Seq("no.ndla.imageapi.model.api._"),
     typescriptExports := Seq(
       "Image",
       "ImageMetaInformationV2",
