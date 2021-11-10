@@ -10,6 +10,7 @@ package no.ndla.imageapi.model.api
 import org.scalatra.swagger.annotations.ApiModel
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
+import java.util.Date
 import scala.annotation.meta.field
 
 // format: off
@@ -24,5 +25,6 @@ case class ImageMetaSummary(
     @(ApiModelProperty @field)(description = "Describes the license of the image") license: String,
     @(ApiModelProperty @field)(description = "List of supported languages in priority") supportedLanguages: Seq[String],
     @(ApiModelProperty @field)(description = "Describes if the model has released use of the image", allowableValues = "not-set,yes,no,not-applicable") modelRelease: Option[String],
-    @(ApiModelProperty @field)(description = "Describes the changes made to the image, only visible to editors") editorNotes: Option[Seq[String]]
+    @(ApiModelProperty @field)(description = "Describes the changes made to the image, only visible to editors") editorNotes: Option[Seq[String]],
+    @(ApiModelProperty @field)(description = "The time and date of last update") lastUpdated: Date
 )
