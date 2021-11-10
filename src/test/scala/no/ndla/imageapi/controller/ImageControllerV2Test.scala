@@ -115,7 +115,7 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       Seq("nb"),
       Some("yes"),
       None,
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse("2021-04-01T14:34:56Z")
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse("2021-04-01T12:34:56Z")
     )
     val expectedBody =
       """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"],"modelRelease":"yes","lastUpdated":"2021-04-01T12:34:56Z"}]}"""
