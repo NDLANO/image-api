@@ -10,7 +10,12 @@ package no.ndla.imageapi.controller
 
 import java.util.Date
 import no.ndla.imageapi.ImageApiProperties.MaxImageFileSizeBytes
-import no.ndla.imageapi.model.api.{ImageMetaSummary, NewImageMetaInformationV2, SearchResult, UpdateImageMetaInformation}
+import no.ndla.imageapi.model.api.{
+  ImageMetaSummary,
+  NewImageMetaInformationV2,
+  SearchResult,
+  UpdateImageMetaInformation
+}
 import no.ndla.imageapi.model.domain.{Sort, _}
 import no.ndla.imageapi.model.{ImageNotFoundException, api, domain}
 import no.ndla.imageapi.{ImageSwagger, TestData, TestEnvironment, UnitSuite}
