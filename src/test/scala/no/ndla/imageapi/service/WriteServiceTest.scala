@@ -8,6 +8,8 @@
 
 package no.ndla.imageapi.service
 
+import no.ndla.imageapi.TestData.DiskImage
+
 import java.io.InputStream
 import java.util.Date
 import javax.servlet.http.HttpServletRequest
@@ -24,6 +26,8 @@ import org.mockito.invocation.InvocationOnMock
 import org.scalatra.servlet.FileItem
 import scalikejdbc.DBSession
 
+import java.awt.image.BufferedImage
+import javax.imageio.ImageIO
 import scala.util.{Failure, Success}
 
 class WriteServiceTest extends UnitSuite with TestEnvironment {
@@ -31,6 +35,8 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   override val converterService = new ConverterService
   val newFileName = "AbCdeF.mp3"
   val fileMock1: FileItem = mock[FileItem]
+  val NdlaLogoImage = DiskImage("ndla_logo.jpg")
+
 
   val newImageMeta = NewImageMetaInformationV2(
     "title",
@@ -45,7 +51,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   def updated() = (new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC)).toDate
 
   val domainImageMeta =
-    converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg")).get
+    converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg", 50, 50)).get
 
   val multiLangImage = domain.ImageMetaInformation(
     Some(2),
@@ -62,7 +68,9 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     updated(),
     "ndla124",
     ModelReleasedStatus.YES,
-    Seq.empty
+    Seq.empty,
+    50,
+    50
   )
 
   override def beforeEach() = {
@@ -98,10 +106,11 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(imageStorage.objectExists(any[String])).thenReturn(false)
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long]))
       .thenReturn(Success(newFileName))
+    when(fileMock1.getInputStream).thenReturn(NdlaLogoImage.stream)
     val result = writeService.uploadImage(fileMock1)
     verify(imageStorage, times(1)).uploadFromStream(any[InputStream], any[String], any[String], any[Long])
 
-    result should equal(Success(Image(newFileName, 1024, "image/jpeg")))
+    result should equal(Success(Image(newFileName, 1024, "image/jpeg", 189, 60)))
   }
 
   test("uploadFile should return Failure if file upload failed") {
@@ -126,6 +135,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       .thenReturn(Failure(new ValidationException(errors = Seq())))
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long]))
       .thenReturn(Success(newFileName))
+    when(fileMock1.getInputStream).thenReturn(NdlaLogoImage.stream)
 
     writeService.storeNewImage(newImageMeta, fileMock1).isFailure should be(true)
     verify(imageRepository, times(0)).insert(any[ImageMetaInformation])(any[DBSession])
@@ -139,6 +149,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long]))
       .thenReturn(Success(newFileName))
     when(imageRepository.insert(any[ImageMetaInformation])(any[DBSession])).thenThrow(new RuntimeException)
+    when(fileMock1.getInputStream).thenReturn(NdlaLogoImage.stream)
 
     writeService.storeNewImage(newImageMeta, fileMock1).isFailure should be(true)
     verify(imageIndexService, times(0)).indexDocument(any[ImageMetaInformation])
@@ -151,6 +162,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(imageStorage.uploadFromStream(any[InputStream], any[String], any[String], any[Long]))
       .thenReturn(Success(newFileName))
     when(imageIndexService.indexDocument(any[ImageMetaInformation])).thenReturn(Failure(new RuntimeException))
+    when(fileMock1.getInputStream).thenReturn(NdlaLogoImage.stream)
 
     writeService.storeNewImage(newImageMeta, fileMock1).isFailure should be(true)
     verify(imageRepository, times(1)).insert(any[ImageMetaInformation])(any[DBSession])
@@ -165,6 +177,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       .thenReturn(Success(newFileName))
     when(imageIndexService.indexDocument(any[ImageMetaInformation])).thenReturn(Success(afterInsert))
     when(tagIndexService.indexDocument(any[ImageMetaInformation])).thenReturn(Failure(new RuntimeException))
+    when(fileMock1.getInputStream).thenReturn(NdlaLogoImage.stream)
 
     writeService.storeNewImage(newImageMeta, fileMock1).isFailure should be(true)
     verify(imageRepository, times(1)).insert(any[ImageMetaInformation])(any[DBSession])
@@ -180,6 +193,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
       .thenReturn(Success(newFileName))
     when(imageIndexService.indexDocument(any[ImageMetaInformation])).thenReturn(Success(afterInsert))
     when(tagIndexService.indexDocument(any[ImageMetaInformation])).thenReturn(Success(afterInsert))
+    when(fileMock1.getInputStream).thenReturn(NdlaLogoImage.stream)
 
     val result = writeService.storeNewImage(newImageMeta, fileMock1)
     result.isSuccess should be(true)
@@ -205,7 +219,7 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
     when(authUser.userOrClientid()).thenReturn("ndla54321")
     when(clock.now()).thenReturn(updated())
     val domain =
-      converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg")).get
+      converterService.asDomainImageMetaInformationV2(newImageMeta, Image(newFileName, 1024, "image/jpeg", 50, 50)).get
     domain.updatedBy should equal("ndla54321")
     domain.updated should equal(updated())
   }

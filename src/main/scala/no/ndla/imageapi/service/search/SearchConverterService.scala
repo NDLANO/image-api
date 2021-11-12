@@ -71,7 +71,10 @@ trait SearchConverterService {
         lastUpdated = imageWithAgreement.updated,
         defaultTitle = defaultTitle.map(t => t.title),
         modelReleased = Some(image.modelReleased.toString),
-        editorNotes = image.editorNotes.map(_.note)
+        editorNotes = image.editorNotes.map(_.note),
+        fileType = image.contentType,
+        width = image.width,
+        height = image.height
       )
     }
 
@@ -105,7 +108,11 @@ trait SearchConverterService {
         license = searchableImage.license,
         supportedLanguages = supportedLanguages,
         modelRelease = searchableImage.modelReleased,
-        editorNotes = editorNotes
+        editorNotes = editorNotes,
+        fileType = searchableImage.fileType,
+        fileSize = searchableImage.imageSize,
+        width = searchableImage.width,
+        height = searchableImage.height
       )
     }
 

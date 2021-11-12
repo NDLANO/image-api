@@ -24,5 +24,9 @@ case class ImageMetaSummary(
     @(ApiModelProperty @field)(description = "Describes the license of the image") license: String,
     @(ApiModelProperty @field)(description = "List of supported languages in priority") supportedLanguages: Seq[String],
     @(ApiModelProperty @field)(description = "Describes if the model has released use of the image", allowableValues = "not-set,yes,no,not-applicable") modelRelease: Option[String],
-    @(ApiModelProperty @field)(description = "Describes the changes made to the image, only visible to editors") editorNotes: Option[Seq[String]]
+    @(ApiModelProperty @field)(description = "Describes the changes made to the image, only visible to editors") editorNotes: Option[Seq[String]],
+    @(ApiModelProperty @field)(description = "The image file type") fileType: String,
+    @(ApiModelProperty @field)(description = "The image file size in kilobytes") fileSize: Number,
+    @(ApiModelProperty @field)(description = "The image width in pixels") width: Number,
+    @(ApiModelProperty @field)(description = "The image height in pixels") height: Number,
 )

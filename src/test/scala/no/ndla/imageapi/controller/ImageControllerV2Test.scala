@@ -113,16 +113,21 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       "by-sa",
       Seq("nb"),
       Some("yes"),
-      None
+      None,
+      "jpg",
+      10000,
+      100,
+      100
     )
     val expectedBody =
-      """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"],"modelRelease":"yes"}]}"""
+      """{"totalCount":1,"page":1,"pageSize":10,"language":"nb","results":[{"id":"4","title":{"title":"Tittel","language":"nb"},"contributors":["Jason Bourne","Ben Affleck"],"altText":{"alttext":"AltText","language":"nb"},"previewUrl":"http://image-api.ndla-local/image-api/raw/4","metaUrl":"http://image-api.ndla-local/image-api/v2/images/4","license":"by-sa","supportedLanguages":["nb"],"modelRelease":"yes","fileType":"jpg","fileSize":10000,"width":100,"height":100}]}"""
     val domainSearchResult = domain.SearchResult(1, Some(1), 10, "nb", List(imageSummary), None)
     val apiSearchResult = api.SearchResult(1, Some(1), 10, "nb", List(imageSummary))
     when(imageSearchService.matchingQuery(any[SearchSettings])).thenReturn(Success(domainSearchResult))
     when(searchConverterService.asApiSearchResult(domainSearchResult)).thenReturn(apiSearchResult)
     get("/") {
       status should equal(200)
+      println(body)
       body should equal(expectedBody)
     }
   }
@@ -215,7 +220,9 @@ class ImageControllerV2Test extends UnitSuite with ScalatraSuite with TestEnviro
       new Date(),
       "createdBy",
       ModelReleasedStatus.YES,
-      Seq.empty
+      Seq.empty,
+      100,
+      100
     )
 
     when(writeService.storeNewImage(any[NewImageMetaInformationV2], any[FileItem])).thenReturn(Success(sampleImageMeta))

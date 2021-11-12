@@ -202,7 +202,9 @@ trait ConverterService {
           created = now,
           updated = now,
           modelReleased = modelStatus,
-          editorNotes = Seq(domain.EditorNote(now, user, "Image created."))
+          editorNotes = Seq(domain.EditorNote(now, user, "Image created.")),
+          width = image.width,
+          height = image.height
         )
       })
     }

@@ -24,8 +24,8 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
   val updated: Date = new DateTime(2017, 4, 1, 12, 15, 32, DateTimeZone.UTC).toDate
 
-  val full = Image("/123.png", 200, "image/png")
-  val wanting = Image("123.png", 200, "image/png")
+  val full = Image("/123.png", 200, "image/png", 50, 50)
+  val wanting = Image("123.png", 200, "image/png", 50, 50)
 
   val DefaultImageMetaInformation = ImageMetaInformation(
     Some(1),
@@ -42,7 +42,9 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     updated,
     "ndla124",
     ModelReleasedStatus.YES,
-    Seq.empty
+    Seq.empty,
+    50,
+    50
   )
 
   val WantingImageMetaInformation = ImageMetaInformation(
@@ -60,7 +62,9 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     updated,
     "ndla124",
     ModelReleasedStatus.YES,
-    Seq.empty
+    Seq.empty,
+    50,
+    50
   )
 
   val MultiLangImage = ImageMetaInformation(
@@ -78,7 +82,9 @@ class ConverterServiceTest extends UnitSuite with TestEnvironment {
     updated,
     "ndla124",
     ModelReleasedStatus.YES,
-    Seq.empty
+    Seq.empty,
+    50,
+    50
   )
 
   override def beforeEach(): Unit = {

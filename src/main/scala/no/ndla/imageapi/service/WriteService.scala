@@ -21,6 +21,7 @@ import org.scalatra.servlet.FileItem
 import java.io.ByteArrayInputStream
 import java.lang.Math.max
 import java.util.Date
+import javax.imageio.ImageIO
 import scala.util.{Failure, Random, Success, Try}
 
 trait WriteService {
@@ -233,10 +234,11 @@ trait WriteService {
 
     private def uploadImageWithName(file: FileItem, fileName: String): Try[Image] = {
       val contentType = file.getContentType.getOrElse("")
+      val image = ImageIO.read(file.getInputStream)
       imageStorage
         .uploadFromStream(new ByteArrayInputStream(file.get()), fileName, contentType, file.size)
         .map(filePath => {
-          Image(filePath, file.size, contentType)
+          Image(filePath, file.size, contentType, image.getWidth, image.getHeight)
         })
     }
 

@@ -31,7 +31,7 @@ case class ImageCaption(caption: String, language: String) extends LanguageField
 case class ImageTag(tags: Seq[String], language: String) extends LanguageField[Seq[String]] {
   override def value: Seq[String] = tags
 }
-case class Image(fileName: String, size: Long, contentType: String)
+case class Image(fileName: String, size: Long, contentType: String, width: Number, height: Number)
 case class Copyright(license: String,
                      origin: String,
                      creators: Seq[Author],
@@ -80,7 +80,9 @@ case class ImageMetaInformation(
     created: Date,
     createdBy: String,
     modelReleased: ModelReleasedStatus.Value,
-    editorNotes: Seq[EditorNote]
+    editorNotes: Seq[EditorNote],
+    width: Number,
+    height: Number
 )
 
 object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
@@ -112,7 +114,9 @@ object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {
       meta.created,
       meta.createdBy,
       meta.modelReleased,
-      meta.editorNotes
+      meta.editorNotes,
+      meta.width,
+      meta.height
     )
   }
 }
