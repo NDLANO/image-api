@@ -81,8 +81,8 @@ case class ImageMetaInformation(
     createdBy: String,
     modelReleased: ModelReleasedStatus.Value,
     editorNotes: Seq[EditorNote],
-    width: Number,
-    height: Number
+    width: Long,
+    height: Long
 )
 
 object ImageMetaInformation extends SQLSyntaxSupport[ImageMetaInformation] {

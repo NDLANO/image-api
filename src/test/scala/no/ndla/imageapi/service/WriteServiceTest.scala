@@ -37,7 +37,6 @@ class WriteServiceTest extends UnitSuite with TestEnvironment {
   val fileMock1: FileItem = mock[FileItem]
   val NdlaLogoImage = DiskImage("ndla_logo.jpg")
 
-
   val newImageMeta = NewImageMetaInformationV2(
     "title",
     "alt text",
