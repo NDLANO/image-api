@@ -89,7 +89,9 @@ class V12__AddImageMetadata extends BaseJavaMigration with LazyLogging {
       }
       case Failure(ex) => {
         logger.warn(s"Something went wrong when fetching $imageKey", ex)
-        JObject()
+        JObject(
+          JField("width", JLong(0)),
+          JField("height", JLong(0)))
       }
     }
 
