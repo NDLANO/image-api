@@ -105,7 +105,8 @@ trait SearchConverterService {
         license = searchableImage.license,
         supportedLanguages = supportedLanguages,
         modelRelease = searchableImage.modelReleased,
-        editorNotes = editorNotes
+        editorNotes = editorNotes,
+        lastUpdated = searchableImage.lastUpdated
       )
     }
 
