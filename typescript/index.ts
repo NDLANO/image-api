@@ -67,6 +67,7 @@ export interface IImageMetaSummary {
   supportedLanguages: string[]
   modelRelease?: string
   editorNotes?: string[]
+  lastUpdated: string
 }
 
 export interface IImageTag {
