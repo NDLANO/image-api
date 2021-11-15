@@ -109,7 +109,9 @@ trait ConverterService {
         imageMeta.created,
         imageMeta.createdBy,
         imageMeta.modelReleased.toString,
-        editorNotes
+        editorNotes,
+        imageMeta.width,
+        imageMeta.height
       )
     }
 

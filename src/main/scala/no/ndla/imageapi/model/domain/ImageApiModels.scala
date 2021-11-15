@@ -31,7 +31,7 @@ case class ImageCaption(caption: String, language: String) extends LanguageField
 case class ImageTag(tags: Seq[String], language: String) extends LanguageField[Seq[String]] {
   override def value: Seq[String] = tags
 }
-case class Image(fileName: String, size: Long, contentType: String, width: Number, height: Number)
+case class Image(fileName: String, size: Long, contentType: String, width: Long, height: Long)
 case class Copyright(license: String,
                      origin: String,
                      creators: Seq[Author],

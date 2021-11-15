@@ -53,7 +53,9 @@ class InternControllerTest extends UnitSuite with ScalatraSuite with TestEnviron
     updated,
     "ndla124",
     ModelReleasedStatus.YES.toString,
-    None
+    None,
+    100,
+    100
   )
 
   val DefaultDomainImageMetaInformation = domain.ImageMetaInformation(
