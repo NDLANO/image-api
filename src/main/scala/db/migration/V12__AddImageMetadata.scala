@@ -7,14 +7,9 @@
 
 package db.migration
 
-import com.amazonaws.services.s3.model.{GetObjectRequest, S3Object}
 import io.lemonlabs.uri.Uri
 import no.ndla.imageapi.ComponentRegistry.{amazonClient, imageStorage}
-import no.ndla.imageapi.ImageApiProperties.StorageName
-import no.ndla.imageapi.model.ImageNotFoundException
-import no.ndla.imageapi.model.domain.{ImageStream, ModelReleasedStatus}
 
-import java.util.Date
 import org.flywaydb.core.api.migration.{BaseJavaMigration, Context}
 import org.json4s.JsonAST.{JField, JString}
 import org.json4s.{DefaultFormats, JArray, JLong, JObject}
@@ -48,12 +43,6 @@ class V12__AddImageMetadata extends BaseJavaMigration {
       .list()
   }
 
-  def getImage(imageKey: String): Try[S3Object] = {
-    Try(amazonClient.getObject(new GetObjectRequest(StorageName, imageKey))).map(s3Object => s3Object) match {
-      case Success(e) => Success(e)
-      case Failure(_) => Failure(new ImageNotFoundException(s"Image $imageKey does not exist"))
-    }
-  }
 
   def convertImageUpdate(imageMeta: String): String = {
     val oldDocument = parse(imageMeta)
@@ -63,7 +52,6 @@ class V12__AddImageMetadata extends BaseJavaMigration {
       .parse(imageUrl)
       .toStringRaw
       .dropWhile(_ == '/') // Strip heading '/'
-
     val mergeObject = imageStorage.get(imageKey) match {
       case Success(value) => {
         val image = value.sourceImage
