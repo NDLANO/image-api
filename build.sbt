@@ -81,6 +81,7 @@ lazy val image_api = (project in file("."))
       "org.jrobin" % "jrobin" % "1.5.9", // This is needed for javamelody graphing
       "org.imgscalr" % "imgscalr-lib" % "4.2",
       "io.lemonlabs" %% "scala-uri" % "1.5.1",
+      "org.apache.xmlgraphics" % "batik-all" % "1.14",
       // These are not strictly needed, for most cases, but offers better handling of loading images with encoding issues
       "com.twelvemonkeys.imageio" % "imageio-core" % "3.4.1",
       "com.twelvemonkeys.imageio" % "imageio-jpeg" % "3.4.1",

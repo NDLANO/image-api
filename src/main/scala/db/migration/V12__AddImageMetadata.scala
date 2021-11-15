@@ -20,6 +20,8 @@ import org.json4s.{DefaultFormats, JLong, JObject}
 import org.json4s.native.JsonMethods.{compact, parse, render}
 import org.postgresql.util.PGobject
 import scalikejdbc.{DB, DBSession, _}
+import org.apache.batic
+
 
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -30,6 +32,7 @@ class V12__AddImageMetadata extends BaseJavaMigration with LazyLogging {
 
   implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
   val timeService = new TimeService()
+
 
   override def migrate(context: Context) = {
     val db = DB(context.getConnection)
@@ -67,6 +70,7 @@ class V12__AddImageMetadata extends BaseJavaMigration with LazyLogging {
         content
       }
 
+      // Håndter SVG annerledes. Retunrer BufferedImage eller SVG?
       val stream = new ByteArrayInputStream(imageContent)
       ImageIO.read(stream)
     })
